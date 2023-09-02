@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using YARG.Core.Extensions;
+using YARG.Core.Chart;
 
 namespace YARG.Core.IO
 {
@@ -225,6 +226,22 @@ namespace YARG.Core.IO
             {
                 note.value = _trackPos[0];
                 note.velocity = _trackPos[1];
+            }
+        }
+        
+        public int ExtractMicrosPerQuarter()
+        {
+            unsafe
+            {
+                return (_trackPos[0] << 16) | (_trackPos[1] << 8) | _trackPos[2];
+            }
+        }
+
+        public TimeSig_FW ExtractTimeSig()
+        {
+            unsafe
+            {
+                return new TimeSig_FW(_trackPos[0], _trackPos[1], _trackPos[2], _trackPos[3]);
             }
         }
 

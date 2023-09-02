@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using YARG.Core.Chart;
 using YARG.Core.Extensions;
 using YARG.Core.IO.Ini;
 
@@ -214,6 +215,7 @@ namespace YARG.Core.IO
         where TDecoder : IStringDecoder<TChar>, new()
         where TBase : unmanaged, IDotChartBases<TChar>
     {
+        private const double TEMPO_FACTOR = 60000000000;
         private static readonly TBase CONFIG = default;
         private readonly YARGTextReader<TChar, TDecoder> reader;
 
@@ -366,6 +368,42 @@ namespace YARG.Core.IO
         {
             note.Lane = reader.ExtractInt32();
             note.Duration = reader.ExtractInt64();
+        }
+
+        public SpecialPhrase_FW ExtractSpecialPhrase()
+        {
+            int type = reader.ExtractInt32();
+            long duration = reader.ExtractInt64();
+            return new((SpecialPhraseType) type, duration);
+        }
+
+        public int ExtractMicrosPerQuarter()
+        {
+            return (int) Math.Round(TEMPO_FACTOR / reader.ExtractUInt32());
+        }
+
+        public long ExtractAnchor()
+        {
+            return reader.ExtractInt64();
+        }
+
+        public TimeSig_FW ExtractTimeSig()
+        {
+            ulong numerator = reader.ExtractUInt64();
+            ulong metro = 0, n32nds = 0;
+            if (reader.ExtractUInt64(out ulong denom))
+            {
+                if (reader.ExtractUInt64(out metro))
+                    reader.ExtractUInt64(out n32nds);
+            }
+            else
+                denom = 255;
+            return new TimeSig_FW((byte) numerator, (byte) denom, (byte) metro, (byte) n32nds);
+        }
+
+        public string ExtractText()
+        {
+            return reader.ExtractText(true);
         }
 
         public void SkipTrack()
