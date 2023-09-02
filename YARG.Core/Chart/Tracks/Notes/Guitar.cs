@@ -18,10 +18,10 @@
 
         public long this[int lane]
         {
-            get => Get(lane);
+            get => lanes[lane];
             set
             {
-                Get(lane).Duration = value;
+                lanes[lane].Duration = value;
                 if (lane == 0)
                 {
                     for (int i = 1; i < numLanes; ++i)
@@ -34,7 +34,7 @@
 
         public void Disable(int lane)
         {
-            Get(lane).Disable();
+            lanes[lane].Disable();
         }
     }
 

@@ -31,7 +31,7 @@
     {
         protected TruncatableSustain _bass;
         protected TruncatableSustain _doubleBass;
-        public ref DrumPad GetPad(int index) => ref Get(index);
+        public ref DrumPad GetPad(int index) => ref lanes[index];
 
         public long Bass
         {
@@ -61,7 +61,7 @@
                     return _bass;
                 if (lane == 1)
                     return _doubleBass;
-                return Get(lane - 2).Duration;
+                return lanes[lane - 2].Duration;
             }
             set
             {
@@ -76,7 +76,7 @@
                     _bass.Disable();
                 }
                 else
-                    Get(lane - 2).Duration = value;
+                    lanes[lane - 2].Duration = value;
             }
         }
 

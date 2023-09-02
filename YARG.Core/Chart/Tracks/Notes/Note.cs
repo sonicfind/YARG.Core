@@ -1,30 +1,15 @@
-﻿using System;
-using System.Runtime.InteropServices;
-
-namespace YARG.Core.Chart
+﻿namespace YARG.Core.Chart
 {
     public abstract unsafe class Note_FW<NoteType> : INote
         where NoteType : unmanaged, IEnableable
     {
-        protected readonly NoteType* lanes;
+        protected readonly NoteType[] lanes;
         protected readonly int numLanes;
-
-        protected ref NoteType Get(int index)
-        {
-            if (index >= numLanes)
-                throw new ArgumentOutOfRangeException("index");
-            return ref lanes[index];
-        }
 
         protected Note_FW(int numLanes)
         {
-            lanes = (NoteType*) Marshal.AllocHGlobal(numLanes * sizeof(NoteType));
+            lanes = new NoteType[numLanes];
             this.numLanes = numLanes;
-        }
-
-        ~Note_FW()
-        {
-            Marshal.FreeHGlobal((IntPtr)lanes);
         }
 
         public virtual int GetNumActive()

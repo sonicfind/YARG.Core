@@ -5,8 +5,8 @@
         public Keys() : base(5) { }
         public long this[int lane]
         {
-            get { return Get(lane); }
-            set { Get(lane) = value; }
+            get { return lanes[lane]; }
+            set { lanes[lane] = value; }
         }
     }
 }

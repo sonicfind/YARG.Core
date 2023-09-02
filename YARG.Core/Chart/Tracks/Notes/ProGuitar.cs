@@ -95,7 +95,7 @@ namespace YARG.Core.Chart
     public unsafe class Guitar_Pro<FretType> : Note_FW<ProString<FretType>>
         where FretType : unmanaged, IFretted
     {
-        public ref ProString<FretType> this[int lane] => ref Get(lane);
+        public ref ProString<FretType> this[int lane] => ref lanes[lane];
 
         public bool HOPO { get; set; }
         public bool ForceNumbering { get; set; }
