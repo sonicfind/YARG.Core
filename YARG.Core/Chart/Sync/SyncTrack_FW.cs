@@ -26,12 +26,13 @@ namespace YARG.Core.Chart
 
         public float ConvertToSeconds(long ticks, ref int startIndex)
         {
-            (var data, int count) = tempoMarkers.Data;
-            for (int i = startIndex; i < count; i++)
+            var span = tempoMarkers.Span;
+            int length = span.Length;
+            for (int i = startIndex; i < length; i++)
             {
-                ref var marker = ref data[i];
-                if (i + 1 == count || ticks < data[i + 1].position)
+                if (i + 1 == length || ticks < span[i + 1].position)
                 {
+                    ref var marker = ref span[i];
                     startIndex = i;
                     return ((marker.obj.Micros * (ticks - marker.position) / (float) _tickrate) + marker.obj.Anchor) / MICROS_PER_SECOND;
                 }
@@ -46,13 +47,14 @@ namespace YARG.Core.Chart
 
         public long ConvertToTicks(float seconds, ref int startIndex)
         {
-            (var data, int count) = tempoMarkers.Data;
+            var span = tempoMarkers.Span;
+            int length = span.Length;
             float micros = seconds * MICROS_PER_SECOND;
-            for (int i = startIndex; i < count; i++)
+            for (int i = startIndex; i < length; i++)
             {
-                ref var marker = ref data[i];
-                if (i + 1 == count || micros < data[i + 1].obj.Anchor)
+                if (i + 1 == length || micros < span[i + 1].obj.Anchor)
                 {
+                    ref var marker = ref span[i];
                     startIndex = i;
                     return (long) ((micros - marker.obj.Anchor) * _tickrate / marker.obj.Micros) + marker.position;
                 }

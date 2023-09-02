@@ -300,10 +300,10 @@ namespace YARG.Core.Chart
                 events = unknownDiff.events,
             };
 
-            var data = unknownDiff.notes.Data;
-            for (int noteIndex = 0; noteIndex < data.Item2; ++noteIndex)
+            var span = unknownDiff.notes.Span;
+            for (int noteIndex = 0; noteIndex < span.Length; ++noteIndex)
             {
-                ref var note = ref data.Item1[noteIndex];
+                ref var note = ref span[noteIndex];
                 diff.notes.Add(note.position, new(note.obj));
             }
             return diff;
@@ -317,10 +317,10 @@ namespace YARG.Core.Chart
                 events = unknownDiff.events,
             };
 
-            var data = unknownDiff.notes.Data;
-            for (int noteIndex = 0; noteIndex < data.Item2; ++noteIndex)
+            var span = unknownDiff.notes.Span;
+            for (int noteIndex = 0; noteIndex < span.Length; ++noteIndex)
             {
-                ref var note = ref data.Item1[noteIndex];
+                ref var note = ref span[noteIndex];
                 diff.notes.Add(note.position, new(note.obj));
             }
             return diff;
@@ -334,10 +334,10 @@ namespace YARG.Core.Chart
                 events = unknownDiff.events,
             };
 
-            var data = unknownDiff.notes.Data;
-            for (int noteIndex = 0; noteIndex < data.Item2; ++noteIndex)
+            var span = unknownDiff.notes.Span;
+            for (int noteIndex = 0; noteIndex < span.Length; ++noteIndex)
             {
-                ref var note = ref data.Item1[noteIndex];
+                ref var note = ref span[noteIndex];
                 diff.notes.Add(note.position, new(note.obj));
             }
             return diff;

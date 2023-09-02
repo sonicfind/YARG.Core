@@ -269,7 +269,7 @@ namespace YARG.Core.Chart.FlatDictionary
             return ~lo;
         }
 
-        public (FlatMapNode<TKey, TObj>[], int) Data => new(_buffer, _count);
+        public Span<FlatMapNode<TKey, TObj>> Span => new(_buffer, 0, _count);
 
         public IEnumerator GetEnumerator() { return new Enumerator(this); }
         IEnumerator<FlatMapNode<TKey, TObj>> IEnumerable<FlatMapNode<TKey, TObj>>.GetEnumerator()

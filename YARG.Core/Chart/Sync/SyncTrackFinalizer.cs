@@ -16,19 +16,23 @@
             uint denominator = 0;
             int searchIndex = 0;
             int tempoIndex = 0;
-            var sigs = sync.timeSigs.Data;
-            for (int i = 0; i < sigs.Item2; ++i)
+
+            var sigs = sync.timeSigs.Span;
+            int numSigs = sigs.Length;
+            for (int i = 0; i < numSigs; ++i)
             {
-                var node = sigs.Item1[i];
+                var node = sigs[i];
                 if (node.obj.Denominator != 255)
                     denominator = 1u << node.obj.Denominator;
+
                 long ticksPerMarker = multipliedTickrate / denominator;
                 long ticksPerMeasure = (multipliedTickrate * node.obj.Numerator) / denominator;
                 long endTime;
-                if (i + 1 < sigs.Item2)
-                    endTime = sigs.Item1[i + 1].position;
+                if (i + 1 < numSigs)
+                    endTime = sigs[i + 1].position;
                 else
                     endTime = endTick;
+
                 while (node.position < endTime)
                 {
                     long position = node.position;
@@ -48,21 +52,25 @@
             uint multipliedTickrate = 4u * sync.Tickrate;
             int metronome = 24;
             int tempoIndex = 0;
-            var sigs = sync.timeSigs.Data;
-            for (int i = 0; i < sigs.Item2; ++i)
+
+            var sigs = sync.timeSigs.Span;
+            int numSigs = sigs.Length;
+            for (int i = 0; i < numSigs; ++i)
             {
-                var node = sigs.Item1[i];
+                var node = sigs[i];
                 int numerator = node.obj.Numerator > 0 ? node.obj.Numerator : 4;
                 int denominator = node.obj.Denominator != 255 ? 1 << node.obj.Denominator : 4;
                 if (node.obj.Metronome != 0)
                     metronome = node.obj.Metronome;
+
                 int markersPerClick = 6 * denominator / metronome;
                 long ticksPerMarker = multipliedTickrate / denominator;
                 long ticksPerMeasure = (multipliedTickrate * numerator) / denominator;
                 bool isIrregular = numerator > 4 || (numerator & 1) == 1;
+
                 long endTime;
-                if (i + 1 < sigs.Item2)
-                    endTime = sigs.Item1[i + 1].position;
+                if (i + 1 < numSigs)
+                    endTime = sigs[i + 1].position;
                 else
                     endTime = endTick;
 
@@ -72,7 +80,7 @@
                     var style = BeatlineType.Measure;
                     int clickSpacing = markersPerClick;
                     int triplSpacing = 3 * markersPerClick;
-                    for (int leftover = numerator; leftover > 0 && (position < endTime || i + 1 == sigs.Item2);)
+                    for (int leftover = numerator; leftover > 0 && (position < endTime || i + 1 == numSigs);)
                     {
                         int clicksLeft = clickSpacing;
                         do
