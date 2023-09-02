@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using YARG.Core.IO;
+using YARG.Core.Chart.FlatDictionary;
 
 namespace YARG.Core.Chart
 {

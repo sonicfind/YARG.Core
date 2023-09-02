@@ -1,5 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using YARG.Core.IO;
+using YARG.Core.Chart.FlatDictionary;
 
 namespace YARG.Core.Chart
 {

@@ -1,4 +1,6 @@
-﻿namespace YARG.Core.Chart
+using YARG.Core.Chart.FlatDictionary;
+
+namespace YARG.Core.Chart
 {
     public class ProGuitarDifficulty<FretType> : DifficultyTrack_FW<Guitar_Pro<FretType>>
         where FretType : unmanaged, IFretted

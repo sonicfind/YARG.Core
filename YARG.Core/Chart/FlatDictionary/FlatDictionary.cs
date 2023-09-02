@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Chart.FlatDictionary
 {
     public struct FlatMapNode<TKey, TObj>
         where TKey : IEquatable<TKey>, IComparable<TKey>

@@ -1,4 +1,6 @@
-﻿namespace YARG.Core.Chart
+﻿using YARG.Core.Chart.FlatDictionary;
+
+namespace YARG.Core.Chart
 {
     public class DifficultyTrack_FW<T> : Track
         where T : INote, new()

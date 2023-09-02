@@ -1,4 +1,6 @@
-﻿namespace YARG.Core.Chart
+using YARG.Core.Chart.FlatDictionary;
+
+namespace YARG.Core.Chart
 {
     public enum ProKey_Ranges
     {
