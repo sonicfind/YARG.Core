@@ -1,0 +1,101 @@
+﻿namespace YARG.Core.Chart
+{
+    public static class SyncTrackFinalizer
+    {
+        public static void Finalize(SyncTrack_FW sync, long endTick)
+        {
+            if (sync.beatMap.IsEmpty())
+                GenerateAllBeats(sync, endTick);
+            else
+                GenerateLeftoverBeats(sync, endTick);
+        }
+
+        private static void GenerateLeftoverBeats(SyncTrack_FW sync, long endTick)
+        {
+            uint multipliedTickrate = 4u * sync.Tickrate;
+            uint denominator = 0;
+            int searchIndex = 0;
+            int tempoIndex = 0;
+            var sigs = sync.timeSigs.Data;
+            for (int i = 0; i < sigs.Item2; ++i)
+            {
+                var node = sigs.Item1[i];
+                if (node.obj.Denominator != 255)
+                    denominator = 1u << node.obj.Denominator;
+                long ticksPerMarker = multipliedTickrate / denominator;
+                long ticksPerMeasure = (multipliedTickrate * node.obj.Numerator) / denominator;
+                long endTime;
+                if (i + 1 < sigs.Item2)
+                    endTime = sigs.Item1[i + 1].position;
+                else
+                    endTime = endTick;
+                while (node.position < endTime)
+                {
+                    long position = node.position;
+                    for (uint n = 0; n < node.obj.Numerator && position < endTime; ++n, position += ticksPerMarker, ++searchIndex)
+                    {
+                        var beat = new DualPosition(position, sync.ConvertToSeconds(position, ref tempoIndex));
+                        if (!sync.beatMap.Contains(searchIndex, beat))
+                            sync.beatMap[beat] = BeatlineType.Weak;
+                    }
+                    node.position += ticksPerMeasure;
+                }
+            }
+        }
+
+        private static void GenerateAllBeats(SyncTrack_FW sync, long endTick)
+        {
+            uint multipliedTickrate = 4u * sync.Tickrate;
+            int metronome = 24;
+            int tempoIndex = 0;
+            var sigs = sync.timeSigs.Data;
+            for (int i = 0; i < sigs.Item2; ++i)
+            {
+                var node = sigs.Item1[i];
+                int numerator = node.obj.Numerator > 0 ? node.obj.Numerator : 4;
+                int denominator = node.obj.Denominator != 255 ? 1 << node.obj.Denominator : 4;
+                if (node.obj.Metronome != 0)
+                    metronome = node.obj.Metronome;
+                int markersPerClick = 6 * denominator / metronome;
+                long ticksPerMarker = multipliedTickrate / denominator;
+                long ticksPerMeasure = (multipliedTickrate * numerator) / denominator;
+                bool isIrregular = numerator > 4 || (numerator & 1) == 1;
+                long endTime;
+                if (i + 1 < sigs.Item2)
+                    endTime = sigs.Item1[i + 1].position;
+                else
+                    endTime = endTick;
+
+                while (node.position < endTime)
+                {
+                    long position = node.position;
+                    var style = BeatlineType.Measure;
+                    int clickSpacing = markersPerClick;
+                    int triplSpacing = 3 * markersPerClick;
+                    for (int leftover = numerator; leftover > 0 && (position < endTime || i + 1 == sigs.Item2);)
+                    {
+                        int clicksLeft = clickSpacing;
+                        do
+                        {
+                            var beat = new DualPosition(position, sync.ConvertToSeconds(position, ref tempoIndex));
+                            sync.beatMap.Add_NoReturn(beat, style);
+                            position += ticksPerMarker;
+                            style = BeatlineType.Weak;
+                            --clicksLeft;
+                            --leftover;
+                        } while (clicksLeft > 0 && leftover > 0 && position < endTime);
+
+                        style = BeatlineType.Strong;
+
+                        if (isIrregular && leftover > 0 && position < endTime && markersPerClick < leftover && 2 * leftover <= triplSpacing)
+                        {
+                            // leftover < 1.5 * spacing
+                            clickSpacing = leftover;
+                        }
+                    }
+                    node.position += ticksPerMeasure;
+                }
+            }
+        }
+    }
+}
