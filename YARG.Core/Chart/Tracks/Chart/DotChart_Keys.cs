@@ -2,7 +2,7 @@
 {
     public static partial class DotChartLoader
     {
-        public static bool Set(Keys note, int lane, long length)
+        public static bool Set(ref Keys note, int lane, long length)
         {
             if (lane >= 5)
                 return false;

@@ -308,7 +308,9 @@ namespace YARG.Core.Chart
                 chartReader.SkipTrack();
         }
 
-        private static bool LoadChartTrack<TChar, TBase, TDecoder, TNote>(YARGChartFileReader<TChar, TDecoder, TBase> chartReader, ref InstrumentTrack_FW<TNote>? track, Func<TNote, int, long, bool> loader)
+        public delegate bool Loader<TNote>(ref TNote note, int lane, long duration);
+
+        private static bool LoadChartTrack<TChar, TBase, TDecoder, TNote>(YARGChartFileReader<TChar, TDecoder, TBase> chartReader, ref InstrumentTrack_FW<TNote>? track, Loader<TNote> loader)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TDecoder : IStringDecoder<TChar>, new()
             where TBase : unmanaged, IDotChartBases<TChar>
@@ -333,7 +335,7 @@ namespace YARG.Core.Chart
                             ref var note = ref difficultyTrack.notes.Get_Or_Add_Last(ev.Position);
                             chartReader.ExtractLaneAndSustain(ref chartNote);
 
-                            if (!loader(note, chartNote.Lane, chartNote.Duration))
+                            if (!loader(ref note, chartNote.Lane, chartNote.Duration))
                                 if (!note.HasActiveNotes())
                                     difficultyTrack.notes.Pop();
                             break;
