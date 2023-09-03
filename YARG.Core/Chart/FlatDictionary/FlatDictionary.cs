@@ -157,8 +157,8 @@ namespace YARG.Core.Chart.FlatDictionary
 
         public void RemoveAt(int index)
         {
-            if ((uint) index >= (uint) _count)
-                throw new IndexOutOfRangeException();
+            if (index >= _count)
+                throw new ArgumentOutOfRangeException(nameof(index));
 
             _buffer[index] = default;
             --_count;
