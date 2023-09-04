@@ -17,17 +17,13 @@ namespace YARG.Core.Chart
             YARGChart chart = new();
             DrumTrackHandler drums = new(settings.DrumsType);
             IMidLoader.MultiplierNote = settings.StarPowerNote;
-            Load(filename, chart, drums, settings.SustainCutoffThreshold, activeInstruments);
+
+            using FileStream stream = new(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+            LoadTracks(chart, drums, stream, settings.SustainCutoffThreshold, activeInstruments);
             return chart;
         }
 
-        public static void Load(string filename, YARGChart chart, DrumTrackHandler drums, long sustainCutoff, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
-        {
-            using FileStream stream = new(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-            LoadTracks(chart, drums, stream, sustainCutoff, activeInstruments);
-        }
-
-        private static void LoadTracks(YARGChart chart, DrumTrackHandler drums, Stream stream, long sustainCutoff, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
+        public static void LoadTracks(YARGChart chart, DrumTrackHandler drums, Stream stream, long sustainCutoff, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
         {
             YARGMidiFile midiFile = new(stream);
             chart.Sync.Tickrate = midiFile.TickRate;
@@ -78,6 +74,35 @@ namespace YARG.Core.Chart
             }
 
             YARGChartFinalizer.Finalize(chart, true);
+        }
+
+        public static void PreloadTracks(YARGChart chart, DrumTrackHandler drums, Stream stream, long sustainCutoff, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
+        {
+            YARGMidiFile midiFile = new(stream);
+            SetSustainThreshold(midiFile.TickRate, sustainCutoff);
+            foreach (var midiTrack in midiFile)
+            {
+                if (midiFile.TrackNumber > 1)
+                {
+                    string name = Encoding.ASCII.GetString(midiTrack.ExtractTextOrSysEx());
+                    if (YARGMidiTrack.TRACKNAMES.TryGetValue(name, out var type))
+                    {
+                        if (type != MidiTrackType.Events && type != MidiTrackType.Beat)
+                        {
+                            HashSet<Difficulty>? difficulties = null;
+                            if (activeInstruments == null || activeInstruments.TryGetValue(type, out difficulties))
+                            {
+                                if (type != MidiTrackType.Drums)
+                                    LoadInstrument(chart, type, midiTrack, difficulties);
+                                else
+                                    drums.LoadMidi(midiTrack, difficulties);
+                            }
+                        }
+                    }
+                    else
+                        YargTrace.LogInfo($"Unrecognized MIDI Track (in preparation): {name}");
+                }
+            }
         }
 
         private static void LoadSyncTrack(SyncTrack_FW sync, YARGMidiTrack midiTrack)
