@@ -4,4 +4,9 @@ namespace YARG.Core.Chart.FlatDictionary
         where TObj : new()
     {
     }
+
+    public class TimedNativeFlatDictionary<TObj> : NativeFlatDictionary<long, TObj>
+        where TObj : unmanaged
+    {
+    }
 }
