@@ -16,21 +16,21 @@ namespace YARG.Core.Chart
     public class ProGuitarTrack<TProFretConfig> : InstrumentTrack_Base<ProGuitarDifficulty<TProFretConfig>>
         where TProFretConfig : IProFretConfig, new()
     {
-        public readonly TimedFlatDictionary<PitchName> roots = new();
-        public readonly TimedFlatDictionary<HandPosition<TProFretConfig>> handPositions = new();
-        public readonly TimedFlatDictionary<List<ChordPhrase>> chordPhrases = new();
+        public readonly TimedFlatDictionary<PitchName> Roots = new();
+        public readonly TimedFlatDictionary<HandPosition<TProFretConfig>> HandPositions = new();
+        public readonly TimedFlatDictionary<List<ChordPhrase>> ChordPhrases = new();
 
         public override bool IsOccupied()
         {
-            return !roots.IsEmpty() || !handPositions.IsEmpty() || !chordPhrases.IsEmpty() || base.IsOccupied();
+            return !Roots.IsEmpty() || !HandPositions.IsEmpty() || !ChordPhrases.IsEmpty() || base.IsOccupied();
         }
 
         public override void Clear()
         {
             base.Clear();
-            roots.Clear();
-            handPositions.Clear();
-            chordPhrases.Clear();
+            Roots.Clear();
+            HandPositions.Clear();
+            ChordPhrases.Clear();
         }
     }
 }

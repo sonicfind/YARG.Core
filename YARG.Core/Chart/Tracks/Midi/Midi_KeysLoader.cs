@@ -40,8 +40,8 @@ namespace YARG.Core.Chart
                     return;
 
                 midiDiff.notes[lane] = position;
-                if (!track[diffIndex].notes.ValidateLastKey(position))
-                    track[diffIndex].notes.Add_NoReturn(position);
+                if (!track[diffIndex].Notes.ValidateLastKey(position))
+                    track[diffIndex].Notes.Add_NoReturn(position);
             }
         }
 
@@ -59,7 +59,7 @@ namespace YARG.Core.Chart
                 long colorPosition = midiDiff.notes[lane];
                 if (colorPosition != -1)
                 {
-                    track[diffIndex].notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
+                    track[diffIndex].Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
                     midiDiff.notes[lane] = -1;
                 }
             }

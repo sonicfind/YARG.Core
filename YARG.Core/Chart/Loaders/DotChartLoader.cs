@@ -333,12 +333,12 @@ namespace YARG.Core.Chart
                 {
                     case ChartEventType.Note:
                         {
-                            ref var note = ref difficultyTrack.notes.Get_Or_Add_Last(ev.Position);
+                            ref var note = ref difficultyTrack.Notes.Get_Or_Add_Last(ev.Position);
                             chartReader.ExtractLaneAndSustain(ref chartNote);
 
                             if (!loader(ref note, chartNote.Lane, chartNote.Duration))
                                 if (note.GetNumActiveNotes() == 0)
-                                    difficultyTrack.notes.Pop();
+                                    difficultyTrack.Notes.Pop();
                             break;
                         }
                     case ChartEventType.Special:

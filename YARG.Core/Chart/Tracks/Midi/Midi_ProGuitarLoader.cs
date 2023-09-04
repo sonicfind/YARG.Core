@@ -89,19 +89,19 @@ namespace YARG.Core.Chart
             if (lane < NUM_STRINGS)
             {
                 if (midiTrack.Channel == 1)
-                    diffTrack.arpeggios.Get_Or_Add_Last(position)[lane] = note.velocity - FRET_MIN;
+                    diffTrack.Arpeggios.Get_Or_Add_Last(position)[lane] = note.velocity - FRET_MIN;
                 else
                 {
                     ProGuitarNote<TProFretConfig> guitar;
-                    if (!track[diffIndex].notes.ValidateLastKey(position))
+                    if (!track[diffIndex].Notes.ValidateLastKey(position))
                     {
-                        guitar = track[diffIndex].notes.Add(position);
+                        guitar = track[diffIndex].Notes.Add(position);
                         guitar.HOPO = midiDiff.Hopo;
                         guitar.Slide = midiDiff.Slide;
                         guitar.Emphasis = midiDiff.Emphasis;
                     }
                     else
-                        guitar = track[diffIndex].notes.Last();
+                        guitar = track[diffIndex].Notes.Last();
 
                     ref var proString = ref guitar[lane];
                     switch (midiTrack.Channel)
@@ -120,18 +120,18 @@ namespace YARG.Core.Chart
             else if (lane == HOPO_VALUE)
             {
                 midiDiff.Hopo = true;
-                if (true && diffTrack.notes.ValidateLastKey(position))
-                    diffTrack.notes.Last().HOPO = true;
+                if (true && diffTrack.Notes.ValidateLastKey(position))
+                    diffTrack.Notes.Last().HOPO = true;
             }
             else if (lane == SLIDE_VALUE)
             {
                 midiDiff.Slide = midiTrack.Channel == 11 ? ProSlide.Reversed : ProSlide.Normal;
-                if (diffTrack.notes.ValidateLastKey(position))
-                    diffTrack.notes.Last().Slide = midiDiff.Slide;
+                if (diffTrack.Notes.ValidateLastKey(position))
+                    diffTrack.Notes.Last().Slide = midiDiff.Slide;
             }
             else if (lane == ARPEGGIO_VALUE)
             {
-                diffTrack.arpeggios.Get_Or_Add_Last(position);
+                diffTrack.Arpeggios.Get_Or_Add_Last(position);
                 midiDiff.Arpeggio = position;
             }
             else if (lane == EMPHASIS_VALUE)
@@ -144,8 +144,8 @@ namespace YARG.Core.Chart
                     default: return;
                 }
 
-                if (diffTrack.notes.ValidateLastKey(position))
-                    diffTrack.notes.Last().Emphasis = midiDiff.Emphasis;
+                if (diffTrack.Notes.ValidateLastKey(position))
+                    diffTrack.Notes.Last().Emphasis = midiDiff.Emphasis;
             }
         }
 
@@ -165,7 +165,7 @@ namespace YARG.Core.Chart
                     long colorPosition = midiDiff.notes[lane];
                     if (colorPosition != -1)
                     {
-                        track[diffIndex].notes.Traverse_Backwards_Until(colorPosition)[lane].Duration = position - colorPosition;
+                        track[diffIndex].Notes.Traverse_Backwards_Until(colorPosition)[lane].Duration = position - colorPosition;
                         midiDiff.notes[lane] = -1;
                     }
                 }
@@ -179,7 +179,7 @@ namespace YARG.Core.Chart
                 long arpeggioPosition = midiDiff.Arpeggio;
                 if (arpeggioPosition != -1)
                 {
-                    track[diffIndex].arpeggios.Last().Length = position - arpeggioPosition;
+                    track[diffIndex].Arpeggios.Last().Length = position - arpeggioPosition;
                     midiDiff.Arpeggio = -1;
                 }
             }
@@ -195,17 +195,17 @@ namespace YARG.Core.Chart
         {
             if (ROOT_MIN <= note.value && note.value <= ROOT_MAX)
             {
-                track.roots.Add(position, s_ROOTS[note.value - ROOT_MIN]);
+                track.Roots.Add(position, s_ROOTS[note.value - ROOT_MIN]);
                 return;
             }
 
             switch (note.value)
             {
-                case 16: track.chordPhrases.Get_Or_Add_Last(position).Add(ChordPhrase.Slash); break;
-                case 17: track.chordPhrases.Get_Or_Add_Last(position).Add(ChordPhrase.Hide); break;
-                case 18: track.chordPhrases.Get_Or_Add_Last(position).Add(ChordPhrase.Accidental_Switch); break;
-                case 107: track.chordPhrases.Get_Or_Add_Last(position).Add(ChordPhrase.Force_Numbering); break;
-                case 108: track.handPositions.Add(position) = note.velocity - FRET_MIN; break;
+                case 16: track.ChordPhrases.Get_Or_Add_Last(position).Add(ChordPhrase.Slash); break;
+                case 17: track.ChordPhrases.Get_Or_Add_Last(position).Add(ChordPhrase.Hide); break;
+                case 18: track.ChordPhrases.Get_Or_Add_Last(position).Add(ChordPhrase.Accidental_Switch); break;
+                case 107: track.ChordPhrases.Get_Or_Add_Last(position).Add(ChordPhrase.Force_Numbering); break;
+                case 108: track.HandPositions.Add(position) = note.velocity - FRET_MIN; break;
             }
         }
     }

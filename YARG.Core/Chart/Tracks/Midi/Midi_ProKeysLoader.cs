@@ -40,8 +40,8 @@ namespace YARG.Core.Chart
 
         protected override void ParseLaneColor(YARGMidiTrack midiTrack)
         {
-            if (!track.notes.ValidateLastKey(position))
-                track.notes.Add_NoReturn(position);
+            if (!track.Notes.ValidateLastKey(position))
+                track.Notes.Add_NoReturn(position);
             lanes[note.value - NOTE_MIN] = position;
         }
 
@@ -50,7 +50,7 @@ namespace YARG.Core.Chart
             long colorPosition = lanes[note.value - NOTE_MIN];
             if (colorPosition != -1)
             {
-                track.notes.Traverse_Backwards_Until(colorPosition)!.Add(note.value, position - colorPosition);
+                track.Notes.Traverse_Backwards_Until(colorPosition)!.Add(note.value, position - colorPosition);
                 lanes[note.value - NOTE_MIN] = -1;
             }
         }
@@ -59,12 +59,12 @@ namespace YARG.Core.Chart
         {
             switch (note.value)
             {
-                case 0: track.ranges.Get_Or_Add_Last(position) = ProKey_Ranges.C1_E2; break;
-                case 2: track.ranges.Get_Or_Add_Last(position) = ProKey_Ranges.D1_F2; break;
-                case 4: track.ranges.Get_Or_Add_Last(position) = ProKey_Ranges.E1_G2; break;
-                case 5: track.ranges.Get_Or_Add_Last(position) = ProKey_Ranges.F1_A2; break;
-                case 7: track.ranges.Get_Or_Add_Last(position) = ProKey_Ranges.G1_B2; break;
-                case 9: track.ranges.Get_Or_Add_Last(position) = ProKey_Ranges.A1_C3; break;
+                case 0: track.Ranges.Get_Or_Add_Last(position) = ProKey_Ranges.C1_E2; break;
+                case 2: track.Ranges.Get_Or_Add_Last(position) = ProKey_Ranges.D1_F2; break;
+                case 4: track.Ranges.Get_Or_Add_Last(position) = ProKey_Ranges.E1_G2; break;
+                case 5: track.Ranges.Get_Or_Add_Last(position) = ProKey_Ranges.F1_A2; break;
+                case 7: track.Ranges.Get_Or_Add_Last(position) = ProKey_Ranges.G1_B2; break;
+                case 9: track.Ranges.Get_Or_Add_Last(position) = ProKey_Ranges.A1_C3; break;
             };
         }
     }

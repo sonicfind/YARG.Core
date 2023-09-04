@@ -15,13 +15,13 @@ namespace YARG.Core.Chart
 
     public class ProKeysDifficulty : DifficultyTrack_FW<ProKeyNote>
     {
-        public readonly TimedFlatDictionary<ProKey_Ranges> ranges = new();
+        public readonly TimedFlatDictionary<ProKey_Ranges> Ranges = new();
 
-        public override bool IsOccupied() { return !ranges.IsEmpty() || base.IsOccupied(); }
+        public override bool IsOccupied() { return !Ranges.IsEmpty() || base.IsOccupied(); }
         public override void Clear()
         {
             base.Clear();
-            ranges.Clear();
+            Ranges.Clear();
         }
     }
 }

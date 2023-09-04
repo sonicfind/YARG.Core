@@ -63,12 +63,12 @@ namespace YARG.Core.Chart
             if (lane < 6)
             {
                 midiDiff!.notes[lane] = position;
-                if (!track[diffIndex].notes.ValidateLastKey(position))
+                if (!track[diffIndex].Notes.ValidateLastKey(position))
                 {
-                    if (track[diffIndex].notes.Capacity == 0)
-                        track[diffIndex].notes.Capacity = 5000;
+                    if (track[diffIndex].Notes.Capacity == 0)
+                        track[diffIndex].Notes.Capacity = 5000;
 
-                    ref var guitar = ref track[diffIndex].notes.Add(position);
+                    ref var guitar = ref track[diffIndex].Notes.Add(position);
                     if (midiDiff.SliderNotes)
                         guitar.IsTap = true;
 
@@ -81,15 +81,15 @@ namespace YARG.Core.Chart
             else if (lane == 6)
             {
                 midiDiff!.HopoOn = true;
-                if (track[diffIndex].notes.ValidateLastKey(position))
-                    track[diffIndex].notes.Last().Forcing = ForceStatus.HOPO;
+                if (track[diffIndex].Notes.ValidateLastKey(position))
+                    track[diffIndex].Notes.Last().Forcing = ForceStatus.HOPO;
             }
             // HopoOff marker
             else if (lane == 7)
             {
                 midiDiff!.HopoOff = true;
-                if (track[diffIndex].notes.ValidateLastKey(position))
-                    track[diffIndex].notes.Last().Forcing = ForceStatus.STRUM;
+                if (track[diffIndex].Notes.ValidateLastKey(position))
+                    track[diffIndex].Notes.Last().Forcing = ForceStatus.STRUM;
             }
             else if (lane == 8)
             {
@@ -150,21 +150,21 @@ namespace YARG.Core.Chart
                 long colorPosition = difficulties[diffIndex].notes[lane];
                 if (colorPosition != -1)
                 {
-                    track[diffIndex].notes.Traverse_Backwards_Until(colorPosition)[(int) lane] = position - colorPosition;
+                    track[diffIndex].Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
                     midiDiff!.notes[lane] = -1;
                 }
             }
             else if (lane == 6)
             {
                 midiDiff!.HopoOn = false;
-                if (track[diffIndex].notes.ValidateLastKey(position))
-                    track[diffIndex].notes.Last().Forcing = ForceStatus.NATURAL;
+                if (track[diffIndex].Notes.ValidateLastKey(position))
+                    track[diffIndex].Notes.Last().Forcing = ForceStatus.NATURAL;
             }
             else if (lane == 7)
             {
                 midiDiff!.HopoOff = false;
-                if (track[diffIndex].notes.ValidateLastKey(position))
-                    track[diffIndex].notes.Last().Forcing = ForceStatus.NATURAL;
+                if (track[diffIndex].Notes.ValidateLastKey(position))
+                    track[diffIndex].Notes.Last().Forcing = ForceStatus.NATURAL;
             }
             else if (lane == 8)
                 phrases.AddPhrase_Off(ref track.specialPhrases, position, SpecialPhraseType.Solo);
@@ -204,8 +204,8 @@ namespace YARG.Core.Chart
                                         continue;
 
                                     difficulties[diff].SliderNotes = str[6] == 1;
-                                    if (track[diff].notes.ValidateLastKey(position))
-                                        track[diff].notes.Last().IsTap = str[6] == 1;
+                                    if (track[diff].Notes.ValidateLastKey(position))
+                                        track[diff].Notes.Last().IsTap = str[6] == 1;
                                 }
                                 break;
                             }
@@ -226,8 +226,8 @@ namespace YARG.Core.Chart
                             {
                                 bool enable = str[6] == 1;
                                 difficulties[diff].SliderNotes = enable;
-                                if (track[diff].notes.ValidateLastKey(position))
-                                    track[diff].notes.Last().IsTap = enable;
+                                if (track[diff].Notes.ValidateLastKey(position))
+                                    track[diff].Notes.Last().IsTap = enable;
                             }
                             break;
                     }

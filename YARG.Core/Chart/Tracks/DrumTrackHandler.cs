@@ -15,7 +15,6 @@ namespace YARG.Core.Chart
 
         public DrumsType Type => _currentType;
 
-
         public DrumTrackHandler(DrumsType initial)
         {
             _currentType = _initialType = initial;
@@ -139,12 +138,12 @@ namespace YARG.Core.Chart
                 {
                     case ChartEventType.Note:
                         {
-                            ref var drum = ref difficulty.notes.Get_Or_Add_Last(ev.Position);
+                            ref var drum = ref difficulty.Notes.Get_Or_Add_Last(ev.Position);
                             reader.ExtractLaneAndSustain(ref note);
                             
                             if (!loader(ref drum, note.Lane, note.Duration))
                                 if (drum.GetNumActiveNotes() == 0)
-                                    difficulty.notes.Pop();
+                                    difficulty.Notes.Pop();
                             break;
                         }
                     case ChartEventType.Special:
@@ -300,11 +299,11 @@ namespace YARG.Core.Chart
                 events = unknownDiff.events,
             };
 
-            var span = unknownDiff.notes.Span;
+            var span = unknownDiff.Notes.Span;
             for (int noteIndex = 0; noteIndex < span.Length; ++noteIndex)
             {
                 ref var note = ref span[noteIndex];
-                diff.notes.Add(note.position, DrumNote<TDrumConfig, TCymbalConfig>.Convert(ref note.obj));
+                diff.Notes.Add(note.position, DrumNote<TDrumConfig, TCymbalConfig>.Convert(ref note.obj));
             }
             return diff;
         }
