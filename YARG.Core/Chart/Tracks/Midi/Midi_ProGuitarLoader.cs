@@ -85,7 +85,7 @@ namespace YARG.Core.Chart
                 return;
 
             int lane = LANEVALUES[noteValue];
-            var diffTrack = track[diffIndex];
+            ref var diffTrack = ref track[diffIndex]!;
             if (lane < NUM_STRINGS)
             {
                 if (midiTrack.Channel == 1)
@@ -93,15 +93,15 @@ namespace YARG.Core.Chart
                 else
                 {
                     ProGuitarNote<TProFretConfig> guitar;
-                    if (!track[diffIndex].Notes.ValidateLastKey(position))
+                    if (!diffTrack.Notes.ValidateLastKey(position))
                     {
-                        guitar = track[diffIndex].Notes.Add(position);
+                        guitar = diffTrack.Notes.Add(position);
                         guitar.HOPO = midiDiff.Hopo;
                         guitar.Slide = midiDiff.Slide;
                         guitar.Emphasis = midiDiff.Emphasis;
                     }
                     else
-                        guitar = track[diffIndex].Notes.Last();
+                        guitar = diffTrack.Notes.Last();
 
                     ref var proString = ref guitar[lane];
                     switch (midiTrack.Channel)
@@ -165,7 +165,7 @@ namespace YARG.Core.Chart
                     long colorPosition = midiDiff.notes[lane];
                     if (colorPosition != -1)
                     {
-                        track[diffIndex].Notes.Traverse_Backwards_Until(colorPosition)[lane].Duration = position - colorPosition;
+                        track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane].Duration = position - colorPosition;
                         midiDiff.notes[lane] = -1;
                     }
                 }
@@ -179,7 +179,7 @@ namespace YARG.Core.Chart
                 long arpeggioPosition = midiDiff.Arpeggio;
                 if (arpeggioPosition != -1)
                 {
-                    track[diffIndex].Arpeggios.Last().Length = position - arpeggioPosition;
+                    track[diffIndex]!.Arpeggios.Last().Length = position - arpeggioPosition;
                     midiDiff.Arpeggio = -1;
                 }
             }

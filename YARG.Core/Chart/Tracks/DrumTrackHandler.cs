@@ -250,7 +250,7 @@ namespace YARG.Core.Chart
             for (int diffIndex = 0; diffIndex < 4; ++diffIndex)
             {
                 var unknownDiff = unknownTrack[diffIndex];
-                if (unknownDiff.IsOccupied())
+                if (unknownDiff != null && unknownDiff.IsOccupied())
                     drums[diffIndex] = Convert<TDrumConfig, TCymbalConfig>(unknownDiff);
             }
             return drums;

@@ -3,12 +3,16 @@ using YARG.Core.Chart.FlatDictionary;
 
 namespace YARG.Core.Chart
 {
-    public class SyncTrack_FW
+    public class SyncTrack_FW : IDisposable
     {
         private uint _tickrate;
-        public readonly TimedFlatDictionary<Tempo_FW> tempoMarkers = new();
-        public readonly TimedFlatDictionary<TimeSig_FW> timeSigs = new();
-        public readonly FlatDictionary<DualPosition, BeatlineType> beatMap = new();
+        private TimedNativeFlatDictionary<Tempo_FW>? _tempoMarkers = new();
+        private TimedNativeFlatDictionary<TimeSig_FW>? _timeSigs = new();
+        private NativeFlatDictionary<DualPosition, BeatlineType>? _beatMap = new();
+
+        public TimedNativeFlatDictionary<Tempo_FW> TempoMarkers => _tempoMarkers!;
+        public TimedNativeFlatDictionary<TimeSig_FW> TimeSigs => _timeSigs!;
+        public NativeFlatDictionary<DualPosition, BeatlineType> BeatMap => _beatMap!;
 
         public SyncTrack_FW() { }
 
@@ -26,7 +30,7 @@ namespace YARG.Core.Chart
 
         public float ConvertToSeconds(long ticks, ref int startIndex)
         {
-            var span = tempoMarkers.Span;
+            var span = _tempoMarkers!.Span;
             int length = span.Length;
             for (int i = startIndex; i < length; i++)
             {
@@ -47,7 +51,7 @@ namespace YARG.Core.Chart
 
         public long ConvertToTicks(float seconds, ref int startIndex)
         {
-            var span = tempoMarkers.Span;
+            var span = _tempoMarkers!.Span;
             int length = span.Length;
             float micros = seconds * MICROS_PER_SECOND;
             for (int i = startIndex; i < length; i++)
@@ -60,6 +64,18 @@ namespace YARG.Core.Chart
                 }
             }
             throw new Exception("dafuq");
+        }
+
+        public void Dispose()
+        {
+            _tempoMarkers!.Dispose();
+            _tempoMarkers = null;
+
+            _timeSigs!.Dispose();
+            _timeSigs = null;
+
+            _beatMap!.Dispose();
+            _beatMap = null;
         }
     }
 }

@@ -63,12 +63,12 @@ namespace YARG.Core.Chart
             if (lane < 6)
             {
                 midiDiff!.notes[lane] = position;
-                if (!track[diffIndex].Notes.ValidateLastKey(position))
+                if (!track[diffIndex]!.Notes.ValidateLastKey(position))
                 {
-                    if (track[diffIndex].Notes.Capacity == 0)
-                        track[diffIndex].Notes.Capacity = 5000;
+                    if (track[diffIndex]!.Notes.Capacity == 0)
+                        track[diffIndex]!.Notes.Capacity = 5000;
 
-                    ref var guitar = ref track[diffIndex].Notes.Add(position);
+                    ref var guitar = ref track[diffIndex]!.Notes.Add(position);
                     if (midiDiff.SliderNotes)
                         guitar.IsTap = true;
 
@@ -81,15 +81,15 @@ namespace YARG.Core.Chart
             else if (lane == 6)
             {
                 midiDiff!.HopoOn = true;
-                if (track[diffIndex].Notes.ValidateLastKey(position))
-                    track[diffIndex].Notes.Last().Forcing = ForceStatus.HOPO;
+                if (track[diffIndex]!.Notes.ValidateLastKey(position))
+                    track[diffIndex]!.Notes.Last().Forcing = ForceStatus.HOPO;
             }
             // HopoOff marker
             else if (lane == 7)
             {
                 midiDiff!.HopoOff = true;
-                if (track[diffIndex].Notes.ValidateLastKey(position))
-                    track[diffIndex].Notes.Last().Forcing = ForceStatus.STRUM;
+                if (track[diffIndex]!.Notes.ValidateLastKey(position))
+                    track[diffIndex]!.Notes.Last().Forcing = ForceStatus.STRUM;
             }
             else if (lane == 8)
             {
@@ -110,7 +110,7 @@ namespace YARG.Core.Chart
                     {
                         if (phrases[p].Type == SpecialPhraseType.Solo)
                         {
-                            track[3].specialPhrases[vec.position].Add(new(SpecialPhraseType.StarPower_Diff, phrases[p].Duration));
+                            track[3]!.specialPhrases[vec.position].Add(new(SpecialPhraseType.StarPower_Diff, phrases[p].Duration));
                             vec.obj.RemoveAt(p);
                         }
                         else
@@ -123,16 +123,16 @@ namespace YARG.Core.Chart
                         ++i;
                 }
 
-                midiDiff!.phrases.AddPhrase(ref track[diffIndex].specialPhrases, position, SpecialPhraseType.StarPower_Diff, 100);
+                midiDiff!.phrases.AddPhrase(ref track[diffIndex]!.specialPhrases, position, SpecialPhraseType.StarPower_Diff, 100);
             }
             else if (lane == 9)
                 midiDiff!.SliderNotes = true;
             else if (lane == 10)
-                midiDiff!.phrases.AddPhrase(ref track[diffIndex].specialPhrases, position, SpecialPhraseType.FaceOff_Player1, 100);
+                midiDiff!.phrases.AddPhrase(ref track[diffIndex]!.specialPhrases, position, SpecialPhraseType.FaceOff_Player1, 100);
             else if (lane == 11)
-                midiDiff!.phrases.AddPhrase(ref track[diffIndex].specialPhrases, position, SpecialPhraseType.FaceOff_Player2, 100);
+                midiDiff!.phrases.AddPhrase(ref track[diffIndex]!.specialPhrases, position, SpecialPhraseType.FaceOff_Player2, 100);
             else if (lane == 12)
-                midiDiff!.phrases.AddPhrase(ref track[diffIndex].specialPhrases, position, SpecialPhraseType.StarPower_Diff, 100);
+                midiDiff!.phrases.AddPhrase(ref track[diffIndex]!.specialPhrases, position, SpecialPhraseType.StarPower_Diff, 100);
         }
 
         protected override void ParseLaneColor_Off(YARGMidiTrack midiTrack)
@@ -150,32 +150,32 @@ namespace YARG.Core.Chart
                 long colorPosition = difficulties[diffIndex].notes[lane];
                 if (colorPosition != -1)
                 {
-                    track[diffIndex].Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
+                    track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
                     midiDiff!.notes[lane] = -1;
                 }
             }
             else if (lane == 6)
             {
                 midiDiff!.HopoOn = false;
-                if (track[diffIndex].Notes.ValidateLastKey(position))
-                    track[diffIndex].Notes.Last().Forcing = ForceStatus.NATURAL;
+                if (track[diffIndex]!.Notes.ValidateLastKey(position))
+                    track[diffIndex]!.Notes.Last().Forcing = ForceStatus.NATURAL;
             }
             else if (lane == 7)
             {
                 midiDiff!.HopoOff = false;
-                if (track[diffIndex].Notes.ValidateLastKey(position))
-                    track[diffIndex].Notes.Last().Forcing = ForceStatus.NATURAL;
+                if (track[diffIndex]!.Notes.ValidateLastKey(position))
+                    track[diffIndex]!.Notes.Last().Forcing = ForceStatus.NATURAL;
             }
             else if (lane == 8)
                 phrases.AddPhrase_Off(ref track.specialPhrases, position, SpecialPhraseType.Solo);
             else if (lane == 9)
                 midiDiff!.SliderNotes = false;
             else if (lane == 10)
-                midiDiff!.phrases.AddPhrase_Off(ref track[diffIndex].specialPhrases, position, SpecialPhraseType.FaceOff_Player1);
+                midiDiff!.phrases.AddPhrase_Off(ref track[diffIndex]!.specialPhrases, position, SpecialPhraseType.FaceOff_Player1);
             else if (lane == 11)
-                midiDiff!.phrases.AddPhrase_Off(ref track[diffIndex].specialPhrases, position, SpecialPhraseType.FaceOff_Player2);
+                midiDiff!.phrases.AddPhrase_Off(ref track[diffIndex]!.specialPhrases, position, SpecialPhraseType.FaceOff_Player2);
             else if (lane == 12)
-                midiDiff!.phrases.AddPhrase_Off(ref track[diffIndex].specialPhrases, position, SpecialPhraseType.StarPower_Diff);
+                midiDiff!.phrases.AddPhrase_Off(ref track[diffIndex]!.specialPhrases, position, SpecialPhraseType.StarPower_Diff);
         }
 
         protected override void ParseSysEx(ReadOnlySpan<byte> str)
@@ -204,8 +204,8 @@ namespace YARG.Core.Chart
                                         continue;
 
                                     difficulties[diff].SliderNotes = str[6] == 1;
-                                    if (track[diff].Notes.ValidateLastKey(position))
-                                        track[diff].Notes.Last().IsTap = str[6] == 1;
+                                    if (track[diff]!.Notes.ValidateLastKey(position))
+                                        track[diff]!.Notes.Last().IsTap = str[6] == 1;
                                 }
                                 break;
                             }
@@ -226,8 +226,8 @@ namespace YARG.Core.Chart
                             {
                                 bool enable = str[6] == 1;
                                 difficulties[diff].SliderNotes = enable;
-                                if (track[diff].Notes.ValidateLastKey(position))
-                                    track[diff].Notes.Last().IsTap = enable;
+                                if (track[diff]!.Notes.ValidateLastKey(position))
+                                    track[diff]!.Notes.Last().IsTap = enable;
                             }
                             break;
                     }

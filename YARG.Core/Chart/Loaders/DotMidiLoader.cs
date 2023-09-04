@@ -73,10 +73,10 @@ namespace YARG.Core.Chart
                 switch (midiTrack.Type)
                 {
                     case MidiEventType.Tempo:
-                        sync.tempoMarkers.Get_Or_Add_Last(midiTrack.Position).Micros = midiTrack.ExtractMicrosPerQuarter();
+                        sync.TempoMarkers.Get_Or_Add_Last(midiTrack.Position).Micros = midiTrack.ExtractMicrosPerQuarter();
                         break;
                     case MidiEventType.Time_Sig:
-                        sync.timeSigs.Get_Or_Add_Last(midiTrack.Position) = midiTrack.ExtractTimeSig();
+                        sync.TimeSigs.Get_Or_Add_Last(midiTrack.Position) = midiTrack.ExtractTimeSig();
                         break;
                 }
             }
@@ -108,7 +108,8 @@ namespace YARG.Core.Chart
 
         private static void LoadBeatsTrack(SyncTrack_FW sync, YARGMidiTrack midiTrack)
         {
-            if (!sync.beatMap.IsEmpty())
+            var beats = sync.BeatMap;
+            if (!beats.IsEmpty())
             {
                 YargTrace.LogInfo("BEATS track appears multiple times. Not parsing repeats...");
                 return;
@@ -124,7 +125,7 @@ namespace YARG.Core.Chart
                     if (note.velocity > 0)
                     {
                         var beat = new DualPosition(midiTrack.Position, sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex));
-                        sync.beatMap.Get_Or_Add_Last(beat) = note.value == 12 ? BeatlineType.Measure : BeatlineType.Strong;
+                        beats.Get_Or_Add_Last(beat) = note.value == 12 ? BeatlineType.Measure : BeatlineType.Strong;
                     }
                 }
             }

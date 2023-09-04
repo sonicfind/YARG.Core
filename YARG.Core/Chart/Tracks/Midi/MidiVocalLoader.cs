@@ -150,7 +150,7 @@ namespace YARG.Core.Chart
         {
             if (percussion != -1)
             {
-                track.percussion.Get_Or_Add_Last(percussion).IsPlayable = playable;
+                track.Percussion.Get_Or_Add_Last(percussion).IsPlayable = playable;
                 percussion = -1;
             }
         }

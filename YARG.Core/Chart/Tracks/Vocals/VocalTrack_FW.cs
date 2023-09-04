@@ -1,12 +1,15 @@
-﻿using YARG.Core.Chart.FlatDictionary;
+﻿using System;
+using YARG.Core.Chart.FlatDictionary;
 using YARG.Core.Chart.Vocal;
 
 namespace YARG.Core.Chart
 {
-    public class VocalTrack_FW : Track
+    public class VocalTrack_FW : Track, IDisposable
     {
-        public readonly TimedFlatDictionary<VocalPercussion> percussion = new();
         private readonly TimedFlatDictionary<VocalNote_FW>[] vocals;
+        private TimedNativeFlatDictionary<VocalPercussion> _percussion = new();
+        public TimedNativeFlatDictionary<VocalPercussion> Percussion => _percussion;
+        
 
         public TimedFlatDictionary<VocalNote_FW> this[int trackIndex]
         {
@@ -25,7 +28,7 @@ namespace YARG.Core.Chart
             for (int i = 0; i < vocals.Length; i++)
                 if (!vocals[i].IsEmpty())
                     return true;
-            return !percussion.IsEmpty() || base.IsOccupied();
+            return !_percussion.IsEmpty() || base.IsOccupied();
         }
 
         public override void Clear()
@@ -33,7 +36,7 @@ namespace YARG.Core.Chart
             base.Clear();
             for (int i = 0; i < vocals.Length; i++)
                 vocals[i].Clear();
-            percussion.Clear();
+            _percussion.Clear();
         }
 
         public override void TrimExcess()
@@ -45,8 +48,8 @@ namespace YARG.Core.Chart
                     track.TrimExcess();
             }
 
-            if ((percussion.Count < 20 || 400 <= percussion.Count) && percussion.Count < percussion.Capacity)
-                percussion.TrimExcess();
+            if ((_percussion.Count < 20 || 400 <= _percussion.Count) && _percussion.Count < _percussion.Capacity)
+                _percussion.TrimExcess();
         }
 
         public override long GetLastNoteTime()
@@ -63,13 +66,20 @@ namespace YARG.Core.Chart
                     endTime = end;
             }
 
-            if (!percussion.IsEmpty())
+            if (!_percussion.IsEmpty())
             {
-                ref var perc = ref percussion.At_index(percussion.Count - 1);
+                ref var perc = ref _percussion.At_index(_percussion.Count - 1);
                 if (perc.position > endTime)
                     endTime = perc.position;
             }
             return endTime;
+        }
+
+        public void Dispose()
+        {
+            for (int i = 0; i < vocals.Length; i++)
+                vocals[i].Clear();
+            _percussion.Dispose();
         }
     }
 }

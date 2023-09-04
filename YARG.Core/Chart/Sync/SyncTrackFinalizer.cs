@@ -4,7 +4,7 @@
     {
         public static void Finalize(SyncTrack_FW sync, long endTick)
         {
-            if (sync.beatMap.IsEmpty())
+            if (sync.BeatMap.IsEmpty())
                 GenerateAllBeats(sync, endTick);
             else
                 GenerateLeftoverBeats(sync, endTick);
@@ -17,7 +17,8 @@
             int searchIndex = 0;
             int tempoIndex = 0;
 
-            var sigs = sync.timeSigs.Span;
+            var beats = sync.BeatMap;
+            var sigs = sync.TimeSigs.Span;
             int numSigs = sigs.Length;
             for (int i = 0; i < numSigs; ++i)
             {
@@ -39,8 +40,8 @@
                     for (uint n = 0; n < node.obj.Numerator && position < endTime; ++n, position += ticksPerMarker, ++searchIndex)
                     {
                         var beat = new DualPosition(position, sync.ConvertToSeconds(position, ref tempoIndex));
-                        if (!sync.beatMap.Contains(searchIndex, beat))
-                            sync.beatMap[beat] = BeatlineType.Weak;
+                        if (!beats.Contains(searchIndex, beat))
+                            beats[beat] = BeatlineType.Weak;
                     }
                     node.position += ticksPerMeasure;
                 }
@@ -53,7 +54,8 @@
             int metronome = 24;
             int tempoIndex = 0;
 
-            var sigs = sync.timeSigs.Span;
+            var beats = sync.BeatMap;
+            var sigs = sync.TimeSigs.Span;
             int numSigs = sigs.Length;
             for (int i = 0; i < numSigs; ++i)
             {
@@ -86,7 +88,7 @@
                         do
                         {
                             var beat = new DualPosition(position, sync.ConvertToSeconds(position, ref tempoIndex));
-                            sync.beatMap.Add_NoReturn(beat, style);
+                            beats.Add_NoReturn(beat, style);
                             position += ticksPerMarker;
                             style = BeatlineType.Weak;
                             --clicksLeft;

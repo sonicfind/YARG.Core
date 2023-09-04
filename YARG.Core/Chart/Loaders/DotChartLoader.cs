@@ -227,13 +227,13 @@ namespace YARG.Core.Chart
                 switch (ev.Type)
                 {
                     case ChartEventType.Bpm:
-                        sync.tempoMarkers.Get_Or_Add_Last(ev.Position).Micros = chartReader.ExtractMicrosPerQuarter();
+                        sync.TempoMarkers.Get_Or_Add_Last(ev.Position).Micros = chartReader.ExtractMicrosPerQuarter();
                         break;
                     case ChartEventType.Anchor:
-                        sync.tempoMarkers.Get_Or_Add_Last(ev.Position).Anchor = chartReader.ExtractAnchor();
+                        sync.TempoMarkers.Get_Or_Add_Last(ev.Position).Anchor = chartReader.ExtractAnchor();
                         break;
                     case ChartEventType.Time_Sig:
-                        sync.timeSigs.Get_Or_Add_Last(ev.Position) = chartReader.ExtractTimeSig();
+                        sync.TimeSigs.Get_Or_Add_Last(ev.Position) = chartReader.ExtractTimeSig();
                         break;
                 }
                 chartReader.NextEvent();
@@ -315,7 +315,7 @@ namespace YARG.Core.Chart
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TDecoder : IStringDecoder<TChar>, new()
             where TBase : unmanaged, IDotChartBases<TChar>
-            where TNote : INote, new()
+            where TNote : unmanaged, INote
         {
             track ??= new InstrumentTrack_FW<TNote>();
 

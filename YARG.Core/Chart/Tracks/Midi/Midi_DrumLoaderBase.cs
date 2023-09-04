@@ -63,8 +63,8 @@ namespace YARG.Core.Chart
                 return true;
 
             difficulties[EXPERT_INDEX].notes[DOUBLEBASS_INDEX] = position;
-            if (!track[EXPERT_INDEX].Notes.ValidateLastKey(position))
-                track[EXPERT_INDEX].Notes.Add_NoReturn(position);
+            if (!track[EXPERT_INDEX]!.Notes.ValidateLastKey(position))
+                track[EXPERT_INDEX]!.Notes.Add_NoReturn(position);
             return true;
         }
 
@@ -79,7 +79,7 @@ namespace YARG.Core.Chart
             long colorPosition = difficulties[EXPERT_INDEX].notes[DOUBLEBASS_INDEX];
             if (colorPosition != -1)
             {
-                track[EXPERT_INDEX].Notes.Traverse_Backwards_Until(colorPosition)[DOUBLEBASS_INDEX] = position - colorPosition;
+                track[EXPERT_INDEX]!.Notes.Traverse_Backwards_Until(colorPosition)[DOUBLEBASS_INDEX] = position - colorPosition;
                 difficulties[EXPERT_INDEX].notes[DOUBLEBASS_INDEX] = -1;
             }
             return true;

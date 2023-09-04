@@ -1,33 +1,52 @@
-﻿using YARG.Core.Chart.FlatDictionary;
+﻿using System;
+using YARG.Core.Chart.FlatDictionary;
 
 namespace YARG.Core.Chart
 {
-    public class DifficultyTrack_FW<T> : Track
-        where T : INote, new()
+    public class DifficultyTrack_FW<T> : Track, IDisposable
+        where T : unmanaged, INote
     {
-        public readonly TimedFlatDictionary<T> Notes = new();
+        private bool disposedValue;
+        protected TimedNativeFlatDictionary<T> _notes = new();
+        public TimedNativeFlatDictionary<T> Notes => _notes;
+        
 
         public DifficultyTrack_FW() { }
         public DifficultyTrack_FW(int capcacity)
         {
-            Notes.Capacity = capcacity;
+            _notes.Capacity = capcacity;
         }
 
-        public override bool IsOccupied() { return !Notes.IsEmpty() || base.IsOccupied(); }
+        public override bool IsOccupied() { return !_notes.IsEmpty() || base.IsOccupied(); }
 
         public override void Clear()
         {
             base.Clear();
-            Notes.Clear();
+            _notes.Clear();
         }
 
-        public override void TrimExcess() => Notes.TrimExcess();
+        public override void TrimExcess() => _notes.TrimExcess();
 
         public override long GetLastNoteTime()
         {
-            if (Notes.IsEmpty()) return 0;
-            var note = Notes.At_index(Notes.Count - 1);
+            if (_notes.IsEmpty()) return 0;
+            var note = _notes.At_index(_notes.Count - 1);
             return note.position + note.obj.GetLongestSustain();
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            _notes.Dispose();
+        }
+
+        public void Dispose()
+        {
+            if (!disposedValue)
+            {
+                Dispose(disposing: true);
+                GC.SuppressFinalize(this);
+                disposedValue = true;
+            }
         }
     }
 }

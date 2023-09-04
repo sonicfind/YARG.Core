@@ -43,7 +43,7 @@ namespace YARG.Core.Chart
             {
                 midiDiff.notes[lane] = position;
 
-                ref var drum = ref track[diffIndex].Notes.Get_Or_Add_Last(position);
+                ref var drum = ref track[diffIndex]!.Notes.Get_Or_Add_Last(position);
                 if (midiDiff.Flam)
                     drum.IsFlammed = true;
 
@@ -80,7 +80,7 @@ namespace YARG.Core.Chart
                 long colorPosition = midiDiff.notes[lane];
                 if (colorPosition != -1)
                 {
-                    track[diffIndex].Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
+                    track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
                     midiDiff.notes[lane] = -1;
                 }
             }
@@ -96,8 +96,8 @@ namespace YARG.Core.Chart
                         continue;
 
                     difficulties[i].Flam = true;
-                    if (track[i].Notes.ValidateLastKey(position))
-                        track[i].Notes.Last().IsFlammed = true;
+                    if (track[i]!.Notes.ValidateLastKey(position))
+                        track[i]!.Notes.Last().IsFlammed = true;
                 }
             }
             else if (TOM_MIN_VALUE <= note.value && note.value <= TOM_MAX_VALUE)
