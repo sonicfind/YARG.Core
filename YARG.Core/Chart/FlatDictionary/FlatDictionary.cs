@@ -89,13 +89,15 @@ namespace YARG.Core.Chart.FlatDictionary
 
         protected void CheckAndGrow()
         {
-            if (_count == int.MaxValue)
+            if (_count < int.MaxValue)
+            {
+                if (_count == _capacity)
+                    Grow();
+
+                ++_version;
+            }
+            else
                 throw new OverflowException("Element limit reached");
-
-            if (_count == _capacity)
-                Grow();
-
-            ++_version;
         }
 
         protected void Grow()
@@ -150,27 +152,57 @@ namespace YARG.Core.Chart.FlatDictionary
             node.obj = obj;
         }
 
-        public void RemoveAt(int index)
+        /// <remarks>
+        /// Note: does NOT check for correct key ordering on forced insertion. Unsafe.
+        /// </remarks>
+        public void Insert(int index, TKey position, TObj obj)
         {
-            if (index >= _count)
-                throw new IndexOutOfRangeException();
+            Insert(index, position, ref obj);
+        }
 
-            _buffer[index] = default;
-            --_count;
+        /// <remarks>
+        /// Note: does NOT check for correct key ordering on forced insertion. Unsafe.
+        /// </remarks>
+        public void Insert(int index, TKey position, ref TObj obj)
+        {
+            CheckAndGrow();
             if (index < _count)
             {
-                Array.Copy(_buffer, index + 1, _buffer, index, _count - index);
+                Array.Copy(_buffer, index, _buffer, index + 1, _count - index);
             }
-            ++_version;
+            ++_count;
+            ref var node = ref _buffer[index];
+            node.position = position;
+            node.obj = obj;
+        }
+
+        public void RemoveAt(int index)
+        {
+            if (index < _count)
+            {
+                _buffer[index] = default;
+                --_count;
+                if (index < _count)
+                {
+                    Array.Copy(_buffer, index + 1, _buffer, index, _count - index);
+                }
+                ++_version;
+            }
+            else
+                throw new IndexOutOfRangeException();
         }
 
         public void Pop()
         {
-            if (_count == 0)
+            if (_count > 0)
+            {
+                _buffer[_count - 1] = default;
+                --_count;
+                ++_version;
+            }
+            else
                 throw new Exception("Pop on emtpy map");
-            _buffer[_count - 1] = default;
-            --_count;
-            ++_version;
+            
         }
 
         public ref TObj this[TKey position] { get { return ref Find_Or_Add(0, position); } }
@@ -188,16 +220,8 @@ namespace YARG.Core.Chart.FlatDictionary
             int index = Find(searchIndex, position);
             if (index < 0)
             {
-                CheckAndGrow();
                 index = ~index;
-                if (index < _count)
-                {
-                    Array.Copy(_buffer, index, _buffer, index + 1, _count - index);
-                }
-                ++_count;
-                ref var node = ref _buffer[index];
-                node.position = position;
-                node.obj = new();
+                Insert(index, position, new());
             }
             return index;
         }
@@ -205,9 +229,9 @@ namespace YARG.Core.Chart.FlatDictionary
         public ref TObj At(TKey position)
         {
             int index = Find(0, position);
-            if (index < 0)
-                throw new KeyNotFoundException();
-            return ref _buffer[index].obj;
+            if (0 <= index)
+                return ref _buffer[index].obj;
+            throw new KeyNotFoundException();
         }
 
         public ref FlatMapNode<TKey, TObj> At_index(int index)
