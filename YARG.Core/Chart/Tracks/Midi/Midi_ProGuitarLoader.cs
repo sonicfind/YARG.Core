@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using YARG.Core.IO;
+using YARG.Core.Chart.Pitch;
+using YARG.Core.Chart.ProGuitar;
 
 namespace YARG.Core.Chart
 {
-    public class Midi_ProGuitar_Loader<FretType> : MidiInstrumentLoader<ProGuitarTrack<FretType>>
-        where FretType : unmanaged, IFretted
+    public class Midi_ProGuitar_Loader<TProFretConfig> : MidiInstrumentLoader<ProGuitarTrack<TProFretConfig>>
+        where TProFretConfig : IProFretConfig, new()
     {
         private const int NOTE_MIN = 24;
         private const int NOTE_MAX = 106;
@@ -65,9 +67,9 @@ namespace YARG.Core.Chart
             }
         }
 
-        public static ProGuitarTrack<FretType> Load(YARGMidiTrack reader, HashSet<Difficulty>? difficulties)
+        public static ProGuitarTrack<TProFretConfig> Load(YARGMidiTrack reader, HashSet<Difficulty>? difficulties)
         {
-            Midi_ProGuitar_Loader<FretType> loader = new(difficulties);
+            Midi_ProGuitar_Loader<TProFretConfig> loader = new(difficulties);
             return loader.Process(reader);
         }
 
@@ -87,10 +89,10 @@ namespace YARG.Core.Chart
             if (lane < NUM_STRINGS)
             {
                 if (midiTrack.Channel == 1)
-                    diffTrack.arpeggios.Get_Or_Add_Last(position).strings[lane].Value = note.velocity - FRET_MIN;
+                    diffTrack.arpeggios.Get_Or_Add_Last(position)[lane] = note.velocity - FRET_MIN;
                 else
                 {
-                    Guitar_Pro<FretType> guitar;
+                    ProGuitarNote<TProFretConfig> guitar;
                     if (!track[diffIndex].notes.ValidateLastKey(position))
                     {
                         guitar = track[diffIndex].notes.Add(position);
@@ -111,7 +113,7 @@ namespace YARG.Core.Chart
                         case 6: proString.mode = StringMode.Pinch_Harmonics; break;
                     }
 
-                    proString.fret.Value = note.velocity - FRET_MIN;
+                    proString.Fret = note.velocity - FRET_MIN;
                     midiDiff.notes[lane] = position;
                 }
             }
@@ -203,7 +205,7 @@ namespace YARG.Core.Chart
                 case 17: track.chordPhrases.Get_Or_Add_Last(position).Add(ChordPhrase.Hide); break;
                 case 18: track.chordPhrases.Get_Or_Add_Last(position).Add(ChordPhrase.Accidental_Switch); break;
                 case 107: track.chordPhrases.Get_Or_Add_Last(position).Add(ChordPhrase.Force_Numbering); break;
-                case 108: track.handPositions.Add(position).Value = note.velocity - FRET_MIN; break;
+                case 108: track.handPositions.Add(position) = note.velocity - FRET_MIN; break;
             }
         }
     }

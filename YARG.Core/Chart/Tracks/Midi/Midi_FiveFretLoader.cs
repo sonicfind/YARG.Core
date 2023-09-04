@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using YARG.Core.IO;
+using YARG.Core.Chart.Guitar;
 
 namespace YARG.Core.Chart
 {
@@ -27,7 +28,7 @@ namespace YARG.Core.Chart
         static FiveFretMidiDifficulty() { }
     }
 
-    public class Midi_FiveFretLoader : MidiInstrumentLoader_Common<FiveFret, FiveFretMidiDifficulty>
+    public class Midi_FiveFretLoader : MidiInstrumentLoader_Common<GuitarNote<FiveFret>, FiveFretMidiDifficulty>
     {
         private static readonly byte[][] ENHANCED_STRINGS = new byte[][] { Encoding.ASCII.GetBytes("[ENHANCED_OPENS]"), Encoding.ASCII.GetBytes("ENHANCED_OPENS") };
         private readonly int[] lanes = new int[] {
@@ -41,7 +42,7 @@ namespace YARG.Core.Chart
 
         private Midi_FiveFretLoader(HashSet<Difficulty>? difficulties) : base(difficulties) { }
 
-        public static InstrumentTrack_FW<FiveFret> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
+        public static InstrumentTrack_FW<GuitarNote<FiveFret>> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
         {
             Midi_FiveFretLoader loader = new(difficulties);
             return loader.Process(midiTrack);

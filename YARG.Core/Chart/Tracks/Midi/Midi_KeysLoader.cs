@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using YARG.Core.IO;
+using YARG.Core.Chart.Keys;
 
 namespace YARG.Core.Chart
 {
@@ -8,7 +9,7 @@ namespace YARG.Core.Chart
         public long[] notes = { -1, -1, -1, -1, -1 };
     }
 
-    public class Midi_KeysLoader : MidiInstrumentLoader_Common<Keys, KeysMidiDiff>
+    public class Midi_KeysLoader : MidiInstrumentLoader_Common<KeyNote, KeysMidiDiff>
     {
         private static readonly int[] lanes = new int[] {
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
@@ -21,7 +22,7 @@ namespace YARG.Core.Chart
 
         private Midi_KeysLoader(HashSet<Difficulty>? difficulties) : base(difficulties) { }
 
-        public static InstrumentTrack_FW<Keys> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
+        public static InstrumentTrack_FW<KeyNote> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
         {
             Midi_KeysLoader loader = new(difficulties);
             return loader.Process(midiTrack);

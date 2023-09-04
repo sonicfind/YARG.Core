@@ -1,4 +1,6 @@
-﻿namespace YARG.Core.Chart
+using YARG.Core.Chart.Guitar;
+
+namespace YARG.Core.Chart
 {
     public static partial class DotChartLoader
     {
@@ -8,7 +10,7 @@
         private const int BASE_RANGE = 5;
 
         private const int OPEN_INDEX = 0;
-        public static bool Set(ref FiveFret note, int lane, long length)
+        public static bool Set(ref GuitarNote<FiveFret> note, int lane, long length)
         {
             if (lane < BASE_RANGE)
                 note[lane + 1] = length;
@@ -25,7 +27,7 @@
 
         private static readonly int[] SIXFRETLANES = new int[5] { 4, 5, 6, 1, 2 };
         private const int BLACK3_INDEX = 3;
-        public static bool Set(ref SixFret note, int lane, long length)
+        public static bool Set(ref GuitarNote<SixFret> note, int lane, long length)
         {
             if (lane < BASE_RANGE)
                 note[SIXFRETLANES[lane]] = length;

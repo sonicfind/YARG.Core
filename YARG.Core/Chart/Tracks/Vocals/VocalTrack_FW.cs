@@ -1,20 +1,21 @@
 ﻿using YARG.Core.Chart.FlatDictionary;
+using YARG.Core.Chart.Vocal;
 
 namespace YARG.Core.Chart
 {
     public class VocalTrack_FW : Track
     {
         public readonly TimedFlatDictionary<VocalPercussion> percussion = new();
-        private readonly TimedFlatDictionary<Vocal>[] vocals;
+        private readonly TimedFlatDictionary<VocalNote_FW>[] vocals;
 
-        public TimedFlatDictionary<Vocal> this[int trackIndex]
+        public TimedFlatDictionary<VocalNote_FW> this[int trackIndex]
         {
             get { return vocals[trackIndex]; }
         }
 
         public VocalTrack_FW(int numTracks)
         {
-            vocals = new TimedFlatDictionary<Vocal>[numTracks];
+            vocals = new TimedFlatDictionary<VocalNote_FW>[numTracks];
             for (int i = 0; i < numTracks; i++)
                 vocals[i] = new();
         }
@@ -57,7 +58,7 @@ namespace YARG.Core.Chart
                     continue;
 
                 ref var vocal = ref track.At_index(track.Count - 1);
-                long end = vocal.position + vocal.obj.duration;
+                long end = vocal.position + vocal.obj.Duration;
                 if (end > endTime)
                     endTime = end;
             }

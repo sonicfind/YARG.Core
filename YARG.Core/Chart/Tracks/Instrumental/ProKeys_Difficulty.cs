@@ -1,4 +1,5 @@
 using YARG.Core.Chart.FlatDictionary;
+using YARG.Core.Chart.ProKeys;
 
 namespace YARG.Core.Chart
 {
@@ -12,7 +13,7 @@ namespace YARG.Core.Chart
         A1_C3,
     };
 
-    public class ProKeysDifficulty : DifficultyTrack_FW<Keys_Pro>
+    public class ProKeysDifficulty : DifficultyTrack_FW<ProKeyNote>
     {
         public readonly TimedFlatDictionary<ProKey_Ranges> ranges = new();
 

@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using YARG.Core.IO;
+using YARG.Core.Chart.Drums;
 
 namespace YARG.Core.Chart
 {
-    public class Midi_ProDrum_Loader : Midi_DrumLoaderBase<Drum_4Pro, FourLaneMidiDiff>
+    public class Midi_ProDrum_Loader : Midi_DrumLoaderBase<DrumPad_4, Pro_Drums, FourLaneMidiDiff>
     {
         private const int TOM_MIN_VALUE = 110;
         private const int TOM_MAX_VALUE = 112;
@@ -13,7 +14,7 @@ namespace YARG.Core.Chart
 
         private Midi_ProDrum_Loader(HashSet<Difficulty>? difficulties) : base(difficulties) { }
 
-        public static InstrumentTrack_FW<Drum_4Pro> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
+        public static InstrumentTrack_FW<DrumNote<DrumPad_4, Pro_Drums>> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
         {
             Midi_ProDrum_Loader loader = new(difficulties);
             return loader.Process(midiTrack);
@@ -39,7 +40,7 @@ namespace YARG.Core.Chart
                 {
                     if (enableDynamics)
                     {
-                        ref var pad = ref drum.GetPad(lane - DYNAMIC_MIN);
+                        ref var pad = ref drum.Pads[lane - DYNAMIC_MIN];
                         if (note.velocity > 100)
                             pad.Dynamics = DrumDynamics.Accent;
                         else if (note.velocity < 100)
@@ -48,7 +49,7 @@ namespace YARG.Core.Chart
 
                     int index = lane - TOM_MIN_LANE;
                     if (index >= 0)
-                        drum.cymbals[index] = !toms[index];
+                        drum.Cymbals[index] = !toms[index];
                 }
             }
         }

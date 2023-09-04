@@ -1,4 +1,5 @@
-﻿using YARG.Core.IO;
+using YARG.Core.IO;
+﻿using YARG.Core.Chart.ProKeys;
 
 namespace YARG.Core.Chart
 {

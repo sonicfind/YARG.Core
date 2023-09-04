@@ -1,8 +1,10 @@
-﻿namespace YARG.Core.Chart
+using YARG.Core.Chart.Keys;
+
+namespace YARG.Core.Chart
 {
     public static partial class DotChartLoader
     {
-        public static bool Set(ref Keys note, int lane, long length)
+        public static bool Set(ref KeyNote note, int lane, long length)
         {
             if (lane >= 5)
                 return false;

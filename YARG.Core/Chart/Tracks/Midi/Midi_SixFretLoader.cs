@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using YARG.Core.IO;
+using YARG.Core.Chart.Guitar;
 
 namespace YARG.Core.Chart
 {
@@ -13,7 +14,7 @@ namespace YARG.Core.Chart
         public SixFretMidiDifficulty() { }
     }
 
-    public class Midi_SixFretLoader : MidiInstrumentLoader_Common<SixFret, SixFretMidiDifficulty>
+    public class Midi_SixFretLoader : MidiInstrumentLoader_Common<GuitarNote<SixFret>, SixFretMidiDifficulty>
     {
         private static readonly int[] LANEVALUES = new int[] {
             0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 11,
@@ -26,7 +27,7 @@ namespace YARG.Core.Chart
 
         private Midi_SixFretLoader(HashSet<Difficulty>? difficulties) : base(difficulties) { }
 
-        public static InstrumentTrack_FW<SixFret> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
+        public static InstrumentTrack_FW<GuitarNote<SixFret>> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
         {
             Midi_SixFretLoader loader = new(difficulties);
             return loader.Process(midiTrack);

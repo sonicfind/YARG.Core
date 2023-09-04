@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using YARG.Core.IO;
+using YARG.Core.Chart.Drums;
 
 namespace YARG.Core.Chart
 {
-    public class Midi_UnknownDrums_Loader : Midi_DrumLoaderBase<Drum_Unknown, FiveLaneMidiDiff>
+    public class Midi_UnknownDrums_Loader : Midi_DrumLoaderBase<DrumPad_5, Pro_Drums, FiveLaneMidiDiff>
     {
         private const int NOTE_MAX = 101;
         private const int LANE_MAX = 7;
@@ -19,7 +20,7 @@ namespace YARG.Core.Chart
             this.type = type;
         }
 
-        public static (InstrumentTrack_FW<Drum_Unknown>, DrumsType) Load(YARGMidiTrack midiTrack, DrumsType type, HashSet<Difficulty>? difficulties)
+        public static (InstrumentTrack_FW<DrumNote<DrumPad_5, Pro_Drums>>, DrumsType) Load(YARGMidiTrack midiTrack, DrumsType type, HashSet<Difficulty>? difficulties)
         {
             Midi_UnknownDrums_Loader loader = new(type, difficulties);
             var track = loader.Process(midiTrack);
@@ -49,7 +50,7 @@ namespace YARG.Core.Chart
                 {
                     if (enableDynamics)
                     {
-                        ref var pad = ref drum.GetPad(lane - DYNAMIC_MIN);
+                        ref var pad = ref drum.Pads[lane - DYNAMIC_MIN];
                         if (note.velocity > 100)
                             pad.Dynamics = DrumDynamics.Accent;
                         else if (note.velocity < 100)
@@ -57,7 +58,7 @@ namespace YARG.Core.Chart
                     }
 
                     if (TOM_MIN_LANE <= lane && lane < FIVE_LANE_DRUM)
-                        drum.cymbals[lane - TOM_MIN_LANE] = !toms[lane - TOM_MIN_LANE];
+                        drum.Cymbals[lane - TOM_MIN_LANE] = !toms[lane - TOM_MIN_LANE];
                     else if (lane == FIVE_LANE_DRUM)
                         type = DrumsType.FiveLane;
                 }

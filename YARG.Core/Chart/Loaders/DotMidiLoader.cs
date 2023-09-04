@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using YARG.Core.IO;
 using YARG.Core.IO.Ini;
+using YARG.Core.Chart.Drums;
+using YARG.Core.Chart.ProGuitar;
+using YARG.Core.Chart.ProKeys;
 
 namespace YARG.Core.Chart
 {
@@ -55,9 +58,9 @@ namespace YARG.Core.Chart
                 var track = drums.GetMidiTrack()!;
                 switch (drums.Type)
                 {
-                    case DrumsType.ProDrums: chart.ProDrums =      (InstrumentTrack_FW<Drum_4Pro>) track; break;
-                    case DrumsType.FiveLane: chart.FiveLaneDrums = (InstrumentTrack_FW<Drum_5>) track; break;
-                    case DrumsType.FourLane: chart.FourLaneDrums = (InstrumentTrack_FW<Drum_4>) track; break;
+                    case DrumsType.ProDrums: chart.ProDrums =      (InstrumentTrack_FW<DrumNote<DrumPad_4, Pro_Drums>>) track; break;
+                    case DrumsType.FiveLane: chart.FiveLaneDrums = (InstrumentTrack_FW<DrumNote<DrumPad_5, Basic_Drums>>) track; break;
+                    case DrumsType.FourLane: chart.FourLaneDrums = (InstrumentTrack_FW<DrumNote<DrumPad_4, Basic_Drums>>) track; break;
                 }
             }
             return chart;
@@ -139,10 +142,10 @@ namespace YARG.Core.Chart
                 case MidiTrackType.Bass_6:        chart.SixFretBass ??=        Midi_SixFretLoader. Load(midiTrack, difficulties); break;
                 case MidiTrackType.Rhythm_6:      chart.SixFretRhythm ??=      Midi_SixFretLoader. Load(midiTrack, difficulties); break;
                 case MidiTrackType.Coop_6:        chart.SixFretCoopGuitar ??=  Midi_SixFretLoader. Load(midiTrack, difficulties); break;
-                case MidiTrackType.Pro_Guitar_17: chart.ProGuitar_17Fret ??=   Midi_ProGuitar_Loader<Fret_17>.Load(midiTrack, difficulties); break;
-                case MidiTrackType.Pro_Guitar_22: chart.ProGuitar_22Fret ??=   Midi_ProGuitar_Loader<Fret_22>.Load(midiTrack, difficulties); break;
-                case MidiTrackType.Pro_Bass_17:   chart.ProBass_17Fret ??=     Midi_ProGuitar_Loader<Fret_17>.Load(midiTrack, difficulties); break;
-                case MidiTrackType.Pro_Bass_22:   chart.ProBass_22Fret ??=     Midi_ProGuitar_Loader<Fret_22>.Load(midiTrack, difficulties); break;
+                case MidiTrackType.Pro_Guitar_17: chart.ProGuitar_17Fret ??=   Midi_ProGuitar_Loader<ProFret_17>.Load(midiTrack, difficulties); break;
+                case MidiTrackType.Pro_Guitar_22: chart.ProGuitar_22Fret ??=   Midi_ProGuitar_Loader<ProFret_22>.Load(midiTrack, difficulties); break;
+                case MidiTrackType.Pro_Bass_17:   chart.ProBass_17Fret ??=     Midi_ProGuitar_Loader<ProFret_17>.Load(midiTrack, difficulties); break;
+                case MidiTrackType.Pro_Bass_22:   chart.ProBass_22Fret ??=     Midi_ProGuitar_Loader<ProFret_22>.Load(midiTrack, difficulties); break;
                 case MidiTrackType.Keys:          chart.Keys ??=               Midi_KeysLoader.Load(midiTrack, difficulties); break;
                 case MidiTrackType.Pro_Keys_X:
                 case MidiTrackType.Pro_Keys_H:
@@ -153,7 +156,7 @@ namespace YARG.Core.Chart
                         if (difficulties != null && !difficulties.Contains((Difficulty) index))
                             break;
 
-                        var proKeys = chart.ProKeys ??= new InstrumentTrack_FW<Keys_Pro>();
+                        var proKeys = chart.ProKeys ??= new InstrumentTrack_FW<ProKeyNote>();
                         proKeys[index] ??= Midi_ProKeys_Loader.Load(midiTrack);
                         break;
                     }

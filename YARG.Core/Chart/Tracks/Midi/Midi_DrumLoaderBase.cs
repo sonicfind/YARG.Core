@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using YARG.Core.IO;
+using YARG.Core.Chart.Drums;
 
 namespace YARG.Core.Chart
 {
@@ -28,8 +29,9 @@ namespace YARG.Core.Chart
         public FiveLaneMidiDiff() : base(7) { }
     }
 
-    public abstract class Midi_DrumLoaderBase<TDrum, TDiffTracker> : MidiInstrumentLoader_Common<TDrum, TDiffTracker>
-        where TDrum : DrumNote_FW, new()
+    public abstract class Midi_DrumLoaderBase<TDrumConfig, TCymbalConfig, TDiffTracker> : MidiInstrumentLoader_Common<DrumNote<TDrumConfig, TCymbalConfig>, TDiffTracker>
+        where TDrumConfig : unmanaged, IDrumPadConfig
+        where TCymbalConfig : unmanaged, ICymbalConfig
         where TDiffTracker : DrumsMidiDiff, new()
     {
         private static readonly byte[] DYNAMICS_STRING = Encoding.ASCII.GetBytes("[ENABLE_CHART_DYNAMICS]");

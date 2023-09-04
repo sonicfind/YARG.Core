@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using YARG.Core.IO;
 using YARG.Core.IO.Ini;
+using YARG.Core.Chart.Drums;
 
 namespace YARG.Core.Chart
 {
@@ -104,9 +105,9 @@ namespace YARG.Core.Chart
                 var track = drums.GetChartTrack()!;
                 switch (drums.Type)
                 {
-                    case DrumsType.ProDrums: chart.ProDrums =      (InstrumentTrack_FW<Drum_4Pro>) track; break;
-                    case DrumsType.FiveLane: chart.FiveLaneDrums = (InstrumentTrack_FW<Drum_5>) track; break;
-                    case DrumsType.FourLane: chart.FourLaneDrums = (InstrumentTrack_FW<Drum_4>) track; break;
+                    case DrumsType.ProDrums: chart.ProDrums =      (InstrumentTrack_FW<DrumNote<DrumPad_4, Pro_Drums>>) track; break;
+                    case DrumsType.FiveLane: chart.FiveLaneDrums = (InstrumentTrack_FW<DrumNote<DrumPad_5, Basic_Drums>>) track; break;
+                    case DrumsType.FourLane: chart.FourLaneDrums = (InstrumentTrack_FW<DrumNote<DrumPad_4, Basic_Drums>>) track; break;
                 }
             }
 
@@ -258,7 +259,7 @@ namespace YARG.Core.Chart
                     else if (str.StartsWith(LYRIC))
                     {
                         if (doVocals)
-                            chart.LeadVocals![0].Get_Or_Add_Last(ev.Position).lyric = str[6..];
+                            chart.LeadVocals![0].Get_Or_Add_Last(ev.Position).Lyric = str[6..];
                     }
                     else if (str == PHRASE_START)
                     {
@@ -308,7 +309,7 @@ namespace YARG.Core.Chart
                 chartReader.SkipTrack();
         }
 
-        public delegate bool Loader<TNote>(ref TNote note, int lane, long duration);
+        private delegate bool Loader<TNote>(ref TNote note, int lane, long duration);
 
         private static bool LoadChartTrack<TChar, TBase, TDecoder, TNote>(YARGChartFileReader<TChar, TDecoder, TBase> chartReader, ref InstrumentTrack_FW<TNote>? track, Loader<TNote> loader)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
@@ -336,7 +337,7 @@ namespace YARG.Core.Chart
                             chartReader.ExtractLaneAndSustain(ref chartNote);
 
                             if (!loader(ref note, chartNote.Lane, chartNote.Duration))
-                                if (!note.HasActiveNotes())
+                                if (note.GetNumActiveNotes() == 0)
                                     difficultyTrack.notes.Pop();
                             break;
                         }

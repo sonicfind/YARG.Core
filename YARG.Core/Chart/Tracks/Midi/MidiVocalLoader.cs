@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using YARG.Core.IO;
 using YARG.Core.Chart.FlatDictionary;
+using YARG.Core.Chart.Vocal;
 
 namespace YARG.Core.Chart
 {
@@ -107,8 +108,8 @@ namespace YARG.Core.Chart
                     duration /= 2;
 
                 ref var note = ref AddVocal(vocal);
-                note.Binary = pitch;
-                note.duration = duration;
+                note.Pitch.Binary = pitch;
+                note.Duration = duration;
                 lyric.Item1 = -1;
                 lyric.Item2 = string.Empty;
             }
@@ -123,15 +124,15 @@ namespace YARG.Core.Chart
             if (vocal != -1 && lyric.Item1 != -1)
             {
                 ref var note = ref AddVocal(vocal);
-                note.Binary = pitch;
-                note.duration = position - vocal;
+                note.Pitch.Binary = pitch;
+                note.Duration = position - vocal;
                 lyric.Item1 = -1;
                 lyric.Item2 = string.Empty;
             }
             vocal = -1;
         }
 
-        private ref Vocal AddVocal(long vocalPos)
+        private ref VocalNote_FW AddVocal(long vocalPos)
         {
             var vocals = track[index];
             if (vocals.Capacity == 0)

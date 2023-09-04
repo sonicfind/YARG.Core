@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
 using YARG.Core.IO;
+using YARG.Core.Chart.Drums;
 
 namespace YARG.Core.Chart
 {
-    public abstract class Midi_BasicDrum_Loader<TDrum, TDiffTracker> : Midi_DrumLoaderBase<TDrum, TDiffTracker>
-        where TDrum : DrumNote_FW, new()
+    public abstract class Midi_BasicDrum_Loader<TDrumConfig, TDiffTracker> : Midi_DrumLoaderBase<TDrumConfig, Basic_Drums, TDiffTracker>
+        where TDrumConfig : unmanaged, IDrumPadConfig
         where TDiffTracker : DrumsMidiDiff, new()
     {
         private readonly int numLanes;
@@ -35,7 +36,7 @@ namespace YARG.Core.Chart
 
                 if (enableDynamics && lane >= DYNAMIC_MIN)
                 {
-                    ref var pad = ref drum.GetPad(lane - DYNAMIC_MIN);
+                    ref var pad = ref drum.Pads[lane - DYNAMIC_MIN];
                     if (note.velocity > 100)
                         pad.Dynamics = DrumDynamics.Accent;
                     else if (note.velocity < 100)
@@ -89,25 +90,25 @@ namespace YARG.Core.Chart
         }
     }
 
-    public class Midi_FourLane_Loader : Midi_BasicDrum_Loader<Drum_4, FourLaneMidiDiff>
+    public class Midi_FourLane_Loader : Midi_BasicDrum_Loader<DrumPad_4, FourLaneMidiDiff>
     {
         private const int NUMLANES = 6;
         private Midi_FourLane_Loader(HashSet<Difficulty>? difficulties) : base(NUMLANES, DEFAULT_MAX, difficulties) { }
 
-        public static InstrumentTrack_FW<Drum_4> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
+        public static InstrumentTrack_FW<DrumNote<DrumPad_4, Basic_Drums>> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
         {
             Midi_FourLane_Loader loader = new(difficulties);
             return loader.Process(midiTrack);
         }
     }
 
-    public class Midi_FiveLane_Loader : Midi_BasicDrum_Loader<Drum_5, FiveLaneMidiDiff>
+    public class Midi_FiveLane_Loader : Midi_BasicDrum_Loader<DrumPad_5, FiveLaneMidiDiff>
     {
         private const int NUMLANES = 7;
         private const int FIVELANE_MAX = 101;
         private Midi_FiveLane_Loader(HashSet<Difficulty>? difficulties) : base(NUMLANES, FIVELANE_MAX, difficulties) { }
 
-        public static InstrumentTrack_FW<Drum_5> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
+        public static InstrumentTrack_FW<DrumNote<DrumPad_5, Basic_Drums>> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
         {
             Midi_FiveLane_Loader loader = new(difficulties);
             return loader.Process(midiTrack);

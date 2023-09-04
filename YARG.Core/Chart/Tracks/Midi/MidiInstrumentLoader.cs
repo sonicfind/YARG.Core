@@ -103,7 +103,7 @@ namespace YARG.Core.Chart
     }
 
     public abstract class MidiInstrumentLoader_Common<TNote, TDiffTracker> : MidiInstrumentLoader<InstrumentTrack_FW<TNote>>
-        where TNote : class, INote, new()
+        where TNote : INote, new()
         where TDiffTracker : new()
     {
         protected const int NOTES_PER_DIFFICULTY = 12;

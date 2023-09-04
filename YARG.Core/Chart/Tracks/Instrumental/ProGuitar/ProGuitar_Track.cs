@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using YARG.Core.Chart.FlatDictionary;
+using YARG.Core.Chart.Pitch;
+using YARG.Core.Chart.ProGuitar;
 
 namespace YARG.Core.Chart
 {
@@ -11,11 +13,11 @@ namespace YARG.Core.Chart
         Accidental_Switch
     };
 
-    public class ProGuitarTrack<FretType> : InstrumentTrack_Base<ProGuitarDifficulty<FretType>>
-        where FretType : unmanaged, IFretted
+    public class ProGuitarTrack<TProFretConfig> : InstrumentTrack_Base<ProGuitarDifficulty<TProFretConfig>>
+        where TProFretConfig : IProFretConfig, new()
     {
         public readonly TimedFlatDictionary<PitchName> roots = new();
-        public readonly TimedFlatDictionary<FretType> handPositions = new();
+        public readonly TimedFlatDictionary<HandPosition<TProFretConfig>> handPositions = new();
         public readonly TimedFlatDictionary<List<ChordPhrase>> chordPhrases = new();
 
         public override bool IsOccupied()

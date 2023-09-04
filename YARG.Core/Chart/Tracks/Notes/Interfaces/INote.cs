@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace YARG.Core.Chart
+﻿namespace YARG.Core.Chart
 {
     public interface INote
     {
-        public bool HasActiveNotes();
+        public int GetNumActiveNotes();
         public long GetLongestSustain();
     }
 }

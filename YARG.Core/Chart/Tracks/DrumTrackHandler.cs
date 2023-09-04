@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using YARG.Core.IO;
+using YARG.Core.Chart.Drums;
 
 namespace YARG.Core.Chart
 {
@@ -62,10 +63,10 @@ namespace YARG.Core.Chart
             _difficulties[diff].Item2 = _currentType;
             _difficulties[diff].Item1 = _currentType switch
             {
-                DrumsType.ProDrums => LoadChartDifficulty<TChar, TDecoder, TBase, Drum_4Pro>   (reader, Set),
-                DrumsType.FiveLane => LoadChartDifficulty<TChar, TDecoder, TBase, Drum_5>      (reader, Set),
-                DrumsType.FourLane => LoadChartDifficulty<TChar, TDecoder, TBase, Drum_4>      (reader, Set),
-                _ =>                  LoadChartDifficulty<TChar, TDecoder, TBase, Drum_Unknown>(reader, Set)
+                DrumsType.ProDrums => LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_4, Pro_Drums>  (reader, Set),
+                DrumsType.FiveLane => LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_5, Basic_Drums>(reader, Set),
+                DrumsType.FourLane => LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_4, Basic_Drums>(reader, Set),
+                _ =>                  LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_5, Pro_Drums>  (reader, Set)
             };
         }
 
@@ -77,15 +78,14 @@ namespace YARG.Core.Chart
             if (_initialType != DrumsType.Unknown && _initialType != DrumsType.UnknownPro)
                 return _track;
 
-            var unknownTrack = (InstrumentTrack_FW<Drum_Unknown>) _track;
             switch (_currentType)
             {
-                case DrumsType.FourLane: return Convert(unknownTrack, ConvertToFourLane);
-                case DrumsType.FiveLane: return Convert(unknownTrack, ConvertToFiveLane);
+                case DrumsType.FourLane: return Convert<DrumPad_4, Basic_Drums>();
+                case DrumsType.FiveLane: return Convert<DrumPad_5, Basic_Drums>();
                 default:
                     {
                         _currentType = DrumsType.ProDrums;
-                        return Convert(unknownTrack, ConvertToProDrums);
+                        return Convert<DrumPad_4, Pro_Drums>();
                     }
             }
         }
@@ -97,19 +97,19 @@ namespace YARG.Core.Chart
 
             switch (_initialType)
             {
-                case DrumsType.ProDrums: return Combine<Drum_4Pro>();
-                case DrumsType.FiveLane: return Combine<Drum_5>();
-                case DrumsType.FourLane: return Combine<Drum_4>();
+                case DrumsType.ProDrums: return Combine<DrumPad_4, Pro_Drums>();
+                case DrumsType.FiveLane: return Combine<DrumPad_5, Basic_Drums>();
+                case DrumsType.FourLane: return Combine<DrumPad_4, Basic_Drums>();
             }
 
             switch (_currentType)
             {
-                case DrumsType.ProDrums: return CombineConvert(ConvertToProDrums);
-                case DrumsType.FiveLane: return CombineConvert(ConvertToFiveLane);
+                case DrumsType.ProDrums: return CombineConvert<DrumPad_4, Pro_Drums>();
+                case DrumsType.FiveLane: return CombineConvert<DrumPad_5, Basic_Drums>();
                 default:
                     {
                         _currentType = DrumsType.FourLane;
-                        return CombineConvert(ConvertToFourLane);
+                        return CombineConvert<DrumPad_4, Basic_Drums>();
                     }
             }
         }
@@ -117,13 +117,18 @@ namespace YARG.Core.Chart
         private const string SOLO = "solo";
         private const string SOLOEND = "soloend";
 
-        private DifficultyTrack_FW<TDrum> LoadChartDifficulty<TChar, TDecoder, TBase, TDrum>(YARGChartFileReader<TChar, TDecoder, TBase> reader, Func<TDrum, int, long, bool> loader)
+        private delegate bool Loader<TDrumConfig, TCymbalConfig>(ref DrumNote<TDrumConfig, TCymbalConfig> note, int lane, long duration)
+            where TDrumConfig : unmanaged, IDrumPadConfig
+            where TCymbalConfig : unmanaged, ICymbalConfig;
+
+        private DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> LoadChartDifficulty<TChar, TDecoder, TBase, TDrumConfig, TCymbalConfig>(YARGChartFileReader<TChar, TDecoder, TBase> reader, Loader<TDrumConfig, TCymbalConfig> loader)
+            where TDrumConfig : unmanaged, IDrumPadConfig
+            where TCymbalConfig : unmanaged, ICymbalConfig
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TDecoder : IStringDecoder<TChar>, new()
             where TBase : unmanaged, IDotChartBases<TChar>
-            where TDrum : DrumNote_FW, new()
         {
-            var difficulty = new DifficultyTrack_FW<TDrum>(5000);
+            var difficulty = new DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>>(5000);
             long solo = 0;
 
             DotChartEvent ev = default;
@@ -137,8 +142,8 @@ namespace YARG.Core.Chart
                             ref var drum = ref difficulty.notes.Get_Or_Add_Last(ev.Position);
                             reader.ExtractLaneAndSustain(ref note);
                             
-                            if (!loader(drum, note.Lane, note.Duration))
-                                if (!drum.HasActiveNotes())
+                            if (!loader(ref drum, note.Lane, note.Duration))
+                                if (drum.GetNumActiveNotes() == 0)
                                     difficulty.notes.Pop();
                             break;
                         }
@@ -187,13 +192,13 @@ namespace YARG.Core.Chart
         private const int GHOST_MAX_4 = 42;
         private const int GHOST_MAX_5 = 43;
 
-        private bool Set(Drum_Unknown note, int lane, long length)
+        private bool Set(ref DrumNote<DrumPad_5, Pro_Drums> note, int lane, long length)
         {
             if (lane == BASS_INDEX)
                 note.Bass = length;
             else if (lane <= FIVELANE_MAX)
             {
-                note.GetPad(lane - 1).Duration = length;
+                note.Pads[lane - 1].Duration = length;
                 if (lane == FIVELANE_MAX)
                     _currentType = DrumsType.FiveLane;
             }
@@ -201,100 +206,95 @@ namespace YARG.Core.Chart
                 note.DoubleBass = length;
             else if (CYMBAL_YELLOW <= lane && lane <= CYMBAL_GREEN)
             {
-                note.cymbals[lane - CYMBAL_YELLOW] = true;
+                note.Cymbals[lane - CYMBAL_YELLOW] = true;
                 _currentType = DrumsType.ProDrums;
             }
-            else if (ACCENT_MIN <= lane && lane <= ACCENT_MAX_5) note.GetPad(lane - ACCENT_MIN).Dynamics = DrumDynamics.Accent;
-            else if (GHOST_MIN <= lane && lane <= GHOST_MAX_5)   note.GetPad(lane - GHOST_MIN).Dynamics = DrumDynamics.Ghost;
+            else if (ACCENT_MIN <= lane && lane <= ACCENT_MAX_5) note.Pads[lane - ACCENT_MIN].Dynamics = DrumDynamics.Accent;
+            else if (GHOST_MIN <= lane && lane <= GHOST_MAX_5)   note.Pads[lane - GHOST_MIN].Dynamics = DrumDynamics.Ghost;
             else
                 return false;
             return true;
         }
 
-        private bool Set(Drum_4Pro note, int lane, long length)
+        private bool Set(ref DrumNote<DrumPad_4, Pro_Drums> note, int lane, long length)
         {
             if (lane == BASS_INDEX)            note.Bass = length;
-            else if (lane <= FOURLANE_MAX)     note.GetPad(lane - 1).Duration = length;
-            else if (lane == DOUBLEBASS_INDEX) note.DoubleBass = length;
-            else if (CYMBAL_YELLOW <= lane && lane <= CYMBAL_GREEN) note.cymbals[lane - CYMBAL_YELLOW] = true;
-            else if (ACCENT_MIN <= lane && lane <= ACCENT_MAX_4)    note.GetPad(lane - ACCENT_MIN).Dynamics = DrumDynamics.Accent;
-            else if (GHOST_MIN <= lane && lane <= GHOST_MAX_4)      note.GetPad(lane - GHOST_MIN).Dynamics = DrumDynamics.Ghost;
+            else if (lane <= FOURLANE_MAX)     note.Pads[lane - 1].Duration = length;
+            else if (lane == DOUBLEBASS_INDEX) note.ToggleDoubleBass();
+            else if (CYMBAL_YELLOW <= lane && lane <= CYMBAL_GREEN) note.Cymbals[lane - CYMBAL_YELLOW] = true;
+            else if (ACCENT_MIN <= lane && lane <= ACCENT_MAX_4)    note.Pads[lane - ACCENT_MIN].Dynamics = DrumDynamics.Accent;
+            else if (GHOST_MIN <= lane && lane <= GHOST_MAX_4)      note.Pads[lane - GHOST_MIN].Dynamics = DrumDynamics.Ghost;
             else
                 return false;
             return true;
         }
 
-        private bool Set(Drum_4 note, int lane, long length)
+        private bool Set<TDrumConfig>(ref DrumNote<TDrumConfig, Basic_Drums> note, int lane, long length)
+            where TDrumConfig : unmanaged, IDrumPadConfig
         {
-            if (lane == BASS_INDEX)            note.Bass = length;
-            else if (lane <= FOURLANE_MAX)     note.GetPad(lane - 1).Duration = length;
-            else if (lane == DOUBLEBASS_INDEX) note.DoubleBass = length;
-            else if (ACCENT_MIN <= lane && lane <= ACCENT_MAX_4) note.GetPad(lane - ACCENT_MIN).Dynamics = DrumDynamics.Accent;
-            else if (GHOST_MIN <= lane && lane <= GHOST_MAX_4)   note.GetPad(lane - GHOST_MIN).Dynamics = DrumDynamics.Ghost;
+            if (lane == BASS_INDEX) note.Bass = length;
+            else if (lane <= DrumNote<TDrumConfig, Basic_Drums>.NUMPADS) note.Pads[lane - 1].Duration = length;
+            else if (lane == DOUBLEBASS_INDEX) note.ToggleDoubleBass();
+            else if (ACCENT_MIN <= lane && lane - ACCENT_MIN < DrumNote<TDrumConfig, Basic_Drums>.NUMPADS) note.Pads[lane - ACCENT_MIN].Dynamics = DrumDynamics.Accent;
+            else if (GHOST_MIN  <= lane && lane - GHOST_MIN  < DrumNote<TDrumConfig, Basic_Drums>.NUMPADS) note.Pads[lane - GHOST_MIN ].Dynamics = DrumDynamics.Ghost;
             else
                 return false;
             return true;
         }
 
-        private bool Set(Drum_5 note, int lane, long length)
+        private InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> Convert<TDrumConfig, TCymbalConfig>()
+            where TDrumConfig : unmanaged, IDrumPadConfig
+            where TCymbalConfig : unmanaged, ICymbalConfig
         {
-            if (lane == BASS_INDEX)            note.Bass = length;
-            else if (lane <= FIVELANE_MAX)     note.GetPad(lane - 1).Duration = length;
-            else if (lane == DOUBLEBASS_INDEX) note.DoubleBass = length;
-            else if (ACCENT_MIN <= lane && lane <= ACCENT_MAX_5) note.GetPad(lane - ACCENT_MIN).Dynamics = DrumDynamics.Accent;
-            else if (GHOST_MIN <= lane && lane <= GHOST_MAX_5)   note.GetPad(lane - GHOST_MIN).Dynamics = DrumDynamics.Ghost;
-            else
-                return false;
-            return true;
-        }
-
-        private static InstrumentTrack_FW<TDrum> Convert<TDrum>(InstrumentTrack_FW<Drum_Unknown> unknownTrack, Func<DifficultyTrack_FW<Drum_Unknown>, DifficultyTrack_FW<TDrum>> converter)
-            where TDrum : DrumNote_FW, new()
-        {
-            InstrumentTrack_FW<TDrum> drum4 = new();
+            InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> drums = new();
+            var unknownTrack = (InstrumentTrack_FW<DrumNote<DrumPad_5, Pro_Drums>>) _track!;
             for (int diffIndex = 0; diffIndex < 4; ++diffIndex)
             {
                 var unknownDiff = unknownTrack[diffIndex];
                 if (unknownDiff.IsOccupied())
-                    drum4[diffIndex] = converter(unknownDiff);
+                    drums[diffIndex] = Convert<TDrumConfig, TCymbalConfig>(unknownDiff);
             }
-            return drum4;
+            return drums;
         }
 
-        private InstrumentTrack_FW<TDrum> Combine<TDrum>()
-            where TDrum : DrumNote_FW, new()
+        private InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> Combine<TDrumConfig, TCymbalConfig>()
+            where TDrumConfig : unmanaged, IDrumPadConfig
+            where TCymbalConfig : unmanaged, ICymbalConfig
         {
-            InstrumentTrack_FW<TDrum> track = new();
+            InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> track = new();
             for (int i = 0; i < 4; ++i)
             {
                 if (_difficulties![i].Item1 != null)
                 {
-                    track[i] = (DifficultyTrack_FW<TDrum>)_difficulties[i].Item1;
+                    track[i] = (DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>>)_difficulties[i].Item1;
                 }
             }
             return track;
         }
 
-        private InstrumentTrack_FW<TDrum> CombineConvert<TDrum>(Func<DifficultyTrack_FW<Drum_Unknown>, DifficultyTrack_FW<TDrum>> converter)
-            where TDrum : DrumNote_FW, new()
+        private InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> CombineConvert<TDrumConfig, TCymbalConfig>()
+            where TDrumConfig : unmanaged, IDrumPadConfig
+            where TCymbalConfig : unmanaged, ICymbalConfig
         {
-            InstrumentTrack_FW<TDrum> track = new();
+            InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> track = new();
             for (int i = 0; i < 4; ++i)
             {
                 if (_difficulties![i].Item1 == null)
                     continue;
 
                 if (_difficulties[i].Item2 == _currentType)
-                    track[i] = (DifficultyTrack_FW<TDrum>) _difficulties[i].Item1;
+                    track[i] = (DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>>) _difficulties[i].Item1;
                 else
-                    track[i] = converter((DifficultyTrack_FW<Drum_Unknown>) _difficulties[i].Item1);
+                    track[i] = Convert<TDrumConfig, TCymbalConfig>((DifficultyTrack_FW<DrumNote<DrumPad_5, Pro_Drums>>) _difficulties[i].Item1);
             }
             return track;
         }
 
-        private static DifficultyTrack_FW<Drum_4> ConvertToFourLane(DifficultyTrack_FW<Drum_Unknown> unknownDiff)
+        private static DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> Convert<TDrumConfig, TCymbalConfig>(DifficultyTrack_FW<DrumNote<DrumPad_5, Pro_Drums>> unknownDiff)
+            where TDrumConfig : unmanaged, IDrumPadConfig
+            where TCymbalConfig : unmanaged, ICymbalConfig
         {
-            DifficultyTrack_FW<Drum_4> diff = new()
+            DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> diff = new()
             {
                 specialPhrases = unknownDiff.specialPhrases,
                 events = unknownDiff.events,
@@ -304,41 +304,7 @@ namespace YARG.Core.Chart
             for (int noteIndex = 0; noteIndex < span.Length; ++noteIndex)
             {
                 ref var note = ref span[noteIndex];
-                diff.notes.Add(note.position, new(note.obj));
-            }
-            return diff;
-        }
-
-        private static DifficultyTrack_FW<Drum_4Pro> ConvertToProDrums(DifficultyTrack_FW<Drum_Unknown> unknownDiff)
-        {
-            DifficultyTrack_FW<Drum_4Pro> diff = new()
-            {
-                specialPhrases = unknownDiff.specialPhrases,
-                events = unknownDiff.events,
-            };
-
-            var span = unknownDiff.notes.Span;
-            for (int noteIndex = 0; noteIndex < span.Length; ++noteIndex)
-            {
-                ref var note = ref span[noteIndex];
-                diff.notes.Add(note.position, new(note.obj));
-            }
-            return diff;
-        }
-
-        private static DifficultyTrack_FW<Drum_5> ConvertToFiveLane(DifficultyTrack_FW<Drum_Unknown> unknownDiff)
-        {
-            DifficultyTrack_FW<Drum_5> diff = new()
-            {
-                specialPhrases = unknownDiff.specialPhrases,
-                events = unknownDiff.events,
-            };
-
-            var span = unknownDiff.notes.Span;
-            for (int noteIndex = 0; noteIndex < span.Length; ++noteIndex)
-            {
-                ref var note = ref span[noteIndex];
-                diff.notes.Add(note.position, new(note.obj));
+                diff.notes.Add(note.position, DrumNote<TDrumConfig, TCymbalConfig>.Convert(ref note.obj));
             }
             return diff;
         }

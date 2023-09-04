@@ -1,11 +1,12 @@
 using YARG.Core.Chart.FlatDictionary;
+using YARG.Core.Chart.ProGuitar;
 
 namespace YARG.Core.Chart
 {
-    public class ProGuitarDifficulty<FretType> : DifficultyTrack_FW<Guitar_Pro<FretType>>
-        where FretType : unmanaged, IFretted
+    public class ProGuitarDifficulty<TProFretConfig> : DifficultyTrack_FW<ProGuitarNote<TProFretConfig>>
+        where TProFretConfig : IProFretConfig, new()
     {
-        public readonly TimedFlatDictionary<Arpeggio<FretType>> arpeggios = new();
+        public readonly TimedFlatDictionary<Arpeggio<TProFretConfig>> arpeggios = new();
 
         public override bool IsOccupied() { return !arpeggios.IsEmpty() || base.IsOccupied(); }
 
