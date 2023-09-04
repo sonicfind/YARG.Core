@@ -18,6 +18,7 @@ namespace YARG.Core.IO
 
         private ushort _trackNumber = 0;
         public ushort TrackNumber => _trackNumber;
+        public ushort TickRate => _tickRate;
 
         private const int SIZEOF_HEADER = 6;
         public YARGMidiFile(Stream stream)

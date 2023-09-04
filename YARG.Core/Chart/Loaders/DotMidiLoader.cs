@@ -18,6 +18,7 @@ namespace YARG.Core.Chart
             YARGChart chart = new();
             DrumTrackHandler drums = new(parseSettings.DrumsType);
             IMidLoader.MultiplierNote = parseSettings.StarPowerNote;
+            chart.Sync.Tickrate = midiFile.TickRate;
             SetSustainThreshold(chart, parseSettings);
             foreach (var midiTrack in midiFile)
             {
