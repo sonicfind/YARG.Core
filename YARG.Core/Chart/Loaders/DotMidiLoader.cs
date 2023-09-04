@@ -6,20 +6,32 @@ using YARG.Core.IO.Ini;
 using YARG.Core.Chart.Drums;
 using YARG.Core.Chart.ProGuitar;
 using YARG.Core.Chart.ProKeys;
+using System.IO;
 
 namespace YARG.Core.Chart
 {
     public static class DotMidiLoader
     {
-        public static YARGChart Load(string filename, ParseSettings parseSettings, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
+        public static YARGChart LoadFull(string filename, ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
         {
-            YARGMidiFile midiFile = new(filename);
-
             YARGChart chart = new();
-            DrumTrackHandler drums = new(parseSettings.DrumsType);
-            IMidLoader.MultiplierNote = parseSettings.StarPowerNote;
+            DrumTrackHandler drums = new(settings.DrumsType);
+            IMidLoader.MultiplierNote = settings.StarPowerNote;
+            Load(filename, chart, drums, settings.SustainCutoffThreshold, activeInstruments);
+            return chart;
+        }
+
+        public static void Load(string filename, YARGChart chart, DrumTrackHandler drums, long sustainCutoff, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
+        {
+            using FileStream stream = new(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+            LoadTracks(chart, drums, stream, sustainCutoff, activeInstruments);
+        }
+
+        private static void LoadTracks(YARGChart chart, DrumTrackHandler drums, Stream stream, long sustainCutoff, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
+        {
+            YARGMidiFile midiFile = new(stream);
             chart.Sync.Tickrate = midiFile.TickRate;
-            SetSustainThreshold(chart, parseSettings);
+            SetSustainThreshold(midiFile.TickRate, sustainCutoff);
             foreach (var midiTrack in midiFile)
             {
                 if (midiFile.TrackNumber == 1)
@@ -64,7 +76,6 @@ namespace YARG.Core.Chart
                     case DrumsType.FourLane: chart.FourLaneDrums = (InstrumentTrack_FW<DrumNote<DrumPad_4, Basic_Drums>>) track; break;
                 }
             }
-            return chart;
         }
 
         private static void LoadSyncTrack(SyncTrack_FW sync, YARGMidiTrack midiTrack)
@@ -176,9 +187,9 @@ namespace YARG.Core.Chart
             }
         }
 
-        private static void SetSustainThreshold(YARGChart chart, ParseSettings settings)
+        private static void SetSustainThreshold(uint tickRate, long sustainCutoff)
         {
-            TruncatableSustain.MinDuration = settings.SustainCutoffThreshold != ParseSettings.SETTING_DEFAULT ? settings.SustainCutoffThreshold : (chart.Sync.Tickrate / 3);
+            TruncatableSustain.MinDuration = sustainCutoff != ParseSettings.SETTING_DEFAULT ? sustainCutoff : (tickRate / 3);
         }
     }
 }
