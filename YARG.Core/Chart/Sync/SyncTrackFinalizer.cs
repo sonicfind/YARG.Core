@@ -2,7 +2,34 @@
 {
     public static class SyncTrackFinalizer
     {
-        public static void Finalize(SyncTrack_FW sync, long endTick)
+        public static void FinalizeTempoMap(SyncTrack_FW sync)
+        {
+            var tempos = sync.TempoMarkers;
+            var sigs = sync.TimeSigs;
+            if (tempos.IsEmpty() || tempos.At_index(0).position != 0)
+                tempos.Insert(0, 0, new(Tempo_FW.MICROS_AT_120BPM));
+
+            if (sigs.IsEmpty() || sigs.At_index(0).position != 0)
+                sigs.Insert(0, 0, new(4, 2, 24, 8));
+            else
+            {
+                ref var timeSig = ref sigs.At_index(0).obj;
+                if (timeSig.Denominator == 255)
+                    timeSig.Denominator = 2;
+            }
+
+            unsafe
+            {
+                var prevNode = tempos.Data;
+                var end = tempos.Data + tempos.Count;
+                uint tickrate = sync.Tickrate;
+                for (var marker = prevNode + 1; marker < end; marker++, prevNode++)
+                    if (marker->obj.Anchor == 0)
+                        marker->obj.Anchor = (long) (((marker->position - prevNode->position) / (float) tickrate) * prevNode->obj.Micros) + prevNode->obj.Anchor;
+            }
+        }
+
+        public static void FinalizeBeats(SyncTrack_FW sync, long endTick)
         {
             if (sync.BeatMap.IsEmpty())
                 GenerateAllBeats(sync, endTick);

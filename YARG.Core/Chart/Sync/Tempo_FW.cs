@@ -1,4 +1,4 @@
-﻿namespace YARG.Core.Chart
+namespace YARG.Core.Chart
 {
     public struct Tempo_FW
     {
