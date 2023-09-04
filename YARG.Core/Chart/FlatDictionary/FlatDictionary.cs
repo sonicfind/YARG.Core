@@ -29,15 +29,10 @@ namespace YARG.Core.Chart.FlatDictionary
             get => _capacity;
             set
             {
-                if (value < _count)
-                    throw new ArgumentOutOfRangeException(nameof(value));
-
-                if (value != _capacity)
+                if (_count <= value && value != _capacity)
                 {
                     if (value > 0)
                     {
-                        if (value > int.MaxValue)
-                            value = int.MaxValue;
                         Array.Resize(ref _buffer, value);
                         _capacity = _buffer.Length;
                     }
@@ -158,7 +153,7 @@ namespace YARG.Core.Chart.FlatDictionary
         public void RemoveAt(int index)
         {
             if (index >= _count)
-                throw new ArgumentOutOfRangeException(nameof(index));
+                throw new IndexOutOfRangeException();
 
             _buffer[index] = default;
             --_count;
