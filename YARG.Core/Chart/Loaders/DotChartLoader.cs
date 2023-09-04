@@ -111,6 +111,7 @@ namespace YARG.Core.Chart
                 }
             }
 
+            YARGChartFinalizer.Finalize(chart, false);
             return chart;
         }
 

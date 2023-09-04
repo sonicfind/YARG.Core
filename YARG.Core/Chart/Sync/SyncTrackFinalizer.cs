@@ -1,7 +1,84 @@
 ﻿namespace YARG.Core.Chart
 {
-    public static class SyncTrackFinalizer
+    public static class YARGChartFinalizer
     {
+        public static void Finalize(YARGChart chart, bool tempoPreFinalized)
+        {
+            Track?[] tracks =
+            {
+                chart.FiveFretGuitar,
+                chart.FiveFretBass,
+                chart.FiveFretRhythm,
+                chart.FiveFretCoopGuitar,
+                chart.SixFretGuitar,
+                chart.SixFretBass,
+                chart.SixFretRhythm,
+                chart.SixFretCoopGuitar,
+
+                chart.Keys,
+
+                chart.FourLaneDrums,
+                chart.ProDrums,
+                chart.FiveLaneDrums,
+
+                //chart.TrueDrums,
+
+                chart.ProGuitar_17Fret,
+                chart.ProGuitar_22Fret,
+                chart.ProBass_17Fret,
+                chart.ProBass_22Fret,
+
+                chart.ProKeys,
+
+                //chart.Dj,
+
+                chart.LeadVocals,
+                chart.HarmonyVocals,
+            };
+
+            long lastNoteTime = 0;
+            foreach (var track in tracks)
+            {
+                if (track != null)
+                {
+                    long lastTime = track.GetLastNoteTime();
+                    if (lastTime > lastNoteTime)
+                        lastNoteTime = lastTime;
+                }
+            }
+
+            long endTick = lastNoteTime;
+            var globals = chart.Events.globals.Span;
+            for (int i = globals.Length - 1; i >= 0; --i)
+            {
+                foreach (string ev in globals[i].obj)
+                {
+                    if (ev == "[end]")
+                    {
+                        if (lastNoteTime < globals[i].position)
+                            endTick = globals[i].position;
+                        goto SYNCFinalization;
+                    }
+                }
+            }
+
+            if (globals.Length > 0)
+            {
+                var node = globals[^1];
+                if (lastNoteTime < node.position)
+                    endTick = node.position;
+            }
+
+        SYNCFinalization:
+            if (!tempoPreFinalized)
+                FinalizeTempoMap(chart.Sync);
+
+            if (chart.Sync.BeatMap.IsEmpty())
+                GenerateAllBeats(chart.Sync, endTick);
+            else
+                GenerateLeftoverBeats(chart.Sync, endTick);
+        }
+
         public static void FinalizeTempoMap(SyncTrack_FW sync)
         {
             var tempos = sync.TempoMarkers;
@@ -27,14 +104,6 @@
                     if (marker->obj.Anchor == 0)
                         marker->obj.Anchor = (long) (((marker->position - prevNode->position) / (float) tickrate) * prevNode->obj.Micros) + prevNode->obj.Anchor;
             }
-        }
-
-        public static void FinalizeBeats(SyncTrack_FW sync, long endTick)
-        {
-            if (sync.BeatMap.IsEmpty())
-                GenerateAllBeats(sync, endTick);
-            else
-                GenerateLeftoverBeats(sync, endTick);
         }
 
         private static void GenerateLeftoverBeats(SyncTrack_FW sync, long endTick)

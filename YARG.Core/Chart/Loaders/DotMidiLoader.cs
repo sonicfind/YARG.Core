@@ -76,6 +76,8 @@ namespace YARG.Core.Chart
                     case DrumsType.FourLane: chart.FourLaneDrums = (InstrumentTrack_FW<DrumNote<DrumPad_4, Basic_Drums>>) track; break;
                 }
             }
+
+            YARGChartFinalizer.Finalize(chart, true);
         }
 
         private static void LoadSyncTrack(SyncTrack_FW sync, YARGMidiTrack midiTrack)
@@ -92,6 +94,7 @@ namespace YARG.Core.Chart
                         break;
                 }
             }
+            YARGChartFinalizer.FinalizeTempoMap(sync);
         }
 
         internal static byte[][] PREFIXES = { Encoding.ASCII.GetBytes("[section "), Encoding.ASCII.GetBytes("[prc_") };
