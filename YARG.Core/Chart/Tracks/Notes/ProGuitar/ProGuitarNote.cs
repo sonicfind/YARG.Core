@@ -47,10 +47,10 @@ namespace YARG.Core.Chart
             }
         }
 
-        public bool HOPO { get; set; }
-        public bool ForceNumbering { get; set; }
-        public ProSlide Slide { get; set; }
-        public EmphasisType Emphasis { get; set; }
+        public bool HOPO;
+        public bool ForceNumbering;
+        public ProSlide Slide;
+        public EmphasisType Emphasis;
 
         public ProSlide WheelSlide()
         {

@@ -2,7 +2,7 @@
 {
     public struct TruncatableSustain : IEnableable
     {
-        public static long MinDuration { get; set; } = 180;
+        public static long MinDuration = 180;
         private long _duration;
         public long Duration
         {

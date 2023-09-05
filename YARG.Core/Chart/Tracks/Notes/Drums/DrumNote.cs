@@ -59,7 +59,7 @@ namespace YARG.Core.Chart.Drums
             }
         }
 
-        public bool IsFlammed { get; set; }
+        public bool IsFlammed;
 
         private unsafe DrumPad* PadPtr
         {

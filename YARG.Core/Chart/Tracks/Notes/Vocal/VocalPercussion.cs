@@ -2,7 +2,7 @@
 {
     public struct VocalPercussion
     {
-        public bool IsPlayable { get; set; }
+        public bool IsPlayable;
         public void TogglePlayability() { IsPlayable = !IsPlayable; }
     }
 }

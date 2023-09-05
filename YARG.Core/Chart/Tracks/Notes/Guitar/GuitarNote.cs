@@ -25,8 +25,8 @@ namespace YARG.Core.Chart.Guitar
         }
 
         private TConfig frets;
-        public ForceStatus Forcing { get; set; }
-        public bool IsTap { get; set; }
+        public ForceStatus Forcing;
+        public bool IsTap;
         public void ToggleTap() { IsTap = !IsTap; }
 
         private unsafe TruncatableSustain* FretPtr

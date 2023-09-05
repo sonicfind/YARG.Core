@@ -11,7 +11,7 @@
     {
         public TruncatableSustain Duration;
 
-        public DrumDynamics Dynamics { get; set; }
+        public DrumDynamics Dynamics;
 
         public bool IsActive()
         {
