@@ -5,9 +5,9 @@ namespace YARG.Core.Chart
     public readonly struct DualPosition : IEquatable<DualPosition>, IComparable<DualPosition>
     {
         public readonly long ticks;
-        public readonly float seconds;
+        public readonly double seconds;
 
-        public DualPosition(long ticks, float seconds)
+        public DualPosition(long ticks, double seconds)
         {
             this.ticks = ticks;
             this.seconds = seconds;
