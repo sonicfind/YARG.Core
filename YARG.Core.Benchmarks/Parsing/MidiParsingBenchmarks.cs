@@ -15,13 +15,16 @@ namespace YARG.Core.Benchmarks
     {
         private static string ChartPath;
         private ParseSettings settings = ParseSettings.Default;
-        private MidiFile midi;
+        private readonly Dictionary<MidiTrackType, HashSet<Difficulty>> guitarOnly= new()
+        {
+            { MidiTrackType.Guitar_5, new() { Difficulty.Expert } },
+            { MidiTrackType.Vocals, null }
+        };
 
         [GlobalSetup]
         public void Initialize()
         {
             ChartPath = Environment.GetEnvironmentVariable(Program.CHART_PATH_VAR);
-            midi = MidiFile.Read(ChartPath);
         }
 
         [Benchmark]
@@ -33,12 +36,7 @@ namespace YARG.Core.Benchmarks
         [Benchmark]
         public void SongLoading_New_GuitarOnly()
         {
-            Dictionary<MidiTrackType, HashSet<Difficulty>> instruments = new()
-            {
-                { MidiTrackType.Guitar_5, new() { Difficulty.Expert } },
-                { MidiTrackType.Vocals, null }
-            };
-            using var chart = DotMidiLoader.LoadFull(ChartPath, settings, instruments);
+            using var chart = DotMidiLoader.LoadFull(ChartPath, settings, guitarOnly);
         }
 
         [Benchmark]
@@ -50,7 +48,7 @@ namespace YARG.Core.Benchmarks
         [Benchmark]
         public SongChart FullChartLoading()
         {
-            return SongChart.FromMidi(settings, midi);
+            return SongChart.FromMidi(settings, MidiFile.Read(ChartPath));
         }
     }
 }

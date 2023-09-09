@@ -15,6 +15,10 @@ namespace YARG.Core.Benchmarks
     {
         private static string ChartPath;
         private ParseSettings settings = ParseSettings.Default;
+		private readonly Dictionary<NoteTracks_Chart, HashSet<Difficulty>> guitarOnly = new()
+        {
+            { NoteTracks_Chart.Single, new() { Difficulty.Expert } },
+        };
 		
         [GlobalSetup]
         public void Initialize()
@@ -29,13 +33,9 @@ namespace YARG.Core.Benchmarks
         }
 
         [Benchmark]
-        public static void SongParsing_New_GuitarOnly()
+        public void SongParsing_New_GuitarOnly()
         {
-            Dictionary<NoteTracks_Chart, HashSet<Difficulty>> instruments = new()
-            {
-                { NoteTracks_Chart.Single, new() { Difficulty.Expert } },
-            };
-            using var chart = DotChartLoader.Load(ChartPath, null, instruments, true);
+            using var chart = DotChartLoader.Load(ChartPath, null, guitarOnly, true);
         }
 
         [Benchmark]
