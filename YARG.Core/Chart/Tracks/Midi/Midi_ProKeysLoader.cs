@@ -40,8 +40,12 @@ namespace YARG.Core.Chart
 
         protected override void ParseLaneColor(YARGMidiTrack midiTrack)
         {
-            if (!track.Notes.ValidateLastKey(position))
-                track.Notes.Add_NoReturn(position);
+            var notes = track.Notes;
+            if (notes.Capacity == 0)
+                notes.Capacity = 5000;
+
+            if (!notes.ValidateLastKey(position))
+                notes.Add_NoReturn(position);
             lanes[note.value - NOTE_MIN] = position;
         }
 

@@ -92,18 +92,22 @@ namespace YARG.Core.Chart
                     diffTrack.Arpeggios.Get_Or_Add_Last(position)[lane] = note.velocity - FRET_MIN;
                 else
                 {
-                    ProGuitarNote<TProFretConfig> guitar;
                     if (!diffTrack.Notes.ValidateLastKey(position))
                     {
-                        guitar = diffTrack.Notes.Add(position);
-                        guitar.HOPO = midiDiff.Hopo;
-                        guitar.Slide = midiDiff.Slide;
-                        guitar.Emphasis = midiDiff.Emphasis;
-                    }
-                    else
-                        guitar = diffTrack.Notes.Last();
+                        if (diffTrack.Notes.Capacity == 0)
+                            diffTrack.Notes.Capacity = 5000;
 
-                    ref var proString = ref guitar[lane];
+                        ProGuitarNote<TProFretConfig> newNote = new()
+                        {
+                            HOPO = midiDiff.Hopo,
+                            Slide = midiDiff.Slide,
+                            Emphasis = midiDiff.Emphasis
+                        };
+
+                        diffTrack.Notes.Add_NoReturn(position, ref newNote);
+                    }
+
+                    ref var proString = ref diffTrack.Notes.Last()[lane];
                     switch (midiTrack.Channel)
                     {
                         case 2: proString.mode = StringMode.Bend; break;

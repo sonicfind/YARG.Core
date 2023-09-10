@@ -43,13 +43,17 @@ namespace YARG.Core.Chart
             if (midiDiff == null)
                 return;
 
+            ref var diff = ref track[diffIndex]!;
             int lane = LANEVALUES[noteValue];
             if (lane < 7)
             {
                 midiDiff.notes[lane] = position;
-                if (!track[diffIndex]!.Notes.ValidateLastKey(position))
+                if (!diff.Notes.ValidateLastKey(position))
                 {
-                    ref var guitar = ref track[diffIndex]!.Notes.Add(position);
+                    if (diff.Notes.Capacity == 0)
+                        diff.Notes.Capacity = 5000;
+
+                    ref var guitar = ref diff.Notes.Add(position);
                     if (midiDiff.SliderNotes)
                         guitar.IsTap = true;
 
@@ -62,15 +66,15 @@ namespace YARG.Core.Chart
             else if (lane == 7)
             {
                 midiDiff.HopoOn = true;
-                if (track[diffIndex]!.Notes.ValidateLastKey(position))
-                    track[diffIndex]!.Notes.Last().Forcing = ForceStatus.HOPO;
+                if (diff.Notes.ValidateLastKey(position))
+                    diff.Notes.Last().Forcing = ForceStatus.HOPO;
             }
             // HopoOff marker
             else if (lane == 8)
             {
                 midiDiff.HopoOff = true;
-                if (track[diffIndex]!.Notes.ValidateLastKey(position))
-                    track[diffIndex]!.Notes.Last().Forcing = ForceStatus.STRUM;
+                if (diff.Notes.ValidateLastKey(position))
+                    diff.Notes.Last().Forcing = ForceStatus.STRUM;
             }
             else if (lane == 10)
                 midiDiff.SliderNotes = true;

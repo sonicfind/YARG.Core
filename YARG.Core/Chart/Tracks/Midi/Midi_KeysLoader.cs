@@ -39,9 +39,15 @@ namespace YARG.Core.Chart
                 if (midiDiff == null)
                     return;
 
+                
                 midiDiff.notes[lane] = position;
-                if (!track[diffIndex]!.Notes.ValidateLastKey(position))
-                    track[diffIndex]!.Notes.Add_NoReturn(position);
+
+                var notes = track[diffIndex]!.Notes;
+                if (notes.Capacity == 0)
+                    notes.Capacity = 5000;
+
+                if (!notes.ValidateLastKey(position))
+                    notes.Add_NoReturn(position);
             }
         }
 

@@ -28,11 +28,16 @@ namespace YARG.Core.Chart
             if (midiDiff == null)
                 return;
 
+            var notes = track[diffIndex]!.Notes;
             int lane = LANEVALUES[noteValue];
             if (lane < NUMLANES)
             {
                 midiDiff.notes[lane] = position;
-                ref var drum = ref track[diffIndex]!.Notes.Get_Or_Add_Last(position);
+
+                if (notes.Capacity == 0)
+                    notes.Capacity = 5000;
+
+                ref var drum = ref notes.Get_Or_Add_Last(position);
                 if (midiDiff.Flam)
                     drum.IsFlammed = true;
 
