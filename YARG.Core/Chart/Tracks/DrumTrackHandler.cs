@@ -300,10 +300,12 @@ namespace YARG.Core.Chart
             };
 
             var span = unknownDiff.Notes.Span;
+            var notes = diff.Notes;
+            notes.Capacity = span.Length;
             for (int noteIndex = 0; noteIndex < span.Length; ++noteIndex)
             {
                 ref var note = ref span[noteIndex];
-                diff.Notes.Add(note.position, DrumNote<TDrumConfig, TCymbalConfig>.Convert(ref note.obj));
+                notes.Add(note.position, DrumNote<TDrumConfig, TCymbalConfig>.Convert(ref note.obj));
             }
             return diff;
         }
