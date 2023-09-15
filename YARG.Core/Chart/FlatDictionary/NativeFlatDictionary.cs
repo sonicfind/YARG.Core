@@ -39,12 +39,10 @@ namespace YARG.Core.Chart.FlatDictionary
                     {
                         unsafe
                         {
-                            var newBuffer = (FlatMapNode<TKey, TObj>*)Marshal.AllocHGlobal(value * SIZEOFNODE);
-                            if (_count > 0)
-                                Unsafe.CopyBlock(newBuffer, _buffer, (uint)(_count * SIZEOFNODE));
-
-                            Marshal.FreeHGlobal((IntPtr)_buffer);
-                            _buffer = newBuffer;
+                            if (_buffer != null)
+                                _buffer = (FlatMapNode<TKey, TObj>*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) (value * SIZEOFNODE));
+                            else
+                                _buffer = (FlatMapNode<TKey, TObj>*) Marshal.AllocHGlobal(value * SIZEOFNODE);
                         }
                         _capacity = value;
                     }
