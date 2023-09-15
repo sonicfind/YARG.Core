@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Diagnostics.Windows.Configs;
+using BenchmarkDotNet.Diagnostics.Windows.Configs; // Enable LOCALLY ONLY if on Windows
 using Melanchall.DryWetMidi.Core;
 using YARG.Core.Chart;
 using YARG.Core.IO;
@@ -9,7 +9,7 @@ using YARG.Core.IO;
 namespace YARG.Core.Benchmarks
 {
     // [SimpleJob(RunStrategy.ColdStart, targetCount: 25, invocationCount: 1)]
-    // [NativeMemoryProfiler] // 1. Windows Only, 2. Need to figure out why it's not showing the native allocations
+    [NativeMemoryProfiler] // Enable LOCALLY ONLY if on Windows
     [MemoryDiagnoser]
     public class MidiParsingBenchmarks
     {
@@ -22,7 +22,7 @@ namespace YARG.Core.Benchmarks
         };
 
         [GlobalSetup]
-        public void Initialize()
+        public static void Initialize()
         {
             ChartPath = Environment.GetEnvironmentVariable(Program.CHART_PATH_VAR);
         }
