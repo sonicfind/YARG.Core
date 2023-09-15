@@ -123,8 +123,7 @@ namespace YARG.Core.Chart.FlatDictionary
 
         public void TrimExcess()
         {
-            if (_count < _capacity)
-                Capacity = _count;
+            Capacity = _count;
         }
 
         public ref TObj Add(TKey key)
