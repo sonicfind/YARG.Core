@@ -37,10 +37,12 @@ namespace YARG.Core.Chart.ProKeys
             }
         }
 
+#pragma warning disable CS0169
         private Pitched_Key key_1;
         private Pitched_Key key_2;
         private Pitched_Key key_3;
         private Pitched_Key key_4;
+#pragma warning restore CS0169
         private int _numActive;
         public int NumActive => _numActive;
 
@@ -57,11 +59,16 @@ namespace YARG.Core.Chart.ProKeys
 
         private ref Pitched_Key GetKey(int index)
         {
-            if (0 <= index && index < _numActive)
+            if (index < _numActive)
             {
-                unsafe
+                switch (index)
                 {
-                    return ref KeyPtr[index];
+#pragma warning disable CS9084
+                    case 0: return ref key_1;
+                    case 1: return ref key_2;
+                    case 2: return ref key_3;
+                    case 3: return ref key_4;
+#pragma warning restore CS9084
                 }
             }
             throw new IndexOutOfRangeException();
@@ -94,9 +101,11 @@ namespace YARG.Core.Chart.ProKeys
                 --_numActive;
                 unsafe
                 {
-                    var keys = KeyPtr;
-                    for (int i = index; i < _numActive; ++i)
-                        keys[i] = keys[i + 1];
+                    fixed (Pitched_Key* keys = &key_1)
+                    {
+                        for (int i = index; i < _numActive; ++i)
+                            keys[i] = keys[i + 1];
+                    }
                 }
             }
         }
@@ -125,22 +134,24 @@ namespace YARG.Core.Chart.ProKeys
             uint i = 0;
             unsafe
             {
-                var keys = KeyPtr;
-                while (i < _numActive)
+                fixed (Pitched_Key* keys = &key_1)
                 {
-                    int cmp = keys[i].Pitch.Binary;
-                    if (cmp == binary)
-                        throw new Exception("Duplicate pitches are not allowed");
-
-                    if (cmp > binary)
+                    while (i < _numActive)
                     {
-                        for (int j = _numActive; j > i; --j)
-                            keys[j] = keys[j - 1];
-                        break;
+                        int cmp = keys[i].Pitch.Binary;
+                        if (cmp == binary)
+                            throw new Exception("Duplicate pitches are not allowed");
+
+                        if (cmp > binary)
+                        {
+                            for (int j = _numActive; j > i; --j)
+                                keys[j] = keys[j - 1];
+                            break;
+                        }
+                        ++i;
                     }
-                    ++i;
+                    keys[i] = key;
                 }
-                keys[i] = key;
             }
             _numActive++;
         }
@@ -155,12 +166,14 @@ namespace YARG.Core.Chart.ProKeys
             long sustain = 0;
             unsafe
             {
-                var keys = KeyPtr;
-                for (int i = 0; i < _numActive; ++i)
+                fixed (Pitched_Key* keys = &key_1)
                 {
-                    long dur = keys[i].Duration;
-                    if (dur > sustain)
-                        sustain = dur;
+                    for (int i = 0; i < _numActive; ++i)
+                    {
+                        long dur = keys[i].Duration;
+                        if (dur > sustain)
+                            sustain = dur;
+                    }
                 }
             }
             return sustain;
