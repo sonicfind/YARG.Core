@@ -7,6 +7,7 @@ namespace YARG.Core.UnitTests.Parsing
     public class ChartParsingTests
     {
         private string? chartsDirectory;
+        private ParseSettings settings = ParseSettings.Default;
 
         [SetUp]
         public void Setup()
@@ -18,6 +19,7 @@ namespace YARG.Core.UnitTests.Parsing
             string projectDirectory = Directory.GetParent(workingDirectory)!.Parent!.Parent!.FullName;
 
             chartsDirectory = Path.Combine(projectDirectory, "Parsing", "Test Charts");
+            settings.StarPowerNote = 116;
         }
 
         [TestCase("test.chart")]
@@ -28,7 +30,7 @@ namespace YARG.Core.UnitTests.Parsing
             Assert.DoesNotThrow(() =>
             {
                 string chartPath = Path.Combine(chartsDirectory!, notesFile);
-                var chart = DotChartLoader.Load(chartPath, ParseSettings.Default, null, true);
+                var chart = DotChartLoader.Load(chartPath, settings, null, true);
             });
         }
 
@@ -40,7 +42,7 @@ namespace YARG.Core.UnitTests.Parsing
             Assert.DoesNotThrow(() =>
             {
                 string chartPath = Path.Combine(chartsDirectory!, notesFile);
-                var song = ChartReader.ReadFromFile(ParseSettings.Default, chartPath);
+                var song = ChartReader.ReadFromFile(settings, chartPath);
             });
         }
 
@@ -52,7 +54,7 @@ namespace YARG.Core.UnitTests.Parsing
             Assert.DoesNotThrow(() =>
             {
                 string chartPath = Path.Combine(chartsDirectory!, notesFile);
-                var chart = DotMidiLoader.LoadFull(chartPath, ParseSettings.Default, null);
+                var chart = DotMidiLoader.LoadFull(chartPath, settings, null);
             });
         }
 
@@ -64,7 +66,7 @@ namespace YARG.Core.UnitTests.Parsing
             Assert.DoesNotThrow(() =>
             {
                 string chartPath = Path.Combine(chartsDirectory!, notesFile);
-                var song = MidReader.ReadMidi(ParseSettings.Default, chartPath);
+                var song = MidReader.ReadMidi(settings, chartPath);
             });
         }
     }

@@ -14,8 +14,8 @@ namespace YARG.Core.Benchmarks
     public class MidiParsingBenchmarks
     {
         private static string ChartPath;
-        private ParseSettings settings = ParseSettings.Default;
-        private readonly Dictionary<MidiTrackType, HashSet<Difficulty>> guitarOnly= new()
+        private static ParseSettings settings = ParseSettings.Default;
+        private static readonly Dictionary<MidiTrackType, HashSet<Difficulty>> guitarOnly = new()
         {
             { MidiTrackType.Guitar_5, new() { Difficulty.Expert } },
             { MidiTrackType.Vocals, null }
@@ -25,6 +25,7 @@ namespace YARG.Core.Benchmarks
         public static void Initialize()
         {
             ChartPath = Environment.GetEnvironmentVariable(Program.CHART_PATH_VAR);
+            settings.StarPowerNote = 116;
         }
 
         [Benchmark]
