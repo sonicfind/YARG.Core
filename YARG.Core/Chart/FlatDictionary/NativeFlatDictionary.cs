@@ -45,17 +45,11 @@ namespace YARG.Core.Chart.FlatDictionary
                                 _buffer = (FlatMapNode<TKey, TObj>*) Marshal.AllocHGlobal(value * SIZEOFNODE);
                         }
                         _capacity = value;
+                        _disposed = false;
+                        ++_version;
                     }
                     else
-                    {
-                        unsafe
-                        {
-                            Marshal.FreeHGlobal((IntPtr) _buffer);
-                            _buffer = null;
-                        }
-                        _capacity = 0;
-                    }
-                    ++_version;
+                        Dispose(true);
                 }
             }
         }
@@ -74,6 +68,9 @@ namespace YARG.Core.Chart.FlatDictionary
                 Marshal.FreeHGlobal((IntPtr) _buffer);
                 _buffer = null;
             }
+            _count = 0;
+            _capacity = 0;
+            _version = 0;
             _disposed = true;
         }
 
