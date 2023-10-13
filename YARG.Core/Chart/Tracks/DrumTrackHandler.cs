@@ -79,12 +79,12 @@ namespace YARG.Core.Chart
 
             switch (_currentType)
             {
-                case DrumsType.FourLane: return Convert<DrumPad_4, Basic_Drums>();
-                case DrumsType.FiveLane: return Convert<DrumPad_5, Basic_Drums>();
+                case DrumsType.FourLane: return MidiConvert<DrumPad_4, Basic_Drums>();
+                case DrumsType.FiveLane: return MidiConvert<DrumPad_5, Basic_Drums>();
                 default:
                     {
                         _currentType = DrumsType.ProDrums;
-                        return Convert<DrumPad_4, Pro_Drums>();
+                        return MidiConvert<DrumPad_4, Pro_Drums>();
                     }
             }
         }
@@ -96,19 +96,19 @@ namespace YARG.Core.Chart
 
             switch (_initialType)
             {
-                case DrumsType.ProDrums: return Combine<DrumPad_4, Pro_Drums>();
-                case DrumsType.FiveLane: return Combine<DrumPad_5, Basic_Drums>();
-                case DrumsType.FourLane: return Combine<DrumPad_4, Basic_Drums>();
+                case DrumsType.ProDrums: return ChartCombine<DrumPad_4, Pro_Drums>();
+                case DrumsType.FiveLane: return ChartCombine<DrumPad_5, Basic_Drums>();
+                case DrumsType.FourLane: return ChartCombine<DrumPad_4, Basic_Drums>();
             }
 
             switch (_currentType)
             {
-                case DrumsType.ProDrums: return CombineConvert<DrumPad_4, Pro_Drums>();
-                case DrumsType.FiveLane: return CombineConvert<DrumPad_5, Basic_Drums>();
+                case DrumsType.ProDrums: return ChartCombineConvert<DrumPad_4, Pro_Drums>();
+                case DrumsType.FiveLane: return ChartCombineConvert<DrumPad_5, Basic_Drums>();
                 default:
                     {
                         _currentType = DrumsType.FourLane;
-                        return CombineConvert<DrumPad_4, Basic_Drums>();
+                        return ChartCombineConvert<DrumPad_4, Basic_Drums>();
                     }
             }
         }
@@ -168,7 +168,7 @@ namespace YARG.Core.Chart
                             else if (str.StartsWith(SOLO))
                                 solo = ev.Position;
                             else
-                                difficulty.events.Get_Or_Add_Last(ev.Position).Add(str);
+                                difficulty.Events.Get_Or_Add_Last(ev.Position).Add(str);
                             break;
                         }
                 }
@@ -241,22 +241,7 @@ namespace YARG.Core.Chart
             return true;
         }
 
-        private InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> Convert<TDrumConfig, TCymbalConfig>()
-            where TDrumConfig : unmanaged, IDrumPadConfig
-            where TCymbalConfig : unmanaged, ICymbalConfig
-        {
-            InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> drums = new();
-            var unknownTrack = (InstrumentTrack_FW<DrumNote<DrumPad_5, Pro_Drums>>) _track!;
-            for (int diffIndex = 0; diffIndex < 4; ++diffIndex)
-            {
-                var unknownDiff = unknownTrack[diffIndex];
-                if (unknownDiff != null && unknownDiff.IsOccupied())
-                    drums[diffIndex] = Convert<TDrumConfig, TCymbalConfig>(unknownDiff);
-            }
-            return drums;
-        }
-
-        private InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> Combine<TDrumConfig, TCymbalConfig>()
+        private InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> ChartCombine<TDrumConfig, TCymbalConfig>()
             where TDrumConfig : unmanaged, IDrumPadConfig
             where TCymbalConfig : unmanaged, ICymbalConfig
         {
@@ -271,7 +256,7 @@ namespace YARG.Core.Chart
             return track;
         }
 
-        private InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> CombineConvert<TDrumConfig, TCymbalConfig>()
+        private InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> ChartCombineConvert<TDrumConfig, TCymbalConfig>()
             where TDrumConfig : unmanaged, IDrumPadConfig
             where TCymbalConfig : unmanaged, ICymbalConfig
         {
@@ -284,9 +269,34 @@ namespace YARG.Core.Chart
                 if (_difficulties[i].Item2 == _currentType)
                     track[i] = (DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>>) _difficulties[i].Item1;
                 else
-                    track[i] = Convert<TDrumConfig, TCymbalConfig>((DifficultyTrack_FW<DrumNote<DrumPad_5, Pro_Drums>>) _difficulties[i].Item1);
+                {
+                    var unknownDiff = (DifficultyTrack_FW<DrumNote<DrumPad_5, Pro_Drums>>) _difficulties[i].Item1;
+                    track[i] = Convert<TDrumConfig, TCymbalConfig>(unknownDiff);
+                    unknownDiff.Dispose();
+                }
             }
             return track;
+        }
+
+        private InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> MidiConvert<TDrumConfig, TCymbalConfig>()
+            where TDrumConfig : unmanaged, IDrumPadConfig
+            where TCymbalConfig : unmanaged, ICymbalConfig
+        {
+            var unknownTrack = (InstrumentTrack_FW<DrumNote<DrumPad_5, Pro_Drums>>) _track!;
+            InstrumentTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> drums = new()
+            {
+                SpecialPhrases = unknownTrack.SpecialPhrases,
+                Events = unknownTrack.Events,
+            };
+
+            for (int diffIndex = 0; diffIndex < 4; ++diffIndex)
+            {
+                var unknownDiff = unknownTrack[diffIndex];
+                if (unknownDiff != null && unknownDiff.IsOccupied())
+                    drums[diffIndex] = Convert<TDrumConfig, TCymbalConfig>(unknownDiff);
+            }
+            unknownTrack.Dispose();
+            return drums;
         }
 
         private static DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> Convert<TDrumConfig, TCymbalConfig>(DifficultyTrack_FW<DrumNote<DrumPad_5, Pro_Drums>> unknownDiff)
@@ -305,7 +315,7 @@ namespace YARG.Core.Chart
             for (int noteIndex = 0; noteIndex < span.Length; ++noteIndex)
             {
                 ref var note = ref span[noteIndex];
-                notes.Add(note.position, DrumNote<TDrumConfig, TCymbalConfig>.Convert(ref note.obj));
+                notes.Add_NoReturn(note.position, DrumNote<TDrumConfig, TCymbalConfig>.Convert(ref note.obj));
             }
             return diff;
         }

@@ -14,6 +14,7 @@ namespace YARG.Core.Chart
             SpecialPhrases.Clear();
             Events.Clear();
         }
+
         public virtual void Dispose() { }
 
         public abstract void TrimExcess();
