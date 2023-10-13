@@ -68,7 +68,7 @@ namespace YARG.Core.Chart
 
         protected virtual void ParseText(ReadOnlySpan<byte> str)
         {
-            track.events.Get_Or_Add_Last(position).Add(Encoding.UTF8.GetString(str));
+            track.Events.Get_Or_Add_Last(position).Add(Encoding.UTF8.GetString(str));
         }
     }
 }

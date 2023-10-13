@@ -267,7 +267,7 @@ namespace YARG.Core.Chart
                         if (doVocals)
                         {
                             if (phrase >= 0)
-                                chart.LeadVocals!.specialPhrases[phrase].Add(new(SpecialPhraseType.LyricLine, ev.Position - phrase));
+                                chart.LeadVocals!.SpecialPhrases[phrase].Add(new(SpecialPhraseType.LyricLine, ev.Position - phrase));
                             phrase = ev.Position;
                         }
                     }
@@ -276,7 +276,7 @@ namespace YARG.Core.Chart
                         // No need for doVocals check
                         if (phrase >= 0)
                         {
-                            chart.LeadVocals!.specialPhrases[phrase].Add(new(SpecialPhraseType.LyricLine, ev.Position - phrase));
+                            chart.LeadVocals!.SpecialPhrases[phrase].Add(new(SpecialPhraseType.LyricLine, ev.Position - phrase));
                             phrase = -1;
                         }
                     }
@@ -351,7 +351,7 @@ namespace YARG.Core.Chart
                                 case SpecialPhraseType.BRE:
                                 case SpecialPhraseType.Tremolo:
                                 case SpecialPhraseType.Trill:
-                                    difficultyTrack.specialPhrases.Get_Or_Add_Last(ev.Position).Add(phrase);
+                                    difficultyTrack.SpecialPhrases.Get_Or_Add_Last(ev.Position).Add(phrase);
                                     break;
                             }
                             break;
@@ -360,11 +360,11 @@ namespace YARG.Core.Chart
                         {
                             string str = chartReader.ExtractText();
                             if (str.StartsWith(SOLOEND))
-                                difficultyTrack.specialPhrases[solo].Add(new(SpecialPhraseType.Solo, ev.Position - solo));
+                                difficultyTrack.SpecialPhrases[solo].Add(new(SpecialPhraseType.Solo, ev.Position - solo));
                             else if (str.StartsWith(SOLO))
                                 solo = ev.Position;
                             else
-                                difficultyTrack.events.Get_Or_Add_Last(ev.Position).Add(str);
+                                difficultyTrack.Events.Get_Or_Add_Last(ev.Position).Add(str);
                             break;
                         }
                 }

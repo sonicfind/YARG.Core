@@ -17,49 +17,29 @@ namespace YARG.Core.Chart
     public class ProGuitarTrack<TProFretConfig> : InstrumentTrack_Base<ProGuitarDifficulty<TProFretConfig>>, IDisposable
         where TProFretConfig : IProFretConfig, new()
     {
-        private bool disposedValue = false;
-        private TimedNativeFlatDictionary<PitchName> _roots = new();
-        private TimedNativeFlatDictionary<HandPosition<TProFretConfig>> _handPositions = new();
-        private TimedFlatDictionary<List<ChordPhrase>> _chordPhrases = new();
-
-        public TimedNativeFlatDictionary<PitchName> Roots => _roots;
-        public TimedNativeFlatDictionary<HandPosition<TProFretConfig>> HandPositions => _handPositions;
-        public TimedFlatDictionary<List<ChordPhrase>> ChordPhrases => _chordPhrases;
+        public readonly TimedNativeFlatDictionary<PitchName> Roots = new();
+        public readonly TimedNativeFlatDictionary<HandPosition<TProFretConfig>> HandPositions = new();
+        public readonly TimedFlatDictionary<List<ChordPhrase>> ChordPhrases = new();
 
         public override bool IsOccupied()
         {
-            return !_roots.IsEmpty() || !_handPositions.IsEmpty() || !_chordPhrases.IsEmpty() || base.IsOccupied();
+            return !Roots.IsEmpty() || !HandPositions.IsEmpty() || !ChordPhrases.IsEmpty() || base.IsOccupied();
         }
 
         public override void Clear()
         {
             base.Clear();
-            _roots.Clear();
-            _handPositions.Clear();
-            _chordPhrases.Clear();
+            Roots.Clear();
+            HandPositions.Clear();
+            ChordPhrases.Clear();
         }
 
-        protected virtual void Dispose(bool disposing)
+        public override void Dispose()
         {
-            foreach (var diff in difficulties)
-                if (diff != null)
-                    diff.Dispose();
+            base.Dispose();
 
-            for (int i = 0; i < difficulties.Length; ++i)
-                difficulties[i] = null;
-
-            _roots.Dispose();
-            _handPositions.Dispose();
-        }
-
-        public void Dispose()
-        {
-            if (!disposedValue)
-            {
-                Dispose(disposing: true);
-                GC.SuppressFinalize(this);
-                disposedValue = true;
-            }
+            Roots.Dispose();
+            HandPositions.Dispose();
         }
     }
 }

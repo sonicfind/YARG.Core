@@ -90,7 +90,7 @@ namespace YARG.Core.Chart
             if (!enableDynamics && str.SequenceEqual(DYNAMICS_STRING))
                 enableDynamics = true;
             else
-                track.events.Get_Or_Add_Last(position).Add(Encoding.UTF8.GetString(str));
+                track.Events.Get_Or_Add_Last(position).Add(Encoding.UTF8.GetString(str));
         }
     }
 }

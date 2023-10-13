@@ -25,7 +25,7 @@ namespace YARG.Core.Chart
 
             if (IsNote())
                 ParseLaneColor(midiTrack);
-            else if (!AddPhrase(ref track.specialPhrases, note))
+            else if (!AddPhrase(ref track.SpecialPhrases, note))
             {
                 if (120 <= note.value && note.value <= 124)
                     ParseBRE(note.value);
@@ -41,7 +41,7 @@ namespace YARG.Core.Chart
 
             if (IsNote())
                 ParseLaneColor_Off(midiTrack);
-            else if (!AddPhrase_Off(ref track.specialPhrases, note))
+            else if (!AddPhrase_Off(ref track.SpecialPhrases, note))
             {
                 if (120 <= note.value && note.value <= 124)
                     ParseBRE_Off();
@@ -92,7 +92,7 @@ namespace YARG.Core.Chart
         {
             if (doBRE)
             {
-                ref var phrasesList = ref track.specialPhrases[notes_BRE[0]];
+                ref var phrasesList = ref track.SpecialPhrases[notes_BRE[0]];
                 phrasesList.Add(new(SpecialPhraseType.BRE, position - notes_BRE[0]));
 
                 for (int i = 0; i < 5; i++)

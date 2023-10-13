@@ -51,12 +51,12 @@ namespace YARG.Core.Chart
                 if (note.value == 96 || note.value == 97)
                     AddPercussion();
                 else
-                    AddPhrase(ref track.specialPhrases, note);
+                    AddPhrase(ref track.SpecialPhrases, note);
             }
             else if (index == 1)
             {
                 if (note.value == 105 || note.value == 106)
-                    AddHarmonyLine(ref track.specialPhrases);
+                    AddHarmonyLine(ref track.SpecialPhrases);
             }
         }
 
@@ -71,12 +71,12 @@ namespace YARG.Core.Chart
                 else if (note.value == 97)
                     AddPercussion_Off(false);
                 else
-                    AddPhrase_Off(ref track.specialPhrases, note);
+                    AddPhrase_Off(ref track.SpecialPhrases, note);
             }
             else if (index == 1)
             {
                 if (note.value == 105 || note.value == 106)
-                    AddHarmonyLine_Off(ref track.specialPhrases);
+                    AddHarmonyLine_Off(ref track.SpecialPhrases);
             }
         }
 
@@ -94,7 +94,7 @@ namespace YARG.Core.Chart
                 lyric.Item2 = Encoding.UTF8.GetString(str);
             }
             else if (index == 0)
-                track.events.Get_Or_Add_Last(position).Add(Encoding.UTF8.GetString(str));
+                track.Events.Get_Or_Add_Last(position).Add(Encoding.UTF8.GetString(str));
         }
 
         private void ParseVocal(int pitch)

@@ -155,7 +155,7 @@ namespace YARG.Core.Chart
                                 case SpecialPhraseType.BRE:
                                 case SpecialPhraseType.Tremolo:
                                 case SpecialPhraseType.Trill:
-                                    difficulty.specialPhrases.Get_Or_Add_Last(ev.Position).Add(phrase);
+                                    difficulty.SpecialPhrases.Get_Or_Add_Last(ev.Position).Add(phrase);
                                     break;
                             }
                             break;
@@ -164,7 +164,7 @@ namespace YARG.Core.Chart
                         {
                             string str = reader.ExtractText();
                             if (str.StartsWith(SOLOEND))
-                                difficulty.specialPhrases[solo].Add(new(SpecialPhraseType.Solo, ev.Position - solo));
+                                difficulty.SpecialPhrases[solo].Add(new(SpecialPhraseType.Solo, ev.Position - solo));
                             else if (str.StartsWith(SOLO))
                                 solo = ev.Position;
                             else
@@ -295,8 +295,8 @@ namespace YARG.Core.Chart
         {
             DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> diff = new()
             {
-                specialPhrases = unknownDiff.specialPhrases,
-                events = unknownDiff.events,
+                SpecialPhrases = unknownDiff.SpecialPhrases,
+                Events = unknownDiff.Events,
             };
 
             var span = unknownDiff.Notes.Span;

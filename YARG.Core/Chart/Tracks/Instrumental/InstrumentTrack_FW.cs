@@ -44,30 +44,23 @@ namespace YARG.Core.Chart
             }
             return endTime;
         }
-    }
 
-    public class InstrumentTrack_FW<T> : InstrumentTrack_Base<DifficultyTrack_FW<T>>, IDisposable
-        where T : unmanaged, INote
-    {
-        private bool disposedValue;
-
-        protected virtual void Dispose(bool disposing)
+        public override void Dispose()
         {
-            foreach (var diff in difficulties)
-                diff?.Dispose();
-
             for (int i = 0; i < difficulties.Length; ++i)
-                difficulties[i] = null;
-        }
-
-        public void Dispose()
-        {
-            if (!disposedValue)
             {
-                Dispose(disposing: true);
-                GC.SuppressFinalize(this);
-                disposedValue = true;
+                ref var diff = ref difficulties[i];
+                if (diff != null)
+                {
+                    diff.Dispose();
+                    diff = null;
+                }
             }
         }
+    }
+
+    public class InstrumentTrack_FW<T> : InstrumentTrack_Base<DifficultyTrack_FW<T>>
+        where T : unmanaged, INote
+    {
     }
 }

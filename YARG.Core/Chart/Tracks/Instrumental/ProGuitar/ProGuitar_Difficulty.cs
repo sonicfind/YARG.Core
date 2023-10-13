@@ -6,21 +6,20 @@ namespace YARG.Core.Chart
     public class ProGuitarDifficulty<TProFretConfig> : DifficultyTrack_FW<ProGuitarNote<TProFretConfig>>
         where TProFretConfig : IProFretConfig, new()
     {
-        private TimedNativeFlatDictionary<Arpeggio<TProFretConfig>> _arpeggios = new();
-        public TimedNativeFlatDictionary<Arpeggio<TProFretConfig>> Arpeggios => _arpeggios;
+        public readonly TimedNativeFlatDictionary<Arpeggio<TProFretConfig>> Arpeggios = new();
 
-        public override bool IsOccupied() { return !_arpeggios.IsEmpty() || base.IsOccupied(); }
+        public override bool IsOccupied() { return !Arpeggios.IsEmpty() || base.IsOccupied(); }
 
         public override void Clear()
         {
             base.Clear();
-            _arpeggios.Clear();
+            Arpeggios.Clear();
         }
 
-        protected override void Dispose(bool disposing)
+        public override void Dispose()
         {
-            _notes.Dispose();
-            _arpeggios.Dispose();
+            base.Dispose();
+            Arpeggios.Dispose();
         }
     }
 }

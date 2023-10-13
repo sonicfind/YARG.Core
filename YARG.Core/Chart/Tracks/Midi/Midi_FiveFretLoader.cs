@@ -96,22 +96,22 @@ namespace YARG.Core.Chart
             {
                 if (diffIndex == 3)
                 {
-                    phrases.AddPhrase(ref track.specialPhrases, position, SpecialPhraseType.Solo, 100);
+                    phrases.AddPhrase(ref track.SpecialPhrases, position, SpecialPhraseType.Solo, 100);
                     return;
                 }
 
                 for (int i = 0; i < 4; ++i)
                     lanes[12 * i + 8] = 12;
 
-                for (int i = 0; i < track.specialPhrases.Count;)
+                for (int i = 0; i < track.SpecialPhrases.Count;)
                 {
-                    var vec = track.specialPhrases.At_index(i);
+                    var vec = track.SpecialPhrases.At_index(i);
                     var phrases = vec.obj;
                     for (int p = 0; p < phrases.Count;)
                     {
                         if (phrases[p].Type == SpecialPhraseType.Solo)
                         {
-                            track[3]!.specialPhrases[vec.position].Add(new(SpecialPhraseType.StarPower_Diff, phrases[p].Duration));
+                            track[3]!.SpecialPhrases[vec.position].Add(new(SpecialPhraseType.StarPower_Diff, phrases[p].Duration));
                             vec.obj.RemoveAt(p);
                         }
                         else
@@ -119,21 +119,21 @@ namespace YARG.Core.Chart
                     }
 
                     if (vec.obj.Count == 0)
-                        track.specialPhrases.RemoveAt(i);
+                        track.SpecialPhrases.RemoveAt(i);
                     else
                         ++i;
                 }
 
-                midiDiff!.phrases.AddPhrase(ref diff.specialPhrases, position, SpecialPhraseType.StarPower_Diff, 100);
+                midiDiff!.phrases.AddPhrase(ref diff.SpecialPhrases, position, SpecialPhraseType.StarPower_Diff, 100);
             }
             else if (lane == 9)
                 midiDiff!.SliderNotes = true;
             else if (lane == 10)
-                midiDiff!.phrases.AddPhrase(ref diff.specialPhrases, position, SpecialPhraseType.FaceOff_Player1, 100);
+                midiDiff!.phrases.AddPhrase(ref diff.SpecialPhrases, position, SpecialPhraseType.FaceOff_Player1, 100);
             else if (lane == 11)
-                midiDiff!.phrases.AddPhrase(ref diff.specialPhrases, position, SpecialPhraseType.FaceOff_Player2, 100);
+                midiDiff!.phrases.AddPhrase(ref diff.SpecialPhrases, position, SpecialPhraseType.FaceOff_Player2, 100);
             else if (lane == 12)
-                midiDiff!.phrases.AddPhrase(ref diff.specialPhrases, position, SpecialPhraseType.StarPower_Diff, 100);
+                midiDiff!.phrases.AddPhrase(ref diff.SpecialPhrases, position, SpecialPhraseType.StarPower_Diff, 100);
         }
 
         protected override void ParseLaneColor_Off(YARGMidiTrack midiTrack)
@@ -169,15 +169,15 @@ namespace YARG.Core.Chart
                     diff.Notes.Last().Forcing = ForceStatus.NATURAL;
             }
             else if (lane == 8)
-                phrases.AddPhrase_Off(ref track.specialPhrases, position, SpecialPhraseType.Solo);
+                phrases.AddPhrase_Off(ref track.SpecialPhrases, position, SpecialPhraseType.Solo);
             else if (lane == 9)
                 midiDiff!.SliderNotes = false;
             else if (lane == 10)
-                midiDiff!.phrases.AddPhrase_Off(ref diff.specialPhrases, position, SpecialPhraseType.FaceOff_Player1);
+                midiDiff!.phrases.AddPhrase_Off(ref diff.SpecialPhrases, position, SpecialPhraseType.FaceOff_Player1);
             else if (lane == 11)
-                midiDiff!.phrases.AddPhrase_Off(ref diff.specialPhrases, position, SpecialPhraseType.FaceOff_Player2);
+                midiDiff!.phrases.AddPhrase_Off(ref diff.SpecialPhrases, position, SpecialPhraseType.FaceOff_Player2);
             else if (lane == 12)
-                midiDiff!.phrases.AddPhrase_Off(ref diff.specialPhrases, position, SpecialPhraseType.StarPower_Diff);
+                midiDiff!.phrases.AddPhrase_Off(ref diff.SpecialPhrases, position, SpecialPhraseType.StarPower_Diff);
         }
 
         protected override void ParseSysEx(ReadOnlySpan<byte> str)
@@ -245,7 +245,7 @@ namespace YARG.Core.Chart
                     lanes[12 * diff] = 0;
             }
             else
-                track.events.Get_Or_Add_Last(position).Add(Encoding.UTF8.GetString(str));
+                track.Events.Get_Or_Add_Last(position).Add(Encoding.UTF8.GetString(str));
         }
     }
 }
