@@ -17,8 +17,8 @@
         static ProGuitarString() { }
 
         private int _fret;
-        public TruncatableSustain Duration;
         public StringMode mode;
+        public TruncatableSustain Duration;
 
         public int Fret
         {
