@@ -5,15 +5,6 @@ using YARG.Core.Chart.Guitar;
 
 namespace YARG.Core.Chart
 {
-    public class SixFretMidiDifficulty
-    {
-        public bool SliderNotes { get; set; }
-        public bool HopoOn { get; set; }
-        public bool HopoOff { get; set; }
-        public readonly long[] notes = new long[7] { -1, -1, -1, -1, -1, -1, -1 };
-        public SixFretMidiDifficulty() { }
-    }
-
     public class Midi_SixFretLoader : MidiInstrumentLoader_Common<GuitarNote<SixFret>, SixFretMidiDifficulty>
     {
         private static readonly int[] LANEVALUES = new int[] {
@@ -55,26 +46,33 @@ namespace YARG.Core.Chart
 
                     ref var guitar = ref diff.Notes.Add(position);
                     if (midiDiff.SliderNotes)
-                        guitar.IsTap = true;
-
-                    if (midiDiff.HopoOn)
-                        guitar.Forcing = ForceStatus.HOPO;
+                        guitar.State = GuitarState.TAP;
+                    else if (midiDiff.HopoOn)
+                        guitar.State = GuitarState.HOPO;
                     else if (midiDiff.HopoOff)
-                        guitar.Forcing = ForceStatus.STRUM;
+                        guitar.State = GuitarState.STRUM;
                 }
             }
             else if (lane == 7)
             {
                 midiDiff.HopoOn = true;
                 if (diff.Notes.ValidateLastKey(position))
-                    diff.Notes.Last().Forcing = ForceStatus.HOPO;
+                {
+                    ref var guitar = ref diff.Notes.Last();
+                    if (guitar.State == GuitarState.NATURAL)
+                        guitar.State = GuitarState.HOPO;
+                }
             }
             // HopoOff marker
             else if (lane == 8)
             {
                 midiDiff.HopoOff = true;
                 if (diff.Notes.ValidateLastKey(position))
-                    diff.Notes.Last().Forcing = ForceStatus.STRUM;
+                {
+                    ref var guitar = ref diff.Notes.Last();
+                    if (guitar.State == GuitarState.NATURAL)
+                        guitar.State = GuitarState.STRUM;
+                }
             }
             else if (lane == 10)
                 midiDiff.SliderNotes = true;
@@ -88,20 +86,37 @@ namespace YARG.Core.Chart
             if (midiDiff == null)
                 return;
 
+            ref var diff = ref track[diffIndex]!;
             int lane = LANEVALUES[noteValue];
             if (lane < 7)
             {
                 long colorPosition = midiDiff.notes[lane];
                 if (colorPosition != -1)
                 {
-                    track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
+                    diff.Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
                     midiDiff.notes[lane] = -1;
                 }
             }
             else if (lane == 7)
+            {
                 midiDiff.HopoOn = false;
+                if (diff.Notes.ValidateLastKey(position))
+                {
+                    ref var guitar = ref diff.Notes.Last();
+                    if (guitar.State != GuitarState.TAP)
+                        guitar.State = GuitarState.NATURAL;
+                }
+            }
             else if (lane == 8)
+            {
                 midiDiff.HopoOff = false;
+                if (diff.Notes.ValidateLastKey(position))
+                {
+                    ref var guitar = ref diff.Notes.Last();
+                    if (guitar.State != GuitarState.TAP)
+                        guitar.State = GuitarState.NATURAL;
+                }
+            }
             else if (lane == 10)
                 midiDiff.SliderNotes = false;
         }
@@ -110,37 +125,22 @@ namespace YARG.Core.Chart
         {
             if (str.StartsWith(SYSEXTAG))
             {
-                if (str[6] == 1)
+                bool enable = str[6] == 1;
+                if (enable)
                     NormalizeNoteOnPosition();
 
                 if (str[5] == 4)
                 {
                     if (str[4] == (char) 0xFF)
-                    {
-                        for (int diff = 0; diff < 4; ++diff)
-                        {
-                            if (difficulties[diff] == null)
-                                continue;
-
-                            difficulties[diff].SliderNotes = str[6] == 1;
-                            if (str[6] == 1 && track[diff]!.Notes.ValidateLastKey(position))
-                                track[diff]!.Notes.Last().IsTap = true;
-                        }
-                    }
+                        MidiGuitarHelper.ProcessTapSysex(track, difficulties, position, enable);
                     else
                     {
-                        byte diff = str[4];
-                        if (difficulties[diff] == null)
+                        byte diffIndex = str[4];
+                        var midiDiff = difficulties[diffIndex];
+                        if (midiDiff == null)
                             return;
 
-                        if (str[6] == 1)
-                        {
-                            difficulties[diff].SliderNotes = true;
-                            if (track[diff]!.Notes.ValidateLastKey(position))
-                                track[diff]!.Notes.Last().IsTap = true;
-                        }
-                        else
-                            difficulties[diff].SliderNotes = false;
+                        MidiGuitarHelper.ProcessTapSysex(track[diffIndex]!, midiDiff, position, enable);
                     }
                 }
             }

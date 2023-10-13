@@ -3,12 +3,13 @@ using System.Runtime.CompilerServices;
 
 namespace YARG.Core.Chart.Guitar
 {
-    public enum ForceStatus
+    public enum GuitarState
     {
         NATURAL,
         FORCED_LEGACY,
         HOPO,
-        STRUM
+        STRUM,
+        TAP
     }
 
     public struct GuitarNote<TConfig> : INote
@@ -25,18 +26,7 @@ namespace YARG.Core.Chart.Guitar
         }
 
         private TConfig frets;
-        public ForceStatus Forcing;
-        public bool IsTap;
-        public void ToggleTap() { IsTap = !IsTap; }
-
-        private unsafe TruncatableSustain* FretPtr
-        {
-            get
-            {
-                fixed (TConfig* lanes = &frets)
-                    return (TruncatableSustain*)lanes;
-            }
-        }
+        public GuitarState State;
 
         private ref TruncatableSustain GetSustain(int lane)
         {
@@ -45,7 +35,8 @@ namespace YARG.Core.Chart.Guitar
 
             unsafe
             {
-                return ref FretPtr[lane];
+                fixed (TConfig* ptr = &frets)
+                    return ref ((TruncatableSustain*) ptr)[lane];
             }
         }
 
@@ -59,15 +50,18 @@ namespace YARG.Core.Chart.Guitar
 
                 unsafe
                 {
-                    var lanes = FretPtr;
-                    lanes[lane] = value;
-                    if (lane == 0)
+                    fixed (TConfig* ptr = &frets)
                     {
-                        for (int i = 1; i < NUMLANES; ++i)
-                            lanes[lane].Disable();
+                        var lanes = (TruncatableSustain*) ptr;
+                        lanes[lane] = value;
+                        if (lane == 0)
+                        {
+                            for (int i = 1; i < NUMLANES; ++i)
+                                lanes[lane].Disable();
+                        }
+                        else
+                            lanes[0].Disable();
                     }
-                    else
-                        lanes[0].Disable();
                 }
             }
         }
@@ -82,11 +76,14 @@ namespace YARG.Core.Chart.Guitar
             int numActive = 0;
             unsafe
             {
-                var lanes = FretPtr;
-                for (int i = 0; i < NUMLANES; ++i)
+                fixed (TConfig* ptr = &frets)
                 {
-                    bool active = lanes[i].IsActive();
-                    numActive += Unsafe.As<bool, byte>(ref active);
+                    var lanes = (TruncatableSustain*) ptr;
+                    for (int i = 0; i < NUMLANES; ++i)
+                    {
+                        bool active = lanes[i].IsActive();
+                        numActive += Unsafe.As<bool, byte>(ref active);
+                    }
                 }
             }
             return numActive;
@@ -96,17 +93,19 @@ namespace YARG.Core.Chart.Guitar
         {
             unsafe
             {
-                var lanes = FretPtr;
-                long sustain = lanes[0];
-                for (int i = 1; i < NUMLANES; ++i)
+                fixed (TConfig* ptr = &frets)
                 {
-                    long dur = lanes[i].Duration;
-                    if (dur > sustain)
-                        sustain = dur;
+                    var lanes = (TruncatableSustain*) ptr;
+                    long sustain = lanes[0];
+                    for (int i = 1; i < NUMLANES; ++i)
+                    {
+                        long dur = lanes[i].Duration;
+                        if (dur > sustain)
+                            sustain = dur;
+                    }
+                    return sustain;
                 }
-                return sustain;
             }
-            
         }
     }
 }

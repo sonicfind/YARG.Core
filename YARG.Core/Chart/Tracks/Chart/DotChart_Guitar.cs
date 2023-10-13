@@ -1,4 +1,4 @@
-using YARG.Core.Chart.Guitar;
+﻿using YARG.Core.Chart.Guitar;
 
 namespace YARG.Core.Chart
 {
@@ -15,9 +15,12 @@ namespace YARG.Core.Chart
             if (lane < BASE_RANGE)
                 note[lane + 1] = length;
             else if (lane == FORCED_VALUE)
-                note.Forcing = ForceStatus.FORCED_LEGACY;
+            {
+                if (note.State == GuitarState.NATURAL)
+                    note.State = GuitarState.FORCED_LEGACY;
+            }
             else if (lane == TAPPED_VALUE)
-                note.IsTap = true;
+                note.State = GuitarState.TAP;
             else if (lane == OPENNOTE)
                 note[OPEN_INDEX] = length;
             else
@@ -34,9 +37,12 @@ namespace YARG.Core.Chart
             else if (lane == 8)
                 note[BLACK3_INDEX] = length;
             else if (lane == FORCED_VALUE)
-                note.Forcing = ForceStatus.FORCED_LEGACY;
+            {
+                if (note.State == GuitarState.NATURAL)
+                    note.State = GuitarState.FORCED_LEGACY;
+            }
             else if (lane == TAPPED_VALUE)
-                note.IsTap = true;
+                note.State = GuitarState.TAP;
             else if (lane == OPENNOTE)
                 note[OPEN_INDEX] = length;
             else
