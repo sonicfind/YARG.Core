@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using YARG.Core.IO;
 
 namespace YARG.Core.Chart.FlatDictionary
 {
@@ -24,8 +25,7 @@ namespace YARG.Core.Chart.FlatDictionary
         private int _count;
         private int _capacity;
         private int _version;
-        private bool _disposed;
-        private unsafe FlatMapNode<TKey, TObj>* _buffer = null;
+        private DisposableArray<FlatMapNode<TKey, TObj>>? _buffer = null;
 
         public int Count { get { return _count; } }
         public int Capacity
@@ -40,12 +40,11 @@ namespace YARG.Core.Chart.FlatDictionary
                         unsafe
                         {
                             if (_buffer != null)
-                                _buffer = (FlatMapNode<TKey, TObj>*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) (value * SIZEOFNODE));
+                                _buffer = DisposableArray<FlatMapNode<TKey, TObj>>.ReAlloc(_buffer, value);
                             else
-                                _buffer = (FlatMapNode<TKey, TObj>*) Marshal.AllocHGlobal(value * SIZEOFNODE);
+                                _buffer = new DisposableArray<FlatMapNode<TKey, TObj>>(value);
                         }
                         _capacity = value;
-                        _disposed = false;
                         ++_version;
                     }
                     else
@@ -58,20 +57,12 @@ namespace YARG.Core.Chart.FlatDictionary
 
         protected void Dispose(bool disposing)
         {
-            if (_disposed)
-            {
-                return;
-            }
-
-            unsafe
-            {
-                Marshal.FreeHGlobal((IntPtr) _buffer);
-                _buffer = null;
-            }
+            if (disposing)
+                _buffer?.Dispose();
+            _buffer = null;
             _count = 0;
             _capacity = 0;
             _version = 0;
-            _disposed = true;
         }
 
         ~NativeFlatDictionary()
@@ -132,7 +123,7 @@ namespace YARG.Core.Chart.FlatDictionary
             int index = _count++;
             unsafe
             {
-                ref var node = ref _buffer[index];
+                ref var node = ref _buffer!.Ptr[index];
                 node.position = key;
                 node.obj = obj;
                 return ref node.obj;
@@ -145,7 +136,7 @@ namespace YARG.Core.Chart.FlatDictionary
             int index = _count++;
             unsafe
             {
-                ref var node = ref _buffer[index];
+                ref var node = ref _buffer!.Ptr[index];
                 node.position = key;
                 node.obj = obj;
                 return ref node.obj;
@@ -163,7 +154,7 @@ namespace YARG.Core.Chart.FlatDictionary
             int index = _count++;
             unsafe
             {
-                ref var node = ref _buffer[index];
+                ref var node = ref _buffer!.Ptr[index];
                 node.position = key;
                 node.obj = obj;
             }
@@ -175,7 +166,7 @@ namespace YARG.Core.Chart.FlatDictionary
             int index = _count++;
             unsafe
             {
-                ref var node = ref _buffer[index];
+                ref var node = ref _buffer!.Ptr[index];
                 node.position = key;
                 node.obj = obj;
             }
@@ -197,7 +188,7 @@ namespace YARG.Core.Chart.FlatDictionary
             CheckAndGrow();
             unsafe
             {
-                var position = _buffer + index;
+                var position = _buffer!.Ptr + index;
                 if (index < _count)
                 {
                     int leftover = _count - index;
@@ -215,7 +206,7 @@ namespace YARG.Core.Chart.FlatDictionary
             {
                 unsafe
                 {
-                    var position = _buffer + index;
+                    var position = _buffer!.Ptr + index;
                     int leftover = _count - index;
 
                     if (leftover > 1)
@@ -252,7 +243,7 @@ namespace YARG.Core.Chart.FlatDictionary
             int index = Find_or_emplace_index(searchIndex, key);
             unsafe
             {
-                return ref _buffer[index].obj;
+                return ref _buffer!.Ptr[index].obj;
             }
         }
 
@@ -274,7 +265,7 @@ namespace YARG.Core.Chart.FlatDictionary
             {
                 unsafe
                 {
-                    return ref _buffer[index].obj;
+                    return ref _buffer!.Ptr[index].obj;
                 }
             }
             throw new KeyNotFoundException();
@@ -285,7 +276,7 @@ namespace YARG.Core.Chart.FlatDictionary
             unsafe
             {
                 if (0 <= index && index < _count)
-                    return ref _buffer[index];
+                    return ref _buffer!.Ptr[index];
                 throw new IndexOutOfRangeException();
             }
         }
@@ -297,7 +288,7 @@ namespace YARG.Core.Chart.FlatDictionary
 
             unsafe
             {
-                ref var node = ref _buffer[_count - 1];
+                ref var node = ref _buffer!.Ptr[_count - 1];
                 if (node.position.CompareTo(key) < 0)
                     return ref Add(key);
 
@@ -309,8 +300,8 @@ namespace YARG.Core.Chart.FlatDictionary
         {
             unsafe
             {
-                var position = _buffer + _count - 1;
-                while (position > _buffer && key.CompareTo(position->position) < 0)
+                var position = _buffer!.Ptr + _count - 1;
+                while (position > _buffer!.Ptr && key.CompareTo(position->position) < 0)
                     --position;
                 return ref position->obj;
             }
@@ -320,7 +311,7 @@ namespace YARG.Core.Chart.FlatDictionary
         {
             unsafe
             {
-                return ref _buffer[_count - 1].obj;
+                return ref _buffer!.Ptr[_count - 1].obj;
             }
         }
 
@@ -328,7 +319,7 @@ namespace YARG.Core.Chart.FlatDictionary
         {
             unsafe
             {
-                return _count > 0 && _buffer[_count - 1].position.Equals(key);
+                return _count > 0 && _buffer!.Ptr[_count - 1].position.Equals(key);
             }
         }
 
@@ -346,7 +337,7 @@ namespace YARG.Core.Chart.FlatDictionary
                 int order;
                 unsafe
                 {
-                    order = _buffer[curr].position.CompareTo(key);
+                    order = _buffer!.Ptr[curr].position.CompareTo(key);
                 }
                 if (order == 0) return curr;
                 if (order < 0)
@@ -363,12 +354,12 @@ namespace YARG.Core.Chart.FlatDictionary
             {
                 unsafe
                 {
-                    return new(_buffer, _count);
+                    return new(_buffer!.Ptr, _count);
                 }
             }
         }
 
-        public unsafe FlatMapNode<TKey, TObj>* Data => _buffer;
+        public unsafe FlatMapNode<TKey, TObj>* Data => _buffer!.Ptr;
 
         public IEnumerator GetEnumerator() { return new Enumerator(this); }
         IEnumerator<FlatMapNode<TKey, TObj>> IEnumerable<FlatMapNode<TKey, TObj>>.GetEnumerator()
