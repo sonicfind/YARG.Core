@@ -56,6 +56,15 @@ namespace YARG.Core.IO
             stream.Read(new Span<byte>(buffer, length));
             return new DisposableArray<T>(buffer, length);
         }
+        
+        public static DisposableArray<T> ReAlloc(DisposableArray<T> original, int numElements)
+        {
+            int bufferLength = numElements * sizeof(T);
+            var newPtr = (byte*) Marshal.ReAllocHGlobal(original.IntPtr, (IntPtr) bufferLength);
+            original.disposedValue = true;
+            original.counter.Decrement();
+            return new DisposableArray<T>(newPtr, bufferLength);
+        }
 
         private DisposableArray(byte* ptr, int bytes)
         {
