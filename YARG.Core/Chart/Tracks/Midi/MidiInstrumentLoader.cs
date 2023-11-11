@@ -72,12 +72,12 @@ namespace YARG.Core.Chart
 
         protected virtual void ToggleExtraValues_Off(YARGMidiTrack midiTrack) { }
 
-        private bool AddPhrase(ref TimedFlatDictionary<List<SpecialPhrase_FW>> phrases, MidiNote note)
+        private bool AddPhrase(ref TimedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, MidiNote note)
         {
             return this.phrases.AddPhrase(ref phrases, position, note);
         }
 
-        private bool AddPhrase_Off(ref TimedFlatDictionary<List<SpecialPhrase_FW>> phrases, MidiNote note)
+        private bool AddPhrase_Off(ref TimedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, MidiNote note)
         {
             return this.phrases.AddPhrase_Off(ref phrases, position, note);
         }
@@ -93,7 +93,7 @@ namespace YARG.Core.Chart
             if (doBRE)
             {
                 ref var phrasesList = ref track.SpecialPhrases[notes_BRE[0]];
-                phrasesList.Add(new(SpecialPhraseType.BRE, position - notes_BRE[0]));
+                phrasesList.TryAdd(SpecialPhraseType.BRE, new SpecialPhraseInfo(position - notes_BRE[0]));
 
                 for (int i = 0; i < 5; i++)
                     notes_BRE[0] = -1;

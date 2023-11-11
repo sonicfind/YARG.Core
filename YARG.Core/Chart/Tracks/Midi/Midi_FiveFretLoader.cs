@@ -88,20 +88,12 @@ namespace YARG.Core.Chart
                 for (int i = 0; i < 4; ++i)
                     lanes[12 * i + 8] = 12;
 
+                ref var expertPhrases = ref track[3]!.SpecialPhrases;
                 for (int i = 0; i < track.SpecialPhrases.Count;)
                 {
                     var vec = track.SpecialPhrases.At_index(i);
-                    var phrases = vec.obj;
-                    for (int p = 0; p < phrases.Count;)
-                    {
-                        if (phrases[p].Type == SpecialPhraseType.Solo)
-                        {
-                            track[3]!.SpecialPhrases[vec.position].Add(new(SpecialPhraseType.StarPower_Diff, phrases[p].Duration));
-                            vec.obj.RemoveAt(p);
-                        }
-                        else
-                            ++p;
-                    }
+                    if (vec.obj.Remove(SpecialPhraseType.Solo, out var phrase))
+                        expertPhrases[vec.position].TryAdd(SpecialPhraseType.StarPower_Diff, phrase);
 
                     if (vec.obj.Count == 0)
                         track.SpecialPhrases.RemoveAt(i);

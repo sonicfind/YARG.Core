@@ -155,22 +155,22 @@ namespace YARG.Core.Chart
             }
         }
 
-        private void AddPhrase(ref TimedFlatDictionary<List<SpecialPhrase_FW>> phrases, MidiNote note)
+        private void AddPhrase(ref TimedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, MidiNote note)
         {
             this.phrases.AddPhrase(ref phrases, position, note);
         }
 
-        private void AddPhrase_Off(ref TimedFlatDictionary<List<SpecialPhrase_FW>> phrases, MidiNote note)
+        private void AddPhrase_Off(ref TimedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, MidiNote note)
         {
             this.phrases.AddPhrase_Off(ref phrases, position, note);
         }
 
-        private void AddHarmonyLine(ref TimedFlatDictionary<List<SpecialPhrase_FW>> phrases)
+        private void AddHarmonyLine(ref TimedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases)
         {
             this.phrases.AddPhrase(ref phrases, position, SpecialPhraseType.HarmonyLine, 100);
         }
 
-        private void AddHarmonyLine_Off(ref TimedFlatDictionary<List<SpecialPhrase_FW>> phrases)
+        private void AddHarmonyLine_Off(ref TimedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases)
         {
             this.phrases.AddPhrase_Off(ref phrases, position, SpecialPhraseType.HarmonyLine);
         }

@@ -6,7 +6,7 @@ namespace YARG.Core.Chart
 {
     public abstract class Track : IDisposable
     {
-        public TimedFlatDictionary<List<SpecialPhrase_FW>> SpecialPhrases = new();
+        public TimedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> SpecialPhrases = new();
         public TimedFlatDictionary<List<string>> Events = new();
         protected bool disposedValue;
 

@@ -267,7 +267,7 @@ namespace YARG.Core.Chart
                         if (doVocals)
                         {
                             if (phrase >= 0)
-                                chart.LeadVocals!.SpecialPhrases[phrase].Add(new(SpecialPhraseType.LyricLine, ev.Position - phrase));
+                                chart.LeadVocals!.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, new(ev.Position - phrase));
                             phrase = ev.Position;
                         }
                     }
@@ -276,7 +276,7 @@ namespace YARG.Core.Chart
                         // No need for doVocals check
                         if (phrase >= 0)
                         {
-                            chart.LeadVocals!.SpecialPhrases[phrase].Add(new(SpecialPhraseType.LyricLine, ev.Position - phrase));
+                            chart.LeadVocals!.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, new(ev.Position - phrase));
                             phrase = -1;
                         }
                     }
@@ -345,13 +345,13 @@ namespace YARG.Core.Chart
                     case ChartEventType.Special:
                         {
                             var phrase = chartReader.ExtractSpecialPhrase();
-                            switch (phrase.Type)
+                            switch (phrase.Item1)
                             {
                                 case SpecialPhraseType.StarPower:
                                 case SpecialPhraseType.BRE:
                                 case SpecialPhraseType.Tremolo:
                                 case SpecialPhraseType.Trill:
-                                    difficultyTrack.SpecialPhrases.Get_Or_Add_Last(ev.Position).Add(phrase);
+                                    difficultyTrack.SpecialPhrases.Get_Or_Add_Last(ev.Position).TryAdd(phrase.Item1, phrase.Item2);
                                     break;
                             }
                             break;
@@ -360,7 +360,7 @@ namespace YARG.Core.Chart
                         {
                             string str = chartReader.ExtractText();
                             if (str.StartsWith(SOLOEND))
-                                difficultyTrack.SpecialPhrases[solo].Add(new(SpecialPhraseType.Solo, ev.Position - solo));
+                                difficultyTrack.SpecialPhrases[solo].TryAdd(SpecialPhraseType.Solo, new SpecialPhraseInfo(ev.Position - solo));
                             else if (str.StartsWith(SOLO))
                                 solo = ev.Position;
                             else

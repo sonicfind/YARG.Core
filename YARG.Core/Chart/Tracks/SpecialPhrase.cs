@@ -16,7 +16,7 @@
         LyricShift = 67,
     }
 
-    public struct SpecialPhrase_FW
+    public struct SpecialPhraseInfo
     {
         private NormalizedDuration _duration;
         public long Duration
@@ -25,12 +25,10 @@
             set => _duration = value;
         }
 
-        public SpecialPhraseType Type { get; set; }
         public int Velocity { get; set; }
 
-        public SpecialPhrase_FW(SpecialPhraseType type, long duration, int velocity = 100)
+        public SpecialPhraseInfo(long duration, int velocity = 100)
         {
-            Type = type;
             Velocity = velocity;
             _duration = duration;
         }

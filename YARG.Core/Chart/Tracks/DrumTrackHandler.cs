@@ -149,13 +149,13 @@ namespace YARG.Core.Chart
                     case ChartEventType.Special:
                         {
                             var phrase = reader.ExtractSpecialPhrase();
-                            switch (phrase.Type)
+                            switch (phrase.Item1)
                             {
                                 case SpecialPhraseType.StarPower:
                                 case SpecialPhraseType.BRE:
                                 case SpecialPhraseType.Tremolo:
                                 case SpecialPhraseType.Trill:
-                                    difficulty.SpecialPhrases.Get_Or_Add_Last(ev.Position).Add(phrase);
+                                    difficulty.SpecialPhrases.Get_Or_Add_Last(ev.Position).TryAdd(phrase.Item1, phrase.Item2);
                                     break;
                             }
                             break;
@@ -164,7 +164,7 @@ namespace YARG.Core.Chart
                         {
                             string str = reader.ExtractText();
                             if (str.StartsWith(SOLOEND))
-                                difficulty.SpecialPhrases[solo].Add(new(SpecialPhraseType.Solo, ev.Position - solo));
+                                difficulty.SpecialPhrases[solo].TryAdd(SpecialPhraseType.Solo, new SpecialPhraseInfo(ev.Position - solo));
                             else if (str.StartsWith(SOLO))
                                 solo = ev.Position;
                             else

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using YARG.Core.IO;
 using YARG.Core.Chart.FlatDictionary;
 
@@ -22,7 +22,7 @@ namespace YARG.Core.Chart
         private readonly (int[], Midi_Phrase)[] _phrases;
         public Midi_PhraseList((int[], Midi_Phrase)[] phrases) { _phrases = phrases; }
 
-        public bool AddPhrase(ref TimedFlatDictionary<List<SpecialPhrase_FW>> phrases, long position, MidiNote note)
+        public bool AddPhrase(ref TimedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, long position, MidiNote note)
         {
             for (int i = 0; i < _phrases.Length; ++i)
             {
@@ -40,7 +40,7 @@ namespace YARG.Core.Chart
             return false;
         }
 
-        public bool AddPhrase_Off(ref TimedFlatDictionary<List<SpecialPhrase_FW>> phrases, long position, MidiNote note)
+        public bool AddPhrase_Off(ref TimedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, long position, MidiNote note)
         {
             for (int i = 0; i < _phrases.Length; ++i)
             {
@@ -51,7 +51,7 @@ namespace YARG.Core.Chart
                         ref var phr = ref _phrases[i].Item2;
                         if (phr.position != -1)
                         {
-                            phrases.Traverse_Backwards_Until(phr.position).Add(new(phr.type, position - phr.position, phr.velocity));
+                            phrases.Traverse_Backwards_Until(phr.position).TryAdd(phr.type, new SpecialPhraseInfo(position - phr.position, phr.velocity));
                             phr.position = -1;
                         }
                         return true;
@@ -61,7 +61,7 @@ namespace YARG.Core.Chart
             return false;
         }
 
-        public bool AddPhrase(ref TimedFlatDictionary<List<SpecialPhrase_FW>> phrases, long position, SpecialPhraseType type, byte velocity)
+        public bool AddPhrase(ref TimedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, long position, SpecialPhraseType type, byte velocity)
         {
             for (int i = 0; i < _phrases.Length; ++i)
             {
@@ -77,7 +77,7 @@ namespace YARG.Core.Chart
             return false;
         }
 
-        public bool AddPhrase_Off(ref TimedFlatDictionary<List<SpecialPhrase_FW>> phrases, long position, SpecialPhraseType type)
+        public bool AddPhrase_Off(ref TimedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, long position, SpecialPhraseType type)
         {
             for (int i = 0; i < _phrases.Length; ++i)
             {
@@ -86,7 +86,7 @@ namespace YARG.Core.Chart
                 {
                     if (phr.position != -1)
                     {
-                        phrases.Traverse_Backwards_Until(phr.position).Add(new(phr.type, position - phr.position, phr.velocity));
+                        phrases.Traverse_Backwards_Until(phr.position).TryAdd(phr.type, new SpecialPhraseInfo(position - phr.position, phr.velocity));
                         phr.position = -1;
                     }
                     return true;

@@ -370,11 +370,11 @@ namespace YARG.Core.IO
             note.Duration = reader.ExtractInt64();
         }
 
-        public SpecialPhrase_FW ExtractSpecialPhrase()
+        public (SpecialPhraseType, SpecialPhraseInfo) ExtractSpecialPhrase()
         {
-            int type = reader.ExtractInt32();
+            var type = (SpecialPhraseType) reader.ExtractInt32();
             long duration = reader.ExtractInt64();
-            return new((SpecialPhraseType) type, duration);
+            return (type, new SpecialPhraseInfo(duration));
         }
 
         public int ExtractMicrosPerQuarter()
