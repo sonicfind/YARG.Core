@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace YARG.Core.Chart.FlatDictionary
 {
+    [DebuggerDisplay("{position} | {obj.ToString()}")]
     public struct FlatMapNode<TKey, TObj>
         where TKey : IEquatable<TKey>, IComparable<TKey>
     {

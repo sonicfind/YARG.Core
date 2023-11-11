@@ -26,5 +26,10 @@
 
         public bool IsActive() { return _duration > 0; }
         public void Disable() { _duration = 0; }
+
+        public override string ToString()
+        {
+            return _duration.ToString();
+        }
     }
 }
