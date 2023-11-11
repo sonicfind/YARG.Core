@@ -3,7 +3,7 @@
 namespace YARG.Core.Chart
 {
     public class InstrumentTrack_Base<TDifficultyTrack> : Track
-        where TDifficultyTrack : Track, new()
+        where TDifficultyTrack : Track
     {
         protected readonly TDifficultyTrack?[] difficulties = new TDifficultyTrack[4];
         public override bool IsOccupied()
@@ -45,16 +45,16 @@ namespace YARG.Core.Chart
             return endTime;
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            for (int i = 0; i < difficulties.Length; ++i)
+            if (!disposedValue)
             {
-                ref var diff = ref difficulties[i];
-                if (diff != null)
+                if (disposing)
                 {
-                    diff.Dispose();
-                    diff = null;
+                    foreach (var diff in  difficulties)
+                        diff?.Dispose();
                 }
+                base.Dispose(disposing);
             }
         }
     }

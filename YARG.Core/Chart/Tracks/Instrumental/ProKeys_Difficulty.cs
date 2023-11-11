@@ -1,4 +1,4 @@
-using YARG.Core.Chart.FlatDictionary;
+﻿using YARG.Core.Chart.FlatDictionary;
 using YARG.Core.Chart.ProKeys;
 
 namespace YARG.Core.Chart
@@ -24,10 +24,14 @@ namespace YARG.Core.Chart
             Ranges.Clear();
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            base.Dispose();
-            Ranges.Dispose();
+            if (!disposedValue)
+            {
+                if (disposing)
+                    Ranges.Dispose();
+                base.Dispose(disposing);
+            }
         }
     }
 }

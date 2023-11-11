@@ -74,9 +74,14 @@ namespace YARG.Core.Chart
             return endTime;
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            Percussion.Dispose();
+            if (!disposedValue)
+            {
+                if (disposing)
+                    Percussion.Dispose();
+                base.Dispose(disposing);
+            }
         }
     }
 }

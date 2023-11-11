@@ -31,9 +31,14 @@ namespace YARG.Core.Chart
             return note.position + note.obj.GetLongestSustain();
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            Notes.Dispose();
+            if (!disposedValue)
+            {
+                if (disposing)
+                    Notes.Dispose();
+                base.Dispose(disposing);
+            }
         }
     }
 }

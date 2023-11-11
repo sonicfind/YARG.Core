@@ -16,10 +16,14 @@ namespace YARG.Core.Chart
             Arpeggios.Clear();
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            base.Dispose();
-            Arpeggios.Dispose();
+            if (!disposedValue)
+            {
+                if (disposing)
+                    Arpeggios.Dispose();
+                base.Dispose(disposing);
+            }
         }
     }
 }

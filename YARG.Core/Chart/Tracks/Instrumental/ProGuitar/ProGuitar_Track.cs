@@ -34,12 +34,17 @@ namespace YARG.Core.Chart
             ChordPhrases.Clear();
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            base.Dispose();
-
-            Roots.Dispose();
-            HandPositions.Dispose();
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Roots.Dispose();
+                    HandPositions.Dispose();
+                }
+                base.Dispose(disposing);
+            }
         }
     }
 }
