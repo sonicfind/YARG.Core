@@ -206,14 +206,25 @@ namespace YARG.Core.Chart.FlatDictionary
             
         }
 
-        public ref TObj this[TKey position] { get { return ref Find_Or_Add(0, position); } }
+        public ref TObj this[TKey position] { get { return ref Find_Or_Insert(0, position); } }
 
-        public int Find_Or_Add_index(int searchIndex, TKey position) { return Find_or_emplace_index(searchIndex, position); }
+        public int Find_Or_Insert_index(int searchIndex, TKey position) { return Find_or_emplace_index(searchIndex, position); }
 
-        public ref TObj Find_Or_Add(int searchIndex, TKey position)
+        public ref TObj Find_Or_Insert(int searchIndex, TKey position)
         {
             int index = Find_or_emplace_index(searchIndex, position);
             return ref _buffer[index].obj;
+        }
+
+        public bool Try_Insert(TKey position, TObj obj)
+        {
+            int index = Find(0, position);
+            if (index >= 0)
+                return false;
+
+            index = ~index;
+            Insert(index, position, obj);
+            return true;
         }
 
         protected int Find_or_emplace_index(int searchIndex, TKey position)

@@ -234,17 +234,28 @@ namespace YARG.Core.Chart.FlatDictionary
                 throw new Exception("Pop on emtpy map");
         }
 
-        public ref TObj this[TKey key] { get { return ref Find_Or_Add(0, key); } }
+        public ref TObj this[TKey key] { get { return ref Find_Or_Insert(0, key); } }
 
-        public int Find_Or_Add_index(int searchIndex, TKey key) { return Find_or_emplace_index(searchIndex, key); }
+        public int Find_Or_Insert_index(int searchIndex, TKey key) { return Find_or_emplace_index(searchIndex, key); }
 
-        public ref TObj Find_Or_Add(int searchIndex, TKey key)
+        public ref TObj Find_Or_Insert(int searchIndex, TKey key)
         {
             int index = Find_or_emplace_index(searchIndex, key);
             unsafe
             {
                 return ref _buffer!.Ptr[index].obj;
             }
+        }
+
+        public bool Try_Insert(TKey position, TObj obj)
+        {
+            int index = Find(0, position);
+            if (index >= 0)
+                return false;
+
+            index = ~index;
+            Insert(index, position, ref obj);
+            return true;
         }
 
         protected int Find_or_emplace_index(int searchIndex, TKey key)
