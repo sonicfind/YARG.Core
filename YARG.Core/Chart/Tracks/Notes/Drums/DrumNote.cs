@@ -149,36 +149,22 @@ namespace YARG.Core.Chart.Drums
             return stringBuilder.ToString();
         }
 
-        public static DrumNote<TPads, TCymbals> Convert<TBasePadConfig>(ref DrumNote<TBasePadConfig, Pro_Drums> other)
-            where TBasePadConfig : unmanaged, IDrumPadConfig
+        public DrumNote(ref DrumNote<DrumPad_5, Pro_Drums> other)
         {
-            if (NUMPADS > DrumNote<TBasePadConfig, Pro_Drums>.NUMPADS)
-                throw new InvalidOperationException("Not allowed to convert RAW chart representation from 4-lane to 5-lane");
-
-            DrumNote<TPads, TCymbals> note = new()
-            {
-                _bass = other._bass,
-                _doubleBass = other._doubleBass,
-                IsFlammed = other.IsFlammed,
-            };
-
+            _bass = other._bass;
+            _doubleBass = other._doubleBass;
+            IsFlammed = other.IsFlammed;
+            
             unsafe
             {
-                fixed (TBasePadConfig* otherPads = &other.Pads)
-                {
-                    Unsafe.CopyBlock(&note.Pads, otherPads, (uint) (sizeof(DrumPad) * NUMPADS));
-                }
+                fixed (TPads* ptr = &Pads)
+                fixed (DrumPad_5* otherPads = &other.Pads)
+                    Unsafe.CopyBlock(ptr, otherPads, (uint) sizeof(TPads));
 
-
-                if (NUMCYMBALS == 3)
-                {
-                    fixed (Pro_Drums* otherCymbals = &other.Cymbals)
-                    {
-                        Unsafe.CopyBlock(&note.Cymbals, otherCymbals, (sizeof(bool) * 3));
-                    }
-                }
+                fixed (TCymbals* ptr = &Cymbals)
+                fixed (Pro_Drums* otherCymbals = &other.Cymbals)
+                    Unsafe.CopyBlock(ptr, otherCymbals, (uint) sizeof(TCymbals));
             }
-            return note;
         }
     }
 }

@@ -315,7 +315,7 @@ namespace YARG.Core.Chart
             for (int noteIndex = 0; noteIndex < span.Length; ++noteIndex)
             {
                 ref var note = ref span[noteIndex];
-                notes.Add_NoReturn(note.position, DrumNote<TDrumConfig, TCymbalConfig>.Convert(ref note.obj));
+                notes.Add_NoReturn(note.position, new DrumNote<TDrumConfig, TCymbalConfig>(ref note.obj));
             }
             return diff;
         }
