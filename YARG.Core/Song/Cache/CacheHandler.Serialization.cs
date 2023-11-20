@@ -17,7 +17,7 @@ namespace YARG.Core.Song.Cache
             for (int i = 0; i < count; ++i)
             {
                 int length = stream.ReadLE<int>();
-                var reader = new YARGBinaryReader(stream.ReadBytes(length));
+                using var reader = new YARGBinaryReader(stream, length);
                 func(reader);
             }
         }
@@ -28,7 +28,7 @@ namespace YARG.Core.Song.Cache
             for (int i = 0; i < count; ++i)
             {
                 int length = stream.ReadLE<int>();
-                var reader = new YARGBinaryReader(stream.ReadBytes(length));
+                using var reader = new YARGBinaryReader(stream, length);
                 func(reader, strings);
             }
         }
@@ -39,7 +39,8 @@ namespace YARG.Core.Song.Cache
             for (int i = 0; i < count && !tracker.IsSet(); ++i)
             {
                 int length = stream.ReadLE<int>();
-                var reader = new YARGBinaryReader(stream.ReadBytes(length));
+                // No "using" to prevent discard before use
+                var reader = new YARGBinaryReader(stream, length);
                 conTasks.Add(Task.Run(() =>
                 {
                     try
@@ -50,6 +51,7 @@ namespace YARG.Core.Song.Cache
                     {
                         tracker.Set(ex);
                     }
+                    reader.Dispose();
                 }));
             }
         }
@@ -60,7 +62,8 @@ namespace YARG.Core.Song.Cache
             for (int i = 0; i < count && !tracker.IsSet(); ++i)
             {
                 int length = stream.ReadLE<int>();
-                var reader = new YARGBinaryReader(stream.ReadBytes(length));
+                // No "using" to prevent discard before use
+                var reader = new YARGBinaryReader(stream, length);
                 entryTasks.Add(Task.Run(() => {
                     List<Task> tasks = new();
                     try
@@ -72,6 +75,7 @@ namespace YARG.Core.Song.Cache
                         tracker.Set(ex);
                     }
                     Task.WaitAll(tasks.ToArray());
+                    reader.Dispose();
                 }));
             }
         }
