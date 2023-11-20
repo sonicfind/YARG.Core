@@ -107,6 +107,15 @@ namespace YARG.Core.IO
         private const int CHANNEL_MASK = 0x0F;
         private const int EVENTTYPE_MASK = 0xF0;
 
+
+        /// <summary>
+        /// Processes the tick position VLQ & event type, channel, and/or length
+        /// as defined by the inner miditrack data.
+        /// </summary>
+        /// <param name="parseVLQ">Determines whether the position VLQ should actually be calculated</param>
+        /// <returns>Whether the End of Track event type was parsed</returns>
+        /// <exception cref="Exception">A running event is encountered before a non-meta event</exception>
+        /// <exception cref="EndOfStreamException">The event length exceeds the end of the file (sign of file corruption)</exception>
         public bool ParseEvent(bool parseVLQ)
         {
             unsafe
@@ -131,6 +140,7 @@ namespace YARG.Core.IO
             {
                 unsafe
                 {
+                    // Safe because PeekByte()
                     ++_trackPos;
                 }
                 _event.Channel = _running.Channel = (byte) (tmp & CHANNEL_MASK);
@@ -176,6 +186,8 @@ namespace YARG.Core.IO
                 _event.Type = type;
             }
 
+            // Guarantees that the event is valid
+            // So long as callers follow the obvious rules with midi data
             unsafe
             {
                 if (_trackPos + _event.Length > _end)
@@ -184,6 +196,14 @@ namespace YARG.Core.IO
             return true;
         }
 
+        /// <summary>
+        /// Returns a span of bytes that represents the text or sysex data
+        /// </summary>
+        /// <remarks>
+        /// Though calling this in wrong situations *does* work, 
+        /// refrain from doing so unless the event is of type Text or Sysex
+        /// </remarks>
+        /// <param name="note"></param>
         public ReadOnlySpan<byte> ExtractTextOrSysEx()
         {
             unsafe
@@ -192,8 +212,15 @@ namespace YARG.Core.IO
             }
         }
 
+        /// <summary>
+        /// Updates a Midinote object with the note values that rest at the
+        /// current position in the midiTrack
+        /// </summary>
+        /// <remarks>DO NOT CALL UNLESS THE EVENT TYPE IS NOTE_ON/OFF</remarks>
+        /// <param name="note">The MidiNote "buffer" to update</param>
         public void ExtractMidiNote(ref MidiNote note)
         {
+            // Safe as ParseEvent guarantees this access as valid
             unsafe
             {
                 note.value = _trackPos[0];
@@ -201,6 +228,10 @@ namespace YARG.Core.IO
             }
         }
 
+        /// <summary>
+        /// Returns the current byte without incrementing the track position
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The current position is out of range</exception>
         private byte PeekByte()
         {
             unsafe
@@ -210,6 +241,11 @@ namespace YARG.Core.IO
                 throw new InvalidOperationException();
             }
         }
+
+        /// <summary>
+        /// Returns the current byte, incrementing the track position after retrieval
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The position is out of range</exception>
         private byte ReadByte()
         {
             unsafe
@@ -228,6 +264,12 @@ namespace YARG.Core.IO
         /// Represents the minimum value where a VLQ shift would be illegal
         /// </summary>
         private const uint VLQ_SHIFTLIMIT = 1 << (VLQ_SHIFT * MAX_SHIFTCOUNT);
+
+        /// <summary>
+        /// Decodes the 32-bit (28 really) integer from a VLQ
+        /// </summary>
+        /// <returns>The resulting integer</returns>
+        /// <exception cref="Exception">The VLQ used too many extended bytes (file possibly out of spec)</exception>
         private uint ReadVLQ()
         {
             unsafe
@@ -249,6 +291,10 @@ namespace YARG.Core.IO
             }
         }
 
+        /// <summary>
+        /// Essentially skips parsing the actual value of the VLQ
+        /// </summary>
+        /// <exception cref="Exception">The VLQ used too many extended bytes (file possibly out of spec)</exception>
         private unsafe void AbsorbVLQ()
         {
             uint b = ReadByte();

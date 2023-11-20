@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using YARG.Core.Extensions;
 
 namespace YARG.Core.IO
 {
@@ -34,6 +31,8 @@ namespace YARG.Core.IO
             if (filestream.Seek(position, SeekOrigin.Begin) != position)
                 throw new EndOfStreamException();
 
+            // `Using` modifier ensures that, in the presence of an exception,
+            // the memory allocated to hold the file will be cleared
             using var data = DisposableArray<byte>.Create(filestream, (int)fileSize);
             int loopCount = (data.Length - SngMask.VECTORBYTE_COUNT) >> VECTOR_SHIFT;
             Parallel.For(0, loopCount, i =>
@@ -53,6 +52,9 @@ namespace YARG.Core.IO
                     data.Ptr[buffIndex] ^= mask.Keys.Ptr[buffIndex & KEY_MASK];
                 }
             }
+
+            // Counteracts the above "using" declaration on the array so that
+            // the data stays alive after the function exits
             return data.Clone();
         }
 
@@ -205,16 +207,21 @@ namespace YARG.Core.IO
                 throw new Exception("Seek error in SNGPKG subfile");
 
             int buffIndex = bufferPosition;
+
+            // buffIndex % 256
             int key = buffIndex & KEY_MASK;
             {
                 int count = SngMask.VECTORBYTE_COUNT - (buffIndex & VECTOR_MASK);
                 if (count > readCount)
                     count = readCount;
 
+                // Checks if we first need to align to VECTORBYTE_COUNT boundaries
+                // Can't use the vector magic otherwise
                 if (count != SngMask.VECTORBYTE_COUNT)
                 {
                     unsafe
                     {
+                        // Safe as the indices are guaranteed within range
                         for (int i = 0; i < count; ++i)
                             dataBuffer.Ptr[buffIndex++] ^= mask.Keys.Ptr[key++];
                     }
@@ -224,16 +231,28 @@ namespace YARG.Core.IO
                 }
             }
 
+            // Sets what vector in the vector array member variable (pointer really) to start with
             int vectorIndex = (key & ~VECTOR_MASK) >> VECTOR_SHIFT;
+
             int end = bufferPosition + readCount;
             int vectorMax = end - SngMask.VECTORBYTE_COUNT;
+
+            // Truncates last group that has a length less than VECTORBYTE_COUNT
             int loopCount = (vectorMax - buffIndex) >> VECTOR_SHIFT;
 
             Parallel.For(0, loopCount, i =>
             {
                 unsafe
                 {
+                    // Aligned to VECTORBYTE_COUNT boundary
                     var pos = dataBuffer.Ptr + (i << VECTOR_SHIFT) + buffIndex;
+
+                    // Vectors are an abstraction over a fixed set of memory.
+                    // Think of it like a union with system-specific size.
+                    //
+                    // As a result, you can cast the address of a vector to any of its underlying types -
+                    // or, in our case, the reverse, thanks to the DisposableArray buffer's inner fixed memory location.
+                    // No copying required, except for Xor's paramaters (unless CLR removes that)
                     var result = Vector.Xor(*(Vector<byte>*)pos, mask.Vectors[(vectorIndex + i) & NUM_VECTORS_MASK]);
                     Unsafe.CopyBlock(pos, &result, (uint) SngMask.VECTORBYTE_COUNT);
                 }
@@ -244,6 +263,7 @@ namespace YARG.Core.IO
             {
                 unsafe
                 {
+                    // Safe as the indices are guaranteed within range
                     dataBuffer.Ptr[buffIndex] ^= mask.Keys.Ptr[buffIndex & 255];
                 }
                 buffIndex++;

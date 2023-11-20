@@ -4,6 +4,10 @@ using System.Runtime.CompilerServices;
 
 namespace YARG.Core.IO
 {
+    /// <summary>
+    /// A stream custom built for untangling entries from a packed CON file.
+    /// </summary>
+    /// <remarks><see href="https://free60.org/System-Software/Formats/STFS/">For information on the format</see></remarks>
     public sealed class CONFileStream : Stream
     {
         private const int FIRSTBLOCK_OFFSET = 0xC000;
@@ -23,6 +27,8 @@ namespace YARG.Core.IO
 
         public static DisposableArray<byte> LoadFile(FileStream filestream, bool isContinguous, int fileSize, int blockNum, int shift)
         {
+            // `Using` modifier ensures that, in the presence of an exception,
+            // the memory allocated to hold the file will be cleared
             using var data = new DisposableArray<byte>(fileSize);
             if (isContinguous)
             {
@@ -49,6 +55,7 @@ namespace YARG.Core.IO
                     numBlocks = BLOCKS_PER_SECTION;
                     readSize = BYTES_PER_SECTION;
 
+                    // Skipping hash blocks
                     int seekCount = 1;
                     if (blockNum == BLOCKS_PER_SECTION)
                         seekCount = 2;
@@ -90,6 +97,9 @@ namespace YARG.Core.IO
                     blockNum = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
                 }
             }
+
+            // Counteracts the above "using" declaration on the array so that
+            // the data stays alive after the function exits
             return data.Clone();
         }
 

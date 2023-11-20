@@ -62,6 +62,8 @@ namespace YARG.Core.IO
                 return null;
 
             {
+                // Would use one of the "CC" types, but unfortunately
+                // the tag is neither 4 NOR 8 bytes long. Thx guys
                 Span<byte> tag = stackalloc byte[SNGPKG.Length];
                 if (stream.Read(tag) != tag.Length)
                     return null;
