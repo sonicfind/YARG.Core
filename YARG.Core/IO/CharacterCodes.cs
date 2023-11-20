@@ -36,13 +36,13 @@ namespace YARG.Core.IO
             _code = BinaryPrimitives.ReadUInt32BigEndian(data);
         }
 
-        public static FourCC Read(Stream stream) => new(stream.ReadUInt32BE());
-        public static FourCC Read(BinaryReader reader) => new(reader.ReadUInt32BE());
-        public static FourCC Read(YARGBinaryReader reader) => new(reader.ReadUInt32(Endianness.BigEndian));
+        public static FourCC Read(Stream stream) => new(stream.ReadBE<uint>());
+        public static FourCC Read(BinaryReader reader) => new(reader.ReadBE<uint>());
+        public static FourCC Read(YARGBinaryReader reader) => new(reader.Read<uint>(Endianness.BigEndian));
 
         public void Serialize(BinaryWriter writer)
         {
-            writer.WriteUInt32BE(_code);
+            writer.WriteBE(_code);
         }
 
         [Obsolete("FourCC is a readonly struct, use the Read static method instead.", true)]
@@ -99,13 +99,13 @@ namespace YARG.Core.IO
             _code = BinaryPrimitives.ReadUInt64BigEndian(data);
         }
 
-        public static EightCC Read(Stream stream) => new(stream.ReadUInt64BE());
-        public static EightCC Read(BinaryReader reader) => new(reader.ReadUInt64BE());
-        public static EightCC Read(YARGBinaryReader reader) => new(reader.ReadUInt64(Endianness.BigEndian));
+        public static EightCC Read(Stream stream) => new(stream.ReadBE<ulong>());
+        public static EightCC Read(BinaryReader reader) => new(reader.ReadBE<ulong>());
+        public static EightCC Read(YARGBinaryReader reader) => new(reader.Read<ulong>(Endianness.BigEndian));
 
         public void Serialize(BinaryWriter writer)
         {
-            writer.WriteUInt64BE(_code);
+            writer.WriteBE(_code);
         }
 
         [Obsolete("EightCC is a readonly struct, use the Read static method instead.", true)]
