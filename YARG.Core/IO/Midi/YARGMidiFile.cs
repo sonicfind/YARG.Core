@@ -37,9 +37,14 @@ namespace YARG.Core.IO
             stream.Position = next;
         }
 
-        public YARGMidiFile(byte[] data) : this(new MemoryStream(data, 0, data.Length, false, true)) { }
+        public YARGMidiFile(byte[] data)
+            : this(new MemoryStream(data, 0, data.Length, false, true)) { }
 
-        public YARGMidiFile(string path) : this(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)) { }
+        public unsafe YARGMidiFile(DisposableArray<byte> data)
+            : this(new UnmanagedMemoryStream(data.Ptr, data.Length)) { }
+
+        public YARGMidiFile(string path)
+            : this(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)) { }
 
         public YARGMidiTrack? LoadNextTrack()
         {
