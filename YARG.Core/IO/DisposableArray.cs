@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -24,6 +25,8 @@ namespace YARG.Core.IO
         }
     }
 
+    [DebuggerDisplay("Length = {Length}")]
+    [DebuggerTypeProxy(typeof(DisposableArray<>.DisposableArrayDebugView))]
     public sealed unsafe class DisposableArray<T> : IDisposable
         where T : unmanaged
     {
@@ -130,6 +133,18 @@ namespace YARG.Core.IO
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        internal sealed class DisposableArrayDebugView
+        {
+            private readonly DisposableArray<T> array;
+            public DisposableArrayDebugView(DisposableArray<T> array)
+            {
+                this.array = array ?? throw new ArgumentNullException(nameof(array));
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public Span<T> Items => array.Span;
         }
     }
 }
