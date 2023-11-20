@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using YARG.Core.Extensions;
 
@@ -15,51 +16,145 @@ namespace YARG.Core.IO
         BigEndian = 1,
     };
 
-    public sealed class YARGBinaryReader
+    public sealed class HandleCounter : Counter, IDisposable
     {
-        private readonly ReadOnlyMemory<byte> _data;
-        private int _position;
+        private readonly GCHandle Handle;
+        private bool _disposed;
 
-        public YARGBinaryReader(ReadOnlyMemory<byte> data)
+        public unsafe byte* Ptr => (byte*)Handle.AddrOfPinnedObject();
+
+        public HandleCounter(byte[] data)
         {
-            _data = data;
+            Handle = GCHandle.Alloc(data, GCHandleType.Pinned);
         }
 
-        public YARGBinaryReader(Stream stream, int count)
+        private void Dispose(bool disposing)
         {
-            if (stream is MemoryStream mem)
+            if (!_disposed)
             {
-                _data = new ReadOnlyMemory<byte>(mem.GetBuffer(), (int) mem.Position, count);
-                mem.Position += count;
+                Handle.Free();
+                _disposed = true;
             }
-            else
+        }
+
+        ~HandleCounter()
+        {
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+    }
+
+    public sealed class YARGBinaryReader : IDisposable
+    {
+        private readonly HandleCounter? _counter;
+        private readonly DisposableArray<byte>? _buffer;
+        private readonly unsafe byte* _end;
+        private unsafe byte* _position;
+        private bool disposedValue;
+
+        public YARGBinaryReader(byte[] data)
+            : this(data, 0, data.Length) { }
+
+        public YARGBinaryReader(byte[] data, long offset, long length)
+        {
+            if (offset < 0 || offset + length > data.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            _counter = new HandleCounter(data);
+            unsafe
             {
-                _data = stream.ReadBytes(count);
+                _position = _counter.Ptr + offset;
+                _end = _position + length;
             }
+        }
+
+        public YARGBinaryReader(Stream stream, long length)
+        {
+            _buffer = DisposableArray<byte>.Create(stream, (int) length);
+            unsafe
+            {
+                _position = _buffer.Ptr;
+                _end = _position + length;
+            }
+        }
+
+        public unsafe YARGBinaryReader(byte* data, long length)
+        {
+            unsafe
+            {
+                _position = data;
+                _end = _position + length;
+            }
+        }
+
+        public YARGBinaryReader(MemoryStream stream, long length)
+            : this(stream.GetBuffer(), stream.Position, length)
+        {
+            stream.Position += length;
+        }
+
+        public unsafe YARGBinaryReader(UnmanagedMemoryStream stream, long length)
+            : this(stream.PositionPointer, length)
+        {
+            stream.Position += length;
         }
 
         public YARGBinaryReader Slice(int length)
         {
-            var local = _position;
-            Move(length);
-            return new YARGBinaryReader(_data.Slice(local, length));
+            if (disposedValue)
+                throw new InvalidOperationException();
+            return new YARGBinaryReader(this, length);
         }
 
-        public void Move(int amount)
+        private YARGBinaryReader(YARGBinaryReader other, long length)
         {
-            _position += amount;
-            if (_position > _data.Length)
-                throw new ArgumentOutOfRangeException("amount");
+            if (other._counter != null)
+            {
+                _counter = other._counter;
+                _counter.Increment();
+            }
+            else if (other._buffer != null)
+                _buffer = other._buffer.Clone();
+
+            unsafe
+            {
+                _position = other._position;
+                _end = _position + length;
+            }
+            other.Move(length);
+        }
+
+        public void Move(long amount)
+        {
+            unsafe
+            {
+                _position += amount;
+                if (_position > _end)
+                    throw new ArgumentOutOfRangeException("amount");
+            }
         }
 
         public byte ReadByte()
         {
-            return _data.Span[_position++];
+            if (disposedValue)
+                throw new InvalidOperationException();
+
+            unsafe
+            {
+                if (_position < _end)
+                    return *_position++;
+                throw new EndOfStreamException();
+            }
         }
 
         public sbyte ReadSByte()
         {
-            return (sbyte) _data.Span[_position++];
+            return (sbyte) ReadByte();
         }
 
         public bool ReadBoolean()
@@ -70,47 +165,45 @@ namespace YARG.Core.IO
         public TType Read<TType>(Endianness endianness = Endianness.LittleEndian)
             where TType : unmanaged, IComparable, IComparable<TType>, IConvertible, IEquatable<TType>, IFormattable
         {
+            if (disposedValue)
+                throw new InvalidOperationException();
+
             unsafe
             {
-                long pos = _position;
+                byte* pos = _position;
                 int size = sizeof(TType);
                 Move(size);
 
-                fixed (byte* buf = _data.Span)
-                {
-                    // If the memory layout of the host system matches the layout of
-                    // the value to be parsed from the file, we only require a cast
-                    if ((endianness == Endianness.LittleEndian) == BitConverter.IsLittleEndian)
-                        return *(TType*) (buf + pos);
+                // If the memory layout of the host system matches the layout of
+                // the value to be parsed from the file, we only require a cast
+                if ((endianness == Endianness.LittleEndian) == BitConverter.IsLittleEndian)
+                    return *(TType*) pos;
 
-                    // Reminder: _position moved
-                    pos = _position;
-                    // Otherwise, we have to flip the bytes
-                    byte* bytes = stackalloc byte[size];
-                    for (int i = 0; i < size; ++i)
-                        bytes[i] = buf[--pos];
+                // Reminder: _position moved
+                pos = _position;
+                // Otherwise, we have to flip the bytes
+                byte* bytes = stackalloc byte[size];
+                for (int i = 0; i < size; ++i)
+                    bytes[i] = *--pos;
 
-                    return *(TType*) bytes;
-                }
+                return *(TType*) bytes;
             }
         }
 
         public bool ReadBytes(byte[] bytes)
         {
-            int endPos = _position + bytes.Length;
-            if (endPos > _data.Length)
-                return false;
+            if (disposedValue)
+                throw new InvalidOperationException();
 
             unsafe
             {
-                fixed (byte* dst = bytes, src = _data.Span)
-                {
-                    Unsafe.CopyBlock(dst, src + _position, (uint) bytes.Length);
-                }
-            }
+                if (_position + bytes.Length > _end)
+                    return false;
 
-            _position = endPos;
-            return true;
+                Unsafe.CopyBlock(ref bytes[0], ref *_position, (uint) bytes.Length);
+                _position += bytes.Length;
+                return true;
+            }
         }
 
         public byte[] ReadBytes(int length)
@@ -129,23 +222,24 @@ namespace YARG.Core.IO
 
         public int ReadLEB()
         {
-            var span = _data.Span;
+            if (disposedValue)
+                throw new InvalidOperationException();
+
             uint result = 0;
             byte byteReadJustNow;
 
             const int MaxBytesWithoutOverflow = 4;
             for (int shift = 0; shift < MaxBytesWithoutOverflow * 7; shift += 7)
             {
-                byteReadJustNow = span[_position++];
+                byteReadJustNow = ReadByte();
                 result |= (byteReadJustNow & 0x7Fu) << shift;
-
                 if (byteReadJustNow <= 0x7Fu)
                 {
                     return (int) result;
                 }
             }
 
-            byteReadJustNow = span[_position++];
+            byteReadJustNow = ReadByte();
             if (byteReadJustNow > 0b_1111u)
             {
                 throw new Exception("LEB value exceeds max allowed");
@@ -157,10 +251,43 @@ namespace YARG.Core.IO
 
         public ReadOnlySpan<byte> ReadSpan(int length)
         {
-            int endPos = _position + length;
-            var span = _data.Span.Slice(_position, length);
-            _position = endPos;
-            return span;
+            if (disposedValue)
+                throw new InvalidOperationException();
+
+            unsafe
+            {
+                var pos = _position;
+                Move(length);
+                return new ReadOnlySpan<byte>(pos, length);
+            }
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                    _buffer?.Dispose();
+
+                if (_counter != null)
+                {
+                    _counter.Decrement();
+                    if (_counter.Count == 0)
+                        _counter.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
+
+        ~YARGBinaryReader()
+        {
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

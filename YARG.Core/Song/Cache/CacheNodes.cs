@@ -38,10 +38,14 @@ namespace YARG.Core.Song.Cache
                 for (int i = 0; i < NUM_CATEGORIES; ++i)
                 {
                     int length = stream.ReadLE<int>();
-                    byte[] section = stream.ReadBytes(length);
+                    // No "using" to prevent discard before use
+                    var reader = new YARGBinaryReader(stream, length);
 
                     int strIndex = i;
-                    tasks[i] = Task.Run(() => { GetArray(strIndex) = ReadStrings(section); });
+                    tasks[i] = Task.Run(() => {
+                        GetArray(strIndex) = ReadStrings(reader);
+                        reader.Dispose();
+                    });
                 }
                 Task.WaitAll(tasks);
             }
@@ -50,13 +54,13 @@ namespace YARG.Core.Song.Cache
                 for (int i = 0; i < NUM_CATEGORIES; ++i)
                 {
                     int length = stream.ReadLE<int>();
-                    GetArray(i) = ReadStrings(stream.ReadBytes(length));
+                    using var reader = new YARGBinaryReader(stream, length);
+                    GetArray(i) = ReadStrings(reader);
                 }
             }
 
-            static string[] ReadStrings(byte[] section)
+            static string[] ReadStrings(YARGBinaryReader reader)
             {
-                YARGBinaryReader reader = new(section);
                 int count = reader.Read<int>();
                 string[] strings = new string[count];
                 for (int i = 0; i < count; ++i)

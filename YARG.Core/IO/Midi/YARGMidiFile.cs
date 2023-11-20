@@ -30,7 +30,7 @@ namespace YARG.Core.IO
             if (length < SIZEOF_HEADER)
                 throw new Exception("Midi Header not of sufficient length");
 
-            YARGBinaryReader reader = new(stream, length);
+            using var reader = new YARGBinaryReader(stream, length);
             _format = reader.Read<ushort>(Endianness.BigEndian);
             _numTracks = reader.Read<ushort>(Endianness.BigEndian);
             _tickRate = reader.Read<ushort>(Endianness.BigEndian);
