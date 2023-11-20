@@ -84,6 +84,13 @@ namespace YARG.Core.IO
             }
         }
 
+        /// <summary>
+        /// Returns whether the character at the current position matches the value
+        /// provided in the paramater
+        /// </summary>
+        /// <param name="cmp">Character to test against</param>
+        /// <returns>Result of the Equals operation</returns>
+        /// <exception cref="InvalidOperationException">If the position is out of range</exception>
         public bool IsCurrentCharacter(char cmp)
         {
             unsafe
@@ -94,6 +101,10 @@ namespace YARG.Core.IO
             }
         }
 
+        /// <summary>
+        /// Returns whether the position of the container is at or surpasses the end
+        /// </summary>
+        /// <returns>... Probably obvious</returns>
         public bool IsAtEnd()
         {
             unsafe

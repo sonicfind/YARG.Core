@@ -50,19 +50,34 @@ namespace YARG.Core.IO
         public bool IsContiguous() { return (flags & CONFileListingFlag.Contiguous) > 0; }
         public bool IsStillValid() { return ConFile.IsStillValid(); }
 
+        /// <summary>
+        /// Returns a stream that handles the untangling of the listing's data within a given CON
+        /// </summary>
+        /// <returns>A stream that points to the subfile within a CON</returns>
         public CONFileStream CreateStream()
         {
             Debug.Assert(!IsDirectory(), "Directory listing cannot be loaded as a file");
             return new CONFileStream(ConFile.FullName, IsContiguous(), size, firstBlock, shift);
         }
 
-        // This overload should only be called during scanning
+        /// <summary>
+        /// Returns a array of bytes that represents the untangled data of a CON subfile
+        /// </summary>
+        /// <remarks>
+        /// This overload should only be called during scanning
+        /// </remarks>
+        /// <param name="file">The base CONFile object that contains the chared filestream to the CON</param>
+        /// <returns>The untangled file data in bytes</returns>
         public DisposableArray<byte> LoadAllBytes(CONFile file)
         {
             lock (file.Lock)
                 return CONFileStream.LoadFile(file.Stream, IsContiguous(), size, firstBlock, shift);
         }
 
+        /// <summary>
+        /// Returns a array of bytes that represents the untangled data of a CON subfile
+        /// </summary>
+        /// <returns>The untangled file data in bytes</returns>
         public DisposableArray<byte> LoadAllBytes()
         {
             return CONFileStream.LoadFile(ConFile.FullName, IsContiguous(), size, firstBlock, shift);

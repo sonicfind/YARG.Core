@@ -25,6 +25,12 @@ namespace YARG.Core.IO
 
             unsafe
             {
+                // Vectors are an abstraction over a fixed set of memory.
+                // Think of it like a union with system-specific size.
+                //
+                // As a result, you can cast the address of a vector to any of its underlying types -
+                // or, in our case, the reverse, thanks to DisposableArray's inner fixed memory location.
+                // No copying required.
                 Vectors = (Vector<byte>*) Keys.Ptr;
 
                 for (int i = 0; i < NUM_KEYBYTES;)

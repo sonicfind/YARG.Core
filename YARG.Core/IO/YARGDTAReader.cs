@@ -308,6 +308,11 @@ namespace YARG.Core.IO
             }
         }
 
+        /// <summary>
+        /// Extracts a boolean and skips the following whitespace
+        /// </summary>
+        /// <remarks>Throws if no value could be parsed</remarks>
+        /// <returns>The boolean</returns>
         public bool ExtractBoolean()
         {
             bool result = container.ExtractBoolean();
@@ -315,6 +320,11 @@ namespace YARG.Core.IO
             return result;
         }
 
+        /// <summary>
+        /// Extracts a short and skips the following whitespace
+        /// </summary>
+        /// <remarks>Throws if no value could be parsed</remarks>
+        /// <returns>The short</returns>
         public short ExtractInt16()
         {
             short result = container.ExtractInt16();
@@ -322,6 +332,11 @@ namespace YARG.Core.IO
             return result;
         }
 
+        /// <summary>
+        /// Extracts a ushort and skips the following whitespace
+        /// </summary>
+        /// <remarks>Throws if no value could be parsed</remarks>
+        /// <returns>The ushort</returns>
         public ushort ExtractUInt16()
         {
             ushort result = container.ExtractUInt16();
@@ -329,12 +344,23 @@ namespace YARG.Core.IO
             return result;
         }
 
+        /// <summary>
+        /// Extracts a int and skips the following whitespace
+        /// </summary>
+        /// <remarks>Throws if no value could be parsed</remarks>
+        /// <returns>The int</returns>
         public int ExtractInt32()
         {
             int result = container.ExtractInt32();
             SkipWhitespace();
             return result;
         }
+
+        /// <summary>
+        /// Extracts a uint and skips the following whitespace
+        /// </summary>
+        /// <remarks>Throws if no value could be parsed</remarks>
+        /// <returns>The uint</returns>
         public uint ExtractUInt32()
         {
             uint result = container.ExtractUInt32();
@@ -342,6 +368,11 @@ namespace YARG.Core.IO
             return result;
         }
 
+        /// <summary>
+        /// Extracts a long and skips the following whitespace
+        /// </summary>
+        /// <remarks>Throws if no value could be parsed</remarks>
+        /// <returns>The long</returns>
         public long ExtractInt64()
         {
             long result = container.ExtractInt64();
@@ -349,6 +380,11 @@ namespace YARG.Core.IO
             return result;
         }
 
+        /// <summary>
+        /// Extracts a ulong and skips the following whitespace
+        /// </summary>
+        /// <remarks>Throws if no value could be parsed</remarks>
+        /// <returns>The ulong</returns>
         public ulong ExtractUInt64()
         {
             ulong result = container.ExtractUInt64();
@@ -356,6 +392,11 @@ namespace YARG.Core.IO
             return result;
         }
 
+        /// <summary>
+        /// Extracts a float and skips the following whitespace
+        /// </summary>
+        /// <remarks>Throws if no value could be parsed</remarks>
+        /// <returns>The float</returns>
         public float ExtractFloat()
         {
             float result = container.ExtractFloat();
@@ -363,6 +404,11 @@ namespace YARG.Core.IO
             return result;
         }
 
+        /// <summary>
+        /// Extracts a double and skips the following whitespace
+        /// </summary>
+        /// <remarks>Throws if no value could be parsed</remarks>
+        /// <returns>The double</returns>
         public double ExtractDouble()
         {
             double result = container.ExtractDouble();
