@@ -262,7 +262,7 @@ namespace YARG.Core.Song.Cache
 
         private void CreateUpdateGroup(string directory, FileInfo dta, bool removeEntries = false)
         {
-            var reader = YARGDTAReader.TryCreate(dta.FullName);
+            using var reader = YARGDTAReader.TryCreate(dta.FullName);
             if (reader == null)
                 return;
 
@@ -273,7 +273,7 @@ namespace YARG.Core.Song.Cache
                 {
                     string name = reader.GetNameOfNode();
                     group!.updates.Add(name);
-                    AddUpdate(name, new(directory, new YARGDTAReader(reader)));
+                    AddUpdate(name, new(directory, reader.Clone()));
 
                     if (removeEntries)
                         RemoveCONEntry(name);
@@ -293,7 +293,7 @@ namespace YARG.Core.Song.Cache
 
         private UpgradeGroup? CreateUpgradeGroup(string directory, FileInfo dta, bool removeEntries = false)
         {
-            var reader = YARGDTAReader.TryCreate(dta.FullName);
+            using var reader = YARGDTAReader.TryCreate(dta.FullName);
             if (reader == null)
                 return null;
 
@@ -310,7 +310,7 @@ namespace YARG.Core.Song.Cache
                         {
                             IRBProUpgrade upgrade = new UnpackedRBProUpgrade(file.FullName, file.LastWriteTime);
                             group!.upgrades[name] = upgrade;
-                            AddUpgrade(name, new YARGDTAReader(reader), upgrade);
+                            AddUpgrade(name, reader.Clone(), upgrade);
 
                             if (removeEntries)
                                 RemoveCONEntry(name);
@@ -337,7 +337,7 @@ namespace YARG.Core.Song.Cache
 
         private bool TryParseUpgrades(string filename, PackedCONGroup group)
         {
-            var reader = group.LoadUpgrades();
+            using var reader = group.LoadUpgrades();
             if (reader == null)
                 return false;
 
@@ -354,7 +354,7 @@ namespace YARG.Core.Song.Cache
                         {
                             IRBProUpgrade upgrade = new PackedRBProUpgrade(listing, listing.lastWrite);
                             group.Upgrades[name] = upgrade;
-                            AddUpgrade(name, new YARGDTAReader(reader), upgrade);
+                            AddUpgrade(name, reader.Clone(), upgrade);
                             RemoveCONEntry(name);
                         }
                     }

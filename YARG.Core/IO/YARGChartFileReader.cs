@@ -231,7 +231,7 @@ namespace YARG.Core.IO
 
         public bool IsStartOfTrack()
         {
-            return !reader.Container.IsEndOfFile() && reader.Container.IsCurrentCharacter('[');
+            return !reader.Container.IsAtEnd() && reader.Container.IsCurrentCharacter('[');
         }
 
         public bool ValidateHeaderTrack()
@@ -266,7 +266,10 @@ namespace YARG.Core.IO
                 {
                     _difficulty = difficulty;
                     eventSet = CONFIG.EVENTS_DIFF;
-                    reader.Container.Position += name.Length;
+                    unsafe
+                    {
+                        reader.Container.Position += name.Length;
+                    }
                     return true;
                 }
             }
@@ -297,24 +300,24 @@ namespace YARG.Core.IO
 
         private bool DoesStringMatch(ReadOnlySpan<TChar> str)
         {
-            if (reader.Container.Next - reader.Container.Position < str.Length)
-                return false;
-            return reader.Container.Slice(reader.Container.Position, str.Length).SequenceEqual(str);
+            unsafe
+            {
+                if (reader.Container.Next - reader.Container.Position < str.Length)
+                    return false;
+                return str.SequenceEqual(new ReadOnlySpan<TChar>(reader.Container.Position, str.Length));
+            }
         }
 
         public bool IsStillCurrentTrack()
         {
-            int position = reader.Container.Position;
-            if (position == reader.Container.Length)
+            if (reader.Container.IsAtEnd())
                 return false;
 
-            if (reader.Container.IsCurrentCharacter('}'))
-            {
-                reader.GotoNextLine();
-                return false;
-            }
+            if (!reader.Container.IsCurrentCharacter('}'))
+                return true;
 
-            return true;
+            reader.GotoNextLine();
+            return false;
         }
 
         public bool TryParseEvent(ref DotChartEvent ev)
@@ -323,26 +326,25 @@ namespace YARG.Core.IO
                 return false;
 
             ev.Position = reader.ExtractInt64();
-
-            int start = reader.Container.Position;
-            int end = start;
-            while (true)
+            unsafe
             {
-                char curr = reader.Container.Data[end].ToChar(null);
-                if (!curr.IsAsciiLetter())
-                    break;
-                ++end;
-            }
-            reader.Container.Position = end;
-
-            ReadOnlySpan<TChar> span = reader.Container.Slice(start, end - start);
-            foreach (var combo in eventSet)
-            {
-                if (combo.DoesEventMatch(span))
+                var start = reader.Container.Position;
+                while (reader.Container.Position < reader.Container.Next)
                 {
-                    reader.SkipWhitespace();
-                    ev.Type = combo.eventType;
-                    return true;
+                    if (!reader.Container.Position->ToChar(null).IsAsciiLetter())
+                        break;
+                    ++reader.Container.Position;
+                }
+
+                ReadOnlySpan<TChar> span = new(start, (int) (reader.Container.Position - start));
+                foreach (var combo in eventSet)
+                {
+                    if (combo.DoesEventMatch(span))
+                    {
+                        reader.SkipWhitespace();
+                        ev.Type = combo.eventType;
+                        return true;
+                    }
                 }
             }
 
@@ -369,7 +371,7 @@ namespace YARG.Core.IO
         public void SkipTrack()
         {
             reader.SkipLinesUntil('}');
-            if (!reader.Container.IsEndOfFile())
+            if (!reader.Container.IsAtEnd())
                 reader.GotoNextLine();
         }
 

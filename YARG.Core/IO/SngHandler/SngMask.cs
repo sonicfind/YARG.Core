@@ -21,16 +21,16 @@ namespace YARG.Core.IO
 
         public SngMask(byte[] mask)
         {
-            Keys = new(NUM_KEYBYTES);
+            Keys = new DisposableArray<byte>(NUM_KEYBYTES);
 
             unsafe
             {
                 Vectors = (Vector<byte>*) Keys.Ptr;
-            }
 
-            for (int i = 0; i < NUM_KEYBYTES;)
-                for (int j = 0; j < MASKLENGTH; i++, j++)
-                    Keys[i] = (byte) (mask[j] ^ i);
+                for (int i = 0; i < NUM_KEYBYTES;)
+                    for (int j = 0; j < MASKLENGTH; i++, j++)
+                        Keys.Ptr[i] = (byte) (mask[j] ^ i);
+            }
         }
 
         public SngMask Clone()

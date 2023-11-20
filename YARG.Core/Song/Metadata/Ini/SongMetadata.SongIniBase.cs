@@ -103,7 +103,7 @@ namespace YARG.Core.Song
             public void Serialize(BinaryWriter writer, string groupDirectory);
             public Stream? GetChartStream();
             public Dictionary<SongStem, Stream> GetAudioStreams();
-            public byte[]? GetUnprocessedAlbumArt();
+            public DisposableArray<byte>? GetUnprocessedAlbumArt();
             public (BackgroundType, Stream?) GetBackgroundStream(BackgroundType selection);
             public Stream? GetPreviewAudioStream();
         }
@@ -199,7 +199,7 @@ namespace YARG.Core.Song
                 _parseSettings.StarPowerNote = -1;
         }
 
-        private static (ScanResult, AvailableParts?) ScanIniChartFile(byte[] file, ChartType chartType, IniSection modifiers)
+        private static (ScanResult, AvailableParts?) ScanIniChartFile(DisposableArray<byte> file, ChartType chartType, IniSection modifiers)
         {
             AvailableParts parts = new();
             DrumPreparseHandler drums = new()
@@ -209,12 +209,12 @@ namespace YARG.Core.Song
 
             if (chartType == ChartType.Chart)
             {
-                var byteReader = YARGTextLoader.TryLoadByteText(file);
+                using var byteReader = YARGTextLoader.TryLoadByteText(file);
                 if (byteReader != null)
                     ParseDotChart<byte, ByteStringDecoder, DotChartByte>(byteReader, modifiers, parts, drums);
                 else
                 {
-                    var charReader = YARGTextLoader.LoadCharText(file);
+                    using var charReader = YARGTextLoader.LoadCharText(file);
                     ParseDotChart<char, CharStringDecoder, DotChartChar>(charReader, modifiers, parts, drums);
                 }
             }
@@ -250,7 +250,7 @@ namespace YARG.Core.Song
                 drums.Type = DrumsType.FourLane;
         }
 
-        private static void ParseDotMidi(byte[] file, IniSection modifiers, AvailableParts parts, DrumPreparseHandler drums)
+        private static void ParseDotMidi(DisposableArray<byte> file, IniSection modifiers, AvailableParts parts, DrumPreparseHandler drums)
         {
             bool usePro = !modifiers.TryGet("pro_drums", out bool proDrums) || proDrums;
             if (drums.Type == DrumsType.Unknown)

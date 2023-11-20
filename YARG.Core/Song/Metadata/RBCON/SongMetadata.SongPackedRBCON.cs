@@ -149,24 +149,24 @@ namespace YARG.Core.Song
                 return midiListing.CreateStream();
             }
 
-            public byte[]? LoadMidiFile(CONFile? file)
+            public DisposableArray<byte>? LoadMidiFile(CONFile? file)
             {
                 if (midiListing == null || !midiListing.IsStillValid())
                     return null;
                 return midiListing.LoadAllBytes(file!);
             }
 
-            public byte[]? LoadMiloFile()
+            public DisposableArray<byte>? LoadMiloFile()
             {
                 if (_metadata.Milo != null && File.Exists(_metadata.Milo.FullName))
-                    return File.ReadAllBytes(_metadata.Milo.FullName);
+                    return DisposableArray<byte>.Create(_metadata.Milo.FullName);
                 return miloListing?.LoadAllBytes();
             }
 
-            public byte[]? LoadImgFile()
+            public DisposableArray<byte>? LoadImgFile()
             {
                 if (_metadata.Image != null && File.Exists(_metadata.Image.FullName))
-                    return File.ReadAllBytes(_metadata.Image.FullName);
+                    return DisposableArray<byte>.Create(_metadata.Image.FullName);
                 return imgListing?.LoadAllBytes();
             }
 

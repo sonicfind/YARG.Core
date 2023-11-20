@@ -10,50 +10,96 @@ namespace YARG.Core.IO
         public static readonly Encoding UTF8Strict = new UTF8Encoding(false, true);
     }
 
-    public sealed class YARGTextContainer<TChar>
+    public sealed class YARGTextContainer<TChar> : IDisposable
         where TChar : unmanaged, IConvertible
     {
-        public readonly TChar[] Data;
-        public readonly int Length;
-        public int Position;
-        public int Next;
+        private readonly HandleCounter<TChar>? _counter;
+        private readonly DisposableArray<TChar>? _buffer;
+        private bool _disposed;
 
-        public YARGTextContainer(TChar[] data, int position)
+        public readonly unsafe TChar* End;
+        public unsafe TChar* Position;
+        public unsafe TChar* Next;
+
+        public TChar Current
         {
-            Data = data;
-            Length = data.Length;
-            Position = position;
-            Next = position;
+            get
+            {
+                unsafe
+                {
+                    if (Position < End)
+                        return *Position;
+                    throw new InvalidOperationException("End of file reached");
+                }
+            }
         }
 
-        public YARGTextContainer(YARGTextContainer<TChar> other)
+        public YARGTextContainer(TChar[] data, int position = 0)
         {
-            Data = other.Data;
-            Length = other.Length;
-            Position = other.Position;
-            Next = other.Next;
+            _counter = new HandleCounter<TChar>(data);
+            unsafe
+            {
+                Position = _counter.Ptr + position;
+                Next = Position;
+                End = Position + data.Length;
+            }
+        }
+
+        public unsafe YARGTextContainer(DisposableArray<TChar> data, int position = 0)
+            : this(data.Ptr + position, data.Length - position)
+        {
+            _buffer = data;
+        }
+
+        public unsafe YARGTextContainer(TChar* data, long length)
+        {
+            unsafe
+            {
+                Position = data;
+                Next = data;
+                End = data + length;
+            }
+        }
+
+        public YARGTextContainer<TChar> Clone()
+        {
+            return new YARGTextContainer<TChar>(this);
+        }
+
+        private YARGTextContainer(YARGTextContainer<TChar> other)
+        {
+            if (other._buffer != null)
+                _buffer = other._buffer.Clone();
+            else
+            {
+                _counter = other._counter;
+                _counter?.Increment();
+            }
+
+            unsafe
+            {
+                Position = other.Position;
+                Next = other.Next;
+                End = other.End;
+            }
         }
 
         public bool IsCurrentCharacter(char cmp)
         {
-            return Data[Position].ToChar(null).Equals(cmp);
+            unsafe
+            {
+                if (Position < End)
+                    return Position->ToChar(null).Equals(cmp);
+                throw new InvalidOperationException("At or past end of buffer");
+            }
         }
 
-        public bool IsEndOfFile()
+        public bool IsAtEnd()
         {
-            return Position >= Length;
-        }
-
-        public ReadOnlySpan<TChar> Slice(int position, int length)
-        {
-            return new ReadOnlySpan<TChar>(Data, position, length);
-        }
-
-        public ReadOnlySpan<TChar> ExtractSpan(int length)
-        {
-            var span = Slice(Position, length);
-            Position += length;
-            return span;
+            unsafe
+            {
+                return Position >= End;
+            }
         }
 
         private const char LAST_DIGIT_SIGNED = '7';
@@ -113,71 +159,74 @@ namespace YARG.Core.IO
         public bool ExtractDouble(out double value)
         {
             value = 0;
-            if (Position >= Next)
-                return false;
-
-            char ch = Data[Position].ToChar(null);
-            double sign = ch == '-' ? -1 : 1;
-
-            if (ch == '-' || ch == '+')
+            unsafe
             {
-                ++Position;
-                if (Position == Next)
+                if (Position >= Next)
                     return false;
-                ch = Data[Position].ToChar(null);
-            }
 
-            if (!ch.IsAsciiDigit() && ch != '.')
-                return false;
-
-            while (ch.IsAsciiDigit())
-            {
-                value *= 10;
-                value += ch - '0';
-                ++Position;
-                if (Position < Next)
-                    ch = Data[Position].ToChar(null);
-                else
-                    break;
-            }
-
-            if (ch == '.')
-            {
-                ++Position;
-                if (Position < Next)
+                char ch = Position->ToChar(null);
+                double sign = ch == '-' ? -1 : 1;
+                if (ch == '-' || ch == '+')
                 {
-                    double divisor = 1;
-                    ch = Data[Position].ToChar(null);
-                    while (ch.IsAsciiDigit())
-                    {
-                        divisor *= 10;
-                        value += (ch - '0') / divisor;
+                    ++Position;
+                    if (Position == Next)
+                        return false;
 
-                        ++Position;
-                        if (Position < Next)
-                            ch = Data[Position].ToChar(null);
-                        else
-                            break;
+                    ch = Position->ToChar(null);
+                }
+
+                if (!ch.IsAsciiDigit() && ch != '.')
+                    return false;
+
+                while (ch.IsAsciiDigit())
+                {
+                    value *= 10;
+                    value += ch - '0';
+
+                    if (++Position < Next)
+                        ch = Position->ToChar(null);
+                    else
+                        break;
+                }
+
+                if (ch == '.')
+                {
+                    if (++Position < Next)
+                    {
+                        double divisor = 1;
+                        ch = Position->ToChar(null);
+                        while (ch.IsAsciiDigit())
+                        {
+                            divisor *= 10;
+                            value += (ch - '0') / divisor;
+
+                            if (++Position < Next)
+                                ch = Position->ToChar(null);
+                            else
+                                break;
+                        }
                     }
                 }
+                value *= sign;
             }
-
-            value *= sign;
             return true;
         }
 
         public bool ExtractBoolean()
         {
-            return Position < Next && Data[Position].ToChar(null) switch
+            unsafe
             {
-                '0' => false,
-                '1' => true,
-                _ => Position + 4 <= Next &&
-                    (Data[Position].ToChar(null).ToAsciiLower() == 't') &&
-                    (Data[Position + 1].ToChar(null).ToAsciiLower() == 'r') &&
-                    (Data[Position + 2].ToChar(null).ToAsciiLower() == 'u') &&
-                    (Data[Position + 3].ToChar(null).ToAsciiLower() == 'e'),
-            };
+                return Position < Next && Position->ToChar(null) switch
+                {
+                    '1' => true,
+                    't' or
+                    'T' => Position + 4 <= Next &&
+                        (Position[1].ToChar(null).ToAsciiLower() == 'r') &&
+                        (Position[2].ToChar(null).ToAsciiLower() == 'u') &&
+                        (Position[3].ToChar(null).ToAsciiLower() == 'e'),
+                    _ => false
+                };
+            }
         }
 
         public short ExtractInt16()
@@ -238,108 +287,130 @@ namespace YARG.Core.IO
 
         private void SkipDigits()
         {
-            while (Position < Next)
+            unsafe
             {
-                char ch = Data[Position].ToChar(null);
-                if (!ch.IsAsciiDigit())
-                    break;
-                ++Position;
+                while (Position < Next)
+                {
+                    char ch = Position->ToChar(null);
+                    if (!ch.IsAsciiDigit())
+                        break;
+                    ++Position;
+                }
             }
         }
 
         private bool InternalExtractSigned(out long value, long hardMax, long hardMin, long softMax)
         {
             value = 0;
-            if (Position >= Next)
-                return false;
-
-            char ch = Data[Position].ToChar(null);
-            long sign = 1;
-
-            switch (ch)
+            unsafe
             {
-                case '-':
-                    sign = -1;
-                    goto case '+';
-                case '+':
-                    ++Position;
-                    if (Position == Next)
-                        return false;
-                    ch = Data[Position].ToChar(null);
-                    break;
-            }
+                if (Position >= Next)
+                    return false;
 
-            if (!ch.IsAsciiDigit())
-                return false;
-
-            while (true)
-            {
-                value += ch - '0';
-
-                ++Position;
-                if (Position < Next)
+                char ch = Position->ToChar(null);
+                long sign = 1;
+                switch (ch)
                 {
-                    ch = Data[Position].ToChar(null);
-                    if (ch.IsAsciiDigit())
-                    {
-                        if (value < softMax || value == softMax && ch <= LAST_DIGIT_SIGNED)
-                        {
-                            value *= 10;
-                            continue;
-                        }
+                    case '-':
+                        sign = -1;
+                        goto case '+';
+                    case '+':
+                        if (++Position == Next)
+                            return false;
 
-                        value = sign == -1 ? hardMin : hardMax;
-                        SkipDigits();
-                        return true;
-                    }
+                        ch = Position->ToChar(null);
+                        break;
                 }
 
-                value *= sign;
-                return true;
+                if (!ch.IsAsciiDigit())
+                    return false;
+
+                while (true)
+                {
+                    value += ch - '0';
+                    if (++Position < Next)
+                    {
+                        ch = Position->ToChar(null);
+                        if (ch.IsAsciiDigit())
+                        {
+                            if (value < softMax || value == softMax && ch <= LAST_DIGIT_SIGNED)
+                            {
+                                value *= 10;
+                                continue;
+                            }
+                            value = sign == -1 ? hardMin : hardMax;
+                            SkipDigits();
+                            return true;
+                        }
+                    }
+                    value *= sign;
+                    return true;
+                }
             }
         }
 
         private bool InternalExtractUnsigned(out ulong value, ulong hardMax, ulong softMax)
         {
             value = 0;
-            if (Position >= Next)
-                return false;
-
-            char ch = Data[Position].ToChar(null);
-            if (ch == '+')
+            unsafe
             {
-                ++Position;
-                if (Position == Next)
+                if (Position >= Next)
                     return false;
-                ch = Data[Position].ToChar(null);
-            }
 
-            if (!ch.IsAsciiDigit())
-                return false;
-
-            while (true)
-            {
-                value += (ulong)(ch - '0');
-
-                ++Position;
-                if (Position < Next)
+                char ch = Position->ToChar(null);
+                if (ch == '+')
                 {
-                    ch = Data[Position].ToChar(null);
-                    if (ch.IsAsciiDigit())
-                    {
-                        if (value < softMax || value == softMax && ch <= LAST_DIGIT_UNSIGNED)
-                        {
-                            value *= 10;
-                            continue;
-                        }
+                    if (++Position == Next)
+                        return false;
 
-                        value = hardMax;
-                        SkipDigits();
-                    }
+                    ch = Position->ToChar(null);
                 }
-                break;
+
+                if (!ch.IsAsciiDigit())
+                    return false;
+
+                while (true)
+                {
+                    value += (ulong) (ch - '0');
+                    if (++Position < Next)
+                    {
+                        ch = Position->ToChar(null);
+                        if (ch.IsAsciiDigit())
+                        {
+                            if (value < softMax || value == softMax && ch <= LAST_DIGIT_UNSIGNED)
+                            {
+                                value *= 10;
+                                continue;
+                            }
+                            value = hardMax;
+                            SkipDigits();
+                        }
+                    }
+                    break;
+                }
             }
             return true;
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                _counter?.Dispose();
+                _buffer?.Dispose();
+                _disposed = true;
+            }
+        }
+
+        ~YARGTextContainer()
+        {
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

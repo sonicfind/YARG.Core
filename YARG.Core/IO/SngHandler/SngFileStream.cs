@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -27,28 +28,32 @@ namespace YARG.Core.IO
             }
         }
 
-        public static byte[] LoadFile(string file, long fileSize, long position, SngMask mask)
+        public static DisposableArray<byte> LoadFile(string file, long fileSize, long position, SngMask mask)
         {
             using FileStream filestream = new(file, FileMode.Open, FileAccess.Read, FileShare.Read, 1);
             if (filestream.Seek(position, SeekOrigin.Begin) != position)
                 throw new EndOfStreamException();
 
-            byte[] buffer = filestream.ReadBytes((int)fileSize);
-            int loopCount = (buffer.Length - SngMask.VECTORBYTE_COUNT) >> VECTOR_SHIFT;
+            using var data = DisposableArray<byte>.Create(filestream, (int)fileSize);
+            int loopCount = (data.Length - SngMask.VECTORBYTE_COUNT) >> VECTOR_SHIFT;
             Parallel.For(0, loopCount, i =>
             {
-                int loc = (i << VECTOR_SHIFT);
-                var vec = new Vector<byte>(buffer, loc);
                 unsafe
                 {
-                    var result = Vector.Xor(vec, mask.Vectors[i & NUM_VECTORS_MASK]);
-                    result.CopyTo(buffer, loc);
+                    var pos = data.Ptr + (i << VECTOR_SHIFT);
+                    var result = Vector.Xor(Unsafe.AsRef<Vector<byte>>(pos), mask.Vectors[i & NUM_VECTORS_MASK]);
+                    Unsafe.CopyBlock(pos, &result, (uint)SngMask.VECTORBYTE_COUNT);
                 }
             });
 
-            for (int buffIndex = loopCount << VECTOR_SHIFT; buffIndex < buffer.Length; buffIndex++)
-                buffer[buffIndex] ^= mask.Keys[buffIndex & KEY_MASK];
-            return buffer;
+            for (int buffIndex = loopCount << VECTOR_SHIFT; buffIndex < data.Length; buffIndex++)
+            {
+                unsafe
+                {
+                    data.Ptr[buffIndex] ^= mask.Keys.Ptr[buffIndex & KEY_MASK];
+                }
+            }
+            return data.Clone();
         }
 
         // 128kiB
@@ -208,8 +213,11 @@ namespace YARG.Core.IO
 
                 if (count != SngMask.VECTORBYTE_COUNT)
                 {
-                    for (int i = 0; i < count; ++i)
-                        dataBuffer[buffIndex++] ^= mask.Keys[key++];
+                    unsafe
+                    {
+                        for (int i = 0; i < count; ++i)
+                            dataBuffer.Ptr[buffIndex++] ^= mask.Keys.Ptr[key++];
+                    }
 
                     if (key == 256)
                         key = 0;
@@ -223,19 +231,21 @@ namespace YARG.Core.IO
 
             Parallel.For(0, loopCount, i =>
             {
-                int loc = (i << VECTOR_SHIFT) + buffIndex;
-                var vec = new Vector<byte>(dataBuffer.Slice(loc, SngMask.VECTORBYTE_COUNT));
                 unsafe
                 {
-                    var result = Vector.Xor(vec, mask.Vectors[(vectorIndex + i) & NUM_VECTORS_MASK]);
-                    Unsafe.CopyBlock(dataBuffer.Ptr + loc, &result, (uint) SngMask.VECTORBYTE_COUNT);
+                    var pos = dataBuffer.Ptr + (i << VECTOR_SHIFT) + buffIndex;
+                    var result = Vector.Xor(*(Vector<byte>*)pos, mask.Vectors[(vectorIndex + i) & NUM_VECTORS_MASK]);
+                    Unsafe.CopyBlock(pos, &result, (uint) SngMask.VECTORBYTE_COUNT);
                 }
             });
 
             buffIndex += loopCount << VECTOR_SHIFT;
             while (buffIndex < end)
             {
-                dataBuffer[buffIndex] ^= mask.Keys[buffIndex & 255];
+                unsafe
+                {
+                    dataBuffer.Ptr[buffIndex] ^= mask.Keys.Ptr[buffIndex & 255];
+                }
                 buffIndex++;
             }
 

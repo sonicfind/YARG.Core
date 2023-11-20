@@ -127,7 +127,11 @@ namespace YARG.Core.IO.Ini
 
         private static string ExtractSngString(YARGTextContainer<byte> sngContainer)
         {
-            return Encoding.UTF8.GetString(sngContainer.ExtractSpan(sngContainer.Next - sngContainer.Position));
+            unsafe
+            {
+                int length = (int) (sngContainer.Next - sngContainer.Position);
+                return Encoding.UTF8.GetString(sngContainer.Position, length);
+            }
         }
     }
 }

@@ -15,15 +15,15 @@ namespace YARG.Core.IO
         private const int HASHBLOCK_OFFSET = 4075;
         private const int DIST_PER_HASH = 4072;
 
-        public static byte[] LoadFile(string file, bool isContinguous, int fileSize, int blockNum, int shift)
+        public static DisposableArray<byte> LoadFile(string file, bool isContinguous, int fileSize, int blockNum, int shift)
         {
             using FileStream filestream = new(file, FileMode.Open, FileAccess.Read, FileShare.Read, 1);
             return LoadFile(filestream, isContinguous, fileSize, blockNum, shift);
         }
 
-        public static byte[] LoadFile(FileStream filestream, bool isContinguous, int fileSize, int blockNum, int shift)
+        public static DisposableArray<byte> LoadFile(FileStream filestream, bool isContinguous, int fileSize, int blockNum, int shift)
         {
-            byte[] data = new byte[fileSize];
+            using var data = new DisposableArray<byte>(fileSize);
             if (isContinguous)
             {
                 long skipVal = BYTES_PER_BLOCK << shift;
@@ -38,7 +38,7 @@ namespace YARG.Core.IO
                     if (readSize > fileSize - offset)
                         readSize = fileSize - offset;
 
-                    if (filestream.Read(data, offset, readSize) != readSize)
+                    if (filestream.Read(data.Slice(offset, readSize)) != readSize)
                         throw new Exception("Read error in CON-like subfile - Type: Contiguous");
 
                     offset += readSize;
@@ -76,12 +76,8 @@ namespace YARG.Core.IO
                         readSize = fileSize - offset;
 
                     filestream.Seek(blockLocation, SeekOrigin.Begin);
-                    unsafe
-                    {
-                        if (filestream.Read(data, offset, readSize) != readSize)
-                            throw new Exception("Pre-Read error in CON-like subfile - Type: Split");
-                    }
-
+                    if (filestream.Read(data.Slice(offset, readSize)) != readSize)
+                        throw new Exception("Pre-Read error in CON-like subfile - Type: Split");
 
                     offset += readSize;
                     if (offset == fileSize)
@@ -94,7 +90,7 @@ namespace YARG.Core.IO
                     blockNum = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
                 }
             }
-            return data;
+            return data.Clone();
         }
 
         public static long CalculateBlockLocation(int blockNum, int shift)

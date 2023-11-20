@@ -76,7 +76,7 @@ namespace YARG.Core.Song.Cache
 
         private void ScanCONGroup_Parallel(string filename, PackedCONGroup group)
         {
-            var reader = group.LoadSongs();
+            using var reader = group.LoadSongs();
             if (reader == null)
                 return;
 
@@ -89,8 +89,12 @@ namespace YARG.Core.Song.Cache
                     string name = reader.GetNameOfNode();
                     int index = GetCONIndex(indices, name);
 
-                    var node = new YARGDTAReader(reader);
-                    tasks.Add(Task.Run(() => ScanPackedCONNode(filename, group, name, index, node)));
+                    var node = reader.Clone();
+                    tasks.Add(Task.Run(() =>
+                    {
+                        ScanPackedCONNode(filename, group, name, index, node);
+                        node.Dispose();
+                    }));
                     reader.EndNode();
                 }
 
@@ -105,7 +109,7 @@ namespace YARG.Core.Song.Cache
 
         private void ScanExtractedCONGroup_Parallel(string directory, UnpackedCONGroup group)
         {
-            var reader = group.LoadDTA();
+            using var reader = group.LoadDTA();
             if (reader == null)
                 return;
 
@@ -118,8 +122,12 @@ namespace YARG.Core.Song.Cache
                     string name = reader.GetNameOfNode();
                     int index = GetCONIndex(indices, name);
 
-                    var node = new YARGDTAReader(reader);
-                    tasks.Add(Task.Run(() => ScanUnpackedCONNode(directory, group, name, index, node)));
+                    var node = reader.Clone();
+                    tasks.Add(Task.Run(() =>
+                    {
+                        ScanUnpackedCONNode(directory, group, name, index, node);
+                        node.Dispose();
+                    }));
                     reader.EndNode();
                 }
                 Task.WaitAll(tasks.ToArray());
@@ -156,6 +164,7 @@ namespace YARG.Core.Song.Cache
                     {
                         tracker.Set(ex);
                     }
+                    entryReader.Dispose();
                 }));
             }
         }
@@ -191,6 +200,7 @@ namespace YARG.Core.Song.Cache
                     {
                         tracker.Set(ex);
                     }
+                    entryReader.Dispose();
                 }));
             }
         }
@@ -227,6 +237,7 @@ namespace YARG.Core.Song.Cache
                     {
                         tracker.Set(ex);
                     }
+                    entryReader.Dispose();
                 }));
             }
         }
@@ -250,6 +261,7 @@ namespace YARG.Core.Song.Cache
                     {
                         tracker.Set(ex);
                     }
+                    entryReader.Dispose();
                 }));
             }
         }
@@ -280,6 +292,7 @@ namespace YARG.Core.Song.Cache
                     {
                         tracker.Set(ex);
                     }
+                    entryReader.Dispose();
                 }));
             }
         }
@@ -308,6 +321,7 @@ namespace YARG.Core.Song.Cache
                     {
                         tracker.Set(ex);
                     }
+                    entryReader.Dispose();
                 }));
             }
         }

@@ -209,7 +209,7 @@ namespace YARG.Core.Song
                 }
             }
 
-            public byte[]? LoadMidiUpdateFile()
+            public DisposableArray<byte>? LoadMidiUpdateFile()
             {
                 if (UpdateMidi == null)
                     return null;
@@ -217,7 +217,7 @@ namespace YARG.Core.Song
                 FileInfo info = new(UpdateMidi.FullName);
                 if (!info.Exists || info.LastWriteTime != UpdateMidi.LastWriteTime)
                     return null;
-                return File.ReadAllBytes(UpdateMidi.FullName);
+                return DisposableArray<byte>.Create(UpdateMidi.FullName);
             }
 
             public Stream? GetMoggStream()
@@ -236,9 +236,9 @@ namespace YARG.Core.Song
             public RBCONSubMetadata SharedMetadata { get; }
             public DateTime MidiLastWrite { get; }
             public Stream? GetMidiStream();
-            public byte[]? LoadMidiFile(CONFile? file);
-            public byte[]? LoadMiloFile();
-            public byte[]? LoadImgFile();
+            public DisposableArray<byte>? LoadMidiFile(CONFile? file);
+            public DisposableArray<byte>? LoadMiloFile();
+            public DisposableArray<byte>? LoadImgFile();
             public Stream? GetMoggStream();
             public bool IsMoggValid(CONFile? file);
             public void Serialize(BinaryWriter writer);
@@ -281,9 +281,9 @@ namespace YARG.Core.Song
 
             try
             {
-                byte[]? chartFile = _rbData.LoadMidiFile(file);
-                byte[]? updateFile = sharedMetadata.LoadMidiUpdateFile();
-                byte[]? upgradeFile = sharedMetadata.Upgrade?.LoadUpgradeMidi();
+                using var chartFile = _rbData.LoadMidiFile(file);
+                using var updateFile = sharedMetadata.LoadMidiUpdateFile();
+                using var upgradeFile = sharedMetadata.Upgrade?.LoadUpgradeMidi();
 
                 DrumPreparseHandler drumTracker = new()
                 {
@@ -319,21 +319,25 @@ namespace YARG.Core.Song
                 if (!_parts.CheckScanValidity())
                     return ScanResult.NoNotes;
 
-                byte[] buffer = new byte[bufLength];
-                System.Runtime.CompilerServices.Unsafe.CopyBlock(ref buffer[0], ref chartFile[0], (uint)chartFile.Length);
-
-                int offset = chartFile.Length;
-                if (updateFile != null)
+                using var buffer = new DisposableArray<byte>(bufLength);
+                unsafe
                 {
-                    System.Runtime.CompilerServices.Unsafe.CopyBlock(ref buffer[offset], ref updateFile[0], (uint)updateFile.Length);
-                    offset += updateFile.Length;
-                }
+                    System.Runtime.CompilerServices.Unsafe.CopyBlock(buffer.Ptr, chartFile.Ptr, (uint) chartFile.Length);
 
-                if (upgradeFile != null)
-                {
-                    System.Runtime.CompilerServices.Unsafe.CopyBlock(ref buffer[offset], ref upgradeFile[0], (uint)upgradeFile.Length);
+                    var ptr = buffer.Ptr + chartFile.Length;
+                    if (updateFile != null)
+                    {
+                        System.Runtime.CompilerServices.Unsafe.CopyBlock(ptr, updateFile.Ptr, (uint) updateFile.Length);
+                        ptr += updateFile.Length;
+                    }
+
+                    if (upgradeFile != null)
+                    {
+                        System.Runtime.CompilerServices.Unsafe.CopyBlock(ptr, upgradeFile.Ptr, (uint) upgradeFile.Length);
+                    }
                 }
-                _hash = HashWrapper.Create(buffer);
+                
+                _hash = HashWrapper.Create(buffer.Span);
                 return ScanResult.Success;
             }
             catch
@@ -351,7 +355,7 @@ namespace YARG.Core.Song
                 {
                     try
                     {
-                        var updateResults = ParseDTA(nodeName, sharedMetadata, new YARGDTAReader(update.Item2));
+                        var updateResults = ParseDTA(nodeName, sharedMetadata, update.Item2.Clone());
                         sharedMetadata.Update(update.Item1, nodeName, updateResults);
                     }
                     catch (Exception ex)
@@ -369,7 +373,7 @@ namespace YARG.Core.Song
             {
                 try
                 {
-                    ParseDTA(nodeName, sharedMetadata, new YARGDTAReader(upgrade.Item1!));
+                    ParseDTA(nodeName, sharedMetadata, upgrade.Item1!.Clone());
                     sharedMetadata.Upgrade = upgrade.Item2;
                 }
                 catch (Exception ex)

@@ -207,7 +207,7 @@ namespace YARG.Core.IO
             {
                 if (_trackPos < _end)
                     return *_trackPos;
-                throw new EndOfStreamException();
+                throw new InvalidOperationException();
             }
         }
         private byte ReadByte()
@@ -216,7 +216,7 @@ namespace YARG.Core.IO
             {
                 if (_trackPos < _end)
                     return *_trackPos++;
-                throw new EndOfStreamException();
+                throw new InvalidOperationException();
             }
         }
 

@@ -9,31 +9,31 @@ namespace YARG.Core.IO
         private static readonly UTF8Encoding UTF8 = new(true, true);
         private Encoding encoding = UTF8;
 
-        public string Decode(byte[] data, int index, int count)
+        public unsafe string Decode(byte* start, int length)
         {
             try
             {
-                return encoding.GetString(data, index, count);
+                return encoding.GetString(start, length);
             }
             catch
             {
                 encoding = YARGTextContainer.Latin1;
-                return encoding.GetString(data, index, count);
+                return encoding.GetString(start, length);
             }
         }
     }
 
     public struct CharStringDecoder : IStringDecoder<char>
     {
-        public string Decode(char[] data, int index, int count)
+        public unsafe string Decode(char* start, int length)
         {
-            return new string(data, index, count);
+            return new string(start, 0, length);
         }
     }
 
     public interface IStringDecoder<TChar>
         where TChar : unmanaged, IConvertible
     {
-        public string Decode(TChar[] data, int index, int count);
+        public unsafe string Decode(TChar* start, int length);
     } 
 }

@@ -25,12 +25,12 @@ namespace YARG.Core.IO
         public readonly int size;
         public readonly DateTime lastWrite;
 
-        public CONFileListing(AbridgedFileInfo conFile, int shift, ReadOnlySpan<byte> data)
+        public unsafe CONFileListing(AbridgedFileInfo conFile, int shift, byte* data)
         {
             ConFile = conFile;
             this.shift = shift;
 
-            Filename = Encoding.UTF8.GetString(data[..0x28]).TrimEnd('\0');
+            Filename = Encoding.UTF8.GetString(data, 0x28).TrimEnd('\0');
             flags = (CONFileListingFlag) data[0x28];
 
             numBlocks = data[0x29] << 16 | data[0x2A] << 8 | data[0x2B];
@@ -57,13 +57,13 @@ namespace YARG.Core.IO
         }
 
         // This overload should only be called during scanning
-        public byte[] LoadAllBytes(CONFile file)
+        public DisposableArray<byte> LoadAllBytes(CONFile file)
         {
             lock (file.Lock)
                 return CONFileStream.LoadFile(file.Stream, IsContiguous(), size, firstBlock, shift);
         }
 
-        public byte[] LoadAllBytes()
+        public DisposableArray<byte> LoadAllBytes()
         {
             return CONFileStream.LoadFile(ConFile.FullName, IsContiguous(), size, firstBlock, shift);
         }

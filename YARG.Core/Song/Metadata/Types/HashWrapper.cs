@@ -16,21 +16,6 @@ namespace YARG.Core.Song
         public  const int HASH_SIZE_IN_BYTES = 20;
         private const int INT_COUNT = 5;
 
-        private readonly byte[] _hash;
-        private readonly int    _hashcode;
-
-        public byte[] HashBytes => _hash;
-
-        public HashWrapper(YARGBinaryReader reader)
-            : this(reader.ReadBytes(HASH_SIZE_IN_BYTES))
-        {
-        }
-
-        public HashWrapper(BinaryReader reader)
-            : this(reader.ReadBytes(HASH_SIZE_IN_BYTES))
-        {
-        }
-
         public static HashWrapper Create(ReadOnlySpan<byte> span)
         {
             using var algo = Algorithm;
@@ -45,6 +30,21 @@ namespace YARG.Core.Song
             stream.Position = 0;
             using var algo = Algorithm;
             return new HashWrapper(algo.ComputeHash(stream));
+        }
+
+        private readonly byte[] _hash;
+        private readonly int _hashcode;
+
+        public byte[] HashBytes => _hash;
+
+        public HashWrapper(YARGBinaryReader reader)
+            : this(reader.ReadBytes(HASH_SIZE_IN_BYTES))
+        {
+        }
+
+        public HashWrapper(BinaryReader reader)
+            : this(reader.ReadBytes(HASH_SIZE_IN_BYTES))
+        {
         }
 
         public HashWrapper(byte[] hash)
