@@ -16,14 +16,15 @@ namespace YARG.Core.IO
         BigEndian = 1,
     };
 
-    public sealed class HandleCounter : Counter, IDisposable
+    public sealed class HandleCounter<TType> : Counter, IDisposable
+        where TType : unmanaged
     {
         private readonly GCHandle Handle;
         private bool _disposed;
 
-        public unsafe byte* Ptr => (byte*)Handle.AddrOfPinnedObject();
+        public unsafe TType* Ptr => (TType*)Handle.AddrOfPinnedObject();
 
-        public HandleCounter(byte[] data)
+        public HandleCounter(TType[] data)
         {
             Handle = GCHandle.Alloc(data, GCHandleType.Pinned);
         }
@@ -51,7 +52,7 @@ namespace YARG.Core.IO
 
     public sealed class YARGBinaryReader : IDisposable
     {
-        private readonly HandleCounter? _counter;
+        private readonly HandleCounter<byte>? _counter;
         private readonly DisposableArray<byte>? _buffer;
         private readonly unsafe byte* _end;
         private unsafe byte* _position;
@@ -65,7 +66,7 @@ namespace YARG.Core.IO
             if (offset < 0 || offset + length > data.Length)
                 throw new ArgumentOutOfRangeException(nameof(offset));
 
-            _counter = new HandleCounter(data);
+            _counter = new HandleCounter<byte>(data);
             unsafe
             {
                 _position = _counter.Ptr + offset;
