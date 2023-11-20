@@ -30,7 +30,7 @@ namespace YARG.Core.Song
 
         private SongChart? LoadIniChart()
         {
-            var stream = IniData!.GetChartStream();
+            using var stream = IniData!.GetChartStream();
             if (stream == null)
                 return null;
 

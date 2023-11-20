@@ -11,12 +11,12 @@ namespace YARG.Core.IO.Ini
         {
             try
             {
-                byte[] bytes = File.ReadAllBytes(iniFile);
-                var byteReader = YARGTextLoader.TryLoadByteText(bytes);
+                using var bytes = DisposableArray<byte>.Create(iniFile);
+                using var byteReader = YARGTextLoader.TryLoadByteText(bytes);
                 if (byteReader != null)
                     return ProcessIni(byteReader, sections);
 
-                var charReader = YARGTextLoader.LoadCharText(bytes);
+                using var charReader = YARGTextLoader.LoadCharText(bytes);
                 return ProcessIni(charReader, sections);
 
             }
@@ -47,16 +47,16 @@ namespace YARG.Core.IO.Ini
             where TDecoder : IStringDecoder<TChar>, new()
         {
             section = string.Empty;
-            if (reader.Container.IsEndOfFile())
+            if (reader.Container.IsAtEnd())
                 return false;
 
             if (!reader.Container.IsCurrentCharacter('['))
             {
                 reader.SkipLinesUntil('[');
-                if (reader.Container.IsEndOfFile())
+                if (reader.Container.IsAtEnd())
                     return false;
             }
-            section = reader.ExtractLine().ToLower();
+            section = reader.PeekLine().ToLower();
             return true;
         }
 
@@ -86,20 +86,7 @@ namespace YARG.Core.IO.Ini
             where TChar : unmanaged, IConvertible
             where TDecoder : IStringDecoder<TChar>, new()
         {
-            return !reader.Container.IsEndOfFile() && !reader.Container.IsCurrentCharacter('[');
-        }
-
-        private static bool FindNextTrack<TChar, TDecoder>(YARGTextReader<TChar, TDecoder> reader)
-            where TChar : unmanaged, IConvertible
-            where TDecoder : IStringDecoder<TChar>, new()
-        {
-            while (reader.Container.Position < reader.Container.Length)
-            {
-                if (reader.Container.Data[reader.Container.Position].ToChar(null) == '[')
-                    return true;
-                ++reader.Container.Position;
-            }
-            return false;
+            return !reader.Container.IsAtEnd() && !reader.Container.IsCurrentCharacter('[');
         }
     }
 }

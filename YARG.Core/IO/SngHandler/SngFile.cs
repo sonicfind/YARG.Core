@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using YARG.Core.Extensions;
 using YARG.Core.IO.Ini;
@@ -100,32 +101,31 @@ namespace YARG.Core.IO
         private static IniSection ReadMetadata(FileStream stream)
         {
             Dictionary<string, List<IniModifier>> modifiers = new();
-            ulong length = stream.ReadLE<ulong>() - sizeof(ulong);
+            ulong sectionLength = stream.ReadLE<ulong>() - sizeof(ulong);
             ulong numPairs = stream.ReadLE<ulong>();
 
             var validNodes = SongIniHandler.SONG_INI_DICTIONARY["[song]"];
-            YARGTextContainer<byte> text = new(stream.ReadBytes((int)length), 0);
+            using var buffer = DisposableArray<byte>.Create(stream, (int)sectionLength);
+            using YARGTextContainer<byte> text = new(buffer);
             for (ulong i = 0; i < numPairs; i++)
             {
-                int size = BitConverter.ToInt32(text.Data, text.Position);
-                text.Position += sizeof(int);
-
-                var key = Encoding.UTF8.GetString(text.ExtractSpan(size));
-                size = BitConverter.ToInt32(text.Data, text.Position);
-                text.Position += sizeof(int);
-
-                if (validNodes.TryGetValue(key, out var node))
+                unsafe
                 {
-                    text.Next = text.Position + size;
-                    var mod = node.CreateSngModifier(text);
-                    if (modifiers.TryGetValue(node.outputName, out var list))
-                        list.Add(mod);
-                    else
-                        modifiers.Add(node.outputName, new() { mod });
+                    int strLength = ParseStrLength(text);
+                    var key = Encoding.UTF8.GetString(text.Position, strLength);
+                    text.Position = text.Next;
+
+                    strLength = ParseStrLength(text);
+                    if (validNodes.TryGetValue(key, out var node))
+                    {
+                        var mod = node.CreateSngModifier(text);
+                        if (modifiers.TryGetValue(node.outputName, out var list))
+                            list.Add(mod);
+                        else
+                            modifiers.Add(node.outputName, new() { mod });
+                    }
                     text.Position = text.Next;
                 }
-                else
-                    text.Position += size;
             }
             return new IniSection(modifiers);
         }
@@ -141,13 +141,30 @@ namespace YARG.Core.IO
             for (ulong i = 0; i < numListings; i++)
             {
                 var strLen = reader.ReadByte();
-                string filename = Encoding.UTF8.GetString(reader.ReadBytes(strLen));
+                string filename = Encoding.UTF8.GetString(reader.ReadSpan(strLen));
                 int idx = filename.LastIndexOf('/');
                 if (idx != -1)
                     filename = filename[idx..];
                 listings.Add(filename.ToLower(), new SngFileListing(reader));
             }
             return listings;
+        }
+        
+        private static int ParseStrLength(YARGTextContainer<byte> container)
+        {
+            unsafe
+            {
+                var pos = container.Position;
+                container.Position += sizeof(int);
+                if (container.Position <= container.End)
+                {
+                    int length = Unsafe.AsRef<int>(pos);
+                    container.Next = container.Position + length;
+                    if (container.Next <= container.End)
+                        return length;
+                }
+                throw new EndOfStreamException();
+            }
         }
     }
 }

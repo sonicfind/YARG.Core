@@ -10,7 +10,7 @@ namespace YARG.Core.Song
         /// <summary>
         /// This not include drums as those must be handled by a dedicated DrumPreparseHandler object.
         /// </summary>
-        public void ParseMidi(byte[] file, DrumPreparseHandler drums)
+        public void ParseMidi(DisposableArray<byte> file, DrumPreparseHandler drums)
         {
             YARGMidiFile midiFile = new(file);
             foreach (var track in midiFile)

@@ -8,33 +8,53 @@ namespace YARG.Core.IO
     {
         private static readonly UTF32Encoding UTF32BE = new(true, false);
 
-        public static YARGTextReader<byte, ByteStringDecoder>? TryLoadByteText(byte[] data)
+        public static YARGTextReader<byte, ByteStringDecoder>? TryLoadByteText(DisposableArray<byte> file)
         {
-            if ((data[0] == 0xFF && data[1] == 0xFE) || (data[0] == 0xFE && data[1] == 0xFF))
+            if ((file[0] == 0xFF && file[1] == 0xFE) || (file[0] == 0xFE && file[1] == 0xFF))
                 return null;
 
-            int position = data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF ? 3 : 0;
-            return new YARGTextReader<byte, ByteStringDecoder>(data, position);
+            int position = file[0] == 0xEF && file[1] == 0xBB && file[2] == 0xBF ? 3 : 0;
+            unsafe
+            {
+                var container = new YARGTextContainer<byte>(file.Ptr + position, file.Length - position);
+                return new YARGTextReader<byte, ByteStringDecoder>(container);
+            }
         }
 
-        public static YARGTextReader<char, CharStringDecoder> LoadCharText(byte[] data)
+        public static YARGTextReader<char, CharStringDecoder> LoadCharText(DisposableArray<byte> file)
         {
-            char[] charData;
-            if (data[0] == 0xFF && data[1] == 0xFE)
+            int offset, charSize;
+            Encoding encoding;
+            if (file[2] != 0)
             {
-                if (data[2] != 0)
-                    charData = Encoding.Unicode.GetChars(data, 2, data.Length - 2);
-                else
-                    charData = Encoding.UTF32.GetChars(data, 3, data.Length - 3);
+                // UTF-16 encoding, endian-correct, so you can use a basic cast
+                if ((file[0] == 0xFF) == BitConverter.IsLittleEndian)
+                {
+                    unsafe
+                    {
+                        var container = new YARGTextContainer<char>((char*)(file.Ptr + 2), (file.Length - 2) >> 1);
+                        return new YARGTextReader<char, CharStringDecoder>(container);
+                    }
+                }
+
+                offset = 2;
+                charSize = 2;
+                encoding = BitConverter.IsLittleEndian ? Encoding.BigEndianUnicode : Encoding.Unicode;
             }
             else
             {
-                if (data[2] != 0)
-                    charData = Encoding.BigEndianUnicode.GetChars(data, 2, data.Length - 2);
-                else
-                    charData = UTF32BE.GetChars(data, 3, data.Length - 3);
+                offset = 3;
+                charSize = 4;
+                encoding = file[0] == 0xFF ? Encoding.UTF32 : UTF32BE;
             }
-            return new YARGTextReader<char, CharStringDecoder>(charData, 0);
+
+            int bytes = file.Length - offset;
+            using DisposableArray<char> charData = new(bytes / charSize);
+            unsafe
+            {
+                encoding.GetChars(file.Ptr + offset, bytes, charData.Ptr, charData.Length);
+            }
+            return new YARGTextReader<char, CharStringDecoder>(new YARGTextContainer<char>(charData.Clone()));
         }
     }
 
@@ -43,36 +63,42 @@ namespace YARG.Core.IO
         public static char SkipWhitespace<TChar>(YARGTextContainer<TChar> container)
             where TChar : unmanaged, IConvertible
         {
-            while (container.Position < container.Length)
+            unsafe
             {
-                char ch = container.Data[container.Position].ToChar(null);
-                if (ch.IsAsciiWhitespace())
+                while (container.Position < container.End)
                 {
-                    if (ch == '\n')
+                    char ch = container.Position->ToChar(null);
+                    if (ch.IsAsciiWhitespace())
+                    {
+                        if (ch == '\n')
+                            return '\n';
+                    }
+                    else if (ch != '=')
                         return ch;
+                    ++container.Position;
                 }
-                else if (ch != '=')
-                    return ch;
-                ++container.Position;
             }
             return (char) 0;
         }
     }
 
-    public sealed class YARGTextReader<TChar, TDecoder>
+    public sealed class YARGTextReader<TChar, TDecoder> : IDisposable
         where TChar : unmanaged, IConvertible
         where TDecoder : IStringDecoder<TChar>, new()
     {
         private readonly TDecoder decoder = new();
         public readonly YARGTextContainer<TChar> Container;
 
-        public YARGTextReader(TChar[] data, int position)
+        public YARGTextReader(YARGTextContainer<TChar> container)
         {
-            Container = new YARGTextContainer<TChar>(data, position);
+            Container = container;
             SkipWhitespace();
             SetNextPointer();
-            if (Container.Data[Container.Position].ToChar(null) == '\n')
-                GotoNextLine();
+            unsafe
+            {
+                if (Container.Position->ToChar(null) == '\n')
+                    GotoNextLine();
+            }
         }
 
         public char SkipWhitespace()
@@ -83,109 +109,136 @@ namespace YARG.Core.IO
         public void GotoNextLine()
         {
             char curr;
-            do
+            unsafe
             {
-                Container.Position = Container.Next;
-                if (Container.Position >= Container.Length)
-                    break;
-
-                Container.Position++;
-                curr = SkipWhitespace();
-
-                if (Container.Position == Container.Length)
-                    break;
-
-                if (Container.Data[Container.Position].ToChar(null) == '{')
+                do
                 {
-                    Container.Position++;
-                    curr = SkipWhitespace();
-                }
+                    Container.Position = Container.Next;
+                    if (Container.Position >= Container.End)
+                        break;
 
-                SetNextPointer();
-            } while (curr == '\n' || curr == '/' && Container.Data[Container.Position + 1].ToChar(null) == '/');
+                    ++Container.Position;
+                    curr = SkipWhitespace();
+                    if (Container.Position == Container.End)
+                        break;
+
+                    if (curr == '{')
+                    {
+                        ++Container.Position;
+                        curr = SkipWhitespace();
+                    }
+
+                    SetNextPointer();
+                } while (curr == '\n' || curr == '/' && CheckNextCharacter(Container, '/'));
+            }
+        }
+
+        private static bool CheckNextCharacter(YARGTextContainer<TChar> container, char cmp)
+        {
+            unsafe
+            {
+                if (container.Position + 1 < container.End)
+                    return container.Position[1].ToChar(null) == cmp;
+                throw new InvalidOperationException();
+            }
         }
 
         public void SkipLinesUntil(char stopCharacter)
         {
             GotoNextLine();
-            while (Container.Position < Container.Length)
+            unsafe
             {
-                if (Container.Data[Container.Position].ToChar(null) == stopCharacter)
+                while (Container.Position < Container.End)
                 {
-                    // Runs a check to ensure that the character is the start of the line
-                    int point = Container.Position - 1;
-                    while (point > Container.Position)
+                    if (Container.Position->ToChar(null) == stopCharacter)
                     {
-                        char character = Container.Data[point].ToChar(null);
-                        if (!character.IsAsciiWhitespace() || character == '\n')
-                            break;
-                        --point;
-                    }
+                        // Runs a check to ensure that the character is the start of the line
+                        var point = Container.Position - 1;
+                        while (point > Container.Position)
+                        {
+                            char character = point->ToChar(null);
+                            if (!character.IsAsciiWhitespace() || character == '\n')
+                                break;
+                            --point;
+                        }
 
-                    if (Container.Data[point].ToChar(null) == '\n')
-                        break;
+                        if (point->ToChar(null) == '\n')
+                            break;
+                    }
+                    ++Container.Position;
                 }
-                ++Container.Position;
             }
             SetNextPointer();
         }
 
-        public void SetNextPointer()
+        private void SetNextPointer()
         {
-            Container.Next = Container.Position;
-            while (Container.Next < Container.Length && Container.Data[Container.Next].ToChar(null) != '\n')
-                ++Container.Next;
+            unsafe
+            {
+                Container.Next = Container.Position;
+                while (Container.Next < Container.End && Container.Next->ToChar(null) != '\n')
+                    ++Container.Next;
+            }
         }
 
         public string ExtractModifierName()
         {
-            int curr = Container.Position;
-            while (curr < Container.Length)
+            unsafe
             {
-                char b = Container.Data[curr].ToChar(null);
-                if (b.IsAsciiWhitespace() || b == '=')
-                    break;
-                ++curr;
-            }
+                var start = Container.Position;
+                while (Container.Position < Container.End)
+                {
+                    char b = Container.Position->ToChar(null);
+                    if (b.IsAsciiWhitespace() || b == '=')
+                        break;
+                    ++Container.Position;
+                }
 
-            string name = decoder.Decode(Container.Data, Container.Position, curr - Container.Position);
-            Container.Position = curr;
-            SkipWhitespace();
-            return name;
+                int length = (int) (Container.Position - start);
+                SkipWhitespace();
+                return decoder.Decode(start, length);
+            }
         }
 
-        public string ExtractLine()
+        public string PeekLine()
         {
-            return decoder.Decode(Container.Data, Container.Position, Container.Next - Container.Position).TrimEnd();
+            unsafe
+            {
+                return decoder.Decode(Container.Position, (int) (Container.Next - Container.Position)).TrimEnd();
+            }
         }
 
         public string ExtractText(bool isChartFile)
         {
-            (int stringBegin, int stringEnd) = (Container.Position, Container.Next);
-            if (Container.Data[stringEnd - 1].ToChar(null) == '\r')
-                --stringEnd;
-
-            if (isChartFile && Container.Data[Container.Position].ToChar(null) == '\"')
+            unsafe
             {
-                int end = stringEnd - 1;
-                while (Container.Position + 1 < end && Container.Data[end].ToChar(null).IsAsciiWhitespace())
-                    --end;
+                var stringBegin = Container.Position;
+                var stringEnd = Container.Next;
+                if (stringEnd[-1].ToChar(null) == '\r')
+                    --stringEnd;
 
-                if (Container.Position < end && Container.Data[end].ToChar(null) == '\"' && Container.Data[end - 1].ToChar(null) != '\\')
+                if (isChartFile && Container.Position->ToChar(null) == '\"')
                 {
-                    ++stringBegin;
-                    stringEnd = end;
+                    var end = stringEnd - 1;
+                    while (Container.Position + 1 < end && end->ToChar(null).IsAsciiWhitespace())
+                        --end;
+
+                    if (Container.Position < end && end->ToChar(null) == '\"' && end[-1].ToChar(null) != '\\')
+                    {
+                        ++stringBegin;
+                        stringEnd = end;
+                    }
                 }
+
+                if (stringEnd < stringBegin)
+                    return string.Empty;
+
+                while (stringBegin < stringEnd && stringEnd[-1].ToChar(null).IsAsciiWhitespace())
+                    --stringEnd;
+
+                Container.Position = Container.Next;
+                return decoder.Decode(stringBegin, (int) (stringEnd - stringBegin));
             }
-
-            if (stringEnd < stringBegin)
-                return string.Empty;
-
-            while (stringEnd > stringBegin && Container.Data[stringEnd - 1].ToChar(null).IsAsciiWhitespace())
-                --stringEnd;
-
-            Container.Position = Container.Next;
-            return decoder.Decode(Container.Data, stringBegin, stringEnd - stringBegin);
         }
 
         public bool ExtractBoolean()
@@ -313,6 +366,11 @@ namespace YARG.Core.IO
                 return false;
             SkipWhitespace();
             return true;
+        }
+
+        public void Dispose()
+        {
+            Container.Dispose();
         }
     }
 }

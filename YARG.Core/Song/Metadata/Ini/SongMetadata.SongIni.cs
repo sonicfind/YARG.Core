@@ -93,7 +93,7 @@ namespace YARG.Core.Song
                 return streams;
             }
 
-            public byte[]? GetUnprocessedAlbumArt()
+            public DisposableArray<byte>? GetUnprocessedAlbumArt()
             {
                 Dictionary<string, string> files = new();
                 {
@@ -104,7 +104,7 @@ namespace YARG.Core.Song
 
                 foreach (string albumFile in IIniMetadata.ALBUMART_FILES)
                     if (files.TryGetValue(albumFile, out var fullname))
-                        return File.ReadAllBytes(fullname);
+                        return DisposableArray<byte>.Create(fullname);
                 return null;
             }
 
@@ -185,9 +185,9 @@ namespace YARG.Core.Song
 
             UnpackedIniSubmetadata metadata = new(directory, chart.Type, new AbridgedFileInfo(chart.File), iniFileInfo);
 
-            byte[] file = File.ReadAllBytes(chart.File);
+            using var file = DisposableArray<byte>.Create(chart.File);
             var result = ScanIniChartFile(file, chart.Type, iniModifiers);
-            return (result.Item1, result.Item2 != null ? new(metadata, result.Item2, HashWrapper.Create(file), iniModifiers) : null);
+            return (result.Item1, result.Item2 != null ? new(metadata, result.Item2, HashWrapper.Create(file.Span), iniModifiers) : null);
         }
 
         public static SongMetadata? IniFromCache(string baseDirectory, YARGBinaryReader reader, CategoryCacheStrings strings)

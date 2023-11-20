@@ -45,7 +45,7 @@ namespace YARG.Core.Song
                 if (!sngInfo.IsStillValid())
                     return null;
 
-                var sngFile = SngFile.TryLoadFile(sngInfo.FullName);
+                using var sngFile = SngFile.TryLoadFile(sngInfo.FullName);
                 if (sngFile == null)
                     return null;
 
@@ -56,7 +56,7 @@ namespace YARG.Core.Song
             {
                 Dictionary<SongStem, Stream> streams = new();
 
-                var sngFile = SngFile.TryLoadFile(sngInfo.FullName);
+                using var sngFile = SngFile.TryLoadFile(sngInfo.FullName);
                 if (sngFile != null)
                 {
                     foreach (var stem in IniAudioChecker.SupportedStems)
@@ -76,9 +76,9 @@ namespace YARG.Core.Song
                 return streams;
             }
 
-            public byte[]? GetUnprocessedAlbumArt()
+            public DisposableArray<byte>? GetUnprocessedAlbumArt()
             {
-                var sngFile = SngFile.TryLoadFile(sngInfo.FullName);
+                using var sngFile = SngFile.TryLoadFile(sngInfo.FullName);
                 if (sngFile == null)
                     return null;
 
@@ -90,7 +90,7 @@ namespace YARG.Core.Song
 
             public (BackgroundType, Stream?) GetBackgroundStream(BackgroundType selections)
             {
-                var sngFile = SngFile.TryLoadFile(sngInfo.FullName);
+                using var sngFile = SngFile.TryLoadFile(sngInfo.FullName);
                 if (sngFile == null)
                     return (default, null);
 
@@ -128,7 +128,7 @@ namespace YARG.Core.Song
 
             public Stream? GetPreviewAudioStream()
             {
-                var sngFile = SngFile.TryLoadFile(sngInfo.FullName);
+                using var sngFile = SngFile.TryLoadFile(sngInfo.FullName);
                 if (sngFile == null)
                     return null;
 
@@ -155,9 +155,9 @@ namespace YARG.Core.Song
                 return (ScanResult.LooseChart_NoAudio, null);
 
             SngSubmetadata metadata = new(sng.Version, sngInfo, chart);
-            byte[] file = sng[chart.File].LoadAllBytes(sngInfo.FullName, sng.Mask);
+            using var file = sng[chart.File].LoadAllBytes(sngInfo.FullName, sng.Mask);
             var result = ScanIniChartFile(file, chart.Type, sng.Metadata);
-            return (result.Item1, result.Item2 != null ? new(metadata, result.Item2, HashWrapper.Create(file), sng.Metadata) : null);
+            return (result.Item1, result.Item2 != null ? new(metadata, result.Item2, HashWrapper.Create(file.Span), sng.Metadata) : null);
         }
 
         public static SongMetadata? SngFromCache(string baseDirectory, YARGBinaryReader reader, CategoryCacheStrings strings)
@@ -170,7 +170,7 @@ namespace YARG.Core.Song
             if (sngInfo == null)
                 return null;
 
-            var sngfile = SngFile.TryLoadFile(sngPath);
+            using var sngfile = SngFile.TryLoadFile(sngPath);
             // TODO: Implement Update-in-place functionality
             if (sngfile == null || sngfile.Version != version)
                 return null;

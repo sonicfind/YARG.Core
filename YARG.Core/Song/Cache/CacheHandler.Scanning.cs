@@ -151,7 +151,7 @@ namespace YARG.Core.Song.Cache
             if (!FindOrMarkFile(filename))
                 return;
 
-            var sngFile = SngFile.TryLoadFile(filename);
+            using var sngFile = SngFile.TryLoadFile(filename);
             if (sngFile == null)
             {
                 AddToBadSongs(filename, ScanResult.PossibleCorruption);

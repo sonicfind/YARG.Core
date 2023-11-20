@@ -93,23 +93,28 @@ namespace YARG.Core.IO
                 List<CONFileListing> listings = new();
 
                 using var conStream = new CONFileStream(stream, true, length, firstBlock, shift);
-                Span<byte> listingBuffer = stackalloc byte[SIZEOF_FILELISTING];
-                for (int i = 0; i < length; i += SIZEOF_FILELISTING)
+                unsafe
                 {
-                    conStream.Read(listingBuffer);
-                    if (listingBuffer[0] == 0)
-                        break;
-
-                    CONFileListing listing = new(fileInfo, shift, listingBuffer);
-                    if (listing.pathIndex >= listings.Count)
+                    byte* listingBuffer = stackalloc byte[SIZEOF_FILELISTING];
+                    var span = new Span<byte>(listingBuffer, SIZEOF_FILELISTING);
+                    while (stream.Position < length)
                     {
-                        YargTrace.LogError($"Error while parsing {filename} - Filelisting blocks constructed out of spec");
-                        return null;
-                    }
+                        conStream.Read(span);
+                        // Empty string means no more listings
+                        if (listingBuffer[0] == 0)
+                            break;
 
-                    if (listing.pathIndex != -1)
-                        listing.SetParentDirectory(listings[listing.pathIndex].Filename);
-                    listings.Add(listing);
+                        CONFileListing listing = new(fileInfo, shift, listingBuffer);
+                        if (listing.pathIndex >= listings.Count)
+                        {
+                            YargTrace.LogError($"Error while parsing {filename} - Filelisting blocks constructed out of spec");
+                            return null;
+                        }
+
+                        if (listing.pathIndex != -1)
+                            listing.SetParentDirectory(listings[listing.pathIndex].Filename);
+                        listings.Add(listing);
+                    }
                 }
                 return new CONFile(fileInfo, listings);
             }

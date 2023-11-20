@@ -18,7 +18,7 @@ namespace YARG.Core.IO
             Position = reader.Read<long>();
         }
 
-        public byte[] LoadAllBytes(string filename, SngMask mask)
+        public DisposableArray<byte> LoadAllBytes(string filename, SngMask mask)
         {
             return SngFileStream.LoadFile(filename, Length, Position, mask.Clone());
         }

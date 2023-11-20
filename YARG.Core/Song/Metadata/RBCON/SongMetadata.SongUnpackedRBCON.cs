@@ -101,25 +101,25 @@ namespace YARG.Core.Song
                 return new FileStream(Midi.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
             }
 
-            public byte[]? LoadMidiFile(CONFile? _)
+            public DisposableArray<byte>? LoadMidiFile(CONFile? _)
             {
                 if (DTA == null || !DTA.IsStillValid() || !Midi.IsStillValid())
                     return null;
-                return File.ReadAllBytes(Midi.FullName);
+                return DisposableArray<byte>.Create(Midi.FullName);
             }
 
-            public byte[]? LoadMiloFile()
+            public DisposableArray<byte>? LoadMiloFile()
             {
                 if (_metadata.Milo == null || !File.Exists(_metadata.Milo.FullName))
                     return null;
-                return File.ReadAllBytes(_metadata.Milo.FullName);
+                return DisposableArray<byte>.Create(_metadata.Milo.FullName);
             }
 
-            public byte[]? LoadImgFile()
+            public DisposableArray<byte>? LoadImgFile()
             {
                 if (_metadata.Image == null || !File.Exists(_metadata.Image.FullName))
                     return null;
-                return File.ReadAllBytes(_metadata.Image.FullName);
+                return DisposableArray<byte>.Create(_metadata.Image.FullName);
             }
 
             public Stream? GetMoggStream()
