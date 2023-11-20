@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace YARG.Core.IO
 {
-    public sealed class Counter
+    public class Counter
     {
         private int _count = 1;
         private object _lock = new();
