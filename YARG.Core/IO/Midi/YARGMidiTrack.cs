@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using YARG.Core.Extensions;
 
 namespace YARG.Core.IO
 {
-    public sealed class YARGMidiTrack
+    public sealed class YARGMidiTrack : IDisposable
     {
         public static readonly Dictionary<string, MidiTrackType> TRACKNAMES = new()
         {
@@ -50,8 +51,11 @@ namespace YARG.Core.IO
         private MidiEvent _event;
         private MidiEvent _running;
 
-        private readonly ReadOnlyMemory<byte> _data;
-        private int _trackPos;
+        private readonly GCHandle _handle;
+        private readonly DisposableArray<byte>? _buffer;
+        private readonly unsafe byte* _end;
+        private unsafe byte* _trackPos;
+        private bool disposedValue;
 
         public long Position => _tickPosition;
         public MidiEventType Type => _event.Type;
@@ -59,23 +63,44 @@ namespace YARG.Core.IO
 
         public YARGMidiTrack(Stream stream)
         {
-            int count = stream.ReadBE<int>();
-            if (stream is MemoryStream mem)
+            int length = stream.ReadBE<int>();
+            if (stream is UnmanagedMemoryStream unmanaged)
             {
-                _data = new ReadOnlyMemory<byte>(mem.GetBuffer(), (int) mem.Position, count);
-                mem.Position += count;
+                unsafe
+                {
+                    _trackPos = unmanaged.PositionPointer;
+                }
+                unmanaged.Position += length;
+            }
+            else if (stream is MemoryStream mem)
+            {
+                _handle = GCHandle.Alloc(mem.GetBuffer(), GCHandleType.Pinned);
+                unsafe
+                {
+                    _trackPos = (byte*) _handle.AddrOfPinnedObject() + mem.Position;
+                }
+                mem.Position += length;
             }
             else
             {
-                _data = stream.ReadBytes(count);
+                _buffer = DisposableArray<byte>.Create(stream, length);
+                unsafe
+                {
+                    _trackPos = _buffer.Ptr;
+                }
             }
 
-            if (!ParseEvent(true) || _event.Type != MidiEventType.Text_TrackName)
+            unsafe
             {
-                _trackPos = 0;
-                _tickPosition = 0;
-                _event.Length = 0;
-                _event.Type = _running.Type = MidiEventType.Reset_Or_Meta;
+                _end = _trackPos + length;
+                var start = _trackPos;
+                if (!ParseEvent(true) || _event.Type != MidiEventType.Text_TrackName)
+                {
+                    _trackPos = start;
+                    _tickPosition = 0;
+                    _event.Length = 0;
+                    _event.Type = _running.Type = MidiEventType.Reset_Or_Meta;
+                }
             }
         }
 
@@ -84,14 +109,17 @@ namespace YARG.Core.IO
 
         public bool ParseEvent(bool parseVLQ)
         {
-            _trackPos += _event.Length;
+            unsafe
+            {
+                _trackPos += _event.Length;
+            }
+
             if (!parseVLQ)
                 AbsorbVLQ();
             else
                 _tickPosition += ReadVLQ();
 
-            var span = _data.Span;
-            byte tmp = span[_trackPos];
+            byte tmp = PeekByte();
             var type = (MidiEventType) tmp;
             if (type < MidiEventType.Note_Off)
             {
@@ -99,65 +127,97 @@ namespace YARG.Core.IO
                     throw new Exception("Invalid running event");
                 _event = _running;
             }
+            else if (type < MidiEventType.SysEx)
+            {
+                unsafe
+                {
+                    ++_trackPos;
+                }
+                _event.Channel = _running.Channel = (byte) (tmp & CHANNEL_MASK);
+                _event.Type = _running.Type = (MidiEventType) (tmp & EVENTTYPE_MASK);
+                _event.Length = _running.Length = _running.Type switch
+                {
+                    MidiEventType.Note_On or
+                    MidiEventType.Note_Off or
+                    MidiEventType.Control_Change or
+                    MidiEventType.Key_Pressure or
+                    MidiEventType.Pitch_Wheel => 2,
+                    _ => 1
+                };
+            }
             else
             {
-                _trackPos++;
-                if (type < MidiEventType.SysEx)
+                unsafe
                 {
-                    _event.Channel = _running.Channel = (byte) (tmp & CHANNEL_MASK);
-                    _event.Type    = _running.Type    = (MidiEventType) (tmp & EVENTTYPE_MASK);
-                    _event.Length  = _running.Length  = _running.Type switch
-                    {
-                        MidiEventType.Note_On or
-                        MidiEventType.Note_Off or
-                        MidiEventType.Control_Change or
-                        MidiEventType.Key_Pressure or
-                        MidiEventType.Pitch_Wheel => 2,
-                        _ => 1
-                    };
+                    ++_trackPos;
                 }
-                else
+
+                switch (type)
                 {
-                    switch (type)
-                    {
-                        case MidiEventType.Reset_Or_Meta:
-                            type = (MidiEventType) span[_trackPos++];
-                            goto case MidiEventType.SysEx_End;
-                        case MidiEventType.SysEx:
-                        case MidiEventType.SysEx_End:
-                            _event.Length = (int) ReadVLQ();
-                            break;
-                        case MidiEventType.Song_Position:
-                            _event.Length = 2;
-                            break;
-                        case MidiEventType.Song_Select:
-                            _event.Length = 1;
-                            break;
-                        default:
-                            _event.Length = 0;
-                            break;
-                    }
-                    if (type == MidiEventType.End_Of_Track)
-                        return false;
-                    _event.Type = type;
+                    case MidiEventType.Reset_Or_Meta:
+                        type = (MidiEventType) ReadByte();
+                        goto case MidiEventType.SysEx_End;
+                    case MidiEventType.SysEx:
+                    case MidiEventType.SysEx_End:
+                        _event.Length = (int) ReadVLQ();
+                        break;
+                    case MidiEventType.Song_Position:
+                        _event.Length = 2;
+                        break;
+                    case MidiEventType.Song_Select:
+                        _event.Length = 1;
+                        break;
+                    default:
+                        _event.Length = 0;
+                        break;
                 }
+                if (type == MidiEventType.End_Of_Track)
+                    return false;
+                _event.Type = type;
             }
 
-            if (_trackPos + _event.Length > _data.Length)
-                throw new EndOfStreamException();
+            unsafe
+            {
+                if (_trackPos + _event.Length > _end)
+                    throw new EndOfStreamException();
+            }
             return true;
         }
 
         public ReadOnlySpan<byte> ExtractTextOrSysEx()
         {
-            return _data.Slice(_trackPos, _event.Length).Span;
+            unsafe
+            {
+                return new ReadOnlySpan<byte>(_trackPos, _event.Length);
+            }
         }
 
         public void ExtractMidiNote(ref MidiNote note)
         {
-            var span = _data.Span;
-            note.value = span[_trackPos];
-            note.velocity = span[_trackPos + 1];
+            unsafe
+            {
+                note.value = _trackPos[0];
+                note.velocity = _trackPos[1];
+            }
+        }
+
+        private byte PeekByte()
+        {
+            unsafe
+            {
+                if (_trackPos < _end)
+                    return *_trackPos;
+                throw new EndOfStreamException();
+            }
+        }
+        private byte ReadByte()
+        {
+            unsafe
+            {
+                if (_trackPos < _end)
+                    return *_trackPos++;
+                throw new EndOfStreamException();
+            }
         }
 
         private const uint EXTENDED_VLQ_FLAG = 0x80;
@@ -170,39 +230,65 @@ namespace YARG.Core.IO
         private const uint VLQ_SHIFTLIMIT = 1 << (VLQ_SHIFT * MAX_SHIFTCOUNT);
         private uint ReadVLQ()
         {
-            var span = _data.Span;
-            uint curr = span[_trackPos++];
-            uint value = curr & VLQ_MASK;
-            while (curr >= EXTENDED_VLQ_FLAG)
+            unsafe
             {
-                if (value < VLQ_SHIFTLIMIT)
+                uint curr = ReadByte();
+                uint value = curr & VLQ_MASK;
+                while (curr >= EXTENDED_VLQ_FLAG)
                 {
-                    value <<= VLQ_SHIFT;
-                    curr = span[_trackPos++];
-                    value |= curr & VLQ_MASK;
+                    if (value < VLQ_SHIFTLIMIT)
+                    {
+                        value <<= VLQ_SHIFT;
+                        curr = ReadByte();
+                        value |= curr & VLQ_MASK;
+                    }
+                    else
+                        throw new Exception("Invalid variable length quantity");
                 }
-                else
-                    throw new Exception("Invalid variable length quantity");
+                return value;
             }
-            return value;
         }
 
         private unsafe void AbsorbVLQ()
         {
-            var span = _data.Span;
-            uint b = span[_trackPos++];
+            uint b = ReadByte();
             // Skip zeroes
             while (b == EXTENDED_VLQ_FLAG)
-                b = span[_trackPos++];
+                b = ReadByte();
 
-            int maxPos = _trackPos + MAX_SHIFTCOUNT;
-            while (b >= EXTENDED_VLQ_FLAG)
+            unsafe
             {
-                if (_trackPos < maxPos)
-                    b = span[_trackPos++];
-                else
-                    throw new Exception("Invalid variable length quantity");
+                var maxPos = _trackPos + MAX_SHIFTCOUNT;
+                while (b >= EXTENDED_VLQ_FLAG)
+                {
+                    if (_trackPos < maxPos)
+                        b = ReadByte();
+                    else
+                        throw new Exception("Invalid variable length quantity");
+                }
             }
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (_handle.IsAllocated)
+                    _handle.Free();
+                _buffer?.Dispose();
+                disposedValue = true;
+            }
+        }
+
+        ~YARGMidiTrack()
+        {
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 
