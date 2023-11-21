@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <Folder Include="Chart\Loaders\" />
+    <Folder Include="Parsing\FlatDictionary\" />
   </ItemGroup>
 
 </Project>
