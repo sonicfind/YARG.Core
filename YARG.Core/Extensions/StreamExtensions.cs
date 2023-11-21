@@ -93,41 +93,13 @@ namespace YARG.Core.Extensions
         public static TType ReadLE<TType>(this BinaryReader reader)
             where TType : unmanaged, IComparable, IComparable<TType>, IConvertible, IEquatable<TType>, IFormattable
         {
-            unsafe
-            {
-                byte* buffer = stackalloc byte[sizeof(TType)];
-                if (reader.Read(new Span<byte>(buffer, sizeof(TType))) != sizeof(TType))
-                    throw new EndOfStreamException($"Not enough data in the reader to read {typeof(TType)}!");
-
-                // Checks System endianness
-                if (!BitConverter.IsLittleEndian)
-                {
-                    int half = sizeof(TType) >> 1;
-                    for (int i = 0, j = sizeof(TType) - 1; i < half; ++i, --j)
-                        (buffer[j], buffer[i]) = (buffer[i], buffer[j]);
-                }
-                return *(TType*) buffer;
-            }
+            return reader.BaseStream.ReadLE<TType>();
         }
 
-        public static TType ReadBE<TType>(this BinaryReader stream)
+        public static TType ReadBE<TType>(this BinaryReader reader)
             where TType : unmanaged, IComparable, IComparable<TType>, IConvertible, IEquatable<TType>, IFormattable
         {
-            unsafe
-            {
-                byte* buffer = stackalloc byte[sizeof(TType)];
-                if (stream.Read(new Span<byte>(buffer, sizeof(TType))) != sizeof(TType))
-                    throw new EndOfStreamException($"Not enough data in the reader to read {typeof(TType)}!");
-
-                // Checks System endianness
-                if (BitConverter.IsLittleEndian)
-                {
-                    int half = sizeof(TType) >> 1;
-                    for (int i = 0, j = sizeof(TType) - 1; i < half; ++i, --j)
-                        (buffer[j], buffer[i]) = (buffer[i], buffer[j]);
-                }
-                return *(TType*) buffer;
-            }
+            return reader.BaseStream.ReadBE<TType>();
         }
         #endregion
 
@@ -135,33 +107,13 @@ namespace YARG.Core.Extensions
         public static void WriteLE<TType>(this BinaryWriter writer, TType value)
             where TType : unmanaged, IComparable, IComparable<TType>, IConvertible, IEquatable<TType>, IFormattable
         {
-            unsafe
-            {
-                byte* buffer = (byte*) &value;
-                if (!BitConverter.IsLittleEndian)
-                {
-                    int half = sizeof(TType) >> 1;
-                    for (int i = 0, j = sizeof(TType) - 1; i < half; ++i, --j)
-                        (buffer[j], buffer[i]) = (buffer[i], buffer[j]);
-                }
-                writer.Write(new Span<byte>(buffer, sizeof(TType)));
-            }
+            writer.BaseStream.WriteLE(value);
         }
 
         public static void WriteBE<TType>(this BinaryWriter writer, TType value)
             where TType : unmanaged, IComparable, IComparable<TType>, IConvertible, IEquatable<TType>, IFormattable
         {
-            unsafe
-            {
-                byte* buffer = (byte*) &value;
-                if (BitConverter.IsLittleEndian)
-                {
-                    int half = sizeof(TType) >> 1;
-                    for (int i = 0, j = sizeof(TType) - 1; i < half; ++i, --j)
-                        (buffer[j], buffer[i]) = (buffer[i], buffer[j]);
-                }
-                writer.Write(new Span<byte>(buffer, sizeof(TType)));
-            }
+            writer.BaseStream.WriteBE(value);
         }
         #endregion
     }
