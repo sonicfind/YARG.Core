@@ -57,6 +57,21 @@ namespace YARG.Core.IO
             return new DisposableArray<T>(buffer, length);
         }
 
+        public static DisposableArray<T> Realloc(DisposableArray<T> original, int numElements)
+        {
+            if (original.counter.Count > 1)
+            {
+                original.Dispose();
+                return new DisposableArray<T>(numElements);
+            }
+            original.disposedValue = true;
+            original.counter.Decrement();
+
+            int bufferLength = numElements * sizeof(T);
+            var newPtr = (byte*) Marshal.ReAllocHGlobal(original.IntPtr, (IntPtr) bufferLength);
+            return new DisposableArray<T>(newPtr, bufferLength);
+        }
+
         private DisposableArray(byte* ptr, int bytes)
         {
             Ptr = (T*) ptr;
