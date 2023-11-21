@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.RegularExpressions;
 using YARG.Core.IO;
 
 namespace YARG.Core.Song

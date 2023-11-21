@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using YARG.Core.Extensions;
 using YARG.Core.IO.Ini;
+using YARG.Core.Parsing;
 
 namespace YARG.Core.IO
 {
@@ -366,6 +367,43 @@ namespace YARG.Core.IO
         {
             note.Lane = reader.ExtractInt32();
             note.Duration = reader.ExtractInt64();
+        }
+
+        public (SpecialPhraseType, SpecialPhraseInfo) ExtractSpecialPhrase()
+        {
+            int type = reader.ExtractInt32();
+            long duration = reader.ExtractInt64();
+            return new((SpecialPhraseType) type, new SpecialPhraseInfo(duration));
+        }
+
+        public int ExtractMicrosPerQuarter()
+        {
+            const double TEMPO_FACTOR = 60000000000;
+            return (int) Math.Round(TEMPO_FACTOR / reader.ExtractUInt32());
+        }
+
+        public long ExtractAnchor()
+        {
+            return reader.ExtractInt64();
+        }
+
+        public TimeSig_FW ExtractTimeSig()
+        {
+            ulong numerator = reader.ExtractUInt64();
+            ulong metro = 0, n32nds = 0;
+            if (reader.ExtractUInt64(out ulong denom))
+            {
+                if (reader.ExtractUInt64(out metro))
+                    reader.ExtractUInt64(out n32nds);
+            }
+            else
+                denom = 255;
+            return new TimeSig_FW((byte) numerator, (byte) denom, (byte) metro, (byte) n32nds);
+        }
+
+        public string ExtractText()
+        {
+            return reader.ExtractText(true);
         }
 
         public void SkipTrack()
