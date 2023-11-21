@@ -23,13 +23,14 @@ namespace YARG.Core.Song.Cache
         public int BadSongCount;
     }
 
-    public sealed partial class CacheHandler
+    public sealed partial class CacheHandler : IDisposable
     {
         public static ScanProgressTracker Progress => _progress;
         private static ScanProgressTracker _progress;
+
         public static SongCache RunScan(bool fast, string cacheLocation, string badSongsLocation, bool multithreading, List<string> baseDirectories)
         {
-            CacheHandler handler = new(baseDirectories);
+            using CacheHandler handler = new(baseDirectories);
             try
             {
                 if (!fast || !handler.QuickScan(cacheLocation, multithreading))
@@ -73,6 +74,7 @@ namespace YARG.Core.Song.Cache
         private readonly HashSet<string> preScannedDirectories = new();
         private readonly HashSet<string> preScannedFiles = new();
         private readonly SortedDictionary<string, ScanResult> badSongs = new();
+        private bool disposedValue;
 
         private CacheHandler(List<string> baseDirectories)
         {
@@ -451,6 +453,48 @@ namespace YARG.Core.Song.Cache
             }
 
             return CanAddUpgrade(shortname, lastWrite);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                foreach (var group in updates)
+                    foreach (var update in group.Value)
+                        update.Item2.Dispose();
+
+                foreach (var upgrade in upgrades)
+                    upgrade.Value.Item1?.Dispose();
+
+                if (disposing)
+                {
+                    updateGroups.Values.Clear();
+                    upgradeGroups.Values.Clear();
+                    conGroups.Values.Clear();
+                    extractedConGroups.Values.Clear();
+                    iniGroups.Clear();
+                    updates.Clear();
+                    upgrades.Clear();
+                    preScannedDirectories.Clear();
+                    preScannedFiles.Clear();
+                    badSongs.Clear();
+                }
+                disposedValue = true;
+            }
+        }
+
+        // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        ~CacheHandler()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: false);
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }
