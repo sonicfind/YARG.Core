@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using YARG.Core.Chart.ProGuitar;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Parsing.ProGuitar
 {
     public enum ProSlide
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Parsing
 {
     public readonly struct DualPosition : IEquatable<DualPosition>, IComparable<DualPosition>
     {

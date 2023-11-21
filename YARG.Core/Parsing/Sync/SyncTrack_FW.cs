@@ -1,7 +1,7 @@
 ﻿using System;
-using YARG.Core.Chart.FlatDictionary;
+using YARG.Core.Chart;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Parsing
 {
     public class SyncTrack_FW : IDisposable
     {

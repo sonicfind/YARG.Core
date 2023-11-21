@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace YARG.Core.Chart.ProGuitar
+namespace YARG.Core.Parsing.ProGuitar
 {
     public interface IProFretConfig
     {

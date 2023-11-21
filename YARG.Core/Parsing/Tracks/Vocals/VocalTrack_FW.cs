@@ -1,8 +1,7 @@
 ﻿using System;
-using YARG.Core.Chart.FlatDictionary;
-using YARG.Core.Chart.Vocal;
+using YARG.Core.Parsing.Vocal;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Parsing
 {
     public class VocalTrack_FW : Track
     {

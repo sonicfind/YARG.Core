@@ -1,4 +1,4 @@
-﻿namespace YARG.Core.Chart.Vocal
+﻿namespace YARG.Core.Parsing.Vocal
 {
     public struct VocalPercussion
     {

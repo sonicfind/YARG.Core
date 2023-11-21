@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace YARG.Core.Chart.Drums
+namespace YARG.Core.Parsing.Drums
 {
     public struct DrumNote<TPads, TCymbals> : INote
         where TPads : unmanaged, IDrumPadConfig

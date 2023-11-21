@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace YARG.Core.Chart.Keys
+namespace YARG.Core.Parsing.Keys
 {
     public struct KeyNote : INote
     {

@@ -1,6 +1,6 @@
-﻿using YARG.Core.Chart.Pitch;
+﻿using YARG.Core.Parsing.Pitch;
 
-namespace YARG.Core.Chart.Vocal
+namespace YARG.Core.Parsing.Vocal
 {
     public struct VocalNote_FW
     {

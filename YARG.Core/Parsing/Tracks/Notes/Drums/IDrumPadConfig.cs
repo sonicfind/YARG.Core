@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace YARG.Core.Chart.Drums
+namespace YARG.Core.Parsing.Drums
 {
     public interface IDrumPadConfig
     {

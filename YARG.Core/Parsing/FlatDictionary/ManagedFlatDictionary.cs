@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 
-namespace YARG.Core.Chart.FlatDictionary
+namespace YARG.Core.Parsing
 {
     /// <summary>
     /// A general purpose subtype of FlatDictionary.

@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using YARG.Core.Chart.Drums;
-using YARG.Core.Chart.Guitar;
-using YARG.Core.Chart.Keys;
-using YARG.Core.Chart.ProGuitar;
-using YARG.Core.Chart.ProKeys;
+using YARG.Core.Parsing.Drums;
+using YARG.Core.Parsing.Guitar;
+using YARG.Core.Parsing.Keys;
+using YARG.Core.Parsing.ProGuitar;
+using YARG.Core.Parsing.ProKeys;
 using YARG.Core.Song;
 using YARG.Core.IO.Ini;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Parsing
 {
     public class YARGChart : IDisposable
     {

@@ -1,7 +1,6 @@
-﻿using YARG.Core.Chart.FlatDictionary;
-using YARG.Core.Chart.ProGuitar;
+﻿using YARG.Core.Parsing.ProGuitar;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Parsing
 {
     public class ProGuitarDifficulty<TProFretConfig> : DifficultyTrack_FW<ProGuitarNote<TProFretConfig>>
         where TProFretConfig : IProFretConfig, new()

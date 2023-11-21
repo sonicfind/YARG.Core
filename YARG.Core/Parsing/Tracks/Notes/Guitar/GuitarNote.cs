@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace YARG.Core.Chart.Guitar
+namespace YARG.Core.Parsing.Guitar
 {
     public enum GuitarState
     {

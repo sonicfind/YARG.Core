@@ -1,5 +1,5 @@
 ﻿using System;
-namespace YARG.Core.Chart.Pitch
+namespace YARG.Core.Parsing.Pitch
 {
     public interface IPitchConfig
     {

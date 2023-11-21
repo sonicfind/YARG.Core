@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using YARG.Core.Chart.FlatDictionary;
-using YARG.Core.Chart.Pitch;
-using YARG.Core.Chart.ProGuitar;
+using YARG.Core.Parsing.Pitch;
+using YARG.Core.Parsing.ProGuitar;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Parsing
 {
     public enum ChordPhrase
     {

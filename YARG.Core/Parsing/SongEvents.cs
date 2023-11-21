@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using YARG.Core.Chart.FlatDictionary;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Parsing
 {
     public class SongEvents
     {

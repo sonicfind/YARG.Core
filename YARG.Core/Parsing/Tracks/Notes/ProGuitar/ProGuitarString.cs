@@ -1,4 +1,4 @@
-﻿namespace YARG.Core.Chart.ProGuitar
+﻿namespace YARG.Core.Parsing.ProGuitar
 {
     public enum StringMode
     {

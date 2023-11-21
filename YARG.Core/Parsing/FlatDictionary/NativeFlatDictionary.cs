@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using YARG.Core.IO;
 
-namespace YARG.Core.Chart.FlatDictionary
+namespace YARG.Core.Parsing
 {
     /// <summary>
     /// A subtype of FlatDictionary made specifically to hold explicitly unmanaged types.

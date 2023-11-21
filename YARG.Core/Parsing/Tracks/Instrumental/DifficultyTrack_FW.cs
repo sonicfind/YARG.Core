@@ -1,7 +1,6 @@
 ﻿using System;
-using YARG.Core.Chart.FlatDictionary;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Parsing
 {
     public class DifficultyTrack_FW<T> : Track
         where T : unmanaged, INote

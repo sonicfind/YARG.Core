@@ -1,7 +1,7 @@
 ﻿using System;
-using YARG.Core.Chart.Pitch;
+using YARG.Core.Parsing.Pitch;
 
-namespace YARG.Core.Chart.ProKeys
+namespace YARG.Core.Parsing.ProKeys
 {
     public unsafe struct ProKeyNote : INote
     {

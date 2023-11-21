@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Parsing
 {
     public class InstrumentTrack_Base<TDifficultyTrack> : Track
         where TDifficultyTrack : Track

@@ -1,4 +1,4 @@
-﻿namespace YARG.Core.Chart.FlatDictionary
+﻿namespace YARG.Core.Parsing
 {
     /// <summary>
     /// Subtype of ManagedFlatDictionary that uses "long"s as keys

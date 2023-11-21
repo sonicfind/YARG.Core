@@ -1,4 +1,4 @@
-﻿namespace YARG.Core.Chart.Drums
+﻿namespace YARG.Core.Parsing.Drums
 {
     public enum DrumDynamics
     {

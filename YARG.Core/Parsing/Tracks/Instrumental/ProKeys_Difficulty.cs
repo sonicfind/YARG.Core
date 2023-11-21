@@ -1,7 +1,6 @@
-﻿using YARG.Core.Chart.FlatDictionary;
-using YARG.Core.Chart.ProKeys;
+﻿using YARG.Core.Parsing.ProKeys;
 
-namespace YARG.Core.Chart
+namespace YARG.Core.Parsing
 {
     public enum ProKey_Ranges
     {

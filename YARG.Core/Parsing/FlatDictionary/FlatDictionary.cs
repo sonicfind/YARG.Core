@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace YARG.Core.Chart.FlatDictionary
+namespace YARG.Core.Parsing
 {
     [DebuggerDisplay("{position} | {obj.ToString()}")]
     public struct FlatMapNode<TKey, TValue>

@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace YARG.Core.Chart.Guitar
+namespace YARG.Core.Parsing.Guitar
 {
     public unsafe interface IFretConfig { }
 

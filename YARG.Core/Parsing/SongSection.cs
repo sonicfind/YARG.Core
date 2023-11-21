@@ -1,4 +1,4 @@
-﻿namespace YARG.Core.Chart
+﻿namespace YARG.Core.Parsing
 {
     public class SongSection
     {
