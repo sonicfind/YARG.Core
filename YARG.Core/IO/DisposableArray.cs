@@ -72,18 +72,18 @@ namespace YARG.Core.IO
             return new DisposableArray<T>(newPtr, bufferLength);
         }
 
-        private DisposableArray(byte* ptr, int bytes)
+        private DisposableArray(byte* ptr, int numBytes)
         {
             Ptr = (T*) ptr;
-            Length = bytes / sizeof(T);
+            Length = numBytes / sizeof(T);
             counter = new Counter();
         }
 
-        public DisposableArray(int length)
+        public DisposableArray(int numElements)
         {
-            Length = length;
+            Length = numElements;
 
-            int bufferLength = length * sizeof(T);
+            int bufferLength = numElements * sizeof(T);
             Ptr = (T*) Marshal.AllocHGlobal(bufferLength);
             counter = new Counter();
         }
