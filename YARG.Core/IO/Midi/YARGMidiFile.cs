@@ -12,28 +12,28 @@ namespace YARG.Core.IO
         private static readonly FourCC TRACK_TAG = new('M', 'T', 'r', 'k');
 
         private readonly Stream _stream;
-        private readonly ushort _format;
-        private readonly ushort _numTracks;
-        private readonly ushort _tickRate;
+        public readonly ushort Format;
+        public readonly ushort NumTracks;
+        public readonly ushort Tickrate;
 
         private ushort _trackNumber = 0;
         public ushort TrackNumber => _trackNumber;
 
-        private const int SIZEOF_HEADER = 6;
         public YARGMidiFile(Stream stream)
         {
             _stream = stream;
             if (FourCC.Read(stream) != HEADER_TAG)
                 throw new Exception("Midi Header Chunk Tag 'MThd' not found");
 
+            const int SIZEOF_HEADER = 6;
             int length = stream.ReadBE<int>();
             if (length < SIZEOF_HEADER)
                 throw new Exception("Midi Header not of sufficient length");
 
             long next = stream.Position + length;
-            _format = stream.ReadBE<ushort>();
-            _numTracks = stream.ReadBE<ushort>();
-            _tickRate = stream.ReadBE<ushort>();
+            Format = stream.ReadBE<ushort>();
+            NumTracks = stream.ReadBE<ushort>();
+            Tickrate = stream.ReadBE<ushort>();
             stream.Position = next;
         }
 
@@ -48,7 +48,7 @@ namespace YARG.Core.IO
 
         public YARGMidiTrack? LoadNextTrack()
         {
-            if (_trackNumber == _numTracks || _stream.Position == _stream.Length)
+            if (_trackNumber == NumTracks || _stream.Position == _stream.Length)
                 return null;
 
             _trackNumber++;
