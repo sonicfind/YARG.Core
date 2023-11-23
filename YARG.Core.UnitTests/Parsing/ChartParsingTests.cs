@@ -1,7 +1,7 @@
-using MoonscraperChartEditor.Song;
-using MoonscraperChartEditor.Song.IO;
+﻿using MoonscraperChartEditor.Song.IO;
 using NUnit.Framework;
 using YARG.Core.Chart;
+using YARG.Core.Parsing;
 
 namespace YARG.Core.UnitTests.Parsing
 {
@@ -22,6 +22,17 @@ namespace YARG.Core.UnitTests.Parsing
         }
 
         [TestCase("test.chart")]
+        public void ParseChartFile_New(string notesFile)
+        {
+            YargTrace.AddListener(new YargDebugTraceListener());
+            Assert.DoesNotThrow(() =>
+            {
+                string chartPath = Path.Combine(chartsDirectory!, notesFile);
+                using var chart = DotChartLoader.Load(chartPath, ParseSettings.Default, null, true);
+            });
+        }
+
+        [TestCase("test.chart")]
         public void ParseChartFile(string notesFile)
         {
             YargTrace.AddListener(new YargDebugTraceListener());
@@ -30,6 +41,17 @@ namespace YARG.Core.UnitTests.Parsing
             {
                 string chartPath = Path.Combine(chartsDirectory!, notesFile);
                 var song = ChartReader.ReadFromFile(ParseSettings.Default, chartPath);
+            });
+        }
+
+        [TestCase("test.mid")]
+        public void ParseMidiFile_New(string notesFile)
+        {
+            YargTrace.AddListener(new YargDebugTraceListener());
+            Assert.DoesNotThrow(() =>
+            {
+                string chartPath = Path.Combine(chartsDirectory!, notesFile);
+                using var chart = DotMidiLoader.LoadFull(chartPath, ParseSettings.Default, null);
             });
         }
 

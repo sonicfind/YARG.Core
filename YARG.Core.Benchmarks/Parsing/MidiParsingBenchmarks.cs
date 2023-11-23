@@ -1,32 +1,56 @@
 ﻿using System;
+using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Engines;
+using BenchmarkDotNet.Diagnostics.Windows.Configs; // Enable LOCALLY ONLY if on Windows
 using Melanchall.DryWetMidi.Core;
 using YARG.Core.Chart;
+using YARG.Core.IO;
+using YARG.Core.Parsing;
 
 namespace YARG.Core.Benchmarks
 {
     // [SimpleJob(RunStrategy.ColdStart, targetCount: 25, invocationCount: 1)]
+    [NativeMemoryProfiler] // Enable LOCALLY ONLY if on Windows
+    [MemoryDiagnoser]
     public class MidiParsingBenchmarks
     {
-
-        private ParseSettings settings = ParseSettings.Default;
-        private MidiFile midi;
+        private static string ChartPath;
+        private static ParseSettings settings = ParseSettings.Default;
+        private static readonly Dictionary<MidiTrackType, HashSet<Difficulty>> guitarOnly = new()
+        {
+            { MidiTrackType.Guitar_5, new() { Difficulty.Expert } },
+            { MidiTrackType.Vocals, null }
+        };
 
         [GlobalSetup]
-        public void Initialize()
+        public static void Initialize()
         {
-            string chartPath = Environment.GetEnvironmentVariable(Program.CHART_PATH_VAR);
-            if (chartPath == null)
-                throw new Exception("Could not find chart path environment variable!");
-
-            midi = MidiFile.Read(chartPath);
+            ChartPath = Environment.GetEnvironmentVariable(Program.CHART_PATH_VAR);
+            settings.StarPowerNote = 116;
         }
 
         [Benchmark]
-        public SongChart ChartParsing()
+        public void SongLoading_New()
         {
-            return SongChart.FromMidi(settings, midi);
+            using var chart = DotMidiLoader.LoadFull(ChartPath, settings, null);
+        }
+
+        [Benchmark]
+        public void SongLoading_New_GuitarOnly()
+        {
+            using var chart = DotMidiLoader.LoadFull(ChartPath, settings, guitarOnly);
+        }
+
+        [Benchmark]
+        public void SongLoading()
+        {
+            MoonSongLoader.LoadSong(settings, ChartPath);
+        }
+
+        [Benchmark]
+        public SongChart FullChartLoading()
+        {
+            return SongChart.FromMidi(settings, MidiFile.Read(ChartPath));
         }
     }
 }
