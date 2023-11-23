@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "YARG.Core": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}
