@@ -23,9 +23,11 @@ namespace YARG.Core.Parsing
 
         public override void TrimExcess() => Notes.TrimExcess();
 
-        public override long GetLastNoteTime()
+        public override DualTime GetLastNoteTime()
         {
-            if (Notes.IsEmpty()) return 0;
+            if (Notes.IsEmpty())
+                return DualTime.Zero;
+
             var note = Notes.At_index(Notes.Count - 1);
             return note.position + note.obj.GetLongestSustain();
         }

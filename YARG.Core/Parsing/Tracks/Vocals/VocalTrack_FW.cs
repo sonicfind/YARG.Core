@@ -50,16 +50,16 @@ namespace YARG.Core.Parsing
                 Percussion.TrimExcess();
         }
 
-        public override long GetLastNoteTime()
+        public override DualTime GetLastNoteTime()
         {
-            long endTime = 0;
+            var endTime = DualTime.Zero;
             foreach (var track in vocals)
             {
                 if (track.IsEmpty())
                     continue;
 
                 ref var vocal = ref track.At_index(track.Count - 1);
-                long end = vocal.position + vocal.obj.Duration;
+                var end = vocal.position + vocal.obj.Duration;
                 if (end > endTime)
                     endTime = end;
             }

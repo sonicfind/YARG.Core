@@ -1,36 +1,82 @@
-﻿namespace YARG.Core.Parsing
+﻿using System;
+
+namespace YARG.Core.Parsing
 {
-    public struct TruncatableSustain : IEnableable
+    public struct TruncatableSustain : IEnableable, IEquatable<TruncatableSustain>, IComparable<TruncatableSustain>
     {
         public static long MinDuration = 180;
         // Default init to 0 is desired
-        private long _duration;
-        public long Duration
+        private DualTime _value;
+
+        public TruncatableSustain(DualTime time)
         {
-            get { return _duration; }
-            set
+            if (time.ticks < MinDuration)
             {
-                if (value < MinDuration)
-                    value = 1;
-                _duration = value;
+                time.seconds /= time.ticks;
+                time.ticks = 1;
             }
+
+            _value = time;
         }
 
-        public TruncatableSustain(long duration)
-        {
-            _duration = 0;
-            Duration = duration;
-        }
+        public static implicit operator DualTime(in TruncatableSustain sustain) => sustain._value;
 
-        public static implicit operator long(TruncatableSustain dur) => dur._duration;
-        public static implicit operator TruncatableSustain(long dur) => new(dur);
-
-        public bool IsActive() { return _duration > 0; }
-        public void Disable() { _duration = 0; }
+        public bool IsActive() { return _value.ticks > 0; }
+        public void Disable() { _value = DualTime.Zero; }
 
         public override string ToString()
         {
-            return _duration.ToString();
+            return _value.ToString();
+        }
+
+        public int CompareTo(TruncatableSustain other)
+        {
+            return _value.CompareTo(other._value);
+        }
+
+        public bool Equals(TruncatableSustain other)
+        {
+            return _value.Equals(other._value);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is TruncatableSustain sustain && Equals(sustain);
+        }
+
+        public override int GetHashCode()
+        {
+            return _value.GetHashCode();
+        }
+
+        public static bool operator <(in TruncatableSustain lhs, in TruncatableSustain rhs)
+        {
+            return lhs._value < rhs._value;
+        }
+
+        public static bool operator >(in TruncatableSustain lhs, in TruncatableSustain rhs)
+        {
+            return lhs._value > rhs._value;
+        }
+
+        public static bool operator <=(in TruncatableSustain lhs, in TruncatableSustain rhs)
+        {
+            return lhs._value <= rhs._value;
+        }
+
+        public static bool operator >=(in TruncatableSustain lhs, in TruncatableSustain rhs)
+        {
+            return lhs._value >= rhs._value;
+        }
+
+        public static bool operator ==(in TruncatableSustain lhs, in TruncatableSustain rhs)
+        {
+            return lhs._value == rhs._value;
+        }
+
+        public static bool operator !=(in TruncatableSustain lhs, in TruncatableSustain rhs)
+        {
+            return lhs._value != rhs._value;
         }
     }
 }

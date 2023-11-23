@@ -14,7 +14,6 @@
         where TFretConfig : IProFretConfig, new()
     {
         public static readonly TFretConfig CONFIG = new();
-        static ProGuitarString() { }
 
         private int _fret;
         public StringMode mode;

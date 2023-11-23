@@ -4,12 +4,12 @@ namespace YARG.Core.Parsing
 {
     public static partial class DotChartLoader
     {
-        public static bool Set(ref KeyNote note, int lane, long length)
+        public static bool Set(ref KeyNote note, int lane, in DualTime length)
         {
             if (lane >= 5)
                 return false;
 
-            note[lane] = length;
+            note[lane] = new TruncatableSustain(length);
             return true;
         }
     }

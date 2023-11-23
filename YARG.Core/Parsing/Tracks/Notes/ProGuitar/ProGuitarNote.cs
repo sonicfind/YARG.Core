@@ -92,16 +92,16 @@ namespace YARG.Core.Parsing.ProGuitar
             return numActive;
         }
 
-        public long GetLongestSustain()
+        public DualTime GetLongestSustain()
         {
-            long sustain = String_1.Duration;
+            var sustain = String_1.Duration;
             unsafe
             {
                 fixed (ProGuitarString<TFretConfig>* strings = &String_2)
                 {
                     for (int i = 1; i < NUMSTRINGS; ++i)
                     {
-                        long dur = strings[i].Duration;
+                        var dur = strings[i].Duration;
                         if (dur > sustain)
                             sustain = dur;
                     }

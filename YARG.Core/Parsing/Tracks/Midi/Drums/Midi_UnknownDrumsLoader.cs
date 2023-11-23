@@ -22,10 +22,10 @@ namespace YARG.Core.Parsing.Midi
             this.type = type;
         }
 
-        public static (InstrumentTrack_FW<DrumNote<DrumPad_5, Pro_Drums>>, DrumsType) Load(YARGMidiTrack midiTrack, DrumsType type, HashSet<Difficulty>? difficulties)
+        public static (InstrumentTrack_FW<DrumNote<DrumPad_5, Pro_Drums>>, DrumsType) Load(YARGMidiTrack midiTrack, DrumsType type, SyncTrack_FW sync, HashSet<Difficulty>? difficulties)
         {
             Midi_UnknownDrums_Loader loader = new(type, difficulties);
-            var track = loader.Process(midiTrack);
+            var track = loader.Process(sync, midiTrack);
             return (track, loader.type);
         }
 
@@ -44,7 +44,7 @@ namespace YARG.Core.Parsing.Midi
             int lane = LANEVALUES[noteValue];
             if (lane < LANE_MAX)
             {
-                midiDiff.notes[lane] = position;
+                midiDiff.Notes[lane] = position;
 
                 if (notes.Capacity == 0)
                     notes.Capacity = 5000;
@@ -83,11 +83,11 @@ namespace YARG.Core.Parsing.Midi
             int lane = LANEVALUES[noteValue];
             if (lane < LANE_MAX)
             {
-                long colorPosition = midiDiff.notes[lane];
-                if (colorPosition != -1)
+                ref var colorPosition = ref midiDiff.Notes[lane];
+                if (colorPosition.ticks != -1)
                 {
                     track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
-                    midiDiff.notes[lane] = -1;
+                    colorPosition.ticks = -1;
                 }
             }
         }

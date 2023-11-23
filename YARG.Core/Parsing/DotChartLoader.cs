@@ -102,7 +102,7 @@ namespace YARG.Core.Parsing
                     if (chartReader.Instrument != NoteTracks_Chart.Drums)
                         SelectChartTrack(chart, chartReader);
                     else
-                        drums.LoadChart(chartReader);
+                        drums.LoadChart(chart.Sync, chartReader);
                 }
                 else
                     chartReader.SkipTrack();
@@ -119,7 +119,7 @@ namespace YARG.Core.Parsing
                 }
             }
 
-            YARGChartFinalizer.Finalize(chart, false);
+            YARGChartFinalizer.FinalizeBeats(chart);
             return chart;
         }
 
@@ -247,6 +247,7 @@ namespace YARG.Core.Parsing
                 }
                 chartReader.NextEvent();
             }
+            YARGChartFinalizer.FinalizeTempoMap(sync);
         }
 
         private static void LoadEventsTrack<TChar, TBase, TDecoder>(YARGChart chart, YARGChartFileReader<TChar, TDecoder, TBase> chartReader, bool doVocals)
@@ -257,39 +258,46 @@ namespace YARG.Core.Parsing
             if (doVocals)
                 chart.LeadVocals = new(1);
 
-            long phrase = -1;
+            // Used to lesson the impact of the ticks-seconds search algorithm as the the position
+            // gets larger by tracking the previous position.
+            int tempoIndex = 0;
+            var phrase = DualTime.Inactive;
+
             DotChartEvent ev = default;
             while (chartReader.TryParseEvent(ref ev))
             {
                 if (ev.Type == ChartEventType.Text)
                 {
+                    var dual = new DualTime(ev.Position, chart.Sync.ConvertToSeconds(ev.Position, ref tempoIndex));
+
                     string str = chartReader.ExtractText();
-                    if (str.StartsWith(SECTION)) chart.Events.sections.Get_Or_Add_Last(ev.Position) = str[8..];
+                    if (str.StartsWith(SECTION))
+                        chart.Events.sections.Get_Or_Add_Last(dual) = str[8..];
                     else if (str.StartsWith(LYRIC))
                     {
                         if (doVocals)
-                            chart.LeadVocals![0].Get_Or_Add_Last(ev.Position).Lyric = str[6..];
+                            chart.LeadVocals![0].Get_Or_Add_Last(dual).Lyric = str[6..];
                     }
                     else if (str == PHRASE_START)
                     {
                         if (doVocals)
                         {
-                            if (phrase >= 0)
-                                chart.LeadVocals!.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, new(ev.Position - phrase));
-                            phrase = ev.Position;
+                            if (phrase.ticks >= 0)
+                                chart.LeadVocals!.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, new(dual - phrase));
+                            phrase = dual;
                         }
                     }
                     else if (str == PHRASE_END)
                     {
                         // No need for doVocals check
-                        if (phrase >= 0)
+                        if (phrase.ticks >= 0)
                         {
-                            chart.LeadVocals!.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, new(ev.Position - phrase));
-                            phrase = -1;
+                            chart.LeadVocals!.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, new(dual - phrase));
+                            phrase.ticks = -1;
                         }
                     }
                     else
-                        chart.Events.globals.Get_Or_Add_Last(ev.Position).Add(str);
+                        chart.Events.globals.Get_Or_Add_Last(dual).Add(str);
                 }
                 chartReader.NextEvent();
             }
@@ -303,15 +311,15 @@ namespace YARG.Core.Parsing
         {
             bool skip = chartReader.Instrument switch
             {
-                NoteTracks_Chart.Single =>       LoadChartTrack(chartReader, ref chart.FiveFretGuitar,     Set),
-                NoteTracks_Chart.DoubleBass =>   LoadChartTrack(chartReader, ref chart.FiveFretBass,       Set),
-                NoteTracks_Chart.DoubleRhythm => LoadChartTrack(chartReader, ref chart.FiveFretRhythm,     Set),
-                NoteTracks_Chart.DoubleGuitar => LoadChartTrack(chartReader, ref chart.FiveFretCoopGuitar, Set),
-                NoteTracks_Chart.GHLGuitar =>    LoadChartTrack(chartReader, ref chart.SixFretGuitar,      Set),
-                NoteTracks_Chart.GHLBass =>      LoadChartTrack(chartReader, ref chart.SixFretBass,        Set),
-                NoteTracks_Chart.GHLRhythm =>    LoadChartTrack(chartReader, ref chart.SixFretRhythm,      Set),
-                NoteTracks_Chart.GHLCoop =>      LoadChartTrack(chartReader, ref chart.SixFretCoopGuitar,  Set),
-                NoteTracks_Chart.Keys =>         LoadChartTrack(chartReader, ref chart.Keys,               Set),
+                NoteTracks_Chart.Single =>       LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretGuitar,     Set),
+                NoteTracks_Chart.DoubleBass =>   LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretBass,       Set),
+                NoteTracks_Chart.DoubleRhythm => LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretRhythm,     Set),
+                NoteTracks_Chart.DoubleGuitar => LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretCoopGuitar, Set),
+                NoteTracks_Chart.GHLGuitar =>    LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretGuitar,      Set),
+                NoteTracks_Chart.GHLBass =>      LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretBass,        Set),
+                NoteTracks_Chart.GHLRhythm =>    LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretRhythm,      Set),
+                NoteTracks_Chart.GHLCoop =>      LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretCoopGuitar,  Set),
+                NoteTracks_Chart.Keys =>         LoadChartTrack(chartReader, chart.Sync, ref chart.Keys,               Set),
                 _ => true,
             };
 
@@ -319,9 +327,9 @@ namespace YARG.Core.Parsing
                 chartReader.SkipTrack();
         }
 
-        private delegate bool Loader<TNote>(ref TNote note, int lane, long duration);
+        private delegate bool Loader<TNote>(ref TNote note, int lane, in DualTime duration);
 
-        private static bool LoadChartTrack<TChar, TBase, TDecoder, TNote>(YARGChartFileReader<TChar, TDecoder, TBase> chartReader, ref InstrumentTrack_FW<TNote>? track, Loader<TNote> loader)
+        private static bool LoadChartTrack<TChar, TBase, TDecoder, TNote>(YARGChartFileReader<TChar, TDecoder, TBase> chartReader, SyncTrack_FW sync, ref InstrumentTrack_FW<TNote>? track, Loader<TNote> loader)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TDecoder : IStringDecoder<TChar>, new()
             where TBase : unmanaged, IDotChartBases<TChar>
@@ -334,27 +342,34 @@ namespace YARG.Core.Parsing
                 return true;
 
             difficultyTrack = new DifficultyTrack_FW<TNote>(5000);
-            List<long> soloQueue = new(2);
+
+            // Used to lesson the impact of the ticks-seconds search algorithm as the the position
+            // gets larger by tracking the previous position.
+            int tempoIndex = 0;
+            List<DualTime> soloQueue = new(2);
+
             DotChartEvent ev = default;
             DotChartNote chartNote = default;
             while (chartReader.TryParseEvent(ref ev))
             {
+                var dual = new DualTime(ev.Position, sync.ConvertToSeconds(ev.Position, ref tempoIndex));
                 switch (ev.Type)
                 {
                     case ChartEventType.Note:
                         {
-                            ref var note = ref difficultyTrack.Notes.Get_Or_Add_Last(ev.Position);
+                            ref var note = ref difficultyTrack.Notes.Get_Or_Add_Last(dual);
                             chartReader.ExtractLaneAndSustain(ref chartNote);
 
-                            if (!loader(ref note, chartNote.Lane, chartNote.Duration))
+                            var dualDuration = new DualTime(chartNote.Duration, sync.ConvertToSeconds(chartNote.Duration, ref tempoIndex));
+                            if (!loader(ref note, chartNote.Lane, dualDuration))
                                 if (note.GetNumActiveNotes() == 0)
                                     difficultyTrack.Notes.Pop();
                             break;
                         }
                     case ChartEventType.Special:
                         {
-                            var phrase = chartReader.ExtractSpecialPhrase();
-                            switch (phrase.Item1)
+                            (var type, long duration) = chartReader.ExtractSpecialPhrase();
+                            switch (type)
                             {
                                 case SpecialPhraseType.FaceOff_Player1:
                                 case SpecialPhraseType.FaceOff_Player2:
@@ -362,7 +377,8 @@ namespace YARG.Core.Parsing
                                 case SpecialPhraseType.BRE:
                                 case SpecialPhraseType.Tremolo:
                                 case SpecialPhraseType.Trill:
-                                    difficultyTrack.SpecialPhrases.Get_Or_Add_Last(ev.Position).TryAdd(phrase.Item1, phrase.Item2);
+                                    var dualDuration = new DualTime(duration, sync.ConvertToSeconds(duration));
+                                    difficultyTrack.SpecialPhrases.Get_Or_Add_Last(dual).TryAdd(type, new SpecialPhraseInfo(dualDuration));
                                     break;
                             }
                             break;
@@ -374,19 +390,19 @@ namespace YARG.Core.Parsing
                             {
                                 if (soloQueue.Count > 0)
                                 {
-                                    long solo = soloQueue[0];
-                                    difficultyTrack.SpecialPhrases[solo].TryAdd(SpecialPhraseType.Solo, new SpecialPhraseInfo(ev.Position - solo));
+                                    var solo = soloQueue[0];
+                                    difficultyTrack.SpecialPhrases[solo].TryAdd(SpecialPhraseType.Solo, new SpecialPhraseInfo(dual - solo));
                                     soloQueue.RemoveAt(0);
 
                                     // Ensures overlapping soloes... don't overlap
-                                    if (soloQueue.Count > 0)
-                                        soloQueue[0] = ev.Position;
+                                    if (soloQueue.Count > 0 && soloQueue[0] != dual)
+                                        soloQueue.Clear();
                                 }
                             }
                             else if (str.StartsWith(SOLO))
-                                soloQueue.Add(ev.Position);
+                                soloQueue.Add(dual);
                             else
-                                difficultyTrack.Events.Get_Or_Add_Last(ev.Position).Add(str);
+                                difficultyTrack.Events.Get_Or_Add_Last(dual).Add(str);
                             break;
                         }
                 }
@@ -395,8 +411,9 @@ namespace YARG.Core.Parsing
 
             if (soloQueue.Count > 0)
             {
-                long solo = soloQueue[0];
-                difficultyTrack.SpecialPhrases[solo].TryAdd(SpecialPhraseType.Solo, new SpecialPhraseInfo(ev.Position - solo));
+                var solo = soloQueue[0];
+                var dual = new DualTime(ev.Position, sync.ConvertToSeconds(ev.Position, ref tempoIndex));
+                difficultyTrack.SpecialPhrases[solo].TryAdd(SpecialPhraseType.Solo, new SpecialPhraseInfo(dual - solo));
                 soloQueue.RemoveAt(0);
             }
 

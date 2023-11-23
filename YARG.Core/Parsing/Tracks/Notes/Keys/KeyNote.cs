@@ -45,16 +45,16 @@ namespace YARG.Core.Parsing.Keys
             return numActive + Unsafe.As<bool, byte>(ref active);
         }
 
-        public long GetLongestSustain()
+        public DualTime GetLongestSustain()
         {
             unsafe
             {
                 fixed (TruncatableSustain* lanes = &Green)
                 {
-                    long sustain = lanes[0];
+                    var sustain = lanes[0];
                     for (int i = 1; i < 5; ++i)
                     {
-                        long dur = lanes[i].Duration;
+                        var dur = lanes[i];
                         if (dur > sustain)
                             sustain = dur;
                     }

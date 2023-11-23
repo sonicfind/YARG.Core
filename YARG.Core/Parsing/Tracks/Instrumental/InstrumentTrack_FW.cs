@@ -30,14 +30,15 @@ namespace YARG.Core.Parsing
         public ref TDifficultyTrack? this[int index] { get { return ref difficulties[index]; } }
         public ref TDifficultyTrack? this[Difficulty diff] { get { return ref difficulties[(int) diff - 1]; } }
 
-        public override long GetLastNoteTime()
+        public override DualTime GetLastNoteTime()
         {
-            long endTime = 0;
+            var endTime = DualTime.Zero;
             for (int i = 0; i < difficulties.Length; ++i)
             {
-                if (difficulties[i] != null)
+                var diff = difficulties[i];
+                if (diff != null)
                 {
-                    long end = difficulties[i]!.GetLastNoteTime();
+                    var end = diff.GetLastNoteTime();
                     if (end > endTime)
                         endTime = end;
                 }

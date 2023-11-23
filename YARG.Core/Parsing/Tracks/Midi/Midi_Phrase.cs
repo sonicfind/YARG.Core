@@ -7,12 +7,12 @@ namespace YARG.Core.Parsing.Midi
     public struct Midi_Phrase
     {
         public readonly SpecialPhraseType[] Types;
-        public long position;
+        public DualTime position;
         public int velocity;
         public Midi_Phrase(params SpecialPhraseType[] types)
         {
             Types = types;
-            position = -1;
+            position = DualTime.Inactive;
             velocity = 0;
         }
     }
@@ -22,7 +22,7 @@ namespace YARG.Core.Parsing.Midi
         private readonly (int[], Midi_Phrase)[] _phrases;
         public Midi_PhraseList(params (int[], Midi_Phrase)[] phrases) { _phrases = phrases; }
 
-        public bool AddPhrase(ref TimedManagedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, long position, MidiNote note)
+        public bool AddPhrase(ref TimedManagedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, in DualTime position, MidiNote note)
         {
             for (int i = 0; i < _phrases.Length; ++i)
             {
@@ -40,7 +40,7 @@ namespace YARG.Core.Parsing.Midi
             return false;
         }
 
-        public bool AddPhrase_Off(ref TimedManagedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, long position, MidiNote note)
+        public bool AddPhrase_Off(ref TimedManagedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, in DualTime position, MidiNote note)
         {
             for (int i = 0; i < _phrases.Length; ++i)
             {
@@ -49,11 +49,11 @@ namespace YARG.Core.Parsing.Midi
                     if (val == note.value)
                     {
                         ref var phr = ref _phrases[i].Item2;
-                        if (phr.position != -1)
+                        if (phr.position.ticks != -1)
                         {
                             foreach (var type in phr.Types)
                                 phrases.Traverse_Backwards_Until(phr.position).TryAdd(type, new SpecialPhraseInfo(position - phr.position, phr.velocity));
-                            phr.position = -1;
+                            phr.position.ticks = -1;
                         }
                         return true;
                     }
@@ -62,7 +62,7 @@ namespace YARG.Core.Parsing.Midi
             return false;
         }
 
-        public bool AddPhrase(ref TimedManagedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, long position, SpecialPhraseType phraseToAdd, byte velocity)
+        public bool AddPhrase(ref TimedManagedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, in DualTime position, SpecialPhraseType phraseToAdd, byte velocity)
         {
             for (int i = 0; i < _phrases.Length; ++i)
             {
@@ -78,18 +78,18 @@ namespace YARG.Core.Parsing.Midi
             return false;
         }
 
-        public bool AddPhrase_Off(ref TimedManagedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, long position, SpecialPhraseType phraseToAdd)
+        public bool AddPhrase_Off(ref TimedManagedFlatDictionary<Dictionary<SpecialPhraseType, SpecialPhraseInfo>> phrases, in DualTime position, SpecialPhraseType phraseToAdd)
         {
             for (int i = 0; i < _phrases.Length; ++i)
             {
                 ref var phr = ref _phrases[i].Item2;
                 if (phr.Types.Contains(phraseToAdd))
                 {
-                    if (phr.position != -1)
+                    if (phr.position.ticks != -1)
                     {
                         foreach (var type in phr.Types)
                             phrases.Traverse_Backwards_Until(phr.position).TryAdd(type, new SpecialPhraseInfo(position - phr.position, phr.velocity));
-                        phr.position = -1;
+                        phr.position.ticks = -1;
                     }
                     return true;
                 }

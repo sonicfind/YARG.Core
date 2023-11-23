@@ -16,7 +16,11 @@ namespace YARG.Core.Parsing.Midi
     {
         private static readonly int[] PHRASE = { 0 };
 
-        public readonly long[] notes = new long[6] { -1, -1, -1, -1, -1, -1 };
+        public readonly DualTime[] Notes = new DualTime[6] {
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive
+        };
+
         public readonly Midi_PhraseList phrases;
 
         public FiveFretMidiDifficulty()
@@ -31,13 +35,17 @@ namespace YARG.Core.Parsing.Midi
 
     public class SixFretMidiDifficulty : GuitarMidiDifficulty
     {
-        public readonly long[] notes = new long[7] { -1, -1, -1, -1, -1, -1, -1 };
+        public readonly DualTime[] Notes = new DualTime[7] {
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive
+        };
+
         public SixFretMidiDifficulty() { }
     }
 
     public static class MidiGuitarHelper
     {
-        public static void ProcessTapSysex<TConfig, TDiffTracker>(InstrumentTrack_FW<GuitarNote<TConfig>> track, TDiffTracker?[] trackers, long position, bool enable)
+        public static void ProcessTapSysex<TConfig, TDiffTracker>(InstrumentTrack_FW<GuitarNote<TConfig>> track, TDiffTracker?[] trackers, in DualTime position, bool enable)
             where TConfig : unmanaged, IFretConfig
             where TDiffTracker : GuitarMidiDifficulty
         {
@@ -49,7 +57,7 @@ namespace YARG.Core.Parsing.Midi
             }
         }
 
-        public static void ProcessTapSysex<TConfig, TDiffTracker>(DifficultyTrack_FW<GuitarNote<TConfig>> diff, TDiffTracker tracker, long position, bool enable)
+        public static void ProcessTapSysex<TConfig, TDiffTracker>(DifficultyTrack_FW<GuitarNote<TConfig>> diff, TDiffTracker tracker, in DualTime position, bool enable)
             where TConfig : unmanaged, IFretConfig
             where TDiffTracker : GuitarMidiDifficulty
         {

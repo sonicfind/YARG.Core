@@ -26,7 +26,7 @@ namespace YARG.Core.Parsing.Drums
         public TPads Pads;
         public TCymbals Cymbals;
 
-        public long Bass
+        public TruncatableSustain Bass
         {
             get { return _bass; }
             set
@@ -35,7 +35,7 @@ namespace YARG.Core.Parsing.Drums
                 _doubleBass.Disable();
             }
         }
-        public long DoubleBass
+        public TruncatableSustain DoubleBass
         {
             get { return _doubleBass; }
             set
@@ -70,7 +70,7 @@ namespace YARG.Core.Parsing.Drums
             }
         }
 
-        public long this[int lane]
+        public DualTime this[int lane]
         {
             get
             {
@@ -84,16 +84,16 @@ namespace YARG.Core.Parsing.Drums
             {
                 if (lane == 0)
                 {
-                    _bass = value;
+                    _bass = new TruncatableSustain(value);
                     _doubleBass.Disable();
                 }
                 else if (lane == 1)
                 {
-                    _doubleBass = value;
+                    _doubleBass = new TruncatableSustain(value);
                     _bass.Disable();
                 }
                 else
-                    Pads[lane - 2].Duration = value;
+                    Pads[lane - 2].Duration = new TruncatableSustain(value);
             }
         }
 
@@ -118,18 +118,18 @@ namespace YARG.Core.Parsing.Drums
             return numActive;
         }
 
-        public long GetLongestSustain()
+        public DualTime GetLongestSustain()
         {
-            long sustain = _bass.Duration;
+            var sustain = _bass;
             if (_doubleBass.IsActive())
-                sustain = _doubleBass.Duration;
+                sustain = _doubleBass;
 
             unsafe
             {
                 var lanes = PadPtr;
                 for (int i = 0; i < NUMPADS; ++i)
                 {
-                    long dur = lanes[i].Duration;
+                    var dur = lanes[i].Duration;
                     if (dur > sustain)
                         sustain = dur;
                 }
@@ -141,9 +141,10 @@ namespace YARG.Core.Parsing.Drums
         {
             StringBuilder stringBuilder = new();
             if (_bass.IsActive())
-                stringBuilder.Append($"Bass: {_bass.Duration} | ");
+                stringBuilder.Append($"Bass: {_bass} | ");
             else if (_doubleBass.IsActive())
-                stringBuilder.Append($"DoubleBass: {_doubleBass.Duration} | ");
+                stringBuilder.Append($"DoubleBass: {_doubleBass} | ");
+
             stringBuilder.Append(Pads.ToString());
             stringBuilder.Append(Cymbals.ToString());
             return stringBuilder.ToString();

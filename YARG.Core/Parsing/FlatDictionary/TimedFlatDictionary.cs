@@ -4,7 +4,7 @@
     /// Subtype of ManagedFlatDictionary that uses "long"s as keys
     /// </summary>
     /// <typeparam name="TObj">The objects to place at each new position</typeparam>
-    public class TimedManagedFlatDictionary<TObj> : ManagedFlatDictionary<long, TObj>
+    public class TimedManagedFlatDictionary<TObj> : ManagedFlatDictionary<DualTime, TObj>
         where TObj : new()
     {
     }
@@ -13,7 +13,7 @@
     /// Subtype of NativeFlatDictionary that uses "long"s as keys
     /// </summary>
     /// <typeparam name="TObj">The unmanaged objects to place at each new position</typeparam>
-    public class TimedNativeFlatDictionary<TObj> : NativeFlatDictionary<long, TObj>
+    public class TimedNativeFlatDictionary<TObj> : NativeFlatDictionary<DualTime, TObj>
         where TObj : unmanaged
     {
     }

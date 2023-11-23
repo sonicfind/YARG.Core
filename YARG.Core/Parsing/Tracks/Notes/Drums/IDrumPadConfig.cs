@@ -45,22 +45,22 @@ namespace YARG.Core.Parsing.Drums
             StringBuilder builder = new();
             if (Snare.IsActive())
             {
-                builder.Append($"Snare: {Snare.Duration} ");
+                builder.Append($"Snare: {Snare} ");
                 IDrumPadConfig.WriteDynamics(builder, ref Snare);
             }
             if (Yellow.IsActive())
             {
-                builder.Append($"Yellow: {Yellow.Duration} ");
+                builder.Append($"Yellow: {Yellow} ");
                 IDrumPadConfig.WriteDynamics(builder, ref Yellow);
             }
             if (Blue.IsActive())
             {
-                builder.Append($"Blue: {Blue.Duration} ");
+                builder.Append($"Blue: {Blue} ");
                 IDrumPadConfig.WriteDynamics(builder, ref Blue);
             }
             if (Green.IsActive())
             {
-                builder.Append($"Green: {Green.Duration} ");
+                builder.Append($"Green: {Green} ");
                 IDrumPadConfig.WriteDynamics(builder, ref Green);
             }
             return builder.ToString();

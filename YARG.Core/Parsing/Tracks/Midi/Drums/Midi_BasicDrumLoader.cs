@@ -7,7 +7,7 @@ namespace YARG.Core.Parsing.Midi
 {
     public abstract class Midi_BasicDrum_Loader<TDrumConfig, TDiffTracker> : Midi_DrumLoaderBase<TDrumConfig, Basic_Drums, TDiffTracker>
         where TDrumConfig : unmanaged, IDrumPadConfig
-        where TDiffTracker : unmanaged, IDrumDiffNotes
+        where TDiffTracker : DrumsMidiDiff, new()
     {
         private readonly int numLanes;
         private readonly int maxNoteValue;
@@ -31,7 +31,7 @@ namespace YARG.Core.Parsing.Midi
             int lane = LANEVALUES[noteValue];
             if (lane < numLanes)
             {
-                midiDiff.notes[lane] = position;
+                midiDiff.Notes[lane] = position;
 
                 if (notes.Capacity == 0)
                     notes.Capacity = 5000;
@@ -62,11 +62,11 @@ namespace YARG.Core.Parsing.Midi
             int lane = LANEVALUES[noteValue];
             if (lane < numLanes)
             {
-                long colorPosition = difficulties[diffIndex].notes[lane];
-                if (colorPosition != -1)
+                ref var colorPosition = ref difficulties[diffIndex].Notes[lane];
+                if (colorPosition.ticks != -1)
                 {
                     track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
-                    difficulties[diffIndex].notes[lane] = -1;
+                    colorPosition.ticks = -1;
                 }
             }
         }
@@ -101,10 +101,10 @@ namespace YARG.Core.Parsing.Midi
         private const int NUMLANES = 6;
         private Midi_FourLane_Loader(HashSet<Difficulty>? difficulties) : base(NUMLANES, DEFAULT_MAX, difficulties) { }
 
-        public static InstrumentTrack_FW<DrumNote<DrumPad_4, Basic_Drums>> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
+        public static InstrumentTrack_FW<DrumNote<DrumPad_4, Basic_Drums>> Load(YARGMidiTrack midiTrack, SyncTrack_FW sync, HashSet<Difficulty>? difficulties)
         {
             Midi_FourLane_Loader loader = new(difficulties);
-            return loader.Process(midiTrack);
+            return loader.Process(sync, midiTrack);
         }
     }
 
@@ -114,10 +114,10 @@ namespace YARG.Core.Parsing.Midi
         private const int FIVELANE_MAX = 101;
         private Midi_FiveLane_Loader(HashSet<Difficulty>? difficulties) : base(NUMLANES, FIVELANE_MAX, difficulties) { }
 
-        public static InstrumentTrack_FW<DrumNote<DrumPad_5, Basic_Drums>> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
+        public static InstrumentTrack_FW<DrumNote<DrumPad_5, Basic_Drums>> Load(YARGMidiTrack midiTrack, SyncTrack_FW sync, HashSet<Difficulty>? difficulties)
         {
             Midi_FiveLane_Loader loader = new(difficulties);
-            return loader.Process(midiTrack);
+            return loader.Process(sync, midiTrack);
         }
     }
 }

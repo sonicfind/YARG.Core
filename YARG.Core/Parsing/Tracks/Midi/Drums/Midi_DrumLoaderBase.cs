@@ -8,10 +8,10 @@ using YARG.Core.Parsing.Midi.Drums;
 namespace YARG.Core.Parsing.Midi
 {
     public abstract class Midi_DrumLoaderBase<TDrumConfig, TCymbalConfig, TDiffTracker>
-        : MidiInstrumentLoader_Common<DrumNote<TDrumConfig, TCymbalConfig>, DrumsMidiDiff<TDiffTracker>>
+        : MidiInstrumentLoader_Common<DrumNote<TDrumConfig, TCymbalConfig>, TDiffTracker>
         where TDrumConfig : unmanaged, IDrumPadConfig
         where TCymbalConfig : unmanaged, ICymbalConfig
-        where TDiffTracker : unmanaged, IDrumDiffNotes
+        where TDiffTracker : DrumsMidiDiff, new()
     {
         private static readonly byte[] DYNAMICS_STRING = Encoding.ASCII.GetBytes("[ENABLE_CHART_DYNAMICS]");
         private const int DOUBLEBASS_VALUE = 95;
@@ -41,7 +41,7 @@ namespace YARG.Core.Parsing.Midi
             if (difficulties[EXPERT_INDEX] == null)
                 return true;
 
-            difficulties[EXPERT_INDEX].notes[DOUBLEBASS_INDEX] = position;
+            difficulties[EXPERT_INDEX].Notes[DOUBLEBASS_INDEX] = position;
             if (!track[EXPERT_INDEX]!.Notes.ValidateLastKey(position))
                 track[EXPERT_INDEX]!.Notes.Add_NoReturn(position);
             return true;
@@ -55,11 +55,11 @@ namespace YARG.Core.Parsing.Midi
             if (difficulties[EXPERT_INDEX] == null)
                 return true;
 
-            long colorPosition = difficulties[EXPERT_INDEX].notes[DOUBLEBASS_INDEX];
-            if (colorPosition != -1)
+            ref var colorPosition = ref difficulties[EXPERT_INDEX].Notes[DOUBLEBASS_INDEX];
+            if (colorPosition.ticks != -1)
             {
                 track[EXPERT_INDEX]!.Notes.Traverse_Backwards_Until(colorPosition)[DOUBLEBASS_INDEX] = position - colorPosition;
-                difficulties[EXPERT_INDEX].notes[DOUBLEBASS_INDEX] = -1;
+                colorPosition.ticks = -1;
             }
             return true;
         }

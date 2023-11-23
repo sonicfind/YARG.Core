@@ -10,8 +10,10 @@ namespace YARG.Core.Parsing.Midi
         protected const int DEFAULT_MAX = 100;
         protected const int NUM_DIFFICULTIES = 4;
 
-        private long lastOn = 0;
-        private readonly long[] notes_BRE = { -1, -1, -1, -1, -1 };
+        private readonly DualTime[] notes_BRE = {
+            DualTime.Inactive, DualTime.Inactive,
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive
+        };
         private bool doBRE = false;
 
         protected MidiInstrumentLoader(Midi_PhraseList phrases) : base(new TTrack(), phrases) { }
@@ -53,12 +55,13 @@ namespace YARG.Core.Parsing.Midi
 
         protected abstract void ParseLaneColor_Off(YARGMidiTrack midiTrack);
 
+        private DualTime lastOnTick = DualTime.Zero;
         protected void NormalizeNoteOnPosition()
         {
-            if (position < lastOn + 16)
-                position = lastOn;
+            if (position.ticks < lastOnTick.ticks + 16)
+                position = lastOnTick;
             else
-                lastOn = position;
+                lastOnTick = position;
         }
 
         protected virtual bool IsNote() { return 60 <= note.value && note.value <= 100; }
@@ -95,7 +98,7 @@ namespace YARG.Core.Parsing.Midi
                 phrasesList.TryAdd(SpecialPhraseType.BRE, new SpecialPhraseInfo(position - notes_BRE[0]));
 
                 for (int i = 0; i < 5; i++)
-                    notes_BRE[0] = -1;
+                    notes_BRE[0].ticks = -1;
                 doBRE = false;
             }
         }

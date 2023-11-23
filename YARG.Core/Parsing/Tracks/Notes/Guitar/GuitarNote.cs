@@ -40,7 +40,7 @@ namespace YARG.Core.Parsing.Guitar
             }
         }
 
-        public long this[int lane]
+        public DualTime this[int lane]
         {
             get => GetSustain(lane);
             set
@@ -53,7 +53,7 @@ namespace YARG.Core.Parsing.Guitar
                     fixed (TConfig* ptr = &frets)
                     {
                         var lanes = (TruncatableSustain*) ptr;
-                        lanes[lane] = value;
+                        lanes[lane] = new TruncatableSustain(value);
                         if (lane == 0)
                         {
                             for (int i = 1; i < NUMLANES; ++i)
@@ -89,17 +89,17 @@ namespace YARG.Core.Parsing.Guitar
             return numActive;
         }
 
-        public long GetLongestSustain()
+        public DualTime GetLongestSustain()
         {
             unsafe
             {
                 fixed (TConfig* ptr = &frets)
                 {
                     var lanes = (TruncatableSustain*) ptr;
-                    long sustain = lanes[0];
+                    var sustain = lanes[0];
                     for (int i = 1; i < NUMLANES; ++i)
                     {
-                        long dur = lanes[i].Duration;
+                        var dur = lanes[i];
                         if (dur > sustain)
                             sustain = dur;
                     }

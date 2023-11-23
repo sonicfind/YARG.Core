@@ -4,15 +4,16 @@
         where TFretConfig : IProFretConfig, new()
     {
         private static readonly TFretConfig CONFIG = new();
-        private int fret;
+        private int _value;
 
-        private HandPosition(int position)
+        public static implicit operator int(HandPosition<TFretConfig> position) => position._value;
+        public static implicit operator HandPosition<TFretConfig>(int position)
         {
             CONFIG.ThrowIfOutOfRange(position);
-            fret = position;
+            return new HandPosition<TFretConfig>()
+            {
+                _value = position
+            };
         }
-
-        public static implicit operator int(HandPosition<TFretConfig> position) => position.fret;
-        public static implicit operator HandPosition<TFretConfig>(int position) => new(position);
     }
 }

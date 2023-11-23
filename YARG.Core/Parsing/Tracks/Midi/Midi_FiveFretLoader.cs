@@ -20,10 +20,10 @@ namespace YARG.Core.Parsing.Midi
 
         private Midi_FiveFretLoader(HashSet<Difficulty>? difficulties) : base(difficulties) { }
 
-        public static InstrumentTrack_FW<GuitarNote<FiveFret>> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
+        public static InstrumentTrack_FW<GuitarNote<FiveFret>> Load(YARGMidiTrack midiTrack, SyncTrack_FW sync, HashSet<Difficulty>? difficulties)
         {
             Midi_FiveFretLoader loader = new(difficulties);
-            return loader.Process(midiTrack);
+            return loader.Process(sync, midiTrack);
         }
 
         protected override bool IsNote() { return 59 <= note.value && note.value <= 107; }
@@ -41,7 +41,7 @@ namespace YARG.Core.Parsing.Midi
             ref var diff = ref track[diffIndex]!;
             if (lane < 6)
             {
-                midiDiff!.notes[lane] = position;
+                midiDiff!.Notes[lane] = position;
                 if (!diff.Notes.ValidateLastKey(position))
                 {
                     if (diff.Notes.Capacity == 0)
@@ -126,11 +126,11 @@ namespace YARG.Core.Parsing.Midi
             ref var diff = ref track[diffIndex]!;
             if (lane < 6)
             {
-                long colorPosition = difficulties[diffIndex].notes[lane];
-                if (colorPosition != -1)
+                ref var colorPosition = ref difficulties[diffIndex].Notes[lane];
+                if (colorPosition.ticks != -1)
                 {
                     diff.Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
-                    midiDiff!.notes[lane] = -1;
+                    colorPosition.ticks = -1;
                 }
             }
             else if (lane == 6)

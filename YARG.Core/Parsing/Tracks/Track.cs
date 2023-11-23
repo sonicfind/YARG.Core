@@ -17,7 +17,7 @@ namespace YARG.Core.Parsing
         }
 
         public abstract void TrimExcess();
-        public abstract long GetLastNoteTime();
+        public abstract DualTime GetLastNoteTime();
 
         protected virtual void Dispose(bool disposing)
         {

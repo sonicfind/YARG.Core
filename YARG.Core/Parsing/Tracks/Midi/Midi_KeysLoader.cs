@@ -6,7 +6,10 @@ namespace YARG.Core.Parsing.Midi
 {
     public class KeysMidiDiff
     {
-        public long[] notes = { -1, -1, -1, -1, -1 };
+        public DualTime[] Notes = {
+            DualTime.Inactive, DualTime.Inactive,
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive
+        };
     }
 
     public class Midi_KeysLoader : MidiInstrumentLoader_Common<KeyNote, KeysMidiDiff>
@@ -22,10 +25,10 @@ namespace YARG.Core.Parsing.Midi
 
         private Midi_KeysLoader(HashSet<Difficulty>? difficulties) : base(difficulties) { }
 
-        public static InstrumentTrack_FW<KeyNote> Load(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
+        public static InstrumentTrack_FW<KeyNote> Load(YARGMidiTrack midiTrack, SyncTrack_FW sync, HashSet<Difficulty>? difficulties)
         {
             Midi_KeysLoader loader = new(difficulties);
-            return loader.Process(midiTrack);
+            return loader.Process(sync, midiTrack);
         }
 
         protected override void ParseLaneColor(YARGMidiTrack midiTrack)
@@ -40,7 +43,7 @@ namespace YARG.Core.Parsing.Midi
                     return;
 
                 
-                midiDiff.notes[lane] = position;
+                midiDiff.Notes[lane] = position;
 
                 var notes = track[diffIndex]!.Notes;
                 if (notes.Capacity == 0)
@@ -62,11 +65,11 @@ namespace YARG.Core.Parsing.Midi
                 if (midiDiff == null)
                     return;
 
-                long colorPosition = midiDiff.notes[lane];
-                if (colorPosition != -1)
+                ref var colorPosition = ref midiDiff.Notes[lane];
+                if (colorPosition.ticks != -1)
                 {
-                    track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane] = position - colorPosition;
-                    midiDiff.notes[lane] = -1;
+                    track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane] = new TruncatableSustain(position - colorPosition);
+                    colorPosition.ticks = -1;
                 }
             }
         }

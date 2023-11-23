@@ -1,20 +1,48 @@
-﻿namespace YARG.Core.Parsing
+﻿using YARG.Core.Chart;
+
+namespace YARG.Core.Parsing
 {
     public static class YARGChartFinalizer
     {
-        public static void Finalize(YARGChart chart, bool tempoPreFinalized)
+        public static void FinalizeBeats(YARGChart chart)
         {
-            long endTick = GetEndTick(chart);
-            if (!tempoPreFinalized)
-                FinalizeTempoMap(chart.Sync);
-
+            var endTick = GetEndTime(chart);
             if (chart.Sync.BeatMap.IsEmpty())
-                GenerateAllBeats(chart.Sync, endTick);
+                GenerateAllBeats(chart.Sync, endTick.ticks);
             else
-                GenerateLeftoverBeats(chart.Sync, endTick);
+                GenerateLeftoverBeats(chart.Sync, endTick.ticks);
         }
 
-        private static long GetEndTick(YARGChart chart)
+        public static void FinalizeTempoMap(SyncTrack_FW sync)
+        {
+            var tempos = sync.TempoMarkers;
+            var sigs = sync.TimeSigs;
+            if (tempos.IsEmpty() || tempos.At_index(0).position != 0)
+                tempos.Insert(0, 0, new(Tempo_FW.MICROS_AT_120BPM));
+
+            if (sigs.IsEmpty() || sigs.At_index(0).position != 0)
+                sigs.Insert(0, 0, new(4, 2, 24, 8));
+            else
+            {
+                ref var timeSig = ref sigs.At_index(0).obj;
+                if (timeSig.Denominator == 255)
+                    timeSig.Denominator = 2;
+            }
+
+            unsafe
+            {
+                var prevNode = tempos.Data;
+                var end = tempos.Data + tempos.Count;
+                uint tickrate = sync.Tickrate;
+
+                // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
+                for (var marker = prevNode + 1; marker < end; marker++, prevNode++)
+                    if (marker->obj.Anchor == 0)
+                        marker->obj.Anchor = (long) (((marker->position - prevNode->position) / (float) tickrate) * prevNode->obj.Micros) + prevNode->obj.Anchor;
+            }
+        }
+
+        private static DualTime GetEndTime(YARGChart chart)
         {
             Track?[] tracks =
             {
@@ -48,18 +76,18 @@
                 chart.HarmonyVocals,
             };
 
-            long lastNoteTime = 0;
+            var lastNoteTime = DualTime.Zero;
             foreach (var track in tracks)
             {
                 if (track != null)
                 {
-                    long lastTime = track.GetLastNoteTime();
+                    var lastTime = track.GetLastNoteTime();
                     if (lastTime > lastNoteTime)
                         lastNoteTime = lastTime;
                 }
             }
 
-            long endTick = lastNoteTime;
+            var endTime = lastNoteTime;
             var globals = chart.Events.globals.Span;
             for (int i = globals.Length - 1; i >= 0; --i)
             {
@@ -68,8 +96,8 @@
                     if (ev == "[end]")
                     {
                         if (lastNoteTime < globals[i].position)
-                            endTick = globals[i].position;
-                        return endTick;
+                            endTime = globals[i].position;
+                        return endTime;
                     }
                 }
             }
@@ -78,36 +106,9 @@
             {
                 var node = globals[^1];
                 if (lastNoteTime < node.position)
-                    endTick = node.position;
+                    endTime = node.position;
             }
-            return endTick;
-        }
-
-        public static void FinalizeTempoMap(SyncTrack_FW sync)
-        {
-            var tempos = sync.TempoMarkers;
-            var sigs = sync.TimeSigs;
-            if (tempos.IsEmpty() || tempos.At_index(0).position != 0)
-                tempos.Insert(0, 0, new(Tempo_FW.MICROS_AT_120BPM));
-
-            if (sigs.IsEmpty() || sigs.At_index(0).position != 0)
-                sigs.Insert(0, 0, new(4, 2, 24, 8));
-            else
-            {
-                ref var timeSig = ref sigs.At_index(0).obj;
-                if (timeSig.Denominator == 255)
-                    timeSig.Denominator = 2;
-            }
-
-            unsafe
-            {
-                var prevNode = tempos.Data;
-                var end = tempos.Data + tempos.Count;
-                uint tickrate = sync.Tickrate;
-                for (var marker = prevNode + 1; marker < end; marker++, prevNode++)
-                    if (marker->obj.Anchor == 0)
-                        marker->obj.Anchor = (long) (((marker->position - prevNode->position) / (float) tickrate) * prevNode->obj.Micros) + prevNode->obj.Anchor;
-            }
+            return endTime;
         }
 
         private static void GenerateLeftoverBeats(SyncTrack_FW sync, long endTick)
@@ -139,7 +140,7 @@
                     long position = node.position;
                     for (uint n = 0; n < node.obj.Numerator && position < endTime; ++n, position += ticksPerMarker, ++searchIndex)
                     {
-                        var beat = new DualPosition(position, sync.ConvertToSeconds(position, ref tempoIndex));
+                        var beat = new DualTime(position, sync.ConvertToSeconds(position, ref tempoIndex));
                         if (!beats.Contains(searchIndex, beat))
                             beats[beat] = BeatlineType.Weak;
                     }
@@ -187,7 +188,7 @@
                         int clicksLeft = clickSpacing;
                         do
                         {
-                            var beat = new DualPosition(position, sync.ConvertToSeconds(position, ref tempoIndex));
+                            var beat = new DualTime(position, sync.ConvertToSeconds(position, ref tempoIndex));
                             beats.Add_NoReturn(beat, style);
                             position += ticksPerMarker;
                             style = BeatlineType.Weak;

@@ -40,11 +40,15 @@ namespace YARG.Core.Parsing.Midi
 
         private class ProGuitar_MidiDiff
         {
-            public bool Hopo { get; set; }
-            public readonly long[] notes = new long[NUM_STRINGS] { -1, -1, -1, -1, -1, -1 };
-            public long Arpeggio { get; set; }
-            public ProSlide Slide { get; set; }
-            public EmphasisType Emphasis { get; set; }
+            public readonly DualTime[] Notes = {
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive
+            };
+
+            public DualTime Arpeggio;
+            public ProSlide Slide;
+            public EmphasisType Emphasis;
+            public bool Hopo;
             public ProGuitar_MidiDiff() { }
         }
 
@@ -68,10 +72,10 @@ namespace YARG.Core.Parsing.Midi
             }
         }
 
-        public static ProGuitarTrack<TProFretConfig> Load(YARGMidiTrack reader, HashSet<Difficulty>? difficulties)
+        public static ProGuitarTrack<TProFretConfig> Load(YARGMidiTrack reader, SyncTrack_FW sync, HashSet<Difficulty>? difficulties)
         {
             Midi_ProGuitar_Loader<TProFretConfig> loader = new(difficulties);
-            return loader.Process(reader);
+            return loader.Process(sync, reader);
         }
 
         protected override bool IsNote() { return NOTE_MIN <= note.value && note.value <= NOTE_MAX; }
@@ -119,7 +123,7 @@ namespace YARG.Core.Parsing.Midi
                     }
 
                     proString.Fret = note.velocity - FRET_MIN;
-                    midiDiff.notes[lane] = position;
+                    midiDiff.Notes[lane] = position;
                 }
             }
             else if (lane == HOPO_VALUE)
@@ -167,11 +171,11 @@ namespace YARG.Core.Parsing.Midi
             {
                 if (midiTrack.Channel != 1)
                 {
-                    long colorPosition = midiDiff.notes[lane];
-                    if (colorPosition != -1)
+                    ref var colorPosition = ref midiDiff.Notes[lane];
+                    if (colorPosition.ticks != -1)
                     {
-                        track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane].Duration = position - colorPosition;
-                        midiDiff.notes[lane] = -1;
+                        track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane].Duration = new TruncatableSustain(position - colorPosition);
+                        colorPosition.ticks = -1;
                     }
                 }
             }
@@ -181,11 +185,11 @@ namespace YARG.Core.Parsing.Midi
                 midiDiff.Slide = ProSlide.None;
             else if (lane == ARPEGGIO_VALUE)
             {
-                long arpeggioPosition = midiDiff.Arpeggio;
-                if (arpeggioPosition != -1)
+                ref var arpeggioPosition = ref midiDiff.Arpeggio;
+                if (arpeggioPosition.ticks != -1)
                 {
-                    track[diffIndex]!.Arpeggios.Last().Length = position - arpeggioPosition;
-                    midiDiff.Arpeggio = -1;
+                    track[diffIndex]!.Arpeggios.Last().Length = new NormalizedDuration(position - arpeggioPosition);
+                    arpeggioPosition.ticks = -1;
                 }
             }
             else if (lane == EMPHASIS_VALUE)

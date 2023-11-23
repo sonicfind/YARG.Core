@@ -19,18 +19,18 @@ namespace YARG.Core.Parsing.ProKeys
             public int OCTAVE_MIN => 3;
             public int OCTAVE_MAX => 5;
 
-            public Pitched_Key(long length)
+            public Pitched_Key(in DualTime length)
             {
                 Pitch = default;
-                Duration = length;
+                Duration = new TruncatableSustain(length);
             }
 
-            public Pitched_Key(long length, int binary) : this(length)
+            public Pitched_Key(in DualTime length, int binary) : this(length)
             {
                 Pitch.Binary = binary;
             }
 
-            public Pitched_Key(long length, PitchName note, int octave) : this(length)
+            public Pitched_Key(in DualTime length, PitchName note, int octave) : this(length)
             {
                 Pitch.Note = note;
                 Pitch.Octave = octave;
@@ -74,7 +74,7 @@ namespace YARG.Core.Parsing.ProKeys
             throw new IndexOutOfRangeException();
         }
 
-        public bool Add(int binary, long length)
+        public bool Add(int binary, in DualTime length)
         {
             if (_numActive == 4)
                 return false;
@@ -84,7 +84,7 @@ namespace YARG.Core.Parsing.ProKeys
             return true;
         }
 
-        public bool Add(PitchName note, int octave, long length)
+        public bool Add(PitchName note, int octave, in DualTime length)
         {
             if (_numActive == 4)
                 return false;
@@ -110,9 +110,9 @@ namespace YARG.Core.Parsing.ProKeys
             }
         }
 
-        public void SetLength(int index, long length)
+        public void SetLength(int index, in DualTime length)
         {
-            GetKey(index).Duration = length;
+            GetKey(index).Duration = new TruncatableSustain(length);
         }
 
         public void SetPitch(int index, PitchName note)
@@ -161,16 +161,16 @@ namespace YARG.Core.Parsing.ProKeys
             return NumActive;
         }
 
-        public long GetLongestSustain()
+        public DualTime GetLongestSustain()
         {
-            long sustain = 0;
+            var sustain = DualTime.Zero;
             unsafe
             {
                 fixed (Pitched_Key* keys = &key_1)
                 {
                     for (int i = 0; i < _numActive; ++i)
                     {
-                        long dur = keys[i].Duration;
+                        var dur = keys[i].Duration;
                         if (dur > sustain)
                             sustain = dur;
                     }

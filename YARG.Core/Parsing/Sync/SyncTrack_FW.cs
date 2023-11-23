@@ -6,9 +6,9 @@ namespace YARG.Core.Parsing
     public class SyncTrack_FW : IDisposable
     {
         public uint Tickrate;
-        public readonly TimedNativeFlatDictionary<Tempo_FW> TempoMarkers = new();
-        public readonly TimedNativeFlatDictionary<TimeSig_FW> TimeSigs = new();
-        public readonly NativeFlatDictionary<DualPosition, BeatlineType> BeatMap = new();
+        public readonly NativeFlatDictionary<long, Tempo_FW> TempoMarkers = new();
+        public readonly NativeFlatDictionary<long, TimeSig_FW> TimeSigs = new();
+        public readonly NativeFlatDictionary<DualTime, BeatlineType> BeatMap = new();
 
         internal const int MICROS_PER_SECOND = 1000000;
         public double ConvertToSeconds(long ticks, int startIndex = 0)

@@ -1,26 +1,72 @@
-﻿namespace YARG.Core.Parsing
+﻿using System;
+
+namespace YARG.Core.Parsing
 {
-    public struct NormalizedDuration
+    public struct NormalizedDuration : IEquatable<NormalizedDuration>, IComparable<NormalizedDuration>
     {
-        private long _duration;
-        public long Duration
+        private static DualTime BASEDuration = new(1, 0);
+        private DualTime _value;
+
+        public NormalizedDuration(in DualTime time)
         {
-            get { return _duration; }
-            set
-            {
-                if (value == 0)
-                    value = 1;
-                _duration = value;
-            }
+            _value = time.ticks > 0 ? BASEDuration : time;
         }
 
-        public NormalizedDuration(long duration)
+        public static implicit operator DualTime(in NormalizedDuration dur) => dur._value;
+
+        public override string ToString()
         {
-            _duration = 1;
-            Duration = duration;
+            return _value.ToString();
         }
 
-        public static implicit operator long(NormalizedDuration dur) => dur._duration;
-        public static implicit operator NormalizedDuration(long dur) => new(dur);
+        public int CompareTo(NormalizedDuration other)
+        {
+            return _value.CompareTo(other._value);
+        }
+
+        public bool Equals(NormalizedDuration other)
+        {
+            return _value.Equals(other._value);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is NormalizedDuration sustain && Equals(sustain);
+        }
+
+        public override int GetHashCode()
+        {
+            return _value.GetHashCode();
+        }
+
+        public static bool operator <(in NormalizedDuration lhs, in NormalizedDuration rhs)
+        {
+            return lhs._value < rhs._value;
+        }
+
+        public static bool operator >(in NormalizedDuration lhs, in NormalizedDuration rhs)
+        {
+            return lhs._value > rhs._value;
+        }
+
+        public static bool operator <=(in NormalizedDuration lhs, in NormalizedDuration rhs)
+        {
+            return lhs._value <= rhs._value;
+        }
+
+        public static bool operator >=(in NormalizedDuration lhs, in NormalizedDuration rhs)
+        {
+            return lhs._value >= rhs._value;
+        }
+
+        public static bool operator ==(in NormalizedDuration lhs, in NormalizedDuration rhs)
+        {
+            return lhs._value == rhs._value;
+        }
+
+        public static bool operator !=(in NormalizedDuration lhs, in NormalizedDuration rhs)
+        {
+            return lhs._value != rhs._value;
+        }
     }
 }

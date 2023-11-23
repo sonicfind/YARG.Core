@@ -14,9 +14,9 @@ namespace YARG.Core.Parsing.Midi
         internal static readonly int[] RANGESHIFT = { 0 };
         internal static readonly int[] LYRICSHIFT = { 1 };
 
-        private long percussion = -1;
-        private long vocal = -1;
-        private (long, string) lyric = new(-1, string.Empty);
+        private DualTime percussion = DualTime.Inactive;
+        private DualTime vocal = DualTime.Inactive;
+        private (DualTime, string) lyric = new(DualTime.Inactive, string.Empty);
         private readonly int index;
 
         private MidiVocalLoader(VocalTrack_FW track, int index)
@@ -32,16 +32,16 @@ namespace YARG.Core.Parsing.Midi
             this.index = index;
         }
 
-        public static VocalTrack_FW LoadLeadVocals(YARGMidiTrack midiTrack)
+        public static VocalTrack_FW LoadLeadVocals(YARGMidiTrack midiTrack, SyncTrack_FW sync)
         {
             MidiVocalLoader loader = new(new VocalTrack_FW(1), 0);
-            return loader.Process(midiTrack);
+            return loader.Process(sync, midiTrack);
         }
 
-        public static void LoadHarmonyVocals(VocalTrack_FW track, int index, YARGMidiTrack midiTrack)
+        public static void LoadHarmonyVocals(VocalTrack_FW track, int index, YARGMidiTrack midiTrack, SyncTrack_FW sync)
         {
             MidiVocalLoader loader = new(track, index);
-            loader.Process(midiTrack);
+            loader.Process(sync, midiTrack);
         }
 
         protected override void ParseNote_ON(YARGMidiTrack midiTrack)
@@ -89,10 +89,10 @@ namespace YARG.Core.Parsing.Midi
 
             if (str[0] != '[')
             {
-                if (lyric.Item1 != -1)
+                if (lyric.Item1.ticks != -1)
                     AddVocal(lyric.Item1);
 
-                lyric.Item1 = vocal != -1 ? vocal : position;
+                lyric.Item1 = vocal.ticks != -1 ? vocal : position;
                 lyric.Item2 = Encoding.UTF8.GetString(str);
             }
             else if (index == 0)
@@ -101,40 +101,47 @@ namespace YARG.Core.Parsing.Midi
 
         private void ParseVocal(int pitch)
         {
-            if (vocal != -1 && lyric.Item1 != -1)
+            if (vocal.ticks != -1 && lyric.Item1.ticks != -1)
             {
-                long duration = position - vocal;
-                if (duration > 240)
-                    duration -= 120;
+                var duration = position - vocal;
+                if (duration.ticks > 240)
+                {
+                    long newticks = duration.ticks - 120;
+                    duration.seconds = (newticks * duration.seconds / duration.ticks);
+                    duration.ticks = newticks;
+                }
                 else
-                    duration /= 2;
+                {
+                    duration.ticks /= 2;
+                    duration.seconds /= 2;
+                }
 
                 ref var note = ref AddVocal(vocal);
                 note.Pitch.Binary = pitch;
-                note.Duration = duration;
-                lyric.Item1 = -1;
+                note.Duration = new NormalizedDuration(duration);
+                lyric.Item1.ticks = -1;
                 lyric.Item2 = string.Empty;
             }
 
             vocal = position;
-            if (lyric.Item1 != -1)
+            if (lyric.Item1.ticks != -1)
                 lyric.Item1 = position;
         }
 
         private void ParseVocal_Off(int pitch)
         {
-            if (vocal != -1 && lyric.Item1 != -1)
+            if (vocal.ticks != -1 && lyric.Item1.ticks != -1)
             {
                 ref var note = ref AddVocal(vocal);
                 note.Pitch.Binary = pitch;
-                note.Duration = position - vocal;
-                lyric.Item1 = -1;
+                note.Duration = new NormalizedDuration(position - vocal);
+                lyric.Item1.ticks = -1;
                 lyric.Item2 = string.Empty;
             }
-            vocal = -1;
+            vocal.ticks = -1;
         }
 
-        private ref VocalNote_FW AddVocal(long vocalPos)
+        private ref VocalNote_FW AddVocal(in DualTime vocalPos)
         {
             var vocals = track[index];
             if (vocals.Capacity == 0)
@@ -150,10 +157,10 @@ namespace YARG.Core.Parsing.Midi
 
         private void AddPercussion_Off(bool playable)
         {
-            if (percussion != -1)
+            if (percussion.ticks != -1)
             {
                 track.Percussion.Get_Or_Add_Last(percussion).IsPlayable = playable;
-                percussion = -1;
+                percussion.ticks = -1;
             }
         }
 

@@ -24,20 +24,20 @@ namespace YARG.Core.Parsing
 
         public bool IsOccupied() => _track != null || _difficulties != null;
 
-        public void LoadMidi(YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties)
+        public void LoadMidi(YARGMidiTrack midiTrack, SyncTrack_FW sync, HashSet<Difficulty>? difficulties)
         {
             if (_track != null)
                 return;
 
             if (_initialType == DrumsType.FiveLane)
-                _track = Midi_FiveLane_Loader.Load(midiTrack, difficulties);
+                _track = Midi_FiveLane_Loader.Load(midiTrack, sync, difficulties);
             else if (_initialType == DrumsType.FourLane)
-                _track = Midi_FourLane_Loader.Load(midiTrack, difficulties);
+                _track = Midi_FourLane_Loader.Load(midiTrack, sync, difficulties);
             else if (_initialType == DrumsType.ProDrums)
-                _track = Midi_ProDrum_Loader.Load(midiTrack, difficulties);
+                _track = Midi_ProDrum_Loader.Load(midiTrack, sync, difficulties);
             else
             {
-                (var track, var type) = Midi_UnknownDrums_Loader.Load(midiTrack, _initialType, difficulties);
+                (var track, var type) = Midi_UnknownDrums_Loader.Load(midiTrack, _initialType, sync, difficulties);
                 _track = track;
                 _currentType = type switch
                 {
@@ -48,7 +48,7 @@ namespace YARG.Core.Parsing
             }
         }
 
-        public void LoadChart<TChar, TDecoder, TBase>(YARGChartFileReader<TChar, TDecoder, TBase> reader)
+        public void LoadChart<TChar, TDecoder, TBase>(SyncTrack_FW sync, YARGChartFileReader<TChar, TDecoder, TBase> reader)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TDecoder : IStringDecoder<TChar>, new()
             where TBase : unmanaged, IDotChartBases<TChar>
@@ -64,10 +64,10 @@ namespace YARG.Core.Parsing
             _difficulties[diff].Item2 = _currentType;
             _difficulties[diff].Item1 = _currentType switch
             {
-                DrumsType.ProDrums => LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_4, Pro_Drums>  (reader, Set),
-                DrumsType.FiveLane => LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_5, Basic_Drums>(reader, Set),
-                DrumsType.FourLane => LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_4, Basic_Drums>(reader, Set),
-                _ =>                  LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_5, Pro_Drums>  (reader, Set)
+                DrumsType.ProDrums => LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_4, Pro_Drums>  (sync, reader, Set),
+                DrumsType.FiveLane => LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_5, Basic_Drums>(sync, reader, Set),
+                DrumsType.FourLane => LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_4, Basic_Drums>(sync, reader, Set),
+                _ =>                  LoadChartDifficulty<TChar, TDecoder, TBase, DrumPad_5, Pro_Drums>  (sync, reader, Set)
             };
         }
 
@@ -115,62 +115,82 @@ namespace YARG.Core.Parsing
             }
         }
 
-        private const string SOLO = "solo";
-        private const string SOLOEND = "soloend";
-
-        private delegate bool Loader<TDrumConfig, TCymbalConfig>(ref DrumNote<TDrumConfig, TCymbalConfig> note, int lane, long duration)
+        private delegate bool Loader<TDrumConfig, TCymbalConfig>(ref DrumNote<TDrumConfig, TCymbalConfig> note, int lane, in DualTime duration)
             where TDrumConfig : unmanaged, IDrumPadConfig
             where TCymbalConfig : unmanaged, ICymbalConfig;
 
-        private DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> LoadChartDifficulty<TChar, TDecoder, TBase, TDrumConfig, TCymbalConfig>(YARGChartFileReader<TChar, TDecoder, TBase> reader, Loader<TDrumConfig, TCymbalConfig> loader)
-            where TDrumConfig : unmanaged, IDrumPadConfig
+        private DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>> LoadChartDifficulty<TChar, TDecoder, TBase, TDrumConfig, TCymbalConfig>(
+                SyncTrack_FW sync, YARGChartFileReader<TChar, TDecoder, TBase> reader, Loader<TDrumConfig, TCymbalConfig> loader)
+            where TDrumConfig   : unmanaged, IDrumPadConfig
             where TCymbalConfig : unmanaged, ICymbalConfig
-            where TChar : unmanaged, IEquatable<TChar>, IConvertible
-            where TDecoder : IStringDecoder<TChar>, new()
-            where TBase : unmanaged, IDotChartBases<TChar>
+            where TChar         : unmanaged, IEquatable<TChar>, IConvertible
+            where TDecoder      : IStringDecoder<TChar>, new()
+            where TBase         : unmanaged, IDotChartBases<TChar>
         {
             var difficulty = new DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>>(5000);
-            long solo = 0;
+
+            // Used to lesson the impact of the ticks-seconds search algorithm as the the position
+            // gets larger by tracking the previous position.
+            int tempoIndex = 0;
+            List<DualTime> soloQueue = new(2);
 
             DotChartEvent ev = default;
             DotChartNote note = default;
             while (reader.TryParseEvent(ref ev))
             {
+                var dual = new DualTime(ev.Position, sync.ConvertToSeconds(ev.Position));
                 switch (ev.Type)
                 {
                     case ChartEventType.Note:
                         {
-                            ref var drum = ref difficulty.Notes.Get_Or_Add_Last(ev.Position);
+                            ref var drum = ref difficulty.Notes.Get_Or_Add_Last(dual);
                             reader.ExtractLaneAndSustain(ref note);
-                            
-                            if (!loader(ref drum, note.Lane, note.Duration))
+
+                            var dualDuration = new DualTime(note.Duration, sync.ConvertToSeconds(note.Duration, ref tempoIndex));
+                            if (!loader(ref drum, note.Lane, dualDuration))
                                 if (drum.GetNumActiveNotes() == 0)
                                     difficulty.Notes.Pop();
                             break;
                         }
                     case ChartEventType.Special:
                         {
-                            var phrase = reader.ExtractSpecialPhrase();
-                            switch (phrase.Item1)
+                            (var type, long duration) = reader.ExtractSpecialPhrase();
+                            switch (type)
                             {
+                                case SpecialPhraseType.FaceOff_Player1:
+                                case SpecialPhraseType.FaceOff_Player2:
                                 case SpecialPhraseType.StarPower:
                                 case SpecialPhraseType.BRE:
                                 case SpecialPhraseType.Tremolo:
                                 case SpecialPhraseType.Trill:
-                                    difficulty.SpecialPhrases.Get_Or_Add_Last(ev.Position).TryAdd(phrase.Item1, phrase.Item2);
+                                    var dualDuration = new DualTime(duration, sync.ConvertToSeconds(duration));
+                                    difficulty.SpecialPhrases.Get_Or_Add_Last(dual).TryAdd(type, new SpecialPhraseInfo(dualDuration));
                                     break;
                             }
                             break;
                         }
                     case ChartEventType.Text:
                         {
+                            const string SOLO = "solo";
+                            const string SOLOEND = "soloend";
                             string str = reader.ExtractText();
                             if (str.StartsWith(SOLOEND))
-                                difficulty.SpecialPhrases[solo].TryAdd(SpecialPhraseType.Solo, new SpecialPhraseInfo(ev.Position - solo));
+                            {
+                                if (soloQueue.Count > 0)
+                                {
+                                    var solo = soloQueue[0];
+                                    difficulty.SpecialPhrases[solo].TryAdd(SpecialPhraseType.Solo, new SpecialPhraseInfo(dual - solo));
+                                    soloQueue.RemoveAt(0);
+
+                                    // Ensures overlapping soloes... don't overlap
+                                    if (soloQueue.Count > 0 && soloQueue[0] != dual)
+                                        soloQueue.Clear();
+                                }
+                            }
                             else if (str.StartsWith(SOLO))
-                                solo = ev.Position;
+                                soloQueue.Add(dual);
                             else
-                                difficulty.Events.Get_Or_Add_Last(ev.Position).Add(str);
+                                difficulty.Events.Get_Or_Add_Last(dual).Add(str);
                             break;
                         }
                 }
@@ -193,18 +213,18 @@ namespace YARG.Core.Parsing
         private const int GHOST_MAX_4 = 42;
         private const int GHOST_MAX_5 = 43;
 
-        private bool Set(ref DrumNote<DrumPad_5, Pro_Drums> note, int lane, long length)
+        private bool Set(ref DrumNote<DrumPad_5, Pro_Drums> note, int lane, in DualTime length)
         {
             if (lane == BASS_INDEX)
-                note.Bass = length;
+                note.Bass = new TruncatableSustain(length);
             else if (lane <= FIVELANE_MAX)
             {
-                note.Pads[lane - 1].Duration = length;
+                note.Pads[lane - 1].Duration = new TruncatableSustain(length);
                 if (lane == FIVELANE_MAX)
                     _currentType = DrumsType.FiveLane;
             }
             else if (lane == DOUBLEBASS_INDEX)
-                note.DoubleBass = length;
+                note.DoubleBass = new TruncatableSustain(length);
             else if (CYMBAL_YELLOW <= lane && lane <= CYMBAL_GREEN)
             {
                 note.Cymbals[lane - CYMBAL_YELLOW] = true;
@@ -217,10 +237,10 @@ namespace YARG.Core.Parsing
             return true;
         }
 
-        private bool Set(ref DrumNote<DrumPad_4, Pro_Drums> note, int lane, long length)
+        private bool Set(ref DrumNote<DrumPad_4, Pro_Drums> note, int lane, in DualTime length)
         {
-            if (lane == BASS_INDEX)            note.Bass = length;
-            else if (lane <= FOURLANE_MAX)     note.Pads[lane - 1].Duration = length;
+            if (lane == BASS_INDEX)            note.Bass = new TruncatableSustain(length);
+            else if (lane <= FOURLANE_MAX)     note.Pads[lane - 1].Duration = new TruncatableSustain(length);
             else if (lane == DOUBLEBASS_INDEX) note.ToggleDoubleBass();
             else if (CYMBAL_YELLOW <= lane && lane <= CYMBAL_GREEN) note.Cymbals[lane - CYMBAL_YELLOW] = true;
             else if (ACCENT_MIN <= lane && lane <= ACCENT_MAX_4)    note.Pads[lane - ACCENT_MIN].Dynamics = DrumDynamics.Accent;
@@ -230,11 +250,11 @@ namespace YARG.Core.Parsing
             return true;
         }
 
-        private bool Set<TDrumConfig>(ref DrumNote<TDrumConfig, Basic_Drums> note, int lane, long length)
+        private bool Set<TDrumConfig>(ref DrumNote<TDrumConfig, Basic_Drums> note, int lane, in DualTime length)
             where TDrumConfig : unmanaged, IDrumPadConfig
         {
-            if (lane == BASS_INDEX) note.Bass = length;
-            else if (lane <= DrumNote<TDrumConfig, Basic_Drums>.NUMPADS) note.Pads[lane - 1].Duration = length;
+            if (lane == BASS_INDEX) note.Bass = new TruncatableSustain(length);
+            else if (lane <= DrumNote<TDrumConfig, Basic_Drums>.NUMPADS) note.Pads[lane - 1].Duration = new TruncatableSustain(length);
             else if (lane == DOUBLEBASS_INDEX) note.ToggleDoubleBass();
             else if (ACCENT_MIN <= lane && lane - ACCENT_MIN < DrumNote<TDrumConfig, Basic_Drums>.NUMPADS) note.Pads[lane - ACCENT_MIN].Dynamics = DrumDynamics.Accent;
             else if (GHOST_MIN  <= lane && lane - GHOST_MIN  < DrumNote<TDrumConfig, Basic_Drums>.NUMPADS) note.Pads[lane - GHOST_MIN ].Dynamics = DrumDynamics.Ghost;

@@ -18,19 +18,14 @@
 
     public struct SpecialPhraseInfo
     {
-        private NormalizedDuration _duration;
-        public long Duration
-        {
-            get => _duration;
-            set => _duration = value;
-        }
+        public NormalizedDuration Duration;
 
-        public int Velocity { get; set; }
+        public int Velocity;
 
-        public SpecialPhraseInfo(long duration, int velocity = 100)
+        public SpecialPhraseInfo(in DualTime duration, int velocity = 100)
         {
             Velocity = velocity;
-            _duration = duration;
+            Duration = new NormalizedDuration(duration);
         }
     }
 }

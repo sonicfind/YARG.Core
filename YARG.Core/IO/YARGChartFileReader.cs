@@ -369,11 +369,11 @@ namespace YARG.Core.IO
             note.Duration = reader.ExtractInt64();
         }
 
-        public (SpecialPhraseType, SpecialPhraseInfo) ExtractSpecialPhrase()
+        public (SpecialPhraseType, long) ExtractSpecialPhrase()
         {
             int type = reader.ExtractInt32();
             long duration = reader.ExtractInt64();
-            return new((SpecialPhraseType) type, new SpecialPhraseInfo(duration));
+            return new((SpecialPhraseType) type, duration);
         }
 
         public int ExtractMicrosPerQuarter()

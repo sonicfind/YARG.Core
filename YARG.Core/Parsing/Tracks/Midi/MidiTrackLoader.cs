@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Text;
 using YARG.Core.IO;
 
@@ -19,7 +18,7 @@ namespace YARG.Core.Parsing.Midi
         where TTrack : Track
     {
         protected static readonly byte[] SYSEXTAG = Encoding.ASCII.GetBytes("PS");
-        protected long position;
+        protected DualTime position;
         protected MidiNote note;
         protected readonly Midi_PhraseList phrases;
         protected readonly TTrack track;
@@ -30,16 +29,20 @@ namespace YARG.Core.Parsing.Midi
             this.phrases = phrases;
         }
 
-        protected TTrack Process(YARGMidiTrack midiTrack)
+        protected TTrack Process(SyncTrack_FW sync, YARGMidiTrack midiTrack)
         {
+            int tempoIndex = 0;
             while (midiTrack.ParseEvent(true))
             {
-                position = midiTrack.Position;
+                position.ticks = midiTrack.Position;
+                position.seconds = sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex);
                 if (midiTrack.Type == MidiEventType.Note_On)
                 {
                     midiTrack.ExtractMidiNote(ref note);
                     if (note.velocity > 0)
+                    {
                         ParseNote_ON(midiTrack);
+                    }
                     else
                         ParseNote_Off(midiTrack);
                 }

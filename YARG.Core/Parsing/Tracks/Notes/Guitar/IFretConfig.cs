@@ -17,17 +17,17 @@ namespace YARG.Core.Parsing.Guitar
         {
             StringBuilder stringBuilder = new();
             if (Open.IsActive())
-                stringBuilder.Append($"Open: {Open.Duration} | ");
+                stringBuilder.Append($"Open: {Open} | ");
             if (Green.IsActive())
-                stringBuilder.Append($"Green: {Green.Duration} | ");
+                stringBuilder.Append($"Green: {Green} | ");
             if (Red.IsActive())
-                stringBuilder.Append($"Red: {Red.Duration} | ");
+                stringBuilder.Append($"Red: {Red} | ");
             if (Yellow.IsActive())
-                stringBuilder.Append($"Yellow: {Yellow.Duration} | ");
+                stringBuilder.Append($"Yellow: {Yellow} | ");
             if (Blue.IsActive())
-                stringBuilder.Append($"Blue: {Blue.Duration} | ");
+                stringBuilder.Append($"Blue: {Blue} | ");
             if (Orange.IsActive())
-                stringBuilder.Append($"Orange: {Orange.Duration}");
+                stringBuilder.Append($"Orange: {Orange}");
             return stringBuilder.ToString();
         }
     }
@@ -46,19 +46,19 @@ namespace YARG.Core.Parsing.Guitar
         {
             StringBuilder stringBuilder = new();
             if (Open.IsActive())
-                stringBuilder.Append($"Open: {Open.Duration} | ");
+                stringBuilder.Append($"Open: {Open} | ");
             if (Black1.IsActive())
-                stringBuilder.Append($"Black 1: {Black1.Duration} | ");
+                stringBuilder.Append($"Black 1: {Black1} | ");
             if (Black2.IsActive())
-                stringBuilder.Append($"Black 2: {Black2.Duration} | ");
+                stringBuilder.Append($"Black 2: {Black2} | ");
             if (Black3.IsActive())
-                stringBuilder.Append($"Black 3: {Black3.Duration} | ");
+                stringBuilder.Append($"Black 3: {Black3} | ");
             if (White1.IsActive())
-                stringBuilder.Append($"White 1: {White1.Duration} | ");
+                stringBuilder.Append($"White 1: {White1} | ");
             if (White2.IsActive())
-                stringBuilder.Append($"White 2: {White2.Duration} | ");
+                stringBuilder.Append($"White 2: {White2} | ");
             if (White3.IsActive())
-                stringBuilder.Append($"White 3: {White3.Duration}");
+                stringBuilder.Append($"White 3: {White3}");
             return stringBuilder.ToString();
         }
     }

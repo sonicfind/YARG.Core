@@ -13,13 +13,13 @@ namespace YARG.Core.Parsing.Midi
         private static readonly int[] TREMOLO = { 126 };
         private static readonly int[] TRILL = { 127 };
 
-        private readonly long[] lanes = new long[NOTE_MAX - NOTE_MIN + 1]
+        private readonly DualTime[] lanes = new DualTime[NOTE_MAX - NOTE_MIN + 1]
         {
-            -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1,
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
         };
 
         private Midi_ProKeys_Loader()
@@ -31,10 +31,10 @@ namespace YARG.Core.Parsing.Midi
             new(TREMOLO,                         new(SpecialPhraseType.Trill))
         )) { }
 
-        public static ProKeysDifficulty Load(YARGMidiTrack track)
+        public static ProKeysDifficulty Load(YARGMidiTrack track, SyncTrack_FW sync)
         {
             Midi_ProKeys_Loader loader = new();
-            return loader.Process(track);
+            return loader.Process(sync, track);
         }
 
         protected override bool IsNote() { return NOTE_MIN <= note.value && note.value <= NOTE_MAX; }
@@ -52,11 +52,11 @@ namespace YARG.Core.Parsing.Midi
 
         protected override void ParseLaneColor_Off(YARGMidiTrack midiTrack)
         {
-            long colorPosition = lanes[note.value - NOTE_MIN];
-            if (colorPosition != -1)
+            ref var colorPosition = ref lanes[note.value - NOTE_MIN];
+            if (colorPosition.ticks != -1)
             {
                 track.Notes.Traverse_Backwards_Until(colorPosition)!.Add(note.value, position - colorPosition);
-                lanes[note.value - NOTE_MIN] = -1;
+                colorPosition.ticks = -1;
             }
         }
 
