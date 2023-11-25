@@ -12,7 +12,7 @@ namespace YARG.Core.Parsing.Guitar
         TAP
     }
 
-    public struct GuitarNote<TConfig> : INote
+    public struct GuitarNote<TConfig> : INote, IDotChartLoadable
         where TConfig : unmanaged, IFretConfig
     {
         public static readonly int NUMLANES;
@@ -48,22 +48,23 @@ namespace YARG.Core.Parsing.Guitar
                 if (lane < 0 || NUMLANES <= lane)
                     throw new IndexOutOfRangeException();
 
-                unsafe
-                {
-                    fixed (TConfig* ptr = &frets)
-                    {
-                        var lanes = (TruncatableSustain*) ptr;
-                        lanes[lane] = new TruncatableSustain(value);
-                        if (lane == 0)
-                        {
-                            for (int i = 1; i < NUMLANES; ++i)
-                                lanes[lane].Disable();
-                        }
-                        else
-                            lanes[0].Disable();
-                    }
-                }
+                SetValues(lane, value);
             }
+        }
+
+        public bool SetFromDotChart(int lane, in DualTime length)
+        {
+            var selection = frets.ParseLane(lane);
+            if (selection == IFretConfig.LaneSelection.None)
+                return false;
+
+            if (selection <= IFretConfig.LaneSelection.Lane_6)
+                SetValues(selection - IFretConfig.LaneSelection.Open, length);
+            else if (selection == IFretConfig.LaneSelection.Tap)
+                State = GuitarState.TAP;
+            else if (State == GuitarState.NATURAL)
+                State = GuitarState.FORCED_LEGACY;
+            return true;
         }
 
         public void Disable(int lane)
@@ -104,6 +105,25 @@ namespace YARG.Core.Parsing.Guitar
                             sustain = dur;
                     }
                     return sustain;
+                }
+            }
+        }
+
+        private void SetValues(int lane, in DualTime length)
+        {
+            unsafe
+            {
+                fixed (TConfig* ptr = &frets)
+                {
+                    var lanes = (TruncatableSustain*) ptr;
+                    lanes[lane] = new TruncatableSustain(length);
+                    if (lane == 0)
+                    {
+                        for (int i = 1; i < NUMLANES; ++i)
+                            lanes[lane].Disable();
+                    }
+                    else
+                        lanes[0].Disable();
                 }
             }
         }

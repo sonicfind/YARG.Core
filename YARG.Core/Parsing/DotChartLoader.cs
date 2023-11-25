@@ -97,7 +97,7 @@ namespace YARG.Core.Parsing
                     LoadEventsTrack(chart, chartReader, doVocals);
                 else if (chartReader.ValidateDifficulty() && chartReader.ValidateInstrument() &&
                         (activeTracks == null ||
-                        (activeTracks.TryGetValue(chartReader.Instrument, out var diffs) && diffs.Contains((Difficulty)chartReader.Difficulty))))
+                        (activeTracks.TryGetValue(chartReader.Instrument, out var diffs) && diffs.Contains(chartReader.Difficulty))))
                 {
                     if (chartReader.Instrument != NoteTracks_Chart.Drums)
                         SelectChartTrack(chart, chartReader);
@@ -311,15 +311,15 @@ namespace YARG.Core.Parsing
         {
             bool skip = chartReader.Instrument switch
             {
-                NoteTracks_Chart.Single =>       LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretGuitar,     Set),
-                NoteTracks_Chart.DoubleBass =>   LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretBass,       Set),
-                NoteTracks_Chart.DoubleRhythm => LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretRhythm,     Set),
-                NoteTracks_Chart.DoubleGuitar => LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretCoopGuitar, Set),
-                NoteTracks_Chart.GHLGuitar =>    LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretGuitar,      Set),
-                NoteTracks_Chart.GHLBass =>      LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretBass,        Set),
-                NoteTracks_Chart.GHLRhythm =>    LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretRhythm,      Set),
-                NoteTracks_Chart.GHLCoop =>      LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretCoopGuitar,  Set),
-                NoteTracks_Chart.Keys =>         LoadChartTrack(chartReader, chart.Sync, ref chart.Keys,               Set),
+                NoteTracks_Chart.Single =>       LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretGuitar),
+                NoteTracks_Chart.DoubleBass =>   LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretBass),
+                NoteTracks_Chart.DoubleRhythm => LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretRhythm),
+                NoteTracks_Chart.DoubleGuitar => LoadChartTrack(chartReader, chart.Sync, ref chart.FiveFretCoopGuitar),
+                NoteTracks_Chart.GHLGuitar =>    LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretGuitar),
+                NoteTracks_Chart.GHLBass =>      LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretBass),
+                NoteTracks_Chart.GHLRhythm =>    LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretRhythm),
+                NoteTracks_Chart.GHLCoop =>      LoadChartTrack(chartReader, chart.Sync, ref chart.SixFretCoopGuitar),
+                NoteTracks_Chart.Keys =>         LoadChartTrack(chartReader, chart.Sync, ref chart.Keys),
                 _ => true,
             };
 
@@ -327,13 +327,11 @@ namespace YARG.Core.Parsing
                 chartReader.SkipTrack();
         }
 
-        private delegate bool Loader<TNote>(ref TNote note, int lane, in DualTime duration);
-
-        private static bool LoadChartTrack<TChar, TBase, TDecoder, TNote>(YARGChartFileReader<TChar, TDecoder, TBase> chartReader, SyncTrack_FW sync, ref InstrumentTrack_FW<TNote>? track, Loader<TNote> loader)
+        private static bool LoadChartTrack<TChar, TBase, TDecoder, TNote>(YARGChartFileReader<TChar, TDecoder, TBase> chartReader, SyncTrack_FW sync, ref InstrumentTrack_FW<TNote>? track)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TDecoder : IStringDecoder<TChar>, new()
             where TBase : unmanaged, IDotChartBases<TChar>
-            where TNote : unmanaged, INote
+            where TNote : unmanaged, INote, IDotChartLoadable
         {
             track ??= new InstrumentTrack_FW<TNote>();
 
@@ -361,7 +359,7 @@ namespace YARG.Core.Parsing
                             chartReader.ExtractLaneAndSustain(ref chartNote);
 
                             var dualDuration = new DualTime(chartNote.Duration, sync.ConvertToSeconds(chartNote.Duration, ref tempoIndex));
-                            if (!loader(ref note, chartNote.Lane, dualDuration))
+                            if (!note.SetFromDotChart(chartNote.Lane, dualDuration))
                                 if (note.GetNumActiveNotes() == 0)
                                     difficultyTrack.Notes.Pop();
                             break;

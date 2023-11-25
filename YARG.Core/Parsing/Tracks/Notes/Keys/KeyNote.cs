@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace YARG.Core.Parsing.Keys
 {
-    public struct KeyNote : INote
+    public struct KeyNote : INote, IDotChartLoadable
     {
         public TruncatableSustain Green;
         public TruncatableSustain Red;
@@ -25,6 +25,19 @@ namespace YARG.Core.Parsing.Keys
                     throw new IndexOutOfRangeException();
                 }
             }
+        }
+
+        public bool SetFromDotChart(int lane, in DualTime length)
+        {
+            if (lane >= 5)
+                return false;
+
+            unsafe
+            {
+                fixed (TruncatableSustain* lanes = &Green)
+                    lanes[lane] = new TruncatableSustain(length);
+            }
+            return true;
         }
 
         public int GetNumActiveNotes()
