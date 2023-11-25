@@ -238,11 +238,14 @@ namespace YARG.Core.Parsing
             Capacity = newcapacity;
         }
 
-        public IEnumerator GetEnumerator() { return new Enumerator(this); }
-
         IEnumerator<FlatMapNode<TKey, TValue>> IEnumerable<FlatMapNode<TKey, TValue>>.GetEnumerator()
         {
             return ((IEnumerable<FlatMapNode<TKey, TValue>>) this).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new Enumerator(this);
         }
 
         public struct Enumerator : IEnumerator<FlatMapNode<TKey, TValue>>, IEnumerator
