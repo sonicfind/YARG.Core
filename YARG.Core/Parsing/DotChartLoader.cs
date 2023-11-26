@@ -125,7 +125,7 @@ namespace YARG.Core.Parsing
 
         private static void SetSustainThreshold(uint tickrate, ParseSettings? settings)
         {
-            DualTime.TruncationLimit = settings != null && settings.SustainCutoffThreshold != ParseSettings.SETTING_DEFAULT ? settings.SustainCutoffThreshold : (tickrate / 3);
+            DualTime.TruncationLimit = settings != null && settings.SustainCutoffThreshold != ParseSettings.SETTING_DEFAULT ? settings.SustainCutoffThreshold : 1;
         }
 
         private static void ParseHeaderTrack<TChar, TBase, TDecoder>(YARGChart chart, Dictionary<string, IniModifierCreator> list, YARGChartFileReader<TChar, TDecoder, TBase> chartReader)
