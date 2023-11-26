@@ -12,7 +12,7 @@ namespace YARG.Core.Parsing.Vocal
 
         public string Lyric;
         public Pitch<VocalConfig> Pitch;
-        public NormalizedDuration Duration;
+        public DualTime Duration;
 
         public bool IsPlayable() { return Lyric.Length > 0 && (Pitch.Octave >= 2 || Lyric[0] == '#'); }
 

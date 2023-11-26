@@ -68,7 +68,7 @@ namespace YARG.Core.Parsing.Midi
                 ref var colorPosition = ref midiDiff.Notes[lane];
                 if (colorPosition.ticks != -1)
                 {
-                    track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane] = new TruncatableSustain(position - colorPosition);
+                    track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane] = DualTime.Truncate(position - colorPosition);
                     colorPosition.ticks = -1;
                 }
             }

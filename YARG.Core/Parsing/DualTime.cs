@@ -2,7 +2,7 @@
 
 namespace YARG.Core.Parsing
 {
-    public struct DualTime : IEquatable<DualTime>, IComparable<DualTime>
+    public struct DualTime : IEquatable<DualTime>, IComparable<DualTime>, IEnableable
     {
         public static readonly DualTime Inactive = new(-1, 0);
         public static readonly DualTime Zero = new(0, 0);
@@ -14,6 +14,35 @@ namespace YARG.Core.Parsing
         {
             this.ticks = ticks;
             this.seconds = seconds;
+        }
+
+        public bool IsActive()
+        {
+            return ticks > 0;
+        }
+
+        public void Disable()
+        {
+            ticks = 0;
+            seconds = 0;
+        }
+
+        public static long TruncationLimit = 180;
+        public static DualTime Truncate(DualTime time)
+        {
+            if (time.ticks < TruncationLimit)
+            {
+                time.seconds /= time.ticks;
+                time.ticks = 1;
+            }
+            return time;
+        }
+
+        private static readonly DualTime NORMALIZED_TIME = new(1, 0);
+
+        public static DualTime Normalize(DualTime time)
+        {
+            return time.ticks > 0 ? NORMALIZED_TIME : time;
         }
 
         public int CompareTo(DualTime other)

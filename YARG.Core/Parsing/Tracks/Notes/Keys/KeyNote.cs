@@ -5,13 +5,13 @@ namespace YARG.Core.Parsing.Keys
 {
     public struct KeyNote : INote, IDotChartLoadable
     {
-        public TruncatableSustain Green;
-        public TruncatableSustain Red;
-        public TruncatableSustain Yellow;
-        public TruncatableSustain Blue;
-        public TruncatableSustain Orange;
+        public DualTime Green;
+        public DualTime Red;
+        public DualTime Yellow;
+        public DualTime Blue;
+        public DualTime Orange;
 
-        public ref TruncatableSustain this[int lane]
+        public ref DualTime this[int lane]
         {
             get
             {
@@ -19,7 +19,7 @@ namespace YARG.Core.Parsing.Keys
                 {
                     if (0 <= lane &lane < 5)
                     {
-                        fixed (TruncatableSustain* lanes = &Green)
+                        fixed (DualTime* lanes = &Green)
                             return ref lanes[lane];
                     }
                     throw new IndexOutOfRangeException();
@@ -34,8 +34,8 @@ namespace YARG.Core.Parsing.Keys
 
             unsafe
             {
-                fixed (TruncatableSustain* lanes = &Green)
-                    lanes[lane] = new TruncatableSustain(length);
+                fixed (DualTime* lanes = &Green)
+                    lanes[lane] = DualTime.Truncate(length);
             }
             return true;
         }
@@ -62,7 +62,7 @@ namespace YARG.Core.Parsing.Keys
         {
             unsafe
             {
-                fixed (TruncatableSustain* lanes = &Green)
+                fixed (DualTime* lanes = &Green)
                 {
                     var sustain = lanes[0];
                     for (int i = 1; i < 5; ++i)

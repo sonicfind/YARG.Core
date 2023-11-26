@@ -14,7 +14,7 @@ namespace YARG.Core.Parsing.ProKeys
             }
 
             public Pitch<ProKeyConfig> Pitch;
-            public TruncatableSustain Duration;
+            public DualTime Duration;
 
             public int OCTAVE_MIN => 3;
             public int OCTAVE_MAX => 5;
@@ -22,7 +22,7 @@ namespace YARG.Core.Parsing.ProKeys
             public Pitched_Key(in DualTime length)
             {
                 Pitch = default;
-                Duration = new TruncatableSustain(length);
+                Duration = DualTime.Truncate(length);
             }
 
             public Pitched_Key(in DualTime length, int binary) : this(length)
@@ -112,7 +112,7 @@ namespace YARG.Core.Parsing.ProKeys
 
         public void SetLength(int index, in DualTime length)
         {
-            GetKey(index).Duration = new TruncatableSustain(length);
+            GetKey(index).Duration = DualTime.Truncate(length);
         }
 
         public void SetPitch(int index, PitchName note)

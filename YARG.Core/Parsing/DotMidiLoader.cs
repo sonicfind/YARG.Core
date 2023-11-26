@@ -236,7 +236,7 @@ namespace YARG.Core.Parsing
 
         private static void SetSustainThreshold(uint tickRate, long sustainCutoff)
         {
-            TruncatableSustain.MinDuration = sustainCutoff != ParseSettings.SETTING_DEFAULT ? sustainCutoff : (tickRate / 3);
+            DualTime.TruncationLimit = sustainCutoff != ParseSettings.SETTING_DEFAULT ? sustainCutoff : (tickRate / 3);
         }
     }
 }

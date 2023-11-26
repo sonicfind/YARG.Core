@@ -30,12 +30,12 @@ namespace YARG.Core.Parsing.Guitar
 
     public struct FiveFret : IFretConfig
     {
-        public TruncatableSustain Open;
-        public TruncatableSustain Green;
-        public TruncatableSustain Red;
-        public TruncatableSustain Yellow;
-        public TruncatableSustain Blue;
-        public TruncatableSustain Orange;
+        public DualTime Open;
+        public DualTime Green;
+        public DualTime Red;
+        public DualTime Yellow;
+        public DualTime Blue;
+        public DualTime Orange;
 
         public LaneSelection ParseLane(int lane)
         {
@@ -73,13 +73,13 @@ namespace YARG.Core.Parsing.Guitar
         private static readonly int[] SIXFRETLANES = new int[5] { 3, 4, 5, 0, 1 };
         private const int BLACK_LANE3 = 8;
 
-        public TruncatableSustain Open;
-        public TruncatableSustain Black1;
-        public TruncatableSustain Black2;
-        public TruncatableSustain Black3;
-        public TruncatableSustain White1;
-        public TruncatableSustain White2;
-        public TruncatableSustain White3;
+        public DualTime Open;
+        public DualTime Black1;
+        public DualTime Black2;
+        public DualTime Black3;
+        public DualTime White1;
+        public DualTime White2;
+        public DualTime White3;
 
         public LaneSelection ParseLane(int lane)
         {

@@ -12,6 +12,11 @@ namespace YARG.Core.Parsing.Guitar
         TAP
     }
 
+    public static class GuitarSettings
+    {
+
+    }
+
     public struct GuitarNote<TConfig> : INote, IDotChartLoadable
         where TConfig : unmanaged, IFretConfig
     {
@@ -21,14 +26,14 @@ namespace YARG.Core.Parsing.Guitar
         {
             unsafe
             {
-                NUMLANES = sizeof(TConfig) / sizeof(TruncatableSustain);
+                NUMLANES = sizeof(TConfig) / sizeof(DualTime);
             }
         }
 
         private TConfig frets;
         public GuitarState State;
 
-        private ref TruncatableSustain GetSustain(int lane)
+        private ref DualTime GetSustain(int lane)
         {
             if (lane < 0 || NUMLANES <= lane)
                 throw new IndexOutOfRangeException();
@@ -36,7 +41,7 @@ namespace YARG.Core.Parsing.Guitar
             unsafe
             {
                 fixed (TConfig* ptr = &frets)
-                    return ref ((TruncatableSustain*) ptr)[lane];
+                    return ref ((DualTime*) ptr)[lane];
             }
         }
 
@@ -79,7 +84,7 @@ namespace YARG.Core.Parsing.Guitar
             {
                 fixed (TConfig* ptr = &frets)
                 {
-                    var lanes = (TruncatableSustain*) ptr;
+                    var lanes = (DualTime*) ptr;
                     for (int i = 0; i < NUMLANES; ++i)
                     {
                         bool active = lanes[i].IsActive();
@@ -96,7 +101,7 @@ namespace YARG.Core.Parsing.Guitar
             {
                 fixed (TConfig* ptr = &frets)
                 {
-                    var lanes = (TruncatableSustain*) ptr;
+                    var lanes = (DualTime*) ptr;
                     var sustain = lanes[0];
                     for (int i = 1; i < NUMLANES; ++i)
                     {
@@ -115,8 +120,8 @@ namespace YARG.Core.Parsing.Guitar
             {
                 fixed (TConfig* ptr = &frets)
                 {
-                    var lanes = (TruncatableSustain*) ptr;
-                    lanes[lane] = new TruncatableSustain(length);
+                    var lanes = (DualTime*) ptr;
+                    lanes[lane] = DualTime.Truncate(length);
                     if (lane == 0)
                     {
                         for (int i = 1; i < NUMLANES; ++i)

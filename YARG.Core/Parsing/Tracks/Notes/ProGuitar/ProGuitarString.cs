@@ -17,7 +17,7 @@
 
         private int _fret;
         public StringMode mode;
-        public TruncatableSustain Duration;
+        public DualTime Duration;
 
         public int Fret
         {

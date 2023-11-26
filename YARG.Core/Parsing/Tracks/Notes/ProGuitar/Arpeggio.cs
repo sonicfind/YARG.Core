@@ -10,7 +10,7 @@ namespace YARG.Core.Parsing.ProGuitar
         static Arpeggio() { }
 
         private unsafe fixed int strings[6];
-        public NormalizedDuration Length;
+        public DualTime Length;
 
         public int this[int lane]
         {

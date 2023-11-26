@@ -118,7 +118,7 @@ namespace YARG.Core.Parsing.Midi
 
                 ref var note = ref AddVocal(vocal);
                 note.Pitch.Binary = pitch;
-                note.Duration = new NormalizedDuration(duration);
+                note.Duration = DualTime.Normalize(duration);
                 lyric.Item1.ticks = -1;
                 lyric.Item2 = string.Empty;
             }
@@ -134,7 +134,7 @@ namespace YARG.Core.Parsing.Midi
             {
                 ref var note = ref AddVocal(vocal);
                 note.Pitch.Binary = pitch;
-                note.Duration = new NormalizedDuration(position - vocal);
+                note.Duration = DualTime.Normalize(position - vocal);
                 lyric.Item1.ticks = -1;
                 lyric.Item2 = string.Empty;
             }

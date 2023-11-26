@@ -9,7 +9,7 @@
 
     public struct DrumPad : IEnableable
     {
-        public TruncatableSustain Duration;
+        public DualTime Duration;
 
         public DrumDynamics Dynamics;
 

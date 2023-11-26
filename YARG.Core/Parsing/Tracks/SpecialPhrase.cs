@@ -18,14 +18,14 @@
 
     public struct SpecialPhraseInfo
     {
-        public NormalizedDuration Duration;
+        public DualTime Duration;
 
         public int Velocity;
 
         public SpecialPhraseInfo(in DualTime duration, int velocity = 100)
         {
             Velocity = velocity;
-            Duration = new NormalizedDuration(duration);
+            Duration = DualTime.Normalize(duration);
         }
     }
 }

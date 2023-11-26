@@ -21,12 +21,12 @@ namespace YARG.Core.Parsing.Drums
             }
         }
 
-        private TruncatableSustain _bass;
-        private TruncatableSustain _doubleBass;
+        private DualTime _bass;
+        private DualTime _doubleBass;
         public TPads Pads;
         public TCymbals Cymbals;
 
-        public TruncatableSustain Bass
+        public DualTime Bass
         {
             get { return _bass; }
             set
@@ -35,7 +35,7 @@ namespace YARG.Core.Parsing.Drums
                 _doubleBass.Disable();
             }
         }
-        public TruncatableSustain DoubleBass
+        public DualTime DoubleBass
         {
             get { return _doubleBass; }
             set
@@ -84,16 +84,16 @@ namespace YARG.Core.Parsing.Drums
             {
                 if (lane == 0)
                 {
-                    _bass = new TruncatableSustain(value);
+                    _bass = DualTime.Truncate(value);
                     _doubleBass.Disable();
                 }
                 else if (lane == 1)
                 {
-                    _doubleBass = new TruncatableSustain(value);
+                    _doubleBass = DualTime.Truncate(value);
                     _bass.Disable();
                 }
                 else
-                    Pads[lane - 2].Duration = new TruncatableSustain(value);
+                    Pads[lane - 2].Duration = DualTime.Truncate(value);
             }
         }
 

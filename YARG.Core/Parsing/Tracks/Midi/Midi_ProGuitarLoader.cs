@@ -174,7 +174,7 @@ namespace YARG.Core.Parsing.Midi
                     ref var colorPosition = ref midiDiff.Notes[lane];
                     if (colorPosition.ticks != -1)
                     {
-                        track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane].Duration = new TruncatableSustain(position - colorPosition);
+                        track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane].Duration = DualTime.Truncate(position - colorPosition);
                         colorPosition.ticks = -1;
                     }
                 }
@@ -188,7 +188,7 @@ namespace YARG.Core.Parsing.Midi
                 ref var arpeggioPosition = ref midiDiff.Arpeggio;
                 if (arpeggioPosition.ticks != -1)
                 {
-                    track[diffIndex]!.Arpeggios.Last().Length = new NormalizedDuration(position - arpeggioPosition);
+                    track[diffIndex]!.Arpeggios.Last().Length = DualTime.Normalize(position - arpeggioPosition);
                     arpeggioPosition.ticks = -1;
                 }
             }

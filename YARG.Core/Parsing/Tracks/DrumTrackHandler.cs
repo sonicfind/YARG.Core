@@ -216,15 +216,15 @@ namespace YARG.Core.Parsing
         private bool Set(ref DrumNote<DrumPad_5, Pro_Drums> note, int lane, in DualTime length)
         {
             if (lane == BASS_INDEX)
-                note.Bass = new TruncatableSustain(length);
+                note.Bass = DualTime.Truncate(length);
             else if (lane <= FIVELANE_MAX)
             {
-                note.Pads[lane - 1].Duration = new TruncatableSustain(length);
+                note.Pads[lane - 1].Duration = DualTime.Truncate(length);
                 if (lane == FIVELANE_MAX)
                     _currentType = DrumsType.FiveLane;
             }
             else if (lane == DOUBLEBASS_INDEX)
-                note.DoubleBass = new TruncatableSustain(length);
+                note.DoubleBass = DualTime.Truncate(length);
             else if (CYMBAL_YELLOW <= lane && lane <= CYMBAL_GREEN)
             {
                 note.Cymbals[lane - CYMBAL_YELLOW] = true;
@@ -239,8 +239,8 @@ namespace YARG.Core.Parsing
 
         private bool Set(ref DrumNote<DrumPad_4, Pro_Drums> note, int lane, in DualTime length)
         {
-            if (lane == BASS_INDEX)            note.Bass = new TruncatableSustain(length);
-            else if (lane <= FOURLANE_MAX)     note.Pads[lane - 1].Duration = new TruncatableSustain(length);
+            if (lane == BASS_INDEX)            note.Bass = DualTime.Truncate(length);
+            else if (lane <= FOURLANE_MAX)     note.Pads[lane - 1].Duration = DualTime.Truncate(length);
             else if (lane == DOUBLEBASS_INDEX) note.ToggleDoubleBass();
             else if (CYMBAL_YELLOW <= lane && lane <= CYMBAL_GREEN) note.Cymbals[lane - CYMBAL_YELLOW] = true;
             else if (ACCENT_MIN <= lane && lane <= ACCENT_MAX_4)    note.Pads[lane - ACCENT_MIN].Dynamics = DrumDynamics.Accent;
@@ -253,8 +253,8 @@ namespace YARG.Core.Parsing
         private bool Set<TDrumConfig>(ref DrumNote<TDrumConfig, Basic_Drums> note, int lane, in DualTime length)
             where TDrumConfig : unmanaged, IDrumPadConfig
         {
-            if (lane == BASS_INDEX) note.Bass = new TruncatableSustain(length);
-            else if (lane <= DrumNote<TDrumConfig, Basic_Drums>.NUMPADS) note.Pads[lane - 1].Duration = new TruncatableSustain(length);
+            if (lane == BASS_INDEX) note.Bass = DualTime.Truncate(length);
+            else if (lane <= DrumNote<TDrumConfig, Basic_Drums>.NUMPADS) note.Pads[lane - 1].Duration = DualTime.Truncate(length);
             else if (lane == DOUBLEBASS_INDEX) note.ToggleDoubleBass();
             else if (ACCENT_MIN <= lane && lane - ACCENT_MIN < DrumNote<TDrumConfig, Basic_Drums>.NUMPADS) note.Pads[lane - ACCENT_MIN].Dynamics = DrumDynamics.Accent;
             else if (GHOST_MIN  <= lane && lane - GHOST_MIN  < DrumNote<TDrumConfig, Basic_Drums>.NUMPADS) note.Pads[lane - GHOST_MIN ].Dynamics = DrumDynamics.Ghost;
