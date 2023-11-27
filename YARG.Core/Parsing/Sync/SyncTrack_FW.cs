@@ -11,12 +11,12 @@ namespace YARG.Core.Parsing
         public readonly NativeFlatDictionary<DualTime, BeatlineType> BeatMap = new();
 
         internal const int MICROS_PER_SECOND = 1000000;
-        public double ConvertToSeconds(long ticks, int startIndex = 0)
+        public double ConvertPositionToSeconds(long ticks, int startIndex)
         {
-            return ConvertToSeconds(ticks, ref startIndex);
+            return ConvertPositionToSeconds(ticks, ref startIndex);
         }
 
-        public double ConvertToSeconds(long ticks, ref int startIndex)
+        public double ConvertPositionToSeconds(long ticks, ref int startIndex)
         {
             var span = TempoMarkers.Span;
             int length = span.Length;
@@ -27,28 +27,6 @@ namespace YARG.Core.Parsing
                     ref var marker = ref span[i];
                     startIndex = i;
                     return ((marker.obj.Micros * (ticks - marker.position) / (double) Tickrate) + marker.obj.Anchor) / MICROS_PER_SECOND;
-                }
-            }
-            throw new Exception("dafuq");
-        }
-
-        public long ConvertToTicks(double seconds, int startIndex = 0)
-        {
-            return ConvertToTicks(seconds, ref startIndex);
-        }
-
-        public long ConvertToTicks(double seconds, ref int startIndex)
-        {
-            var span = TempoMarkers.Span;
-            int length = span.Length;
-            double micros = seconds * MICROS_PER_SECOND;
-            for (int i = startIndex; i < length; i++)
-            {
-                if (i + 1 == length || micros < span[i + 1].obj.Anchor)
-                {
-                    ref var marker = ref span[i];
-                    startIndex = i;
-                    return (long) ((micros - marker.obj.Anchor) * Tickrate / marker.obj.Micros) + marker.position;
                 }
             }
             throw new Exception("dafuq");

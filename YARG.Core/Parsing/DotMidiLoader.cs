@@ -151,7 +151,7 @@ namespace YARG.Core.Parsing
             {
                 if (midiTrack.Type <= MidiEventType.Text_EnumLimit)
                 {
-                    var dual = new DualTime(midiTrack.Position, sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex));
+                    var dual = new DualTime(midiTrack.Position, sync.ConvertPositionToSeconds(midiTrack.Position, ref tempoIndex));
                     var bytes = midiTrack.ExtractTextOrSysEx();
                     if (bytes.StartsWith(PREFIXES[0]))
                         events.sections.Get_Or_Add_Last(dual) = Encoding.UTF8.GetString(bytes[PREFIXES[0].Length..(bytes.Length - 1)]);
@@ -183,7 +183,7 @@ namespace YARG.Core.Parsing
                     midiTrack.ExtractMidiNote(ref note);
                     if (note.velocity > 0)
                     {
-                        var beat = new DualTime(midiTrack.Position, sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex));
+                        var beat = new DualTime(midiTrack.Position, sync.ConvertPositionToSeconds(midiTrack.Position, ref tempoIndex));
                         beats.Get_Or_Add_Last(beat) = note.value == 12 ? BeatlineType.Measure : BeatlineType.Strong;
                     }
                 }

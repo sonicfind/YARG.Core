@@ -140,7 +140,7 @@ namespace YARG.Core.Parsing
                     long position = node.position;
                     for (uint n = 0; n < node.obj.Numerator && position < endTime; ++n, position += ticksPerMarker, ++searchIndex)
                     {
-                        var beat = new DualTime(position, sync.ConvertToSeconds(position, ref tempoIndex));
+                        var beat = new DualTime(position, sync.ConvertPositionToSeconds(position, ref tempoIndex));
                         if (!beats.Contains(searchIndex, beat))
                             beats[beat] = BeatlineType.Weak;
                     }
@@ -188,7 +188,7 @@ namespace YARG.Core.Parsing
                         int clicksLeft = clickSpacing;
                         do
                         {
-                            var beat = new DualTime(position, sync.ConvertToSeconds(position, ref tempoIndex));
+                            var beat = new DualTime(position, sync.ConvertPositionToSeconds(position, ref tempoIndex));
                             beats.Add_NoReturn(beat, style);
                             position += ticksPerMarker;
                             style = BeatlineType.Weak;

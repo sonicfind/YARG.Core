@@ -258,7 +258,7 @@ namespace YARG.Core.Parsing
             if (doVocals)
                 chart.LeadVocals = new(1);
 
-            // Used to lesson the impact of the ticks-seconds search algorithm as the the position
+            // Used to lesson the impact of the ticks-to-seconds search algorithm as the the position
             // gets larger by tracking the previous position.
             int tempoIndex = 0;
             var phrase = DualTime.Inactive;
@@ -268,7 +268,7 @@ namespace YARG.Core.Parsing
             {
                 if (ev.Type == ChartEventType.Text)
                 {
-                    var dual = new DualTime(ev.Position, chart.Sync.ConvertToSeconds(ev.Position, ref tempoIndex));
+                    var dual = new DualTime(ev.Position, chart.Sync.ConvertPositionToSeconds(ev.Position, ref tempoIndex));
 
                     string str = chartReader.ExtractText();
                     if (str.StartsWith(SECTION))
@@ -341,7 +341,7 @@ namespace YARG.Core.Parsing
 
             difficultyTrack = new DifficultyTrack_FW<TNote>(5000);
 
-            // Used to lesson the impact of the ticks-seconds search algorithm as the the position
+            // Used to lesson the impact of the ticks-to-seconds search algorithm as the the position
             // gets larger by tracking the previous position.
             int tempoIndex = 0;
             List<DualTime> soloQueue = new(2);
@@ -350,7 +350,7 @@ namespace YARG.Core.Parsing
             DotChartNote chartNote = default;
             while (chartReader.TryParseEvent(ref ev))
             {
-                var dual = new DualTime(ev.Position, sync.ConvertToSeconds(ev.Position, ref tempoIndex));
+                var dual = new DualTime(ev.Position, sync.ConvertPositionToSeconds(ev.Position, ref tempoIndex));
                 switch (ev.Type)
                 {
                     case ChartEventType.Note:
@@ -358,7 +358,8 @@ namespace YARG.Core.Parsing
                             ref var note = ref difficultyTrack.Notes.Get_Or_Add_Last(dual);
                             chartReader.ExtractLaneAndSustain(ref chartNote);
 
-                            var dualDuration = new DualTime(chartNote.Duration, sync.ConvertToSeconds(chartNote.Duration, ref tempoIndex));
+                            var endPosition = sync.ConvertPositionToSeconds(dual.ticks + chartNote.Duration, tempoIndex);
+                            var dualDuration = new DualTime(chartNote.Duration, endPosition - dual.seconds);
                             if (!note.SetFromDotChart(chartNote.Lane, dualDuration))
                                 if (note.GetNumActiveNotes() == 0)
                                     difficultyTrack.Notes.Pop();
@@ -375,7 +376,8 @@ namespace YARG.Core.Parsing
                                 case SpecialPhraseType.BRE:
                                 case SpecialPhraseType.Tremolo:
                                 case SpecialPhraseType.Trill:
-                                    var dualDuration = new DualTime(duration, sync.ConvertToSeconds(duration));
+                                    var endPosition = sync.ConvertPositionToSeconds(dual.ticks + duration, tempoIndex);
+                                    var dualDuration = new DualTime(duration, endPosition - dual.seconds);
                                     difficultyTrack.SpecialPhrases.Get_Or_Add_Last(dual).TryAdd(type, new SpecialPhraseInfo(dualDuration));
                                     break;
                             }
@@ -410,7 +412,7 @@ namespace YARG.Core.Parsing
             if (soloQueue.Count > 0)
             {
                 var solo = soloQueue[0];
-                var dual = new DualTime(ev.Position, sync.ConvertToSeconds(ev.Position, ref tempoIndex));
+                var dual = new DualTime(ev.Position, sync.ConvertPositionToSeconds(ev.Position, ref tempoIndex));
                 difficultyTrack.SpecialPhrases[solo].TryAdd(SpecialPhraseType.Solo, new SpecialPhraseInfo(dual - solo));
                 soloQueue.RemoveAt(0);
             }

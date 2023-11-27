@@ -129,7 +129,7 @@ namespace YARG.Core.Parsing
         {
             var difficulty = new DifficultyTrack_FW<DrumNote<TDrumConfig, TCymbalConfig>>(5000);
 
-            // Used to lesson the impact of the ticks-seconds search algorithm as the the position
+            // Used to lesson the impact of the ticks-to-seconds search algorithm as the the position
             // gets larger by tracking the previous position.
             int tempoIndex = 0;
             List<DualTime> soloQueue = new(2);
@@ -138,7 +138,7 @@ namespace YARG.Core.Parsing
             DotChartNote note = default;
             while (reader.TryParseEvent(ref ev))
             {
-                var dual = new DualTime(ev.Position, sync.ConvertToSeconds(ev.Position));
+                var dual = new DualTime(ev.Position, sync.ConvertPositionToSeconds(ev.Position, ref tempoIndex));
                 switch (ev.Type)
                 {
                     case ChartEventType.Note:
@@ -146,7 +146,8 @@ namespace YARG.Core.Parsing
                             ref var drum = ref difficulty.Notes.Get_Or_Add_Last(dual);
                             reader.ExtractLaneAndSustain(ref note);
 
-                            var dualDuration = new DualTime(note.Duration, sync.ConvertToSeconds(note.Duration, ref tempoIndex));
+                            var endPosition = sync.ConvertPositionToSeconds(dual.ticks + note.Duration, tempoIndex);
+                            var dualDuration = new DualTime(note.Duration, endPosition - dual.seconds);
                             if (!loader(ref drum, note.Lane, dualDuration))
                                 if (drum.GetNumActiveNotes() == 0)
                                     difficulty.Notes.Pop();
@@ -163,7 +164,8 @@ namespace YARG.Core.Parsing
                                 case SpecialPhraseType.BRE:
                                 case SpecialPhraseType.Tremolo:
                                 case SpecialPhraseType.Trill:
-                                    var dualDuration = new DualTime(duration, sync.ConvertToSeconds(duration));
+                                    var endPosition = sync.ConvertPositionToSeconds(dual.ticks + duration, tempoIndex);
+                                    var dualDuration = new DualTime(duration, endPosition - dual.seconds);
                                     difficulty.SpecialPhrases.Get_Or_Add_Last(dual).TryAdd(type, new SpecialPhraseInfo(dualDuration));
                                     break;
                             }

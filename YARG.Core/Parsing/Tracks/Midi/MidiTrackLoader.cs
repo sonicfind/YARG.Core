@@ -35,7 +35,7 @@ namespace YARG.Core.Parsing.Midi
             while (midiTrack.ParseEvent(true))
             {
                 position.ticks = midiTrack.Position;
-                position.seconds = sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex);
+                position.seconds = sync.ConvertPositionToSeconds(midiTrack.Position, ref tempoIndex);
                 if (midiTrack.Type == MidiEventType.Note_On)
                 {
                     midiTrack.ExtractMidiNote(ref note);
