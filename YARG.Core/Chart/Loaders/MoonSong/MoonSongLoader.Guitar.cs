@@ -36,7 +36,7 @@ namespace YARG.Core.Chart
             var guitarFlags = GetGuitarNoteFlags(moonNote);
 
             double time = _moonSong.TickToTime(moonNote.tick);
-            return new GuitarNote(fret, noteType, guitarFlags, generalFlags, time, GetLengthInTime(moonNote), moonNote.tick, moonNote.length);
+            return new GuitarNote((int)fret, noteType, guitarFlags, generalFlags, time, GetLengthInTime(moonNote), moonNote.tick, moonNote.length);
         }
 
         private GuitarNote CreateSixFretGuitarNote(MoonNote moonNote, Dictionary<SpecialPhrase.Type, SpecialPhrase> currentPhrases)
@@ -47,7 +47,7 @@ namespace YARG.Core.Chart
             var guitarFlags = GetGuitarNoteFlags(moonNote);
 
             double time = _moonSong.TickToTime(moonNote.tick);
-            return new GuitarNote(fret, noteType, guitarFlags, generalFlags, time, GetLengthInTime(moonNote), moonNote.tick, moonNote.length);
+            return new GuitarNote((int)fret, noteType, guitarFlags, generalFlags, time, GetLengthInTime(moonNote), moonNote.tick, moonNote.length);
         }
 
         private FiveFretGuitarFret GetFiveFretGuitarFret(MoonNote moonNote)

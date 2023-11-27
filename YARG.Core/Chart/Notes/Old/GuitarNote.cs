@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace YARG.Core.Chart
 {
@@ -24,18 +24,6 @@ namespace YARG.Core.Chart
 
         public bool IsExtendedSustain => (GuitarFlags & GuitarNoteFlags.ExtendedSustain) != 0;
         public bool IsDisjoint        => (GuitarFlags & GuitarNoteFlags.Disjoint) != 0;
-
-        public GuitarNote(FiveFretGuitarFret fret, GuitarNoteType noteType, GuitarNoteFlags guitarFlags,
-            NoteFlags flags, double time, double timeLength, uint tick, uint tickLength)
-            : this((int) fret, noteType, guitarFlags, flags, time, timeLength, tick, tickLength)
-        {
-        }
-
-        public GuitarNote(SixFretGuitarFret fret, GuitarNoteType noteType, GuitarNoteFlags guitarFlags,
-            NoteFlags flags, double time, double timeLength, uint tick, uint tickLength)
-            : this((int) fret, noteType, guitarFlags, flags, time, timeLength, tick, tickLength)
-        {
-        }
 
         public GuitarNote(int fret, GuitarNoteType noteType, GuitarNoteFlags guitarFlags, NoteFlags flags,
             double time, double timeLength, uint tick, uint tickLength)
