@@ -167,7 +167,7 @@ namespace YARG.Core.Parsing
         public int Find(int searchIndex, TKey position)
         {
             int lo = searchIndex;
-            int hi = Count - (searchIndex + 1);
+            int hi = Count - 1;
             while (lo <= hi)
             {
                 int curr = lo + ((hi - lo) >> 1);
