@@ -18,15 +18,18 @@ namespace YARG.Core.Parsing
 
         public double ConvertPositionToSeconds(long ticks, ref int startIndex)
         {
-            var span = TempoMarkers.Span;
-            int length = span.Length;
-            for (int i = startIndex; i < length; i++)
+            unsafe
             {
-                if (i + 1 == length || ticks < span[i + 1].position)
+                var data = TempoMarkers.Data;
+                int length = TempoMarkers.Count;
+                for (int i = startIndex; i < length; i++)
                 {
-                    ref var marker = ref span[i];
-                    startIndex = i;
-                    return ((marker.obj.Micros * (ticks - marker.position) / (double) Tickrate) + marker.obj.Anchor) / MICROS_PER_SECOND;
+                    if (i + 1 == length || ticks < data[i + 1].position)
+                    {
+                        ref var marker = ref data[i];
+                        startIndex = i;
+                        return ((marker.obj.Micros * (ticks - marker.position) / (double) Tickrate) + marker.obj.Anchor) / MICROS_PER_SECOND;
+                    }
                 }
             }
             throw new Exception("dafuq");
