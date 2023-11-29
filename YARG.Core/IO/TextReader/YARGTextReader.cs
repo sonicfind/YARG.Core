@@ -199,9 +199,10 @@ namespace YARG.Core.IO
         {
             unsafe
             {
-                Container.Next = Container.Position;
-                while (Container.Next < Container.End && Container.Next->ToChar(null) != '\n')
-                    ++Container.Next;
+                var next = Container.Position;
+                while (next < Container.End && next->ToChar(null) != '\n')
+                    ++next;
+                Container.Next = next;
             }
         }
 
