@@ -367,6 +367,8 @@ namespace YARG.Core.IO
         {
             note.Lane = reader.ExtractInt32();
             note.Duration = reader.ExtractInt64();
+            if (note.Duration == 0)
+                note.Duration = 1;
         }
 
         public (SpecialPhraseType, long) ExtractSpecialPhrase()
