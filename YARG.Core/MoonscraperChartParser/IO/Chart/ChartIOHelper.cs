@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2020 Alexander Ong
+﻿// Copyright (c) 2016-2020 Alexander Ong
 // See LICENSE in project root for license information.
 
 using System.Collections.Generic;
@@ -115,10 +115,8 @@ namespace MoonscraperChartEditor.Song.IO
             // Prefer explicit tick value to eighth-note HOPO value
             if (settings.HopoThreshold > 0)
                 return settings.HopoThreshold;
-            else if (settings.EighthNoteHopo)
-                return resolution * EIGHTHNOTE_HOPO_THRESHOLD_FACTOR;
-            else
-                return resolution * HOPO_THRESHOLD_FACTOR;
+
+            return resolution * (settings.EighthNoteHopo ? EIGHTHNOTE_HOPO_THRESHOLD_FACTOR : HOPO_THRESHOLD_FACTOR);
         }
     }
 }
