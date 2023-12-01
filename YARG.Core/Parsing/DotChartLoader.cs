@@ -8,7 +8,7 @@ using YARG.Core.Parsing.Drums;
 
 namespace YARG.Core.Parsing
 {
-    public static partial class DotChartLoader
+    public static class DotChartLoader
     {
         private const string SOLO = "solo";
         private const string SOLOEND = "soloend";
