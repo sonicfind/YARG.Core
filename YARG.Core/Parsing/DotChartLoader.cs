@@ -119,7 +119,8 @@ namespace YARG.Core.Parsing
                 }
             }
 
-            YARGChartFinalizer.FinalizeBeats(chart);
+            chart.Sync.EndTime = YARGChartFinalizer.GetEndTime(chart);
+            YARGChartFinalizer.FinalizeBeats(chart.Sync);
             return chart;
         }
 

@@ -79,7 +79,8 @@ namespace YARG.Core.Parsing
                 }
             }
 
-            YARGChartFinalizer.FinalizeBeats(chart);
+            chart.Sync.EndTime = YARGChartFinalizer.GetEndTime(chart);
+            YARGChartFinalizer.FinalizeBeats(chart.Sync);
         }
 
         public static void PreloadTracks(YARGChart chart, DrumTrackHandler drums, Stream stream, long sustainCutoff, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)

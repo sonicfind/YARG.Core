@@ -4,15 +4,6 @@ namespace YARG.Core.Parsing
 {
     public static class YARGChartFinalizer
     {
-        public static void FinalizeBeats(YARGChart chart)
-        {
-            var endTick = GetEndTime(chart);
-            if (chart.Sync.BeatMap.IsEmpty())
-                GenerateAllBeats(chart.Sync, endTick.ticks);
-            else
-                GenerateLeftoverBeats(chart.Sync, endTick.ticks);
-        }
-
         public static void FinalizeTempoMap(SyncTrack_FW sync)
         {
             var tempos = sync.TempoMarkers;
@@ -42,7 +33,7 @@ namespace YARG.Core.Parsing
             }
         }
 
-        private static DualTime GetEndTime(YARGChart chart)
+        public static DualTime GetEndTime(YARGChart chart)
         {
             Track?[] tracks =
             {
@@ -109,6 +100,18 @@ namespace YARG.Core.Parsing
                     endTime = node.position;
             }
             return endTime;
+        }
+
+        public static void FinalizeBeats(SyncTrack_FW sync)
+        {
+            if (sync.BeatMap.IsEmpty())
+            {
+                GenerateAllBeats(sync, sync.EndTime.ticks);
+            }
+            else
+            {
+                GenerateLeftoverBeats(sync, sync.EndTime.ticks);
+            }
         }
 
         private static void GenerateLeftoverBeats(SyncTrack_FW sync, long endTick)

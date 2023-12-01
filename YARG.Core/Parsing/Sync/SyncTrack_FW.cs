@@ -5,10 +5,13 @@ namespace YARG.Core.Parsing
 {
     public class SyncTrack_FW : IDisposable
     {
-        public uint Tickrate;
         public readonly NativeFlatDictionary<long, Tempo_FW> TempoMarkers = new();
         public readonly NativeFlatDictionary<long, TimeSig_FW> TimeSigs = new();
         public readonly NativeFlatDictionary<DualTime, BeatlineType> BeatMap = new();
+
+        public uint Tickrate;
+        public DualTime EndTime;
+
 
         internal const int MICROS_PER_SECOND = 1000000;
         public double ConvertPositionToSeconds(long ticks, int startIndex)
