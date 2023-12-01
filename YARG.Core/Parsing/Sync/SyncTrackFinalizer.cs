@@ -119,7 +119,7 @@ namespace YARG.Core.Parsing
         private static void GenerateLeftoverBeats(SyncTrack_FW sync, long endTick)
         {
             uint multipliedTickrate = 4u * sync.Tickrate;
-            uint denominator = 0;
+            int denominator = 0;
             int searchIndex = 0;
             int tempoIndex = 0;
 
@@ -130,10 +130,10 @@ namespace YARG.Core.Parsing
             {
                 var node = sigs[i];
                 if (node.obj.Denominator != 255)
-                    denominator = 1u << node.obj.Denominator;
+                    denominator = node.obj.Denominator;
 
-                long ticksPerMarker = multipliedTickrate / denominator;
-                long ticksPerMeasure = (multipliedTickrate * node.obj.Numerator) / denominator;
+                long ticksPerMarker = multipliedTickrate >> denominator;
+                long ticksPerMeasure = (multipliedTickrate * node.obj.Numerator) >> denominator;
                 long endTime;
                 if (i + 1 < numSigs)
                     endTime = sigs[i + 1].position;
