@@ -3,6 +3,12 @@ using YARG.Core.Chart;
 
 namespace YARG.Core.Parsing
 {
+    public enum OverdriveStyle
+    {
+        RockBand,
+        GuitarHero
+    }
+
     public class SyncTrack_FW : IDisposable
     {
         public readonly NativeFlatDictionary<long, Tempo_FW> TempoMarkers = new();
@@ -11,6 +17,7 @@ namespace YARG.Core.Parsing
 
         public uint Tickrate;
         public DualTime EndTime;
+        public OverdriveStyle Style;
 
 
         internal const int MICROS_PER_SECOND = 1000000;

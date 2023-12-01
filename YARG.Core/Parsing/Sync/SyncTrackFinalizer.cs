@@ -107,10 +107,12 @@ namespace YARG.Core.Parsing
             if (sync.BeatMap.IsEmpty())
             {
                 GenerateAllBeats(sync, sync.EndTime.ticks);
+                sync.Style = OverdriveStyle.GuitarHero;
             }
             else
             {
                 GenerateLeftoverBeats(sync, sync.EndTime.ticks);
+                sync.Style = OverdriveStyle.RockBand;
             }
         }
 
