@@ -7,6 +7,7 @@ namespace YARG.Core.UnitTests.Parsing
 {
     public class ChartParsingTests
     {
+        private const int VOCALS_COUNT = 3;
         private string? chartsDirectory;
 
         [SetUp]
@@ -51,7 +52,7 @@ namespace YARG.Core.UnitTests.Parsing
             Assert.DoesNotThrow(() =>
             {
                 string chartPath = Path.Combine(chartsDirectory!, notesFile);
-                using var chart = DotMidiLoader.LoadFull(chartPath, ParseSettings.Default, null);
+                using var chart = DotMidiLoader.LoadFull(chartPath, ParseSettings.Default, null, VOCALS_COUNT);
             });
         }
 

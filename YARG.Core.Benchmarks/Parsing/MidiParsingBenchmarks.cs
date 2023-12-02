@@ -14,6 +14,7 @@ namespace YARG.Core.Benchmarks
     [MemoryDiagnoser]
     public class MidiParsingBenchmarks
     {
+        private const int VOCALS_COUNT = 3;
         private static string ChartPath;
         private static ParseSettings settings = ParseSettings.Default;
         private static readonly Dictionary<MidiTrackType, HashSet<Difficulty>> guitarOnly = new()
@@ -32,13 +33,13 @@ namespace YARG.Core.Benchmarks
         [Benchmark]
         public void SongLoading_New()
         {
-            using var chart = DotMidiLoader.LoadFull(ChartPath, settings, null);
+            using var chart = DotMidiLoader.LoadFull(ChartPath, settings, null, VOCALS_COUNT);
         }
 
         [Benchmark]
         public void SongLoading_New_GuitarOnly()
         {
-            using var chart = DotMidiLoader.LoadFull(ChartPath, settings, guitarOnly);
+            using var chart = DotMidiLoader.LoadFull(ChartPath, settings, guitarOnly, VOCALS_COUNT);
         }
 
         [Benchmark]

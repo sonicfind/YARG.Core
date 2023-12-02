@@ -14,22 +14,22 @@ namespace YARG.Core.Parsing
 {
     public static class DotMidiLoader
     {
-        public static YARGChart LoadFull(string filename, ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
+        public static YARGChart LoadFull(string filename, ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments, int numHarmonyTracks)
         {
             using FileStream stream = new(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-            return LoadFull(stream, settings, activeInstruments);
+            return LoadFull(stream, settings, activeInstruments, numHarmonyTracks);
         }
 
-        public static YARGChart LoadFull(Stream stream, ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
+        public static YARGChart LoadFull(Stream stream, ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments, int numHarmonyTracks)
         {
             YARGChart chart = new();
             DrumTrackHandler drums = new(settings.DrumsType);
             MidiTrackLoader.SetMultiplierNote(settings.StarPowerNote);
-            LoadTracks(chart, drums, stream, settings.SustainCutoffThreshold, activeInstruments);
+            LoadTracks(chart, drums, stream, settings.SustainCutoffThreshold, activeInstruments, numHarmonyTracks);
             return chart;
         }
 
-        public static void LoadTracks(YARGChart chart, DrumTrackHandler drums, Stream stream, long sustainCutoff, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
+        public static void LoadTracks(YARGChart chart, DrumTrackHandler drums, Stream stream, long sustainCutoff, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments, int numHarmonyTracks)
         {
             YARGMidiFile midiFile = new(stream);
             chart.Sync.Tickrate = midiFile.Tickrate;
@@ -61,7 +61,7 @@ namespace YARG.Core.Parsing
                     if (activeInstruments == null || activeInstruments.TryGetValue(type, out difficulties))
                     {
                         if (type != MidiTrackType.Drums)
-                            LoadInstrument(chart, type, chart.Sync, midiTrack, difficulties);
+                            LoadInstrument(chart, type, chart.Sync, midiTrack, difficulties, numHarmonyTracks);
                         else
                             drums.LoadMidi(midiTrack, chart.Sync, difficulties);
                     }
@@ -83,7 +83,7 @@ namespace YARG.Core.Parsing
             YARGChartFinalizer.FinalizeBeats(chart.Sync);
         }
 
-        public static void PreloadTracks(YARGChart chart, DrumTrackHandler drums, Stream stream, long sustainCutoff, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments)
+        public static void PreloadTracks(YARGChart chart, DrumTrackHandler drums, Stream stream, long sustainCutoff, Dictionary<MidiTrackType, HashSet<Difficulty>>? activeInstruments, int numHarmonyTracks)
         {
             YARGMidiFile midiFile = new(stream);
             SetSustainThreshold(midiFile.Tickrate, sustainCutoff);
@@ -108,7 +108,7 @@ namespace YARG.Core.Parsing
                         if (activeInstruments == null || activeInstruments.TryGetValue(type, out difficulties))
                         {
                             if (type != MidiTrackType.Drums)
-                                LoadInstrument(chart, type, sync, midiTrack, difficulties);
+                                LoadInstrument(chart, type, sync, midiTrack, difficulties, numHarmonyTracks);
                             else
                                 drums.LoadMidi(midiTrack, sync, difficulties);
                         }
@@ -191,7 +191,7 @@ namespace YARG.Core.Parsing
             }
         }
 
-        private static void LoadInstrument(YARGChart chart, MidiTrackType type, SyncTrack_FW sync, YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties) 
+        private static void LoadInstrument(YARGChart chart, MidiTrackType type, SyncTrack_FW sync, YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties, int numHarmonyTracks) 
         {
             switch (type)
             {
@@ -226,7 +226,7 @@ namespace YARG.Core.Parsing
                 case MidiTrackType.Harm2:
                 case MidiTrackType.Harm3:
                     {
-                        var harmony = chart.HarmonyVocals ??= new VocalTrack_FW(3);
+                        var harmony = chart.HarmonyVocals ??= new VocalTrack_FW(numHarmonyTracks);
                         int index = type - MidiTrackType.Harm1;
                         if (harmony[index].IsEmpty())
                             MidiVocalLoader.LoadHarmonyVocals(harmony, index, midiTrack, sync);
