@@ -6,6 +6,8 @@
         public const int DEFAULT_BPM = 120;
         public const int MICROS_AT_120BPM = BPM_FACTOR / DEFAULT_BPM;
 
+        public static readonly Tempo_FW DEFAULT = new(MICROS_AT_120BPM);
+
         private int _micros;
         public int Micros
         {

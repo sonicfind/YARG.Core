@@ -2,6 +2,8 @@
 {
     public struct TimeSig_FW
     {
+        public static readonly TimeSig_FW DEFAULT = new(4, 2, 24, 8);
+
         public byte Numerator;
         public byte Denominator;
         public byte Metronome;

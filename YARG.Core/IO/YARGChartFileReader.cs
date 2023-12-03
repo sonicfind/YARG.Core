@@ -391,16 +391,21 @@ namespace YARG.Core.IO
 
         public TimeSig_FW ExtractTimeSig()
         {
-            ulong numerator = reader.ExtractUInt64();
-            ulong metro = 0, n32nds = 0;
+            var timeSig = TimeSig_FW.DEFAULT;
+            timeSig.Numerator = (byte) reader.ExtractUInt64();
             if (reader.ExtractUInt64(out ulong denom))
             {
-                if (reader.ExtractUInt64(out metro))
-                    reader.ExtractUInt64(out n32nds);
+                timeSig.Denominator = (byte) denom;
+                if (reader.ExtractUInt64(out ulong metro))
+                {
+                    timeSig.Metronome = (byte) metro;
+                    if (reader.ExtractUInt64(out ulong n32nds))
+                    {
+                        timeSig.Num32nds = (byte) n32nds;
+                    }
+                }
             }
-            else
-                denom = 255;
-            return new TimeSig_FW((byte) numerator, (byte) denom, (byte) metro, (byte) n32nds);
+            return timeSig;
         }
 
         public string ExtractText()

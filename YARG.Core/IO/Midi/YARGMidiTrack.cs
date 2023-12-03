@@ -243,7 +243,7 @@ namespace YARG.Core.IO
         {
             unsafe
             {
-                return new TimeSig_FW(_trackPos[0], _trackPos[1], _trackPos[2], _trackPos[3]);
+                return *(TimeSig_FW*)_trackPos;
             }
         }
 

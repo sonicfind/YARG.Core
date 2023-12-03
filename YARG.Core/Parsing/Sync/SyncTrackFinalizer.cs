@@ -9,16 +9,10 @@ namespace YARG.Core.Parsing
             var tempos = sync.TempoMarkers;
             var sigs = sync.TimeSigs;
             if (tempos.IsEmpty() || tempos.At_index(0).position != 0)
-                tempos.Insert(0, 0, new(Tempo_FW.MICROS_AT_120BPM));
+                tempos.Insert(0, 0, Tempo_FW.DEFAULT);
 
             if (sigs.IsEmpty() || sigs.At_index(0).position != 0)
-                sigs.Insert(0, 0, new(4, 2, 24, 8));
-            else
-            {
-                ref var timeSig = ref sigs.At_index(0).obj;
-                if (timeSig.Denominator == 255)
-                    timeSig.Denominator = 2;
-            }
+                sigs.Insert(0, 0, TimeSig_FW.DEFAULT);
 
             unsafe
             {
@@ -28,8 +22,12 @@ namespace YARG.Core.Parsing
 
                 // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
                 for (var marker = prevNode + 1; marker < end; marker++, prevNode++)
+                {
                     if (marker->obj.Anchor == 0)
+                    {
                         marker->obj.Anchor = (long) (((marker->position - prevNode->position) / (float) tickrate) * prevNode->obj.Micros) + prevNode->obj.Anchor;
+                    }
+                }
             }
         }
 
@@ -119,97 +117,89 @@ namespace YARG.Core.Parsing
         private static void GenerateLeftoverBeats(SyncTrack_FW sync, long endTick)
         {
             uint multipliedTickrate = 4u * sync.Tickrate;
-            int denominator = 0;
             int searchIndex = 0;
             int tempoIndex = 0;
 
             var beats = sync.BeatMap;
-            var sigs = sync.TimeSigs.Span;
-            int numSigs = sigs.Length;
-            for (int i = 0; i < numSigs; ++i)
+            unsafe
             {
-                var node = sigs[i];
-                if (node.obj.Denominator != 255)
-                    denominator = node.obj.Denominator;
+                var sigs = sync.TimeSigs.Data;
+                int numSigs = sync.TimeSigs.Count;
 
-                long ticksPerMarker = multipliedTickrate >> denominator;
-                long ticksPerMeasure = (multipliedTickrate * node.obj.Numerator) >> denominator;
-                long endTime;
-                if (i + 1 < numSigs)
-                    endTime = sigs[i + 1].position;
-                else
-                    endTime = endTick;
-
-                while (node.position < endTime)
+                for (int i = 0; i < numSigs; ++i)
                 {
-                    long position = node.position;
-                    for (uint n = 0; n < node.obj.Numerator && position < endTime; ++n, position += ticksPerMarker, ++searchIndex)
+                    ref var node = ref sigs[i];
+
+                    long ticksPerMarker = multipliedTickrate >> node.obj.Denominator;
+                    long ticksPerMeasure = (multipliedTickrate * node.obj.Numerator) >> node.obj.Denominator;
+
+                    long endTime = i + 1 < numSigs ? sigs[i + 1].position : endTick;
+                    while (node.position < endTime)
                     {
-                        var beat = new DualTime(position, sync.ConvertPositionToSeconds(position, ref tempoIndex));
-                        if (!beats.Contains(searchIndex, beat))
-                            beats[beat] = BeatlineType.Weak;
+                        long position = node.position;
+                        for (uint n = 0; n < node.obj.Numerator && position < endTime; ++n, position += ticksPerMarker, ++searchIndex)
+                        {
+                            var beat = new DualTime(position, sync.ConvertPositionToSeconds(position, ref tempoIndex));
+                            if (!beats.Contains(searchIndex, beat))
+                                beats[beat] = BeatlineType.Weak;
+                        }
+                        node.position += ticksPerMeasure;
                     }
-                    node.position += ticksPerMeasure;
                 }
-            }
+            }    
         }
 
         private static void GenerateAllBeats(SyncTrack_FW sync, long endTick)
         {
             uint multipliedTickrate = 4u * sync.Tickrate;
-            int metronome = 24;
             int tempoIndex = 0;
 
             var beats = sync.BeatMap;
-            var sigs = sync.TimeSigs.Span;
-            int numSigs = sigs.Length;
-            for (int i = 0; i < numSigs; ++i)
+            unsafe
             {
-                var node = sigs[i];
-                int numerator = node.obj.Numerator > 0 ? node.obj.Numerator : 4;
-                int denominator = node.obj.Denominator != 255 ? 1 << node.obj.Denominator : 4;
-                if (node.obj.Metronome != 0)
-                    metronome = node.obj.Metronome;
+                var sigs = sync.TimeSigs.Data;
+                int numSigs = sync.TimeSigs.Count;
 
-                int markersPerClick = 6 * denominator / metronome;
-                long ticksPerMarker = multipliedTickrate / denominator;
-                long ticksPerMeasure = (multipliedTickrate * numerator) / denominator;
-                bool isIrregular = numerator > 4 || (numerator & 1) == 1;
-
-                long endTime;
-                if (i + 1 < numSigs)
-                    endTime = sigs[i + 1].position;
-                else
-                    endTime = endTick;
-
-                while (node.position < endTime)
+                for (int i = 0; i < numSigs; ++i)
                 {
-                    long position = node.position;
-                    var style = BeatlineType.Measure;
-                    int clickSpacing = markersPerClick;
-                    int triplSpacing = 3 * markersPerClick;
-                    for (int leftover = numerator; leftover > 0 && (position < endTime || i + 1 == numSigs);)
+                    ref var node = ref sigs[i];
+                    int numerator = node.obj.Numerator;
+
+                    int markersPerClick = (6 << node.obj.Denominator) / node.obj.Metronome;
+                    long ticksPerMarker = multipliedTickrate >> node.obj.Denominator;
+                    long ticksPerMeasure = (multipliedTickrate * numerator) >> node.obj.Denominator;
+                    bool isIrregular = numerator > 4 || (numerator & 1) == 1;
+
+                    long endTime = i + 1 < numSigs ? sigs[i + 1].position : endTick;
+                    while (node.position < endTime)
                     {
-                        int clicksLeft = clickSpacing;
-                        do
+                        long position = node.position;
+                        var style = BeatlineType.Measure;
+                        int clickSpacing = markersPerClick;
+                        int triplSpacing = 3 * markersPerClick;
+                        for (int leftover = numerator; leftover > 0 && (position < endTime || i + 1 == numSigs);)
                         {
-                            var beat = new DualTime(position, sync.ConvertPositionToSeconds(position, ref tempoIndex));
-                            beats.Add_NoReturn(beat, style);
-                            position += ticksPerMarker;
-                            style = BeatlineType.Weak;
-                            --clicksLeft;
-                            --leftover;
-                        } while (clicksLeft > 0 && leftover > 0 && position < endTime);
+                            int clicksLeft = clickSpacing;
+                            do
+                            {
+                                var beat = new DualTime(position, sync.ConvertPositionToSeconds(position, ref tempoIndex));
+                                beats.Add_NoReturn(beat, style);
+                                position += ticksPerMarker;
+                                style = BeatlineType.Weak;
+                                --clicksLeft;
+                                --leftover;
+                            } while (clicksLeft > 0 && leftover > 0 && position < endTime);
 
-                        style = BeatlineType.Strong;
+                            style = BeatlineType.Strong;
 
-                        if (isIrregular && leftover > 0 && position < endTime && markersPerClick < leftover && 2 * leftover <= triplSpacing)
-                        {
-                            // leftover < 1.5 * spacing
-                            clickSpacing = leftover;
+                            if (isIrregular && leftover > 0 && position < endTime && markersPerClick < leftover && 2 * leftover <= triplSpacing)
+                            {
+                                // leftover < 1.5 * spacing
+                                clickSpacing = leftover;
+                            }
                         }
+                        node.position += ticksPerMeasure;
                     }
-                    node.position += ticksPerMeasure;
                 }
             }
         }
