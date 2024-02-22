@@ -7,6 +7,6 @@ namespace YARG.Core.NewParsing
     public interface IInstrumentNote
     {
         public int GetNumActiveLanes();
-        public long GetLongestSustain();
+        public DualTime GetLongestSustain();
     }
 }
