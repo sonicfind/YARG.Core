@@ -14,6 +14,11 @@ namespace YARG.Core.NewParsing
         public long Ticks;
         public double Seconds;
 
+        public readonly bool IsActive()
+        {
+            return Ticks > 0;
+        }
+
         public static long TruncationLimit = 170;
         /// <summary>
         /// Returns a <see cref="DualTime"/> structure that abides by the currently specified <see cref="TruncationLimit"/>.
