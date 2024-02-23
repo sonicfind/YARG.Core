@@ -15,7 +15,7 @@ namespace YARG.Core.IO
         private readonly Stream _stream;
         private readonly ushort _format;
         private readonly ushort _numTracks;
-        private readonly ushort _tickRate;
+        public readonly ushort TickRate;
 
         private ushort _trackNumber = 0;
         public ushort TrackNumber => _trackNumber;
@@ -34,7 +34,7 @@ namespace YARG.Core.IO
             long next = stream.Position + length;
             _format = stream.Read<ushort>(Endianness.Big);
             _numTracks = stream.Read<ushort>(Endianness.Big);
-            _tickRate = stream.Read<ushort>(Endianness.Big);
+            TickRate = stream.Read<ushort>(Endianness.Big);
             stream.Position = next;
         }
 
