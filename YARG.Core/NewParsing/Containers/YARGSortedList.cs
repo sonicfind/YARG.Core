@@ -24,6 +24,11 @@ namespace YARG.Core.NewParsing
             return Count == 0;
         }
 
+        public void TrimExcess()
+        {
+            Capacity = _count;
+        }
+
         public void Add(TKey key, TValue value)
         {
             if (!Try_Add(key, in value))
