@@ -14,11 +14,9 @@ namespace YARG.Core.NewParsing
         Pinch_Harmonics
     };
 
-    public struct ProGuitarString<TFretConfig>
-        where TFretConfig : unmanaged, IProFretConfig
+    public struct ProGuitarString<TProFretConfig>
+        where TProFretConfig : unmanaged, IProFretConfig<TProFretConfig>
     {
-        public static readonly TFretConfig CONFIG = default;
-
         private int _fret;
         public StringMode Mode;
         public DualTime Duration;
@@ -28,7 +26,7 @@ namespace YARG.Core.NewParsing
             readonly get => _fret;
             set
             {
-                _fret = CONFIG.ValidateFret(value);
+                _fret = IProFretConfig<TProFretConfig>.ValidateFret(value);
             }
         }
 
