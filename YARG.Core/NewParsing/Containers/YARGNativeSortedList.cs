@@ -270,11 +270,14 @@ namespace YARG.Core.NewParsing
             Capacity = newcapacity;
         }
 
-        public IEnumerator GetEnumerator() { return new Enumerator(this); }
-
         IEnumerator<YARGKeyValuePair<TKey, TValue>> IEnumerable<YARGKeyValuePair<TKey, TValue>>.GetEnumerator()
         {
             return ((IEnumerable<YARGKeyValuePair<TKey, TValue>>) this).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new Enumerator(this);
         }
 
         public struct Enumerator : IEnumerator<YARGKeyValuePair<TKey, TValue>>, IEnumerator
