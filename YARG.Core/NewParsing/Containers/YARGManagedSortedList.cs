@@ -10,12 +10,18 @@ namespace YARG.Core.NewParsing
         where TValue : new()
     {
         private YARGKeyValuePair<TKey, TValue>[] _buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
+        private bool _disposed;
 
         public override int Capacity
         {
             get => _buffer.Length;
             set
             {
+                if (_disposed)
+                {
+                    throw new ObjectDisposedException(GetType().Name);
+                }
+
                 if (_count <= value && value != _buffer.Length)
                 {
                     Array.Resize(ref _buffer, value);
@@ -38,6 +44,24 @@ namespace YARG.Core.NewParsing
         public YARGManagedSortedList(int capacity)
         {
             Capacity = capacity;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    for (int i = 0; i < _count; ++i)
+                    {
+                        _buffer[i] = default;
+                    }
+                    _buffer = null!;
+                }
+                _version = 0;
+                _count = 0;
+                _disposed = true;
+            }
         }
 
         public override void Clear()
