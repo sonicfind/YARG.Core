@@ -7,7 +7,7 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public sealed unsafe class YARGNativeSortedList<TKey, TValue> : YARGSortedList<TKey, TValue>, IEnumerable<YARGKeyValuePair<TKey, TValue>>, IDisposable
+    public sealed unsafe class YARGNativeSortedList<TKey, TValue> : YARGSortedList<TKey, TValue>, IEnumerable<YARGKeyValuePair<TKey, TValue>>
         where TKey : unmanaged, IEquatable<TKey>, IComparable<TKey>
         where TValue : unmanaged
     {
@@ -74,7 +74,7 @@ namespace YARG.Core.NewParsing
             _count = 0;
         }
 
-        private void Dispose(bool _)
+        protected override void Dispose(bool _)
         {
             if (!_disposed)
             {
@@ -82,19 +82,12 @@ namespace YARG.Core.NewParsing
                 {
                     Marshal.FreeHGlobal((IntPtr) _buffer);
                 }
-                _buffer = null;
+                _buffer = null!;
                 _version = 0;
                 _capacity = 0;
                 _count = 0;
                 _disposed = true;
             }
-        }
-
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         ~YARGNativeSortedList()
