@@ -4,8 +4,8 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public struct Arpeggio<TFretConfig>
-        where TFretConfig : unmanaged, IProFretConfig
+    public struct Arpeggio<TProFretConfig>
+        where TProFretConfig : unmanaged, IProFretConfig<TProFretConfig>
     {
         private unsafe fixed int strings[6];
         private DualTime _length;
@@ -23,7 +23,7 @@ namespace YARG.Core.NewParsing
         {
             get
             {
-                if (lane < 0 || ProGuitarNote<TFretConfig>.NUMSTRINGS <= lane)
+                if (lane < 0 || ProGuitarNote<TProFretConfig>.NUMSTRINGS <= lane)
                 {
                     throw new IndexOutOfRangeException();
                 }
@@ -36,14 +36,14 @@ namespace YARG.Core.NewParsing
 
             set
             {
-                if (lane < 0 || ProGuitarNote<TFretConfig>.NUMSTRINGS <= lane)
+                if (lane < 0 || ProGuitarNote<TProFretConfig>.NUMSTRINGS <= lane)
                 {
                     throw new IndexOutOfRangeException();
                 }
 
                 unsafe
                 {
-                    strings[lane] = ProGuitarString<TFretConfig>.CONFIG.ValidateFret(lane);
+                    strings[lane] = IProFretConfig<TProFretConfig>.ValidateFret(lane);
                 }
             }
         }
