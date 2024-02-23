@@ -20,24 +20,24 @@ namespace YARG.Core.NewParsing
         Low
     };
 
-    public struct ProGuitarNote<TFretConfig> : IInstrumentNote
-        where TFretConfig : unmanaged, IProFretConfig
+    public struct ProGuitarNote<TProFretConfig> : IInstrumentNote
+        where TProFretConfig : unmanaged, IProFretConfig<TProFretConfig>
     {
         public const int NUMSTRINGS = 6;
 
-        public ProGuitarString<TFretConfig> String_1;
-        public ProGuitarString<TFretConfig> String_2;
-        public ProGuitarString<TFretConfig> String_3;
-        public ProGuitarString<TFretConfig> String_4;
-        public ProGuitarString<TFretConfig> String_5;
-        public ProGuitarString<TFretConfig> String_6;
+        public ProGuitarString<TProFretConfig> String_1;
+        public ProGuitarString<TProFretConfig> String_2;
+        public ProGuitarString<TProFretConfig> String_3;
+        public ProGuitarString<TProFretConfig> String_4;
+        public ProGuitarString<TProFretConfig> String_5;
+        public ProGuitarString<TProFretConfig> String_6;
 
         public bool HOPO;
         public bool ForceNumbering;
         public ProSlide Slide;
         public EmphasisType Emphasis;
 
-        public ref ProGuitarString<TFretConfig> this[int lane]
+        public ref ProGuitarString<TProFretConfig> this[int lane]
         {
             get
             {
@@ -48,7 +48,7 @@ namespace YARG.Core.NewParsing
 
                 unsafe
                 {
-                    fixed (ProGuitarString<TFretConfig>* strings = &String_1)
+                    fixed (ProGuitarString<TProFretConfig>* strings = &String_1)
                     {
                         return ref strings[lane];
                     }
@@ -84,7 +84,7 @@ namespace YARG.Core.NewParsing
             int numActive = 0;
             unsafe
             {
-                fixed (ProGuitarString<TFretConfig>* strings = &String_1)
+                fixed (ProGuitarString<TProFretConfig>* strings = &String_1)
                 {
                     for (int i = 0; i < NUMSTRINGS; ++i)
                     {
@@ -101,7 +101,7 @@ namespace YARG.Core.NewParsing
             DualTime sustain = default;
             unsafe
             {
-                fixed (ProGuitarString<TFretConfig>* strings = &String_2)
+                fixed (ProGuitarString<TProFretConfig>* strings = &String_2)
                 {
                     for (int i = 0; i < NUMSTRINGS; ++i)
                     {
