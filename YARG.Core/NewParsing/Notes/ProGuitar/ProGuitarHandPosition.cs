@@ -4,10 +4,9 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public struct HandPosition<TFretConfig>
-        where TFretConfig : unmanaged, IProFretConfig
+    public struct HandPosition<TProFretConfig>
+        where TProFretConfig : unmanaged, IProFretConfig<TProFretConfig>
     {
-        private static readonly TFretConfig CONFIG = default;
         private int _fret;
 
         public int Fret
@@ -15,7 +14,7 @@ namespace YARG.Core.NewParsing
             readonly get => _fret;
             set
             {
-                _fret = CONFIG.ValidateFret(value);
+                _fret = IProFretConfig<TProFretConfig>.ValidateFret(value);
             }
         }
     }
