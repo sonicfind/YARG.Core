@@ -47,6 +47,21 @@ namespace YARG.Core.IO.Ini
         private Dictionary<string, double>? _doubles; 
         private Dictionary<string, (long, long)>? _int64Arrays; 
 
+        public void Clear()
+        {
+            Clear(ref _strings);
+            Clear(ref _uint64s);
+            Clear(ref _int64s);
+            Clear(ref _uint32s);
+            Clear(ref _int32s);
+            Clear(ref _uint16s);
+            Clear(ref _int16s);
+            Clear(ref _booleans);
+            Clear(ref _floats);
+            Clear(ref _doubles);
+            Clear(ref _int64Arrays);
+        }
+
         public bool Contains(string key)
         {
             static bool DictContains<T>(Dictionary<string, T>? dict, string key)
@@ -436,6 +451,15 @@ namespace YARG.Core.IO.Ini
 #endif
             values = default!;
             return _int64Arrays != null && _int64Arrays.Remove(key, out values);
+        }
+
+        private static void Clear<TValue>(ref Dictionary<string, TValue>? dict)
+        {
+            if (dict != null)
+            {
+                dict.Clear();
+                dict = null;
+            }
         }
 
         private static void Union<TValue>(ref Dictionary<string, TValue>? dest, Dictionary<string, TValue>? source)
