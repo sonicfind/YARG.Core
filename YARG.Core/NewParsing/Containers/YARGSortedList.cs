@@ -5,7 +5,7 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public abstract class YARGSortedList<TKey, TValue>
+    public abstract class YARGSortedList<TKey, TValue> : IDisposable
         where TKey : IEquatable<TKey>, IComparable<TKey>
     {
         protected const int DEFAULT_CAPACITY = 16;
@@ -90,5 +90,13 @@ namespace YARG.Core.NewParsing
         public abstract int Find(int startIndex, TKey key);
         public abstract bool ValidateLastKey(TKey key);
         public abstract ref TValue Last();
+
+        protected abstract void Dispose(bool disposing);
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 }
