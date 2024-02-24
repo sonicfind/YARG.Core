@@ -10,7 +10,6 @@ namespace YARG.Core.NewParsing
         public uint Tickrate;
         public readonly YARGNativeSortedList<long, Tempo2> TempoMarkers = new();
         public readonly YARGNativeSortedList<long, TimeSig2> TimeSigs = new();
-        public readonly YARGNativeSortedList<DualTime, BeatlineType> BeatMap = new();
 
         public double ConvertToSeconds(long ticks, int startIndex = 0)
         {
@@ -68,7 +67,6 @@ namespace YARG.Core.NewParsing
         {
             TempoMarkers.Dispose();
             TimeSigs.Dispose();
-            BeatMap.Dispose();
         }
 
         public static void Finalize(SyncTrack2 sync)
