@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using YARG.Core.Chart;
 using YARG.Core.IO.Ini;
 using YARG.Core.Song;
 
@@ -13,6 +14,8 @@ namespace YARG.Core.NewParsing
         public readonly SongMetadata Metadata = new();
         public readonly Dictionary<string, IniModifier> Miscellaneous = new();
         public string MidiSequenceName = string.Empty;
+
+        public readonly YARGNativeSortedList<DualTime, BeatlineType> BeatMap = new();
 
         public BasicInstrumentTrack2<GuitarNote2<FiveFret>>? FiveFretGuitar;
         public BasicInstrumentTrack2<GuitarNote2<FiveFret>>? FiveFretBass;
@@ -49,6 +52,7 @@ namespace YARG.Core.NewParsing
             {
                 Sync.Dispose();
                 Events.Dispose();
+                BeatMap.Dispose();
                 Miscellaneous.Clear();
 
                 FiveFretGuitar?.Dispose();
