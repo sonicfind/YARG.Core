@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using YARG.Core.Extensions;
 using YARG.Core.IO.Ini;
+using YARG.Core.NewParsing;
 
 namespace YARG.Core.IO
 {
@@ -195,6 +196,32 @@ namespace YARG.Core.IO
             return true;
         }
 
+        public static int ExtractMicrosPerQuarter<TChar>(ref YARGTextContainer<TChar> container)
+            where TChar : unmanaged, IEquatable<TChar>, IConvertible
+        {
+            const double TEMPO_FACTOR = 60000000000;
+            return (int)Math.Round(TEMPO_FACTOR / ExtractWithWhitespace<TChar, uint>(ref container));
+        }
+
+        public static TimeSig2 ExtractTimeSig<TChar>(ref YARGTextContainer<TChar> container)
+            where TChar : unmanaged, IEquatable<TChar>, IConvertible
+        {
+            var timeSig = TimeSig2.DEFAULT;
+            timeSig.Numerator = (byte)ExtractWithWhitespace<TChar, uint>(ref container);
+            if (YARGTextReader.TryExtractWithWhitespace(ref container, out ulong value))
+            {
+                timeSig.Denominator = (byte)value;
+                if (YARGTextReader.TryExtractWithWhitespace(ref container, out value))
+                {
+                    timeSig.Metronome = (byte)value;
+                    if (YARGTextReader.TryExtractWithWhitespace(ref container, out value))
+                    {
+                        timeSig.Num32nds = (byte)value;
+                    }
+                }
+            }
+            return timeSig;
+        }
         public static TNumber Extract<TChar, TNumber>(ref YARGTextContainer<TChar> text)
             where TChar : unmanaged, IConvertible
             where TNumber : unmanaged, IComparable, IComparable<TNumber>, IConvertible, IEquatable<TNumber>, IFormattable
