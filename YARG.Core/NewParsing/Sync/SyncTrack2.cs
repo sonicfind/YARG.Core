@@ -70,5 +70,32 @@ namespace YARG.Core.NewParsing
             TimeSigs.Dispose();
             BeatMap.Dispose();
         }
+
+        public static void Finalize(SyncTrack2 sync)
+        {
+            if (sync.TempoMarkers.IsEmpty() || sync.TempoMarkers.ElementAtIndex(0).Key != 0)
+            {
+                sync.TempoMarkers.Insert_Forced(0, 0, Tempo2.DEFAULT);
+            }
+
+            if (sync.TimeSigs.IsEmpty() || sync.TimeSigs.ElementAtIndex(0).Key != 0)
+            {
+                sync.TimeSigs.Insert_Forced(0, 0, TimeSig2.DEFAULT);
+            }
+
+            unsafe
+            {
+                var end = sync.TempoMarkers.End;
+                // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
+                for (var marker = sync.TempoMarkers.Data + 1; marker < end; ++marker)
+                {
+                    if (marker->Value.Anchor == 0)
+                    {
+                        var prev = marker - 1;
+                        marker->Value.Anchor = (long) (((marker->Key - prev->Key) / (float) sync.Tickrate) * prev->Value.MicrosPerQuarter) + prev->Value.Anchor;
+                    }
+                }
+            }
+        }
     }
 }
