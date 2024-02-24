@@ -58,6 +58,9 @@ namespace YARG.Core.NewParsing
 
         public override Span<YARGKeyValuePair<TKey, TValue>> Span => new (_buffer, _count);
 
+        public YARGKeyValuePair<TKey, TValue>* Data => _buffer;
+        public YARGKeyValuePair<TKey, TValue>* End => _buffer + _count;
+
         public YARGNativeSortedList() { }
 
         public YARGNativeSortedList(int capacity)
