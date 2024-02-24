@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using YARG.Core.Extensions;
 using YARG.Core.IO.Disposables;
+using YARG.Core.NewParsing;
 
 namespace YARG.Core.IO
 {
@@ -190,6 +191,22 @@ namespace YARG.Core.IO
         {
             note.value = _position[0];
             note.velocity = _position[1];
+        }
+        
+        public int ExtractMicrosPerQuarter()
+        {
+            return (_position[0] << 16) | (_position[1] << 8) | _position[2];
+        }
+        
+        public TimeSig2 ExtractTimeSig()
+        {
+            return new TimeSig2()
+            {
+                Numerator =   _position[0],
+                Denominator = _position[1],
+                Metronome =   _position[2],
+                Num32nds =    _position[3],
+            };
         }
 
         private const uint EXTENDED_VLQ_FLAG = 0x80;
