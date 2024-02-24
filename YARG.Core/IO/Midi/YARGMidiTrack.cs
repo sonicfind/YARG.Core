@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using YARG.Core.NewParsing;
 
 namespace YARG.Core.IO
 {
@@ -75,6 +76,22 @@ namespace YARG.Core.IO
             unsafe
             {
                 note = *(MidiNote*) (_data + _eventPosition);
+            }
+        }
+
+        public readonly int ExtractMicrosPerQuarter()
+        {
+            unsafe
+            {
+                return (_data[_eventPosition] << 16) | (_data[_eventPosition + 1] << 8) | _data[_eventPosition + 2];
+            }
+        }
+
+        public readonly TimeSig2 ExtractTimeSig()
+        {
+            unsafe
+            {
+                return *(TimeSig2*)(_data + _eventPosition);
             }
         }
 
