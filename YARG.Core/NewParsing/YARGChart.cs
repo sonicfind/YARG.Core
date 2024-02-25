@@ -11,7 +11,8 @@ namespace YARG.Core.NewParsing
         private bool disposedValue;
         public readonly SyncTrack2 Sync;
         public readonly TextEvents2 Events = new();
-        public readonly SongMetadata Metadata = new();
+        public SongMetadata Metadata = SongMetadata.Default;
+        public LoaderSettings Settings = LoaderSettings.Default;
         public readonly IniModifierCollection Miscellaneous = new();
         public string MidiSequenceName = string.Empty;
 
