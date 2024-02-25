@@ -9,7 +9,7 @@ namespace YARG.Core.NewParsing
     public class YARGChart : IDisposable
     {
         private bool disposedValue;
-        public readonly SyncTrack2 Sync = new();
+        public readonly SyncTrack2 Sync;
         public readonly TextEvents2 Events = new();
         public readonly SongMetadata Metadata = new();
         public readonly Dictionary<string, IniModifier> Miscellaneous = new();
