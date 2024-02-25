@@ -11,8 +11,8 @@ namespace YARG.Core.NewParsing
         private bool disposedValue;
         public readonly SyncTrack2 Sync;
         public readonly TextEvents2 Events = new();
-        public SongMetadata Metadata = SongMetadata.Default;
-        public ParseSettings Settings = ParseSettings.Default;
+        public SongMetadata Metadata;
+        public ParseSettings Settings;
         public readonly Dictionary<string, IniModifier> Miscellaneous = new();
         public string MidiSequenceName = string.Empty;
 
@@ -47,6 +47,13 @@ namespace YARG.Core.NewParsing
 
         public VocalTrack2? LeadVocals;
         public VocalTrack2? HarmonyVocals;
+
+        public YARGChart(SyncTrack2 sync, SongMetadata metadata, ParseSettings settings)
+        {
+            Sync = sync;
+            Metadata = metadata;
+            Settings = settings;
+        }
 
         public void Dispose()
         {
