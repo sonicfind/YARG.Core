@@ -7,7 +7,7 @@ namespace YARG.Core.NewParsing
 {
     public class SyncTrack2 : IDisposable
     {
-        public uint Tickrate;
+        private uint _tickrate;
         public readonly YARGNativeSortedList<long, Tempo2> TempoMarkers = new();
         public readonly YARGNativeSortedList<long, TimeSig2> TimeSigs = new();
 
@@ -28,7 +28,7 @@ namespace YARG.Core.NewParsing
                     {
                         startIndex = (int)(curr - TempoMarkers.Data);
 
-                        double quarters = (ticks - curr->Key) / (double) Tickrate;
+                        double quarters = (ticks - curr->Key) / (double) _tickrate;
                         long micros = (long)(curr->Value.MicrosPerQuarter * quarters) + curr->Value.Anchor;
                         return micros / (double) Tempo2.MICROS_PER_SECOND;
                     }
@@ -56,7 +56,7 @@ namespace YARG.Core.NewParsing
                         startIndex = (int) (curr - TempoMarkers.Data);
 
                         double quarters = (micros - curr->Value.Anchor) / (double) curr->Value.MicrosPerQuarter;
-                        return (long)(quarters * Tickrate) + curr->Key;
+                        return (long)(quarters * _tickrate) + curr->Key;
                     }
                 }
                 throw new ArgumentOutOfRangeException(nameof(startIndex));
@@ -90,7 +90,7 @@ namespace YARG.Core.NewParsing
                     if (marker->Value.Anchor == 0)
                     {
                         var prev = marker - 1;
-                        marker->Value.Anchor = (long) (((marker->Key - prev->Key) / (float) sync.Tickrate) * prev->Value.MicrosPerQuarter) + prev->Value.Anchor;
+                        marker->Value.Anchor = (long) (((marker->Key - prev->Key) / (float) sync._tickrate) * prev->Value.MicrosPerQuarter) + prev->Value.Anchor;
                     }
                 }
             }
