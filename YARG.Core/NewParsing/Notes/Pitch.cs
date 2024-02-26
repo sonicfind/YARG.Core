@@ -80,5 +80,12 @@ namespace YARG.Core.NewParsing
                 _note = note;
             }
         }
+
+        public void Reset()
+        {
+            _note = PitchName.C;
+            _octave = 0;
+            _binary = 0;
+        }
     }
 }
