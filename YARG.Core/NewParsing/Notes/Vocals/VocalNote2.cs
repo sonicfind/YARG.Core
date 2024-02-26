@@ -4,6 +4,13 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
+    public enum TalkieState
+    {
+        None,
+        Talkie,
+        Lenient
+    }
+
     public struct VocalNote2
     {
         public struct VocalConfig : IPitchConfig
@@ -15,7 +22,8 @@ namespace YARG.Core.NewParsing
         public string Lyric;
         public Pitch<VocalConfig> Pitch;
         public DualTime Duration;
+        public TalkieState TalkieState;
 
-        public readonly bool IsPlayable() { return Lyric.Length > 0 && (Pitch.Octave >= 2 || Lyric[0] == '#'); }
+        public readonly bool IsPlayable() { return Duration.Ticks > 0 && (Pitch.Octave >= 0 || TalkieState != TalkieState.None); }
     }
 }
