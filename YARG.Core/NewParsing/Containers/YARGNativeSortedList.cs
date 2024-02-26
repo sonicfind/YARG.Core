@@ -208,6 +208,20 @@ namespace YARG.Core.NewParsing
             return ref _buffer[index];
         }
 
+        public override bool RemoveAtIndex(int index)
+        {
+            if (index < 0 || _count <= index)
+            {
+                return false;
+            }
+
+            --_count;
+            var position = _buffer + index;
+            int amount = (_count - index) * SIZEOF_PAIR;
+            Buffer.MemoryCopy(position + 1, position, amount, amount);
+            return true;
+        }
+
         public override ref TValue GetLastOrAppend(TKey key)
         {
             if (_count == 0 || _buffer[_count - 1] < key)

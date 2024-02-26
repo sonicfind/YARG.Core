@@ -139,6 +139,18 @@ namespace YARG.Core.NewParsing
             node.Value = value;
         }
 
+        public override bool RemoveAtIndex(int index)
+        {
+            if (index < 0 || _count <= index)
+            {
+                return false;
+            }
+
+            --_count;
+            Array.Copy(_buffer, index + 1, _buffer, index, _count - index);
+            return true;
+        }
+
         public override bool TryGetValue(TKey key, out TValue value)
         {
             int index = Find(0, key);
