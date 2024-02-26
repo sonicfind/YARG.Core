@@ -2,7 +2,7 @@
 
 namespace YARG.Core.Song
 {
-    public abstract class Midi_Drum_Preparser_Base : MidiInstrument_Common
+    public abstract class Midi_Drum_Preparser_Base : MidiBasicInstrument_Preparser
     {
         private const int DOUBLE_BASS_NOTE = 95;
         private const int DOUBLE_BASS_INDEX = 1;

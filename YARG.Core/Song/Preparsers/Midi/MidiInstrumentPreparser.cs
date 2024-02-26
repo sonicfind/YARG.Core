@@ -54,7 +54,7 @@ namespace YARG.Core.Song
         protected void Validate(int diffIndex) { validations |= DIFFINDEX_TO_DIFF[diffIndex]; }
     }
 
-    public abstract class MidiInstrument_Common : Midi_Instrument_Preparser
+    public abstract class MidiBasicInstrument_Preparser : Midi_Instrument_Preparser
     {
         protected const int NOTES_PER_DIFFICULTY = 12;
         protected static readonly int[] DIFFVALUES = new int[NUM_DIFFICULTIES * NOTES_PER_DIFFICULTY] {

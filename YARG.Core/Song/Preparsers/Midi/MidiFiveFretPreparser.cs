@@ -4,7 +4,7 @@ using YARG.Core.IO;
 
 namespace YARG.Core.Song
 {
-    public class Midi_FiveFret_Preparser : MidiInstrument_Common
+    public class Midi_FiveFret_Preparser : MidiBasicInstrument_Preparser
     {
         private const int FIVEFRET_MIN = 59;
         // Open note included

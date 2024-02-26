@@ -2,7 +2,7 @@
 
 namespace YARG.Core.Song
 {
-    public class Midi_SixFret_Preparser : MidiInstrument_Common
+    public class Midi_SixFret_Preparser : MidiBasicInstrument_Preparser
     {
         // Open note included
         private const int NOTE_MIN = 58;
