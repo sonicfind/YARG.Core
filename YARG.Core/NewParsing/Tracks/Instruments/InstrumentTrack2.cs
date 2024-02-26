@@ -4,10 +4,15 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
+    public static class InstrumentTrack2
+    {
+        public const int NUM_DIFFICULTIES = 4;
+    }
+
     public class InstrumentTrack2<TDifficultyTrack> : Track
         where TDifficultyTrack : Track
     {
-        protected readonly TDifficultyTrack?[] difficulties = new TDifficultyTrack[4];
+        protected readonly TDifficultyTrack?[] difficulties = new TDifficultyTrack[InstrumentTrack2.NUM_DIFFICULTIES];
         public override bool IsOccupied()
         {
             foreach (var diff in difficulties)
