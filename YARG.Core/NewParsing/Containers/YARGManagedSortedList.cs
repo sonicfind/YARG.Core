@@ -274,14 +274,12 @@ namespace YARG.Core.NewParsing
             private readonly YARGManagedSortedList<TKey, TValue> _map;
             private int _index;
             private readonly int _version;
-            private YARGKeyValuePair<TKey, TValue> _current;
 
             internal Enumerator(YARGManagedSortedList<TKey, TValue> map)
             {
                 _map = map;
                 _index = -1;
                 _version = map._version;
-                _current = default;
             }
 
             public readonly void Dispose()
@@ -296,13 +294,7 @@ namespace YARG.Core.NewParsing
                 }
 
                 ++_index;
-                if ((uint) _index == (uint) _map._count)
-                {
-                    _current = default;
-                    return false;
-                }
-                _current = _map.ElementAtIndex(_index);
-                return true;
+                return _index < _map._count;
             }
 
             public readonly YARGKeyValuePair<TKey, TValue> Current
@@ -313,7 +305,7 @@ namespace YARG.Core.NewParsing
                     {
                         throw new InvalidOperationException("Enum Operation not possible");
                     }
-                    return _current;
+                    return _map._buffer[_index];
                 }
             }
 
@@ -327,7 +319,6 @@ namespace YARG.Core.NewParsing
                 }
 
                 _index = -1;
-                _current = default;
             }
         }
     }
