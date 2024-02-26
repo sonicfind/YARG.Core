@@ -18,24 +18,18 @@ namespace YARG.Core.NewParsing
         Tremolo = 65,
         Trill = 66,
         LyricShift = 67,
+        Glissando = 68,
     }
 
     public struct SpecialPhraseInfo
     {
-        private DualTime _duration;
-
+        public DualTime Duration;
         public int Velocity;
-
-        public DualTime Duration
-        {
-            readonly get => _duration;
-            set => _duration = DualTime.Normalize(value);
-        }
 
         public SpecialPhraseInfo(in DualTime duration, int velocity = 100)
         {
             Velocity = velocity;
-            _duration = DualTime.Normalize(duration);
+            Duration = duration;
         }
     }
 }
