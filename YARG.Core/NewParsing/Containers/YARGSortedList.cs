@@ -71,6 +71,12 @@ namespace YARG.Core.NewParsing
             Insert_Forced(index + 1, key, in value);
         }
 
+        public bool Remove(in TKey key)
+        {
+            int index = Find(0, key);
+            return RemoveAtIndex(index);
+        }
+
         public bool ContainsKey(TKey key) { return ContainsKey(0, key); }
 
         public bool ContainsKey(int startIndex, TKey key) { return Find(startIndex, key) >= 0; }
@@ -91,6 +97,7 @@ namespace YARG.Core.NewParsing
         public abstract ref TValue At(TKey key);
         public abstract bool TryGetValue(TKey key, out TValue? value);
         public abstract ref YARGKeyValuePair<TKey, TValue> ElementAtIndex(int index);
+        public abstract bool RemoveAtIndex(int index);
         public abstract ref TValue GetLastOrAppend(TKey key);
         public abstract int Find(int startIndex, TKey key);
         public abstract bool ValidateLastKey(TKey key);
