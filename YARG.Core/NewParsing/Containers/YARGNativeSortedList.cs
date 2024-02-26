@@ -157,7 +157,7 @@ namespace YARG.Core.NewParsing
             var position = _buffer + index;
             if (index < _count)
             {
-                int leftover = _count - index;
+                int leftover = (_count - index) * SIZEOF_PAIR;
                 Buffer.MemoryCopy(position, position + 1, leftover, leftover);
             }
 
