@@ -99,8 +99,8 @@ namespace YARG.Core.NewParsing
         public abstract ref YARGKeyValuePair<TKey, TValue> ElementAtIndex(int index);
         public abstract bool RemoveAtIndex(int index);
         public abstract ref TValue GetLastOrAppend(TKey key);
-        public abstract int Find(int startIndex, TKey key);
-        public abstract bool ValidateLastKey(TKey key);
+        public abstract int Find(int startIndex, in TKey key);
+        public abstract bool ValidateLastKey(in TKey key);
         public abstract ref TValue Last();
 
         protected abstract void Dispose(bool disposing);

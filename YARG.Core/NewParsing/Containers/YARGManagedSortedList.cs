@@ -203,7 +203,7 @@ namespace YARG.Core.NewParsing
             return ref _buffer[_count - 1].Value;
         }
 
-        public override int Find(int startIndex, TKey key)
+        public override int Find(int startIndex, in TKey key)
         {
             int lo = startIndex;
             int hi = Count - (startIndex + 1);
@@ -228,7 +228,7 @@ namespace YARG.Core.NewParsing
             return ~lo;
         }
 
-        public override bool ValidateLastKey(TKey key)
+        public override bool ValidateLastKey(in TKey key)
         {
             return _count > 0 && _buffer[_count - 1].Equals(key);
         }
