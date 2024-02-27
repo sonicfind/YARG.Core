@@ -12,9 +12,9 @@ namespace YARG.Core.NewParsing.Midi
         private const int BRE_MIDI = 120;
         private const int GLISSANDO_MIDI = 126;
 
-        public static unsafe bool Load(YARGMidiTrack midiTrack, SyncTrack2 sync, InstrumentTrack2<ProKeysDifficultyTrack> instrumentTrack, Difficulty difficulty)
+        public static unsafe bool Load(YARGMidiTrack midiTrack, SyncTrack2 sync, InstrumentTrack2<ProKeysDifficultyTrack> instrumentTrack, int diffIndex)
         {
-            ref var diffTrack = ref instrumentTrack[difficulty];
+            ref var diffTrack = ref instrumentTrack[diffIndex];
             if (diffTrack != null)
             {
                 return false;
