@@ -50,18 +50,24 @@ namespace YARG.Core.IO.Ini
                 { "artist",                               new("artist", ModifierType.SortString) },
                 { "Artist",                               new("artist", ModifierType.SortString_Chart) },
 
+                { "BassStream",                           new("BassStream", ModifierType.String_Chart ) },
                 { "background",                           new("background", ModifierType.String) },
                 //{ "banner_link_a",                        new("banner_link_a", ModifierType.String) },
                 //{ "banner_link_b",                        new("banner_link_b", ModifierType.String) },
                 { "bass_type",                            new("bass_type", ModifierType.UInt32) },
                 //{ "boss_battle",                          new("boss_battle", ModifierType.Bool) },
 
+                { "CrowdStream",                          new("CrowdStream", ModifierType.String_Chart ) },
                 //{ "cassettecolor",                        new("cassettecolor", ModifierType.UInt32) },
                 { "charter",                              new("charter", ModifierType.SortString) },
                 { "Charter",                              new("charter", ModifierType.SortString_Chart) },
                 { "count",                                new("count", ModifierType.UInt32) },
                 { "cover",                                new("cover", ModifierType.String) },
 
+                { "Drum2Stream",                          new("Drum2Stream", ModifierType.String_Chart ) },
+                { "Drum3Stream",                          new("Drum3Stream", ModifierType.String_Chart ) },
+                { "Drum4Stream",                          new("Drum4Stream", ModifierType.String_Chart ) },
+                { "DrumStream",                           new("DrumStream", ModifierType.String_Chart ) },
                 { "dance_type",                           new("dance_type", ModifierType.UInt32) },
                 { "delay",                                new("delay", ModifierType.Int64) },
                 { "Difficulty",                           new("diff_band", ModifierType.Int32) },
@@ -98,15 +104,18 @@ namespace YARG.Core.IO.Ini
                 { "five_lane_drums",                      new("five_lane_drums", ModifierType.Bool) },
                 { "frets",                                new("frets", ModifierType.SortString) },
 
+                { "GuitarStream",                         new("GuitarStream", ModifierType.String_Chart ) },
                 { "genre",                                new("genre", ModifierType.SortString) },
                 { "Genre",                                new("genre", ModifierType.SortString_Chart) },
                 { "guitar_type",                          new("guitar_type", ModifierType.UInt32) },
 
+                { "HarmonyStream",                        new("HarmonyStream", ModifierType.String_Chart ) },
                 { "hopo_frequency",                       new("hopo_frequency", ModifierType.Int64) },
                 { "hopofreq",                             new("hopofreq", ModifierType.Int32) },
 
                 { "icon",                                 new("icon", ModifierType.SortString) },
 
+                { "KeysStream",                           new("KeysStream", ModifierType.String_Chart ) },
                 { "keys_type",                            new("keys_type", ModifierType.UInt32) },
                 { "kit_type",                             new("kit_type", ModifierType.UInt32) },
 
@@ -115,6 +124,7 @@ namespace YARG.Core.IO.Ini
                 { "loading_phrase",                       new("loading_phrase", ModifierType.String) },
                 { "lyrics",                               new("lyrics", ModifierType.Bool) },
 
+                { "MusicStream",                          new("MusicStream", ModifierType.String_Chart ) },
                 { "modchart",                             new("modchart", ModifierType.Bool) },
                 { "multiplier_note",                      new("multiplier_note", ModifierType.Int32) },
 
@@ -134,6 +144,8 @@ namespace YARG.Core.IO.Ini
                 { "pro_drum",                             new("pro_drums", ModifierType.Bool) },
                 { "pro_drums",                            new("pro_drums", ModifierType.Bool) },
 
+                { "Resolution",                           new("Resolution", ModifierType.UInt32 ) },
+                { "RhythmStream",                         new("RhythmStream", ModifierType.String_Chart ) },
                 { "rating",                               new("rating", ModifierType.UInt32) },
                 { "real_bass_22_tuning",                  new("real_bass_22_tuning", ModifierType.UInt32) },
                 { "real_bass_tuning",                     new("real_bass_tuning", ModifierType.UInt32) },
@@ -164,6 +176,7 @@ namespace YARG.Core.IO.Ini
                 { "unlock_require",                       new("unlock_require", ModifierType.String) },
                 { "unlock_text",                          new("unlock_text", ModifierType.String) },
 
+                { "VocalStream",                          new("VocalStream", ModifierType.String_Chart ) },
                 { "version",                              new("version", ModifierType.UInt32) },
                 { "video",                                new("video", ModifierType.String) },
                 { "video_end_time",                       new("video_end_time", ModifierType.Int64) },
