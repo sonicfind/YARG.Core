@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace YARG.Core.NewParsing.Midi
+﻿namespace YARG.Core.NewParsing.Midi
 {
     public struct GuitarMidiDifficulty
     {
