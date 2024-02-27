@@ -77,22 +77,5 @@ namespace YARG.Core.NewParsing
             TempoMarkers.Dispose();
             TimeSigs.Dispose();
         }
-
-        private void FinalizeAnchors()
-        {
-            unsafe
-            {
-                var end = TempoMarkers.End;
-                // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
-                for (var marker = TempoMarkers.Data + 1; marker < end; ++marker)
-                {
-                    if (marker->Value.Anchor == 0)
-                    {
-                        var prev = marker - 1;
-                        marker->Value.Anchor = (long) (((marker->Key - prev->Key) / (float) _tickrate) * prev->Value.MicrosPerQuarter) + prev->Value.Anchor;
-                    }
-                }
-            }
-        }
     }
 }
