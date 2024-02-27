@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using YARG.Core.Chart;
+using YARG.Core.Song;
 
 namespace YARG.Core.NewParsing
 {
@@ -19,9 +21,14 @@ namespace YARG.Core.NewParsing
             return Ticks > 0;
         }
 
-        public static long TruncationLimit = 170;
+        private static long TruncationLimit = 170;
+        public static void SetTruncationLimit(LoaderSettings settings, long defaultThreshold)
+        {
+            TruncationLimit = settings.SustainCutoffThreshold != -1 ? settings.SustainCutoffThreshold : defaultThreshold;
+        }
+
         /// <summary>
-        /// Returns a <see cref="DualTime"/> structure that abides by the currently specified <see cref="TruncationLimit"/>.
+        /// Returns a <see cref="DualTime"/> structure that abides by the current truncation limit
         /// <br></br>If the time exceeds the limit, it returns unchanged. Otherwise, it gets proportionally scaled down to a tick value of one.
         /// </summary>
         /// <remarks>If the ticks provided by <see langword="time"/> is zero, the resulting seconds will be <see cref="double.NaN"/>

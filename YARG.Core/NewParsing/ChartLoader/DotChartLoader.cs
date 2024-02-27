@@ -41,7 +41,7 @@ namespace YARG.Core.NewParsing
             }
 
             long tickrate = ParseTickrate(ref container);
-            YARGChartFinalizer.SetSustainThreshold(settings, 1);
+            DualTime.SetTruncationLimit(settings, 1);
 
             var sync = new SyncTrack2(tickrate);
             if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.SYNCTRACK))
