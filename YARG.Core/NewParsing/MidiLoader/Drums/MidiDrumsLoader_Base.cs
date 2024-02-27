@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using YARG.Core.IO;
-using YARG.Core.NewParsing.Midi;
 
-namespace YARG.Core.NewParsing.MidiLoader
+namespace YARG.Core.NewParsing.Midi
 {
     internal static class MidiDrumLoader_Base
     {

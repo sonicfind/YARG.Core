@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using YARG.Core.Chart;
 using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing.Midi

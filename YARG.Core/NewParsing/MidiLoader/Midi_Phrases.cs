@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using YARG.Core.IO;
-
-namespace YARG.Core.NewParsing.Midi
+﻿namespace YARG.Core.NewParsing.Midi
 {
     internal struct Midi_Phrase
     {

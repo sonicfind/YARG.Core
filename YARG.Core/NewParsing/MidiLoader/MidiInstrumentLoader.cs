@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using YARG.Core.IO;
+﻿using System.Collections.Generic;
 
 namespace YARG.Core.NewParsing.Midi
 {
