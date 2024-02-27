@@ -97,11 +97,6 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        public static void SetSustainThreshold(LoaderSettings settings, uint defaultThreshold)
-        {
-            DualTime.TruncationLimit = settings.SustainCutoffThreshold != -1 ? settings.SustainCutoffThreshold : defaultThreshold;
-        }
-
         private static void GenerateLeftoverBeats(SyncTrack2 sync, long endTick, YARGNativeSortedList<DualTime, BeatlineType> beats)
         {
             long multipliedTickrate = 4u * sync.Tickrate;
