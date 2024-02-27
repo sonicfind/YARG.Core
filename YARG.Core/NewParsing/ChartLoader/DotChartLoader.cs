@@ -239,6 +239,8 @@ namespace YARG.Core.NewParsing
             // Used to lesson the impact of the ticks-seconds search algorithm as the the position
             // gets larger by tracking the previous position.
             int tempoIndex = 0;
+            
+             var soloQueue = stackalloc DualTime[2] { DualTime.Inactive, DualTime.Inactive };
 
             DotChartEvent ev = default;
             DualTime position = default;
@@ -288,42 +290,35 @@ namespace YARG.Core.NewParsing
                         }
                     case ChartEventType.Text:
                         string str = YARGTextReader.ExtractText(ref container, false);
-                        difficultyTrack.Events.GetLastOrAppend(position).Add(str);
+                        if (str.StartsWith(SOLOEND))
+                        {
+                            if (soloQueue[0].Ticks != -1)
+                            {
+                                // .chart handles solo phrases with *inclusive ends*, so we have add one tick
+                                var soloEnd = position;
+                                ++soloEnd.Ticks;
+                                soloEnd.Seconds = sync.ConvertToSeconds(soloEnd.Ticks, tempoIndex);
+
+                                difficultyTrack.SpecialPhrases[soloQueue[0]].TryAdd(SpecialPhraseType.Solo, new SpecialPhraseInfo(soloEnd - soloQueue[0]));
+                                soloQueue[0] = soloQueue[1] == position ? soloQueue[1] : DualTime.Inactive;
+                                soloQueue[1] = DualTime.Inactive;
+                            }
+                        }
+                        else if (str.StartsWith(SOLO))
+                        {
+                            unsafe
+                            {
+                                bool useBackup = soloQueue[0].Ticks != -1;
+                                soloQueue[*(byte*)&useBackup] = position;
+                            }
+                        }
+                        else
+                        {
+                            difficultyTrack.Events.GetLastOrAppend(position).Add(str);
+                        }
                         break;
                 }
                 YARGTextReader.GotoNextLine(ref container);
-            }
-
-            for (int i = 0; i < difficultyTrack.Events.Count;)
-            {
-                var start = difficultyTrack.Events.ElementAtIndex(i);
-                if (!start.Value.Remove(SOLO))
-                {
-                    ++i;
-                    continue;
-                }
-
-                if (start.Value.Count == 0)
-                {
-                    difficultyTrack.Events.RemoveAtIndex(i);
-                }
-
-                while (i < difficultyTrack.Events.Count)
-                {
-                    var end = difficultyTrack.Events.ElementAtIndex(i);
-                    if (end.Value.Remove(SOLOEND))
-                    {
-                        var info = new SpecialPhraseInfo(end.Key - start.Key);
-                        difficultyTrack.SpecialPhrases[start.Key].TryAdd(SpecialPhraseType.Solo, info);
-
-                        if (end.Value.Count == 0)
-                        {
-                            difficultyTrack.Events.RemoveAtIndex(i);
-                        }
-                        break;
-                    }
-                    ++i;
-                }
             }
 
             difficultyTrack.TrimExcess();
