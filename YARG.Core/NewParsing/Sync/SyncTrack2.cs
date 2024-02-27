@@ -11,6 +11,8 @@ namespace YARG.Core.NewParsing
         public readonly YARGNativeSortedList<long, Tempo2> TempoMarkers = new();
         public readonly YARGNativeSortedList<long, TimeSig2> TimeSigs = new();
 
+        public uint Tickrate => _tickrate;
+
         public SyncTrack2(uint tickrate)
         {
             _tickrate = tickrate;
