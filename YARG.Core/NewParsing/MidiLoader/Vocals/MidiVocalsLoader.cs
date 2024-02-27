@@ -1,9 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System;
 using System.Text;
-using YARG.Core.Chart;
 using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing.Midi

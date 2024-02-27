@@ -1,7 +1,4 @@
-﻿using Melanchall.DryWetMidi.MusicTheory;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System;
 using System.Text;
 using YARG.Core.IO;
 

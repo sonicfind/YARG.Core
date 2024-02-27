@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using YARG.Core.IO;
-using YARG.Core.Song;
 
 namespace YARG.Core.NewParsing.Midi
 {
