@@ -11,12 +11,12 @@ namespace YARG.Core.NewParsing
         private bool disposedValue;
         public readonly SyncTrack2 Sync;
         public readonly TextEvents2 Events = new();
+        public readonly YARGNativeSortedList<DualTime, BeatlineType> BeatMap = new();
+        public readonly IniModifierCollection Miscellaneous = new();
+
         public SongMetadata Metadata;
         public LoaderSettings Settings;
-        public readonly IniModifierCollection Miscellaneous = new();
         public string MidiSequenceName = string.Empty;
-
-        public readonly YARGNativeSortedList<DualTime, BeatlineType> BeatMap = new();
 
         public BasicInstrumentTrack2<GuitarNote2<FiveFret>>? FiveFretGuitar;
         public BasicInstrumentTrack2<GuitarNote2<FiveFret>>? FiveFretBass;
