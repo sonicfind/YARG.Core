@@ -7,13 +7,13 @@ namespace YARG.Core.NewParsing
 {
     public class SyncTrack2 : IDisposable
     {
-        private uint _tickrate;
+        private long _tickrate;
         public readonly YARGNativeSortedList<long, Tempo2> TempoMarkers = new();
         public readonly YARGNativeSortedList<long, TimeSig2> TimeSigs = new();
 
-        public uint Tickrate => _tickrate;
+        public long Tickrate => _tickrate;
 
-        public SyncTrack2(uint tickrate)
+        public SyncTrack2(long tickrate)
         {
             _tickrate = tickrate;
             TempoMarkers.Append(0, Tempo2.DEFAULT);
