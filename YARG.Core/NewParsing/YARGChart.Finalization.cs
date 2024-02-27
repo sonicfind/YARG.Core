@@ -104,7 +104,7 @@ namespace YARG.Core.NewParsing
 
         private static void GenerateLeftoverBeats(SyncTrack2 sync, long endTick, YARGNativeSortedList<DualTime, BeatlineType> beats)
         {
-            uint multipliedTickrate = 4u * sync.Tickrate;
+            long multipliedTickrate = 4u * sync.Tickrate;
 
             int searchIndex = 0;
             int tempoIndex = 0;
@@ -141,7 +141,7 @@ namespace YARG.Core.NewParsing
 
         private static void GenerateAllBeats(SyncTrack2 sync, long endTick, YARGNativeSortedList<DualTime, BeatlineType> beats)
         {
-            uint multipliedTickrate = 4u * sync.Tickrate;
+            long multipliedTickrate = 4u * sync.Tickrate;
 
             int tempoIndex = 0;
             DualTime beat = default;
