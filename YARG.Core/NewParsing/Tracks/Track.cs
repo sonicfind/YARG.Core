@@ -7,7 +7,7 @@ namespace YARG.Core.NewParsing
     public abstract class Track : IDisposable
     {
         public YARGManagedSortedList<DualTime, Dictionary<SpecialPhraseType, SpecialPhraseInfo>> SpecialPhrases = new();
-        public YARGManagedSortedList<DualTime, List<string>> Events = new();
+        public YARGManagedSortedList<DualTime, HashSet<string>> Events = new();
         protected bool disposedValue;
 
         public virtual bool IsOccupied() { return !SpecialPhrases.IsEmpty() || !Events.IsEmpty(); }
