@@ -334,7 +334,7 @@ namespace YARG.Core.NewParsing
             }
 
             difficultyTrack.TrimExcess();
-            return false;
+            return true;
         }
     }
 }
