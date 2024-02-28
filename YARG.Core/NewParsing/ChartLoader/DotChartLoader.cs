@@ -4,6 +4,7 @@ using YARG.Core.Chart;
 using YARG.Core.Game;
 using YARG.Core.IO;
 using YARG.Core.IO.Ini;
+using YARG.Core.Logging;
 using YARG.Core.Song;
 
 namespace YARG.Core.NewParsing
@@ -47,11 +48,9 @@ namespace YARG.Core.NewParsing
             DualTime.SetTruncationLimit(settings, 1);
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
-                if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK))
-                {
-                    LoadEventsTrack(ref container, chart);
-                }
-                else if (!SelectChartTrack(ref container, chart, drumsInChart, activeTracks))
+                if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK)
+                    ? !LoadEventsTrack(ref container, chart)
+                    : !SelectChartTrack(ref container, chart, drumsInChart, activeTracks))
                 {
                     if (YARGTextReader.SkipLinesUntil(ref container, TextConstants<TChar>.CLOSE_BRACE))
                     {
@@ -114,9 +113,15 @@ namespace YARG.Core.NewParsing
             return new YARGChart(sync, metadata, settings, miscellaneous);
         }
 
-        private static void LoadEventsTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
+        private static bool LoadEventsTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
+            if (chart.Events.IsOccupied() || (chart.LeadVocals != null && chart.LeadVocals.IsOccupied()))
+            {
+                YargLogger.LogInfo("[Events] track appears multiple times. Not parsing repeats...");
+                return false;
+            }
+
             // Used to lesson the impact of the ticks-seconds search algorithm as the the position
             // gets larger by tracking the previous position.
             int tempoIndex = 0;
@@ -175,6 +180,7 @@ namespace YARG.Core.NewParsing
             {
                 chart.LeadVocals = null;
             }
+            return true;
         }
 
         private static bool SelectChartTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, DrumsType drumsInChart, HashSet<Instrument> activeTracks)
