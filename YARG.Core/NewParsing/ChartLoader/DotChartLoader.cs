@@ -4,6 +4,7 @@ using YARG.Core.Chart;
 using YARG.Core.IO;
 using YARG.Core.IO.Disposables;
 using YARG.Core.IO.Ini;
+using YARG.Core.Logging;
 using YARG.Core.Song;
 
 namespace YARG.Core.NewParsing
@@ -134,6 +135,16 @@ namespace YARG.Core.NewParsing
         private static void LoadEventsTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
+            if (chart.Events.IsOccupied() || (chart.LeadVocals != null && chart.LeadVocals.IsOccupied()))
+            {
+                YargLogger.LogInfo("[Events] track appears multiple times. Not parsing repeats...");
+                if (YARGTextReader.SkipLinesUntil(ref container, '}'))
+                {
+                    YARGTextReader.GotoNextLine(ref container);
+                }
+                return;
+            }
+
             // Used to lesson the impact of the ticks-seconds search algorithm as the the position
             // gets larger by tracking the previous position.
             int tempoIndex = 0;
