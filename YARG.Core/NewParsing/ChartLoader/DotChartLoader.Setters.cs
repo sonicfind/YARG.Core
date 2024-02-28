@@ -6,11 +6,11 @@
         {
             switch (lane)
             {
-                case 0: note.Frets.Green =  length; break;
-                case 1: note.Frets.Red =    length; break;
-                case 2: note.Frets.Yellow = length; break;
-                case 3: note.Frets.Blue =   length; break;
-                case 4: note.Frets.Orange = length; break;
+                case 0: note.Frets.Green =  DualTime.Truncate(length); break;
+                case 1: note.Frets.Red =    DualTime.Truncate(length); break;
+                case 2: note.Frets.Yellow = DualTime.Truncate(length); break;
+                case 3: note.Frets.Blue =   DualTime.Truncate(length); break;
+                case 4: note.Frets.Orange = DualTime.Truncate(length); break;
                 case 5:
                     if (note.State == GuitarState.Natural)
                     {
@@ -18,7 +18,7 @@
                     }
                     break;
                 case 6: note.State = GuitarState.Tap; break;
-                case 7: note.Frets.Open = length; break;
+                case 7: note.Frets.Open = DualTime.Truncate(length); break;
                 default:
                     return false;
             }
@@ -29,11 +29,11 @@
         {
             switch (lane)
             {
-                case 0: note.Frets.White1 = length; break;
-                case 1: note.Frets.White2 = length; break;
-                case 2: note.Frets.White3 = length; break;
-                case 3: note.Frets.Black1 = length; break;
-                case 4: note.Frets.Black2 = length; break;
+                case 0: note.Frets.White1 = DualTime.Truncate(length); break;
+                case 1: note.Frets.White2 = DualTime.Truncate(length); break;
+                case 2: note.Frets.White3 = DualTime.Truncate(length); break;
+                case 3: note.Frets.Black1 = DualTime.Truncate(length); break;
+                case 4: note.Frets.Black2 = DualTime.Truncate(length); break;
                 case 5:
                     if (note.State == GuitarState.Natural)
                     {
@@ -41,8 +41,8 @@
                     }
                     break;
                 case 6: note.State = GuitarState.Tap; break;
-                case 7: note.Frets.Open =   length; break;
-                case 8: note.Frets.Black3 = length; break;
+                case 7: note.Frets.Open =   DualTime.Truncate(length); break;
+                case 8: note.Frets.Black3 = DualTime.Truncate(length); break;
                 default:
                     return false;
             }
@@ -53,11 +53,11 @@
         {
             switch (lane)
             {
-                case 0:  note.Bass = length; break;
-                case 1:  note.Pads.Snare.Duration  = length; break;
-                case 2:  note.Pads.Yellow.Duration = length; break;
-                case 3:  note.Pads.Blue.Duration   = length; break;
-                case 4:  note.Pads.Green.Duration  = length; break;
+                case 0:  note.Bass = DualTime.Truncate(length); break;
+                case 1:  note.Pads.Snare.Duration  = DualTime.Truncate(length); break;
+                case 2:  note.Pads.Yellow.Duration = DualTime.Truncate(length); break;
+                case 3:  note.Pads.Blue.Duration   = DualTime.Truncate(length); break;
+                case 4:  note.Pads.Green.Duration  = DualTime.Truncate(length); break;
 
                 case 32: note.ToggleDoubleBass(); break;
 
@@ -80,12 +80,12 @@
         {
             switch (lane)
             {
-                case 0:  note.Bass = length; break;
-                case 1:  note.Pads.Snare.Duration  = length; break;
-                case 2:  note.Pads.Yellow.Duration = length; break;
-                case 3:  note.Pads.Blue.Duration   = length; break;
-                case 4:  note.Pads.Orange.Duration = length; break;
-                case 5:  note.Pads.Green.Duration  = length; break;
+                case 0:  note.Bass = DualTime.Truncate(length); break;
+                case 1:  note.Pads.Snare.Duration  = DualTime.Truncate(length); break;
+                case 2:  note.Pads.Yellow.Duration = DualTime.Truncate(length); break;
+                case 3:  note.Pads.Blue.Duration   = DualTime.Truncate(length); break;
+                case 4:  note.Pads.Orange.Duration = DualTime.Truncate(length); break;
+                case 5:  note.Pads.Green.Duration  = DualTime.Truncate(length); break;
 
                 case 32: note.ToggleDoubleBass(); break;
 
@@ -110,11 +110,11 @@
         {
             switch (lane)
             {
-                case 0:  note.Bass = length; break;
-                case 1:  note.Pads.Snare.Duration  = length; break;
-                case 2:  note.Pads.Yellow.Duration = length; break;
-                case 3:  note.Pads.Blue.Duration   = length; break;
-                case 4:  note.Pads.Green.Duration  = length; break;
+                case 0:  note.Bass = DualTime.Truncate(length); break;
+                case 1:  note.Pads.Snare.Duration  = DualTime.Truncate(length); break;
+                case 2:  note.Pads.Yellow.Duration = DualTime.Truncate(length); break;
+                case 3:  note.Pads.Blue.Duration   = DualTime.Truncate(length); break;
+                case 4:  note.Pads.Green.Duration  = DualTime.Truncate(length); break;
 
                 case 32: note.ToggleDoubleBass(); break;
 
