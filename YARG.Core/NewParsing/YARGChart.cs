@@ -47,12 +47,20 @@ namespace YARG.Core.NewParsing
         public VocalTrack2? LeadVocals;
         public VocalTrack2? HarmonyVocals;
 
-        public YARGChart(SyncTrack2 sync, SongMetadata metadata, LoaderSettings settings, string? midiSequenceName = null)
+        public YARGChart(SyncTrack2 sync, SongMetadata metadata, LoaderSettings settings, string? midiSequenceName)
         {
             Sync = sync;
             Metadata = metadata;
             Settings = settings;
             MidiSequenceName = midiSequenceName ?? string.Empty;
+        }
+
+        public YARGChart(SyncTrack2 sync, SongMetadata metadata, LoaderSettings settings, Dictionary<string, IniModifier> miscellaneous)
+        {
+            Sync = sync;
+            Metadata = metadata;
+            Settings = settings;
+            Miscellaneous = miscellaneous;
         }
 
         public void Dispose()
