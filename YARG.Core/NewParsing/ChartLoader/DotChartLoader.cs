@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using YARG.Core.Chart;
+using YARG.Core.Game;
 using YARG.Core.IO;
+using YARG.Core.IO.Ini;
 using YARG.Core.Song;
 
 namespace YARG.Core.NewParsing
@@ -32,29 +34,17 @@ namespace YARG.Core.NewParsing
             return Process(ref intContainer, in metadata, in settings, drumsInChart, activeTracks);
         }
 
+        private const long DEFAULT_TICKRATE = 192;
         private static YARGChart Process<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument> activeTracks)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
-            if (!YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.HEADERTRACK))
-            {
-                throw new Exception("[Song] track expected at the start of the file");
-            }
-
-            long tickrate = ParseTickrate(ref container);
-            DualTime.SetTruncationLimit(settings, 1);
-
-            var sync = new SyncTrack2(tickrate);
-            if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.SYNCTRACK))
-            {
-                FillSynctrack(ref container, sync);
-            }
-
-            var chart = new YARGChart(sync, metadata, settings);
+            var chart = LoadHeaderAndSync(ref container, in metadata, in settings);
             if (activeTracks.Contains(Instrument.Vocals))
             {
                 chart.LeadVocals = new VocalTrack2(1);
             }
 
+            DualTime.SetTruncationLimit(settings, 1);
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
                 if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK))
@@ -74,50 +64,54 @@ namespace YARG.Core.NewParsing
             return chart;
         }
 
-        private static long ParseTickrate<TChar>(ref YARGTextContainer<TChar> container)
+        private static YARGChart LoadHeaderAndSync<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in LoaderSettings settings)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
-            long tickrate = 192;
-            var modifiers = YARGChartFileReader.ExtractModifiers(ref container);
-            if (modifiers.TryGetValue("Resolution", out var tickrates))
+            long tickrate = DEFAULT_TICKRATE;
+            var miscellaneous = new Dictionary<string, IniModifier>();
+            if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.HEADERTRACK))
             {
-                for (int i = 0; i < tickrates.Count; i++)
+                foreach (var node in YARGChartFileReader.ExtractModifiers(ref container))
                 {
+                    if (node.Key != "Resolution")
+                    {
+                        miscellaneous.Add(node.Key, node.Value[0]);
+                    }
+
                     unsafe
                     {
-                        var mod = tickrates[0];
+                        var mod = node.Value[0];
                         if (mod.Buffer[0] != 0)
                         {
                             tickrate = mod.Buffer[0];
-                            break;
                         }
                     }
                 }
             }
-            return tickrate;
-        }
 
-        private static void FillSynctrack<TChar>(ref YARGTextContainer<TChar> container, SyncTrack2 sync)
-            where TChar : unmanaged, IEquatable<TChar>, IConvertible
-        {
-            DotChartEvent ev = default;
-            while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
+            var sync = new SyncTrack2(tickrate);
+            if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.SYNCTRACK))
             {
-                switch (ev.Type)
+                DotChartEvent ev = default;
+                while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
                 {
-                    case ChartEventType.Bpm:
-                        sync.TempoMarkers.GetLastOrAppend(ev.Position).MicrosPerQuarter = YARGChartFileReader.ExtractMicrosPerQuarter(ref container);
-                        break;
-                    case ChartEventType.Anchor:
-                        sync.TempoMarkers.GetLastOrAppend(ev.Position).Anchor = ev.Position > 0 ? YARGTextReader.ExtractInt64AndWhitespace(ref container) : 0;
-                        break;
-                    case ChartEventType.Time_Sig:
-                        sync.TimeSigs.GetLastOrAppend(ev.Position) = YARGChartFileReader.ExtractTimeSig(ref container);
-                        break;
+                    switch (ev.Type)
+                    {
+                        case ChartEventType.Bpm:
+                            sync.TempoMarkers.GetLastOrAppend(ev.Position).MicrosPerQuarter = YARGChartFileReader.ExtractMicrosPerQuarter(ref container);
+                            break;
+                        case ChartEventType.Anchor:
+                            sync.TempoMarkers.GetLastOrAppend(ev.Position).Anchor = ev.Position > 0 ? YARGTextReader.ExtractInt64AndWhitespace(ref container) : 0;
+                            break;
+                        case ChartEventType.Time_Sig:
+                            sync.TimeSigs.GetLastOrAppend(ev.Position) = YARGChartFileReader.ExtractTimeSig(ref container);
+                            break;
+                    }
+                    YARGTextReader.GotoNextLine(ref container);
                 }
-                YARGTextReader.GotoNextLine(ref container);
+                YARGChartFinalizer.FinalizeAnchors(sync);
             }
-            YARGChartFinalizer.FinalizeAnchors(sync);
+            return new YARGChart(sync, metadata, settings, miscellaneous);
         }
 
         private static void LoadEventsTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
