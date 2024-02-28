@@ -43,20 +43,14 @@ namespace YARG.Core.NewParsing
             }
 
             uint tickrate = ParseTickrate(ref container);
-            DualTime.SetTruncationLimit(settings, 1);
-
-            var sync = new SyncTrack2(tickrate);
-            if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.SYNCTRACK))
-            {
-                FillSynctrack(ref container, sync);
-            }
-
+            var sync = ReadSynctrack(ref container, tickrate);
             var chart = new YARGChart(sync, metadata, settings);
             if (activeTracks.Contains(Instrument.Vocals))
             {
                 chart.LeadVocals = new VocalTrack2(1);
             }
 
+            DualTime.SetTruncationLimit(settings, 1);
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
                 if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK))
@@ -76,10 +70,16 @@ namespace YARG.Core.NewParsing
             return chart;
         }
 
+        private const uint DEFAULT_TICKRATE = 192;
         private static uint ParseTickrate<TChar>(ref YARGTextContainer<TChar> container)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
-            uint tickrate = 192;
+            uint tickrate = DEFAULT_TICKRATE;
+            if (!YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.HEADERTRACK))
+            {
+                return tickrate;
+            }
+
             var modifiers = YARGChartFileReader.ExtractModifiers(ref container);
             if (modifiers.TryGetValue("Resolution", out var tickrates))
             {
@@ -101,9 +101,15 @@ namespace YARG.Core.NewParsing
             return tickrate;
         }
 
-        private static void FillSynctrack<TChar>(ref YARGTextContainer<TChar> container, SyncTrack2 sync)
+        private static SyncTrack2 ReadSynctrack<TChar>(ref YARGTextContainer<TChar> container, uint tickrate)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
+            var sync = new SyncTrack2(tickrate);
+            if (!YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.SYNCTRACK))
+            {
+                return sync;
+            }
+
             DotChartEvent ev = default;
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
             {
@@ -122,6 +128,7 @@ namespace YARG.Core.NewParsing
                 YARGTextReader.GotoNextLine(ref container);
             }
             YARGChartFinalizer.FinalizeAnchors(sync);
+            return sync;
         }
 
         private static void LoadEventsTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
