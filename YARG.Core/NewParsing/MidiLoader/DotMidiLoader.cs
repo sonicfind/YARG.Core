@@ -95,9 +95,13 @@ namespace YARG.Core.NewParsing
                 }
 
                 if (type == MidiTrackType.Events)
+                {
                     LoadEventsTrack(chart.Events, sync, midiTrack);
+                }
                 else if (type == MidiTrackType.Beat)
+                {
                     LoadBeatsTrack(chart.BeatMap, sync, midiTrack);
+                }
                 else if (activeInstruments == null || activeInstruments.Contains(type))
                 {
                     LoadInstrument(chart, drumsInChart, type, sync, midiTrack, ref encoding);
