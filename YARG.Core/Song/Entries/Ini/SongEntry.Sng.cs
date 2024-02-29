@@ -1,11 +1,10 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using YARG.Core.Audio;
 using YARG.Core.Extensions;
 using YARG.Core.IO;
 using YARG.Core.Logging;
-using YARG.Core.Song.Cache;
 using YARG.Core.Venue;
 
 namespace YARG.Core.Song

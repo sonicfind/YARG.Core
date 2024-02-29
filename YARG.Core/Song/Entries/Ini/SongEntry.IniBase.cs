@@ -2,12 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using YARG.Core.Chart;
 using YARG.Core.Extensions;
 using YARG.Core.IO;
 using YARG.Core.IO.Ini;
-using YARG.Core.Song.Cache;
+using YARG.Core.NewParsing;
 
 namespace YARG.Core.Song
 {
@@ -103,6 +102,30 @@ namespace YARG.Core.Song
 
             using var reader = new StreamReader(stream);
             return SongChart.FromDotChart(in parseSettings, reader.ReadToEnd());
+        }
+
+        public override YARGChart? LoadChart_New(HashSet<Instrument> activeInstruments)
+        {
+            using var data = GetChartData(CHART_FILE_TYPES[(int)_chartFormat].Filename);
+            if (data == null)
+            {
+                return null;
+            }
+
+            var drums = ParseDrumsType(in _parts);
+            switch (_chartFormat)
+            {
+                case ChartFormat.Mid:
+                case ChartFormat.Midi:
+                    {
+                        var tracks = ConvertToMidiTracks(activeInstruments);
+                        return DotMidiLoader.LoadSingle(data, in _metadata, in _settings, null, drums, tracks);
+                    }
+                default:
+                    {
+                        return YARGDotChartLoader.Load(data, in _metadata, in _settings, drums, activeInstruments);
+                    }
+            }
         }
 
         public override FixedArray<byte>? LoadMiloData()
