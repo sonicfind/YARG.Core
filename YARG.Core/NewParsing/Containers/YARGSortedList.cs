@@ -68,7 +68,7 @@ namespace YARG.Core.NewParsing
         /// </remarks>
         public void Insert_Forced(int index, TKey key, TValue value)
         {
-            Insert_Forced(index + 1, key, in value);
+            Insert_Forced(index, key, in value);
         }
 
         public bool Remove(in TKey key)
