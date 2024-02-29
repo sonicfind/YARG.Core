@@ -9,6 +9,7 @@ using Melanchall.DryWetMidi.Core;
 using YARG.Core.Extensions;
 using YARG.Core.Audio;
 using YARG.Core.Logging;
+using YARG.Core.NewParsing;
 
 namespace YARG.Core.Song
 {
@@ -114,23 +115,17 @@ namespace YARG.Core.Song
                 midi = MidiFile.Read(mainMidi.ToReferenceStream(), readingSettings);
             }
 
-            // Merge update MIDI
-            if (_updateMidiLastWrite.HasValue)
+            using (var updateMidi = LoadUpdateMidi())
             {
-                if (!AbridgedFileInfo.Validate(Path.Combine(_updateDirectoryAndDtaLastWrite!.Value.FullName, "songs_updates.dta"), _updateDirectoryAndDtaLastWrite.Value.LastWriteTime))
+                if (updateMidi.IsAllocated)
+                {
+                    var update = MidiFile.Read(updateMidi.ToReferenceStream(), readingSettings);
+                    midi.Merge(update);
+                }
+                else if (_updateMidiLastWrite.HasValue)
                 {
                     return null;
                 }
-
-                string updateFilename = Path.Combine(_updateDirectoryAndDtaLastWrite!.Value.FullName, _nodeName, _nodeName + "_update.mid");
-                if (!AbridgedFileInfo.Validate(updateFilename, _updateMidiLastWrite.Value))
-                {
-                    return null;
-                }
-
-                using var updateMidi = FixedArray.LoadFile(updateFilename);
-                var update = MidiFile.Read(updateMidi.ToReferenceStream(), readingSettings);
-                midi.Merge(update);
             }
 
             // Merge upgrade MIDI
@@ -155,6 +150,48 @@ namespace YARG.Core.Song
                 ChordHopoCancellation = true
             };
             return SongChart.FromMidi(in parseSettings, midi);
+        }
+        
+        public override YARGChart? LoadChart_New(HashSet<Instrument> activeInstruments)
+        {
+            using var mainMidi = GetMainMidiData();
+            if (!mainMidi.IsAllocated)
+            {
+                return null;
+            }
+
+            using var updateMidi = LoadUpdateMidi();
+            if (!updateMidi.IsAllocated && _updateMidiLastWrite.HasValue)
+            {
+                return null;
+            }
+
+            using var upgradeMidi = _upgrade != null ? _upgrade.LoadUpgradeMidi() : FixedArray<byte>.Null;
+            if (!upgradeMidi.IsAllocated && _upgrade != null)
+            {
+                return null;
+            }
+
+            var tracks = ConvertToMidiTracks(activeInstruments);
+            return DotMidiLoader.LoadMulti(in mainMidi, in updateMidi, in upgradeMidi, in _metadata, in _settings, DrumsType.ProDrums, tracks);
+        }
+
+        private FixedArray<byte> LoadUpdateMidi()
+        {
+            var data = FixedArray<byte>.Null;
+            // Merge update MIDI
+            if (_updateMidiLastWrite.HasValue)
+            {
+                if (AbridgedFileInfo.Validate(Path.Combine(_updateDirectoryAndDtaLastWrite!.Value.FullName, "songs_updates.dta"), _updateDirectoryAndDtaLastWrite.Value.LastWriteTime))
+                {
+                    string updateFilename = Path.Combine(_updateDirectoryAndDtaLastWrite!.Value.FullName, _nodeName, _nodeName + "_update.mid");
+                    if (AbridgedFileInfo.Validate(updateFilename, _updateMidiLastWrite.Value))
+                    {
+                        data = FixedArray.LoadFile(updateFilename);
+                    }
+                }
+            }
+            return data;
         }
 
         public override StemMixer? LoadAudio(float speed, double volume, params SongStem[] ignoreStems)
