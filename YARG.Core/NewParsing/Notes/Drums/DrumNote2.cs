@@ -94,6 +94,7 @@ namespace YARG.Core.NewParsing
                     case 0: return _bass;
                     case 1: return _doubleBass;
                     default:
+                        lane -= 2;
                         if (lane >= _pads.NumPads)
                         {
                             throw new ArgumentOutOfRangeException(nameof(lane));
@@ -121,6 +122,7 @@ namespace YARG.Core.NewParsing
                         _bass = default;
                         break;
                     default:
+                        lane -= 2;
                         if (lane >= _pads.NumPads)
                         {
                             throw new ArgumentOutOfRangeException(nameof(lane));
