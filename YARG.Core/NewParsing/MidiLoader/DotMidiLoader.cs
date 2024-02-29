@@ -26,7 +26,7 @@ namespace YARG.Core.NewParsing
             MidiFiveFretLoader.SetOverdriveMidiNote(chart.Settings.OverdiveMidiNote);
 
             var encoding = YARGTextReader.UTF8Strict;
-            LoadTracks(chart, ref midi, ref encoding, drumsInChart, activeInstruments);
+            LoadTracks(chart, ref midi, ref encoding, ref drumsInChart, activeInstruments);
             YARGChartFinalizer.FinalizeBeats(chart);
             return chart;
         }
@@ -42,21 +42,21 @@ namespace YARG.Core.NewParsing
             if (updateData != null)
             {
                 var updateMidi = YARGMidiFile.Load(updateData);
-                LoadTracks(chart, ref updateMidi, ref encoding, drumsInChart, activeInstruments);
+                LoadTracks(chart, ref updateMidi, ref encoding, ref drumsInChart, activeInstruments);
             }
 
             if (upgradeData != null)
             {
                 var upgradeMidi = YARGMidiFile.Load(upgradeData);
-                LoadTracks(chart, ref upgradeMidi, ref encoding, drumsInChart, activeInstruments);
+                LoadTracks(chart, ref upgradeMidi, ref encoding, ref drumsInChart, activeInstruments);
             }
 
-            LoadTracks(chart, ref mainMidi, ref encoding, drumsInChart, activeInstruments);
+            LoadTracks(chart, ref mainMidi, ref encoding, ref drumsInChart, activeInstruments);
             YARGChartFinalizer.FinalizeBeats(chart);
             return chart;
         }
 
-        private static void LoadTracks(YARGChart chart, ref YARGMidiFile midi, ref Encoding encoding, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
+        private static void LoadTracks(YARGChart chart, ref YARGMidiFile midi, ref Encoding encoding, ref DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
         {
             while (midi.GetNextTrack(out var trackNumber, out var track))
             {
@@ -90,22 +90,7 @@ namespace YARG.Core.NewParsing
                 }
                 else if (activeInstruments == null || activeInstruments.Contains(type))
                 {
-                    if (type != MidiTrackType.Drums)
-                    {
-                        LoadInstrument(chart, type, track, ref encoding);
-                    }
-                    else if (drumsInChart == DrumsType.ProDrums)
-                    {
-                        chart.ProDrums ??= MidiDrumsLoader.LoadProDrums(track, chart.Sync);
-                    }
-                    else if (drumsInChart == DrumsType.FourLane)
-                    {
-                        chart.FourLaneDrums ??= MidiDrumsLoader.LoadBasic<FourLane>(track, chart.Sync);
-                    }
-                    else if (drumsInChart == DrumsType.FiveLane)
-                    {
-                        chart.FiveLaneDrums ??= MidiDrumsLoader.LoadBasic<FiveLane>(track, chart.Sync);
-                    }
+                    LoadInstrument(chart, type, ref drumsInChart, track, ref encoding);
                 }
             }
         }
@@ -194,7 +179,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static void LoadInstrument(YARGChart chart, MidiTrackType type, in YARGMidiTrack midiTrack, ref Encoding encoding)
+        private static void LoadInstrument(YARGChart chart, MidiTrackType type, ref DrumsType drumsInChart, in YARGMidiTrack midiTrack, ref Encoding encoding)
         {
             switch (type)
             {
@@ -204,6 +189,20 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Coop_5:        chart.FiveFretCoopGuitar ??= MidiFiveFretLoader.Load(midiTrack, chart.Sync); break;
                 case MidiTrackType.Keys:          chart.Keys ??=               MidiFiveFretLoader.Load(midiTrack, chart.Sync); break;
 
+                case MidiTrackType.Drums:
+                    if (drumsInChart == DrumsType.ProDrums)
+                    {
+                        chart.ProDrums ??= MidiDrumsLoader.LoadProDrums(midiTrack, chart.Sync);
+                    }
+                    else if (drumsInChart == DrumsType.FourLane)
+                    {
+                        chart.FourLaneDrums ??= MidiDrumsLoader.LoadBasic<FourLane>(midiTrack, chart.Sync);
+                    }
+                    else if (drumsInChart == DrumsType.FiveLane)
+                    {
+                        chart.FiveLaneDrums ??= MidiDrumsLoader.LoadBasic<FiveLane>(midiTrack, chart.Sync);
+                    }
+                    break;
                 case MidiTrackType.Guitar_6:      chart.SixFretGuitar ??=      MidiSixFretLoader. Load(midiTrack, chart.Sync); break;
                 case MidiTrackType.Bass_6:        chart.SixFretBass ??=        MidiSixFretLoader. Load(midiTrack, chart.Sync); break;
                 case MidiTrackType.Rhythm_6:      chart.SixFretRhythm ??=      MidiSixFretLoader. Load(midiTrack, chart.Sync); break;

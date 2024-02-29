@@ -5,7 +5,7 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    [DebuggerDisplay("{key} | {Value.ToString()}")]
+    [DebuggerDisplay("{Key} | {Value.ToString()}")]
     public struct YARGKeyValuePair<TKey, TValue> : IComparable<TKey>, IEquatable<TKey>
         where TKey : IEquatable<TKey>, IComparable<TKey>
     {
