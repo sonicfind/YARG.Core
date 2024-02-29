@@ -9,6 +9,7 @@ using YARG.Core.Extensions;
 using YARG.Core.IO;
 using YARG.Core.IO.Disposables;
 using YARG.Core.IO.Ini;
+using YARG.Core.NewParsing;
 using YARG.Core.Song.Cache;
 using YARG.Core.Song.Preparsers;
 
@@ -143,13 +144,29 @@ namespace YARG.Core.Song
             if (stream == null)
                 return null;
 
-            if (Type != ChartType.Chart)
+            if (Type == ChartType.Mid || Type == ChartType.Midi)
             {
                 return SongChart.FromMidi(_parseSettings, MidFileLoader.LoadMidiFile(stream));
             }
 
             using var reader = new StreamReader(stream);
             return SongChart.FromDotChart(_parseSettings, reader.ReadToEnd());
+        }
+
+        public override YARGChart? LoadChart_New(HashSet<Instrument> activeInstruments)
+        {
+            using var stream = GetChartStream();
+            if (stream == null)
+                return null;
+
+            if (Type == ChartType.Mid || Type == ChartType.Midi)
+            {
+                var tracks = ConvertToMidiTracks(activeInstruments);
+                return DotMidiLoader.LoadSingle(stream, _metadata, _parseSettings, tracks);
+            }
+
+            using var bytes = AllocatedArray<byte>.Read(stream, stream.Length);
+            return YARGDotChartLoader.Load(bytes, _metadata, _parseSettings, activeInstruments);
         }
 
         public override FixedArray<byte>? LoadMiloData()
