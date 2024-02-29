@@ -95,16 +95,16 @@ namespace YARG.Core.NewParsing
                 }
 
                 if (type == MidiTrackType.Events)
-                    LoadEventsTrack(chart.Events, sync, midiTrack);
-                else if (type == MidiTrackType.Beat)
-                    LoadBeatsTrack(chart.BeatMap, sync, midiTrack);
-                else
                 {
-                    HashSet<Difficulty>? difficulties = null;
-                    if (activeInstruments == null || activeInstruments.Contains(type))
-                    {
-                        LoadInstrument(chart, type, sync, midiTrack, ref encoding);
-                    }
+                    LoadEventsTrack(chart.Events, sync, midiTrack);
+                }
+                else if (type == MidiTrackType.Beat)
+                {
+                    LoadBeatsTrack(chart.BeatMap, sync, midiTrack);
+                }
+                else if (activeInstruments == null || activeInstruments.Contains(type))
+                {
+                    LoadInstrument(chart, type, sync, midiTrack, ref encoding);
                 }
             }
         }
