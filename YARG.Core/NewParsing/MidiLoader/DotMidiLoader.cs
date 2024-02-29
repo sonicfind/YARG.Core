@@ -98,27 +98,9 @@ namespace YARG.Core.NewParsing
                     LoadEventsTrack(chart.Events, sync, midiTrack);
                 else if (type == MidiTrackType.Beat)
                     LoadBeatsTrack(chart.BeatMap, sync, midiTrack);
-                else
+                else if (activeInstruments == null || activeInstruments.Contains(type))
                 {
-                    if (activeInstruments == null || activeInstruments.Contains(type))
-                    {
-                        if (type != MidiTrackType.Drums)
-                        {
-                            LoadInstrument(chart, type, sync, midiTrack, ref encoding);
-                        }
-                        else if (drumsInChart == DrumsType.ProDrums)
-                        {
-                            chart.ProDrums ??= MidiDrumsLoader.LoadProDrums(midiTrack, sync);
-                        }
-                        else if (drumsInChart == DrumsType.FourLane)
-                        {
-                            chart.FourLaneDrums ??= MidiDrumsLoader.LoadBasic<FourLane>(midiTrack, sync);
-                        }
-                        else if (drumsInChart == DrumsType.FiveLane)
-                        {
-                            chart.FiveLaneDrums ??= MidiDrumsLoader.LoadBasic<FiveLane>(midiTrack, sync);
-                        }
-                    }
+                    LoadInstrument(chart, drumsInChart, type, sync, midiTrack, ref encoding);
                 }
             }
         }
@@ -186,7 +168,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static void LoadInstrument(YARGChart chart, MidiTrackType type, SyncTrack2 sync, YARGMidiTrack midiTrack, ref Encoding encoding) 
+        private static void LoadInstrument(YARGChart chart, DrumsType drumsInChart, MidiTrackType type, SyncTrack2 sync, YARGMidiTrack midiTrack, ref Encoding encoding) 
         {
             switch (type)
             {
@@ -201,6 +183,20 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Rhythm_6:      chart.SixFretRhythm ??=      MidiSixFretLoader. Load(midiTrack, sync); break;
                 case MidiTrackType.Coop_6:        chart.SixFretCoopGuitar ??=  MidiSixFretLoader. Load(midiTrack, sync); break;
 
+                case MidiTrackType.Drums:
+                    if (drumsInChart == DrumsType.ProDrums)
+                    {
+                        chart.ProDrums ??= MidiDrumsLoader.LoadProDrums(midiTrack, sync);
+                    }
+                    else if (drumsInChart == DrumsType.FourLane)
+                    {
+                        chart.FourLaneDrums ??= MidiDrumsLoader.LoadBasic<FourLane>(midiTrack, sync);
+                    }
+                    else if (drumsInChart == DrumsType.FiveLane)
+                    {
+                        chart.FiveLaneDrums ??= MidiDrumsLoader.LoadBasic<FiveLane>(midiTrack, sync);
+                    }
+                    break;
                 case MidiTrackType.Pro_Guitar_17: chart.ProGuitar_17Fret ??=   MidiProGuitarLoader.Load<ProFret_17>(midiTrack, sync); break;
                 case MidiTrackType.Pro_Guitar_22: chart.ProGuitar_22Fret ??=   MidiProGuitarLoader.Load<ProFret_22>(midiTrack, sync); break;
                 case MidiTrackType.Pro_Bass_17:   chart.ProBass_17Fret ??=     MidiProGuitarLoader.Load<ProFret_17>(midiTrack, sync); break;
