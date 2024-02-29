@@ -11,6 +11,7 @@ using YARG.Core.Logging;
 using YARG.Core.Extensions;
 using MoonscraperChartEditor.Song.IO;
 using YARG.Core.Chart;
+using YARG.Core.NewParsing;
 
 namespace YARG.Core.Song
 {
@@ -100,6 +101,36 @@ namespace YARG.Core.Song
 
             using var reader = new StreamReader(stream);
             return SongChart.FromDotChart(in parseSettings, reader.ReadToEnd());
+        }
+
+        public override YARGChart? LoadChart_New(HashSet<Instrument> activeInstruments)
+        {
+            if (!_chartFile.IsStillValid())
+            {
+                return null;
+            }
+
+            if (_iniFile != null ? !_iniFile.Value.IsStillValid() : File.Exists(Path.Combine(Location, "song.ini")))
+            {
+                return null;
+            }
+
+            var drums = ParseDrumsType(in Parts);
+            switch (_chartFormat)
+            {
+                case ChartFormat.Mid:
+                case ChartFormat.Midi:
+                {
+                    using var stream = new FileStream(_chartFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, 1);
+                    var tracks = ConvertToMidiTracks(activeInstruments);
+                    return DotMidiLoader.LoadSingle(stream, in Metadata, in Settings, drums, tracks);
+                }
+                default:
+                {
+                    using var bytes = FixedArray<byte>.Load(_chartFile.FullName);
+                    return YARGDotChartLoader.Load(in bytes, in Metadata, in Settings, drums, activeInstruments);
+                }
+            }
         }
 
         public override StemMixer? LoadAudio(float speed, double volume, params SongStem[] ignoreStems)
