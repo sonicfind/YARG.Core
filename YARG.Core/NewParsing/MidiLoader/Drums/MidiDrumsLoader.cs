@@ -193,9 +193,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[3] == brePositions[4])
                             {
                                 phraseInfo.Duration = position - bre;
-                                instrumentTrack.SpecialPhrases
-                                        .TraverseBackwardsUntil(bre)
-                                        .Add(SpecialPhraseType.BRE, phraseInfo);
+                                instrumentTrack.SpecialPhrases[bre].Add(SpecialPhraseType.BRE, phraseInfo);
                             }
                             bre.Ticks = -1;
                         }
