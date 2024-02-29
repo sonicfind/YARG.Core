@@ -37,9 +37,8 @@ namespace YARG.Core.NewParsing
         {
             unsafe
             {
-                var curr = TempoMarkers.Data + startIndex;
                 var end = TempoMarkers.End;
-                while (curr < end)
+                for (var curr = TempoMarkers.Data + startIndex;  curr < end; ++curr)
                 {
                     if (curr + 1 == end || ticks < curr[1].Key)
                     {
@@ -64,9 +63,8 @@ namespace YARG.Core.NewParsing
             long micros = (long) (seconds * Tempo2.MICROS_PER_SECOND);
             unsafe
             {
-                var curr = TempoMarkers.Data + startIndex;
                 var end = TempoMarkers.End;
-                while (curr < end)
+                for (var curr = TempoMarkers.Data + startIndex; curr < end; ++curr)
                 {
                     if (curr + 1 == end || micros < curr[1].Key)
                     {
