@@ -101,22 +101,7 @@ namespace YARG.Core.NewParsing
                     HashSet<Difficulty>? difficulties = null;
                     if (activeInstruments == null || activeInstruments.TryGetValue(type, out difficulties))
                     {
-                        if (type != MidiTrackType.Drums)
-                        {
-                            LoadInstrument(chart, type, sync, midiTrack, difficulties);
-                        }
-                        else if (chart.Settings.DrumsType == DrumsType.ProDrums)
-                        {
-                            chart.ProDrums ??= MidiProDrumsLoader.Load(midiTrack, sync, difficulties);
-                        }
-                        else if (chart.Settings.DrumsType == DrumsType.FourLane)
-                        {
-                            chart.FourLaneDrums ??= MidiFourLaneLoader.Load(midiTrack, sync, difficulties);
-                        }
-                        else if (chart.Settings.DrumsType == DrumsType.FiveLane)
-                        {
-                            chart.FiveLaneDrums ??= MidiFiveLaneLoader.Load(midiTrack, sync, difficulties);
-                        }
+                        LoadInstrument(chart, type, sync, midiTrack, difficulties);
                     }
                 }
             }
@@ -199,6 +184,20 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Rhythm_6:      chart.SixFretRhythm ??=      MidiSixFretLoader. Load(midiTrack, sync, difficulties); break;
                 case MidiTrackType.Coop_6:        chart.SixFretCoopGuitar ??=  MidiSixFretLoader. Load(midiTrack, sync, difficulties); break;
 
+                case MidiTrackType.Drums:
+                    if (chart.Settings.DrumsType == DrumsType.ProDrums)
+                    {
+                        chart.ProDrums ??= MidiProDrumsLoader.Load(midiTrack, sync, difficulties);
+                    }
+                    else if (chart.Settings.DrumsType == DrumsType.FourLane)
+                    {
+                        chart.FourLaneDrums ??= MidiFourLaneLoader.Load(midiTrack, sync, difficulties);
+                    }
+                    else if (chart.Settings.DrumsType == DrumsType.FiveLane)
+                    {
+                        chart.FiveLaneDrums ??= MidiFiveLaneLoader.Load(midiTrack, sync, difficulties);
+                    }
+                    break;
                 case MidiTrackType.Pro_Guitar_17: chart.ProGuitar_17Fret ??=   MidiProGuitarLoader<ProFret_17>.Load(midiTrack, sync, difficulties); break;
                 case MidiTrackType.Pro_Guitar_22: chart.ProGuitar_22Fret ??=   MidiProGuitarLoader<ProFret_22>.Load(midiTrack, sync, difficulties); break;
                 case MidiTrackType.Pro_Bass_17:   chart.ProBass_17Fret ??=     MidiProGuitarLoader<ProFret_17>.Load(midiTrack, sync, difficulties); break;
