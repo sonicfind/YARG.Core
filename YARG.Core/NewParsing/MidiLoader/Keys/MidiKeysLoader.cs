@@ -86,7 +86,7 @@ namespace YARG.Core.NewParsing.Midi
 
         private static void ParseLaneColor_ON(this MidiBasicInstrumentLoader<KeysNote2, KeysMidiDiff> loader)
         {
-            int noteValue = loader.Note.value - 60;
+            int noteValue = loader.Note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
             int lane = LANEVALUES[noteValue];
             if (lane < 5)
             {
@@ -108,7 +108,7 @@ namespace YARG.Core.NewParsing.Midi
 
         private static void ParseLaneColor_Off(this MidiBasicInstrumentLoader<KeysNote2, KeysMidiDiff> loader)
         {
-            int noteValue = loader.Note.value - 60;
+            int noteValue = loader.Note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
             int lane = LANEVALUES[noteValue];
             if (lane < 5)
             {

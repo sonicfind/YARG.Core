@@ -29,7 +29,7 @@ namespace YARG.Core.NewParsing.Midi
 
         protected override void ParseLaneColor_ON()
         {
-            int noteValue = Note.value - 60;
+            int noteValue = Note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
             int diffIndex = MidiBasicInstrumentLoader.DIFFVALUES[noteValue];
             var midiDiff = Difficulties[diffIndex];
             if (midiDiff == null)
