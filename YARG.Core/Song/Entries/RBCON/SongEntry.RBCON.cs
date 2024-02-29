@@ -12,6 +12,7 @@ using YARG.Core.Extensions;
 using YARG.Core.Audio;
 using YARG.Core.Logging;
 using YARG.Core.IO.Disposables;
+using YARG.Core.NewParsing;
 
 namespace YARG.Core.Song
 {
@@ -105,6 +106,30 @@ namespace YARG.Core.Song
             }
 
             return SongChart.FromMidi(_parseSettings, midi);
+        }
+        
+        public override YARGChart? LoadChart_New(Dictionary<Instrument, HashSet<Difficulty>> activeInstruments)
+        {
+            using var midiStream = GetMidiStream();
+            if (midiStream == null)
+            {
+                return null;
+            }
+
+            if (_updateMidi != null && !_updateMidi.Value.IsStillValid(false))
+            {
+                return null;
+            }
+
+            using var updateStream = _updateMidi != null ? new FileStream(_updateMidi.Value.FullName, FileMode.Open, FileAccess.Read, FileShare.Read) : null;
+            using var upgradeStream = _upgrade?.GetUpgradeMidiStream();
+            if (upgradeStream == null && _upgrade != null)
+            {
+                return null;
+            }
+
+            var tracks = ConvertToMidiTrackDict(activeInstruments);
+            return DotMidiLoader.LoadMulti(midiStream, updateStream, upgradeStream, _metadata, _parseSettings, tracks);
         }
 
         public override StemMixer? LoadAudio(float speed, double volume, params SongStem[] ignoreStems)
