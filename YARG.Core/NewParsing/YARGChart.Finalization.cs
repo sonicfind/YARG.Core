@@ -107,9 +107,8 @@ namespace YARG.Core.NewParsing
             DualTime beat = default;
             unsafe
             {
-                var currSig = sync.TimeSigs.Data;
                 var end = sync.TimeSigs.End;
-                while (currSig < end)
+                for (var currSig = sync.TimeSigs.Data; currSig < end; ++currSig)
                 {
                     long ticksPerMarker = multipliedTickrate >> currSig->Value.Denominator;
                     long ticksPerMeasure = (multipliedTickrate * currSig->Value.Numerator) >> currSig->Value.Denominator;
@@ -142,9 +141,8 @@ namespace YARG.Core.NewParsing
             DualTime beat = default;
             unsafe
             {
-                var currSig = sync.TimeSigs.Data;
                 var end = sync.TimeSigs.End;
-                while (currSig < end)
+                for (var currSig = sync.TimeSigs.Data; currSig < end; ++currSig)
                 {
                     int numerator = currSig->Value.Numerator;
                     int markersPerClick = (6 << currSig->Value.Denominator) / currSig->Value.Metronome;
