@@ -30,7 +30,7 @@ namespace YARG.Core.NewParsing.Midi
                 instrumentTrack[i] = new DifficultyTrack2<DrumNote2<TDrumConfig>>();
             }
 
-            int NUM_LANES = new DrumNote2<TDrumConfig>().Pads.NumPads + 2;
+            int NUM_LANES = IDrumNote<TDrumConfig>.NUM_PADS + 2;
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * MAX_LANES]
             {
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
