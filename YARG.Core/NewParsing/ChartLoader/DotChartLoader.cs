@@ -18,20 +18,20 @@ namespace YARG.Core.NewParsing
         private const string PHRASE_START = "phrase_start";
         private const string PHRASE_END = "phrase_end ";
 
-        public static YARGChart Load(FixedArray<byte> file, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument> activeTracks)
+        public static YARGChart Load(in FixedArray<byte> file, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument> activeTracks)
         {
-            if (YARGTextReader.IsUTF8(file, out var byteContainer))
+            if (YARGTextReader.IsUTF8(in file, out var byteContainer))
             {
                 return Process(ref byteContainer, in metadata, in settings, drumsInChart, activeTracks);
             }
 
-            using var chars = YARGTextReader.ConvertToUTF16(file, out var charContainer);
+            using var chars = YARGTextReader.ConvertToUTF16(in file, out var charContainer);
             if (chars.IsAllocated)
             {
                 return Process(ref charContainer, in metadata, in settings, drumsInChart, activeTracks);
             }
 
-            using var ints = YARGTextReader.ConvertToUTF32(file, out var intContainer);
+            using var ints = YARGTextReader.ConvertToUTF32(in file, out var intContainer);
             return Process(ref intContainer, in metadata, in settings, drumsInChart, activeTracks);
         }
 

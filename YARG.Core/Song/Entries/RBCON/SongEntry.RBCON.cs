@@ -10,6 +10,7 @@ using Melanchall.DryWetMidi.Core;
 using YARG.Core.Extensions;
 using YARG.Core.Audio;
 using YARG.Core.Logging;
+using YARG.Core.NewParsing;
 
 namespace YARG.Core.Song
 {
@@ -162,6 +163,30 @@ namespace YARG.Core.Song
                 ChordHopoCancellation = true
             };
             return SongChart.FromMidi(in parseSettings, midi);
+        }
+        
+        public override YARGChart? LoadChart_New(HashSet<Instrument> activeInstruments)
+        {
+            using var midiStream = GetMidiStream();
+            if (midiStream == null)
+            {
+                return null;
+            }
+
+            if (UpdateMidi != null && !UpdateMidi.Value.IsStillValid(false))
+            {
+                return null;
+            }
+
+            using var updateStream = UpdateMidi != null ? new FileStream(UpdateMidi.Value.FullName, FileMode.Open, FileAccess.Read, FileShare.Read) : null;
+            using var upgradeStream = Upgrade?.GetUpgradeMidiStream();
+            if (upgradeStream == null && Upgrade != null)
+            {
+                return null;
+            }
+
+            var tracks = ConvertToMidiTracks(activeInstruments);
+            return DotMidiLoader.LoadMulti(midiStream, updateStream, upgradeStream, in Metadata, in Settings, DrumsType.ProDrums, tracks);
         }
 
         public override StemMixer? LoadAudio(float speed, double volume, params SongStem[] ignoreStems)
