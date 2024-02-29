@@ -9,6 +9,13 @@ namespace YARG.Core.NewParsing
     public interface IDrumNote<TPads> : IInstrumentNote
          where TPads : unmanaged, IDrumPadConfig
     {
+        public static readonly int NUM_PADS;
+        static IDrumNote()
+        {
+            TPads d = default;
+            NUM_PADS = d.NumPads;
+        }
+
         public DualTime Bass { get; set; }
         public DualTime DoubleBass { get; set; }
         public ref TPads Pads { get; }
