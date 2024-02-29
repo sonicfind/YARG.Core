@@ -87,10 +87,10 @@ namespace YARG.Core.NewParsing
         {
             foreach (var midiTrack in midi)
             {
-                string name = Encoding.ASCII.GetString(midiTrack.ExtractTextOrSysEx());
-                if (!YARGMidiTrack.TRACKNAMES.TryGetValue(name, out var type))
+                string trackname = midiTrack.FindTrackName(Encoding.UTF8)!;
+                if (!YARGMidiTrack.TRACKNAMES.TryGetValue(trackname, out var type))
                 {
-                    YargLogger.LogInfo($"Unrecognized MIDI Track: {name}");
+                    YargLogger.LogInfo($"Unrecognized MIDI Track: {trackname}");
                     continue;
                 }
 
