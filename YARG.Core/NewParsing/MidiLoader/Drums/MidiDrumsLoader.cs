@@ -13,15 +13,16 @@ namespace YARG.Core.NewParsing.Midi
             return loader.Process(midiTrack, sync);
         }
 
-        private static readonly int NUM_LANES;
+        private static readonly int NUM_BRELANES;
+        private static readonly int NUM_DRUMLANES;
         static MidiDrumsLoader()
         {
-            TDrumConfig bufNote = default;
-            NUM_LANES = bufNote.NumPads;
+            NUM_BRELANES = IDrumNote<TDrumConfig>.NUM_PADS + 1;
+            NUM_DRUMLANES = IDrumNote<TDrumConfig>.NUM_PADS + 2;
         }
 
         private MidiDrumsLoader(HashSet<Difficulty>? Difficulties)
-            : base(Difficulties, NUM_LANES)
+            : base(Difficulties, NUM_BRELANES)
         {
 
         }
@@ -36,7 +37,7 @@ namespace YARG.Core.NewParsing.Midi
 
             var notes = Track[diffIndex]!.Notes;
             int lane = MidiDrumLoader_Base.LANEVALUES[noteValue];
-            if (lane < NUM_LANES)
+            if (lane < NUM_DRUMLANES)
             {
                 midiDiff.Notes[lane] = Position;
 
@@ -80,7 +81,7 @@ namespace YARG.Core.NewParsing.Midi
                 return;
 
             int lane = MidiDrumLoader_Base.LANEVALUES[noteValue];
-            if (lane < NUM_LANES)
+            if (lane < NUM_DRUMLANES)
             {
                 ref var colorPosition = ref midiDiff.Notes[lane];
                 if (colorPosition.Ticks != -1)

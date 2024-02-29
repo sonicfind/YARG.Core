@@ -14,11 +14,12 @@ namespace YARG.Core.NewParsing.Midi
         private const int TOM_MIN_VALUE = 110;
         private const int TOM_MAX_VALUE = 112;
         private const int TOM_MIN_LANE = 3;
-        private const int NUMLANES = 6;
+        private const int NUM_BRELANES = 5;
+        private const int NUM_DRUMLANES = 6;
 
         private readonly bool[] _toms = new bool[3];
 
-        private MidiProDrumsLoader(HashSet<Difficulty>? Difficulties) : base(Difficulties, 4) { }
+        private MidiProDrumsLoader(HashSet<Difficulty>? Difficulties) : base(Difficulties, NUM_BRELANES) { }
 
         protected override void ParseLaneColor_ON()
         {
@@ -30,7 +31,7 @@ namespace YARG.Core.NewParsing.Midi
 
             var notes = Track[diffIndex]!.Notes;
             int lane = MidiDrumLoader_Base.LANEVALUES[noteValue];
-            if (lane < NUMLANES)
+            if (lane < NUM_DRUMLANES)
             {
                 midiDiff.Notes[lane] = Position;
 
@@ -84,7 +85,7 @@ namespace YARG.Core.NewParsing.Midi
                 return;
 
             int lane = MidiDrumLoader_Base.LANEVALUES[noteValue];
-            if (lane < NUMLANES)
+            if (lane < NUM_DRUMLANES)
             {
                 ref var colorPosition = ref midiDiff.Notes[lane];
                 if (colorPosition.Ticks != -1)
