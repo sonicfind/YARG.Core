@@ -53,8 +53,7 @@ namespace YARG.Core.NewParsing.Midi
                 }
             }
 
-            Track.SpecialPhrases.TraverseBackwardsUntil(_BRENotes[0])
-                                .TryAdd(SpecialPhraseType.BRE, new SpecialPhraseInfo(Position - _BRENotes[0]));
+            Track.SpecialPhrases[_BRENotes[0]].Add(SpecialPhraseType.BRE, new SpecialPhraseInfo(Position - _BRENotes[0]));
 
             for (int i = 0; i < _BRENotes.Length; i++)
             {
