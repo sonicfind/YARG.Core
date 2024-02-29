@@ -208,12 +208,8 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Pro_Keys_M:
                 case MidiTrackType.Pro_Keys_E:
                     {
-                        int index = type - MidiTrackType.Pro_Keys_E;
-                        if (difficulties != null && !difficulties.Contains((Difficulty) index))
-                            break;
-
                         chart.ProKeys ??= new InstrumentTrack2<ProKeysDifficultyTrack>();
-                        chart.ProKeys[index] ??= MidiProKeysLoader.Load(midiTrack, sync);
+                        chart.ProKeys[type - MidiTrackType.Pro_Keys_E] ??= MidiProKeysLoader.Load(midiTrack, sync);
                         break;
                     }
                 case MidiTrackType.Vocals: chart.LeadVocals ??= MidiVocalsLoader.LoadLeadVocals(midiTrack, sync); break;
