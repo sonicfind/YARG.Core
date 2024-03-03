@@ -87,5 +87,21 @@ namespace YARG.Core.NewParsing
                 }
             }
         }
+
+        public override string ToString()
+        {
+            StringBuilder stringBuilder = new();
+            if (Green.IsActive())
+                stringBuilder.Append($"Green: {Green.Ticks} | ");
+            if (Red.IsActive())
+                stringBuilder.Append($"Red: {Red.Ticks} | ");
+            if (Yellow.IsActive())
+                stringBuilder.Append($"Yellow: {Yellow.Ticks} | ");
+            if (Blue.IsActive())
+                stringBuilder.Append($"Blue: {Blue.Ticks} | ");
+            if (Orange.IsActive())
+                stringBuilder.Append($"Orange: {Orange.Ticks}");
+            return stringBuilder.ToString();
+        }
     }
 }

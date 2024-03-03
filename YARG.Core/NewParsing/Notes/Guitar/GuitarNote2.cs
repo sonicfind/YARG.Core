@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace YARG.Core.NewParsing
 {
@@ -92,6 +89,11 @@ namespace YARG.Core.NewParsing
                     return sustain;
                 }
             }
+        }
+
+        public readonly override string ToString()
+        {
+            return $"{State} | {Frets}";
         }
     }
 }
