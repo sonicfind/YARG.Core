@@ -13,13 +13,13 @@ namespace YARG.Core.NewParsing
 {
     public class DotMidiLoader
     {
-        public static YARGChart LoadSingle(string filename, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?> activeInstruments)
+        public static YARGChart LoadSingle(string filename, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
         {
             using FileStream stream = new(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
             return LoadSingle(stream, metadata, settings, activeInstruments);
         }
 
-        public static YARGChart LoadSingle(Stream stream, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?> activeInstruments)
+        public static YARGChart LoadSingle(Stream stream, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
         {
             var midi = new YARGMidiFile(stream);
             var (sync, sequencename) = LoadSyncTrack(midi);
@@ -32,7 +32,7 @@ namespace YARG.Core.NewParsing
             return chart;
         }
 
-        public static YARGChart LoadMulti(Stream mainStream, Stream? updateStream, Stream? upgradeStream, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?> activeInstruments)
+        public static YARGChart LoadMulti(Stream mainStream, Stream? updateStream, Stream? upgradeStream, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
         {
             var midi = new YARGMidiFile(mainStream);
             var (sync, sequencename) = LoadSyncTrack(midi);
@@ -81,7 +81,7 @@ namespace YARG.Core.NewParsing
             return (sync, sequenceName);
         }
 
-        private static void LoadTracks(YARGChart chart, SyncTrack2 sync, YARGMidiFile midi, Dictionary<MidiTrackType, HashSet<Difficulty>?> activeInstruments)
+        private static void LoadTracks(YARGChart chart, SyncTrack2 sync, YARGMidiFile midi, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
         {
             foreach (var midiTrack in midi)
             {
