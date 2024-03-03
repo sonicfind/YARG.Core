@@ -15,7 +15,7 @@ namespace YARG.Core.NewParsing.Midi
 
         public static void SetMultiplierNote(int note)
         {
-            OverdrivePhrase.MidiValues[0] = note;
+            OverdrivePhrase.MidiValues[0] = note == 103 ? 116 : 103;
         }
 
         internal DualTime Position = default;
