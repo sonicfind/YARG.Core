@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using YARG.Core.Chart;
 using YARG.Core.Song;
 
 namespace YARG.Core.NewParsing
 {
+    [DebuggerDisplay("[{Ticks}, {Seconds}]")]
     public struct DualTime : IEquatable<DualTime>, IComparable<DualTime>
     {
         public static readonly DualTime Inactive = new()
