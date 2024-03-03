@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -190,6 +188,21 @@ namespace YARG.Core.NewParsing
             return sustain;
         }
 
+        public override string ToString()
+        {
+            StringBuilder stringBuilder = new();
+            if (_bass.IsActive())
+            {
+                stringBuilder.Append($"Bass: {_bass.Ticks} | ");
+            }
+            else if (_doubleBass.IsActive())
+            {
+                stringBuilder.Append($"DoubleBass: {_doubleBass.Ticks} | ");
+            }
+            stringBuilder.Append(Pads.ToString());
+            return stringBuilder.ToString();
+        }
+
         /// <summary>
         /// Constructor to convert the buffer of unknown drum types to a known type
         /// </summary>
@@ -267,6 +280,24 @@ namespace YARG.Core.NewParsing
         public int GetNumActiveLanes() => _baseDrumNote.GetNumActiveLanes();
 
         public DualTime GetLongestSustain() => _baseDrumNote.GetLongestSustain();
+
+        public override string ToString()
+        {
+            StringBuilder builder = new(_baseDrumNote.ToString());
+            if (Cymbals[0])
+            {
+                builder.Append($"Y-Cymbal | ");
+            }
+            if (Cymbals[1])
+            {
+                builder.Append($"B-Cymbal | ");
+            }
+            if (Cymbals[2])
+            {
+                builder.Append($"G-Cymbal | ");
+            }
+            return builder.ToString();
+        }
 
         /// <summary>
         /// Constructor to convert the buffer of unknown drum types to a known type

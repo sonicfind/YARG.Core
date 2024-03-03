@@ -20,5 +20,10 @@ namespace YARG.Core.NewParsing
         {
             return Duration.IsActive();
         }
+
+        public override string ToString()
+        {
+            return Dynamics != DrumDynamics.None ? $"{Duration.Ticks} - {Dynamics}" : Duration.Ticks.ToString();
+        }
     }
 }
