@@ -21,6 +21,12 @@ namespace YARG.Core.NewParsing
         public void ToggleDoubleBass();
         public void DisableBass();
         public DualTime this[int lane] { get; set; }
+
+        /// <summary>
+        /// Used for loading the buffer of unknown drum types to a known type
+        /// </summary>
+        /// <param name="unknown">Unknown drum type note</param>
+        public void LoadFrom(in ProDrumNote2<FiveLane> unknown);
     }
 
     public struct DrumNote2<TPads> : IDrumNote<TPads>
@@ -204,19 +210,19 @@ namespace YARG.Core.NewParsing
         }
 
         /// <summary>
-        /// Constructor to convert the buffer of unknown drum types to a known type
+        /// Used for loading the buffer of unknown drum types to a known type
         /// </summary>
-        /// <param name="other">Unknown drum type note</param>
-        public DrumNote2(in ProDrumNote2<FiveLane> other)
+        /// <param name="unknown">Unknown drum type note</param>
+        public void LoadFrom(in ProDrumNote2<FiveLane> unknown)
         {
-            _bass = other.Bass;
-            _doubleBass = other.DoubleBass;
-            _flammed = other.IsFlammed;
+            _bass = unknown.Bass;
+            _doubleBass = unknown.DoubleBass;
+            _flammed = unknown.IsFlammed;
 
             unsafe
             {
                 fixed (void* ptr = &_pads)
-                fixed (void* otherPads = &other.Pads)
+                fixed (void* otherPads = &unknown.Pads)
                 {
                     Unsafe.CopyBlock(ptr, otherPads, (uint) sizeof(TPads));
                 }
@@ -300,17 +306,17 @@ namespace YARG.Core.NewParsing
         }
 
         /// <summary>
-        /// Constructor to convert the buffer of unknown drum types to a known type
+        /// Used for loading the buffer of unknown drum types to a known type
         /// </summary>
-        /// <param name="other">Unknown drum type note</param>
-        public ProDrumNote2(in ProDrumNote2<FiveLane> other)
+        /// <param name="unknown">Unknown drum type note</param>
+        public void LoadFrom(in ProDrumNote2<FiveLane> unknown)
         {
-            _baseDrumNote = new DrumNote2<TPads>(in other);
+            _baseDrumNote.LoadFrom(in unknown);
             unsafe
             {
                 for (int i = 0; i < CymbalArray.NUM_CYMBALS; ++i)
                 {
-                    Cymbals[i] = other.Cymbals[i];
+                    Cymbals[i] = unknown.Cymbals[i];
                 }
             }
         }
