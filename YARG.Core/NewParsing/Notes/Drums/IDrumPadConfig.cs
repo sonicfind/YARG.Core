@@ -7,6 +7,7 @@ namespace YARG.Core.NewParsing
     public interface IDrumPadConfig
     {
         public int NumPads { get; }
+        public void SetDynamics(int index, DrumDynamics dynamics);
     }
 
     public struct FourLane : IDrumPadConfig
@@ -17,6 +18,19 @@ namespace YARG.Core.NewParsing
         public DrumPad Green;
 
         public readonly int NumPads => 4;
+
+        public void SetDynamics(int index, DrumDynamics dynamics)
+        {
+            switch (index)
+            {
+                case 0: Snare.Dynamics  = dynamics; break;
+                case 1: Yellow.Dynamics = dynamics; break;
+                case 2: Blue.Dynamics   = dynamics; break;
+                case 3: Green.Dynamics  = dynamics; break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(index));
+            }
+        }
 
         public override string ToString()
         {
@@ -50,6 +64,20 @@ namespace YARG.Core.NewParsing
         public DrumPad Green;
 
         public readonly int NumPads => 5;
+
+        public void SetDynamics(int index, DrumDynamics dynamics)
+        {
+            switch (index)
+            {
+                case 0: Snare.Dynamics  = dynamics; break;
+                case 1: Yellow.Dynamics = dynamics; break;
+                case 2: Blue.Dynamics   = dynamics; break;
+                case 3: Orange.Dynamics = dynamics; break;
+                case 4: Green.Dynamics  = dynamics; break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(index));
+            }
+        }
 
         public override string ToString()
         {
