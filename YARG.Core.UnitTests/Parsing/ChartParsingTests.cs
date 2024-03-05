@@ -57,8 +57,7 @@ namespace YARG.Core.UnitTests.Parsing
             Assert.DoesNotThrow(() =>
             {
                 string chartPath = Path.Combine(chartsDirectory!, notesFile);
-                using var file = FixedArray<byte>.Load(chartPath);
-                using var chart = YARGDotChartLoader.Load(file, in SongMetadata.Default, in LoaderSettings.Default, DrumsType.Unknown, null);
+                using var chart = YARGDotChartLoader.Load(chartPath, null);
             });
         }
 
@@ -81,7 +80,7 @@ namespace YARG.Core.UnitTests.Parsing
             Assert.DoesNotThrow(() =>
             {
                 string chartPath = Path.Combine(chartsDirectory!, notesFile);
-                using var chart = DotMidiLoader.LoadSingle(chartPath, in SongMetadata.Default, in LoaderSettings.Default, DrumsType.Unknown, null);
+                using var chart = DotMidiLoader.LoadSingle(chartPath, null);
             });
         }
     }

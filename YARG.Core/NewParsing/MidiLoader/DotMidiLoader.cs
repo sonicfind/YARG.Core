@@ -6,6 +6,7 @@ using System.Text;
 using YARG.Core.Chart;
 using YARG.Core.IO;
 using YARG.Core.Logging;
+using YARG.Core.IO.Ini;
 using YARG.Core.NewParsing.Midi;
 using YARG.Core.Song;
 
@@ -13,10 +14,85 @@ namespace YARG.Core.NewParsing
 {
     public class DotMidiLoader
     {
-        public static YARGChart LoadSingle(string filename, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
+        public static YARGChart LoadSingle(string chartPath, HashSet<MidiTrackType>? activeInstruments)
         {
-            using FileStream stream = new(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-            return LoadSingle(stream, in metadata, in settings, drumsInChart, activeInstruments);
+            string iniPath = Path.Combine(Path.GetDirectoryName(chartPath), "song.ini");
+
+            IniSection modifiers;
+            var metadata = SongMetadata.Default;
+            var settings = LoaderSettings.Default;
+
+            var drumType = DrumsType.UnknownPro;
+            if (File.Exists(iniPath))
+            {
+                modifiers = SongIniHandler.ReadSongIniFile(iniPath);
+                metadata = new SongMetadata(modifiers, string.Empty);
+
+                if (modifiers.TryGet("five_lane_drums", out bool fiveLane))
+                {
+                    if (fiveLane)
+                    {
+                        drumType = DrumsType.FiveLane;
+                    }
+                    else if (!modifiers.TryGet("pro_drums", out bool prodrums) || prodrums)
+                    {
+                        drumType = DrumsType.ProDrums;
+                    }
+                    else
+                    {
+                        drumType = DrumsType.Unknown;
+                    }
+                }
+                else if (modifiers.TryGet("pro_drums", out bool prodrums) && !prodrums)
+                {
+                    drumType = DrumsType.Unknown;
+                }
+
+                if (!modifiers.TryGet("multiplier_note", out settings.OverdiveMidiNote) || settings.OverdiveMidiNote != 103)
+                {
+                    settings.OverdiveMidiNote = 116;
+                }
+            }
+            else
+            {
+                modifiers = new IniSection();
+            }
+
+            using var stream = new FileStream(chartPath, FileMode.Open, FileAccess.Read, FileShare.Read, 1);
+            var chart = LoadSingle(stream, metadata, in settings, drumType, activeInstruments);
+            if (!modifiers.TryGet("hopo_frequency", out chart.Settings.HopoThreshold) || chart.Settings.HopoThreshold <= 0)
+            {
+                if (modifiers.TryGet("eighthnote_hopo", out bool eighthNoteHopo))
+                {
+                    chart.Settings.HopoThreshold = chart.Sync.Tickrate / (eighthNoteHopo ? 2 : 3);
+                }
+                else if (modifiers.TryGet("hopofreq", out long hopoFreq))
+                {
+                    int denominator = hopoFreq switch
+                    {
+                        0 => 24,
+                        1 => 16,
+                        2 => 12,
+                        3 => 8,
+                        4 => 6,
+                        5 => 4,
+                        _ => throw new NotImplementedException($"Unhandled hopofreq value {hopoFreq}!")
+                    };
+                    chart.Settings.HopoThreshold = 4 * chart.Sync.Tickrate / denominator;
+                }
+                else
+                {
+                    chart.Settings.HopoThreshold = chart.Sync.Tickrate / 3;
+                }
+            }
+
+            // .chart defaults to no cutting off sustains whatsoever if the ini does not define the value.
+            // Since a failed `TryGet` sets the value to zero, we would need no additional work outside .mid
+            if (!modifiers.TryGet("sustain_cutoff_threshold", out chart.Settings.SustainCutoffThreshold))
+            {
+                settings.SustainCutoffThreshold = chart.Sync.Tickrate / 3;
+            }
+            return chart;
         }
 
         public static YARGChart LoadSingle(Stream stream, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
