@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnostics.Windows.Configs;
 using BenchmarkDotNet.Engines;
@@ -16,7 +17,7 @@ namespace YARG.Core.Benchmarks
     [MemoryDiagnoser]
     public class MidiParsingBenchmarks
     {
-        private static string ChartPath;
+        private static string chartPath;
         private static ParseSettings settings = ParseSettings.Default;
         private static readonly HashSet<MidiTrackType> guitarOnly = new()
         {
@@ -27,32 +28,36 @@ namespace YARG.Core.Benchmarks
         [GlobalSetup]
         public static void Initialize()
         {
-            ChartPath = Environment.GetEnvironmentVariable(Program.CHART_PATH_VAR);
+            chartPath = Environment.GetEnvironmentVariable(Program.CHART_PATH_VAR);
+            if (!File.Exists(chartPath))
+            {
+                throw new FileNotFoundException(chartPath);
+            }
             settings.StarPowerNote = 116;
         }
 
         [Benchmark]
         public void SongLoading_New()
         {
-            using var chart = DotMidiLoader.LoadSingle(ChartPath, in SongMetadata.Default, in LoaderSettings.Default, DrumsType.Unknown, null);
+            using var chart = DotMidiLoader.LoadSingle(chartPath, null);
         }
 
         [Benchmark]
         public void SongLoading_New_GuitarOnly()
         {
-            using var chart = DotMidiLoader.LoadSingle(ChartPath, in SongMetadata.Default, in LoaderSettings.Default, DrumsType.Unknown, guitarOnly);
+            using var chart = DotMidiLoader.LoadSingle(chartPath, guitarOnly);
         }
 
         [Benchmark]
         public void SongLoading()
         {
-            MoonSongLoader.LoadSong(ParseSettings.Default_Midi, ChartPath);
+            MoonSongLoader.LoadSong(ParseSettings.Default_Midi, chartPath);
         }
 
         [Benchmark]
         public SongChart FullChartLoading()
         {
-            return SongChart.FromMidi(in ParseSettings.Default_Midi, MidiFile.Read(ChartPath));
+            return SongChart.FromMidi(in ParseSettings.Default_Midi, MidiFile.Read(chartPath));
         }
     }
 }
