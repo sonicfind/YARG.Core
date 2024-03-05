@@ -4,7 +4,7 @@ namespace YARG.Core.NewParsing
 {
     public static partial class YARGDotChartLoader
     {
-        private static bool Set(ref GuitarNote2<FiveFret> note, int lane, DualTime length)
+        private static bool Set(ref GuitarNote2<FiveFret> note, int lane, in DualTime length)
         {
             switch (lane)
             {
@@ -27,7 +27,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool Set(ref GuitarNote2<SixFret> note, int lane, DualTime length)
+        private static bool Set(ref GuitarNote2<SixFret> note, int lane, in DualTime length)
         {
             switch (lane)
             {
@@ -51,7 +51,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool Set(ref KeysNote2 note, int lane, DualTime length)
+        private static bool Set(ref KeysNote2 note, int lane, in DualTime length)
         {
             switch (lane)
             {
@@ -66,7 +66,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool Set(ref DrumNote2<FourLane> note, int lane, DualTime length)
+        private static bool Set(ref DrumNote2<FourLane> note, int lane, in DualTime length)
         {
             switch (lane)
             {
@@ -93,7 +93,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool Set(ref DrumNote2<FiveLane> note, int lane, DualTime length)
+        private static bool Set(ref DrumNote2<FiveLane> note, int lane, in DualTime length)
         {
             switch (lane)
             {
@@ -123,7 +123,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool Set(ref ProDrumNote2<FourLane> note, int lane, DualTime length)
+        private static bool Set(ref ProDrumNote2<FourLane> note, int lane, in DualTime length)
         {
             switch (lane)
             {
@@ -155,7 +155,7 @@ namespace YARG.Core.NewParsing
         }
 
         private static DrumsType _unknownDrumType;
-        private static bool Set(ref ProDrumNote2<FiveLane> note, int lane, DualTime length)
+        private static bool Set(ref ProDrumNote2<FiveLane> note, int lane, in DualTime length)
         {
             switch (lane)
             {
