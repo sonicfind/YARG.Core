@@ -12,6 +12,7 @@ namespace YARG.Core.NewParsing
         where TValue : unmanaged
     {
         private static readonly int SIZEOF_PAIR = sizeof(YARGKeyValuePair<TKey, TValue>);
+        private static readonly TValue DEFAULT_VALUE = default;
 
         private YARGKeyValuePair<TKey, TValue>* _buffer = null;
         private int _capacity;
@@ -105,7 +106,7 @@ namespace YARG.Core.NewParsing
 
             var node = _buffer + index;
             node->Key = key;
-            node->Value = default;
+            node->Value = DEFAULT_VALUE;
             return ref node->Value;
         }
 
@@ -171,7 +172,7 @@ namespace YARG.Core.NewParsing
             int index = Find(0, key);
             if (index < 0)
             {
-                value = default!;
+                value = DEFAULT_VALUE;
                 return false;
             }
             value = _buffer[index].Value;
