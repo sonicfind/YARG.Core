@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnostics.Windows.Configs;
 using BenchmarkDotNet.Engines;
@@ -15,7 +16,7 @@ namespace YARG.Core.Benchmarks
     [MemoryDiagnoser]
     public class MidiParsingBenchmarks
     {
-        private static string ChartPath;
+        private static FileInfo chartInfo;
         private static ParseSettings settings = ParseSettings.Default;
         private static readonly HashSet<MidiTrackType> guitarOnly = new()
         {
@@ -26,32 +27,36 @@ namespace YARG.Core.Benchmarks
         [GlobalSetup]
         public static void Initialize()
         {
-            ChartPath = Environment.GetEnvironmentVariable(Program.CHART_PATH_VAR);
+            chartInfo = new FileInfo(Environment.GetEnvironmentVariable(Program.CHART_PATH_VAR));
+            if (!chartInfo.Exists)
+            {
+                throw new FileNotFoundException(chartInfo.FullName);
+            }
             settings.StarPowerNote = 116;
         }
 
         [Benchmark]
         public void SongLoading_New()
         {
-            using var chart = DotMidiLoader.LoadSingle(ChartPath, Song.SongMetadata.Default, settings, null);
+            using var chart = DotMidiLoader.LoadSingle(chartInfo, null);
         }
 
         [Benchmark]
         public void SongLoading_New_GuitarOnly()
         {
-            using var chart = DotMidiLoader.LoadSingle(ChartPath, Song.SongMetadata.Default, settings, guitarOnly);
+            using var chart = DotMidiLoader.LoadSingle(chartInfo, guitarOnly);
         }
 
         [Benchmark]
         public void SongLoading()
         {
-            MoonSongLoader.LoadSong(settings, ChartPath);
+            MoonSongLoader.LoadSong(settings, chartInfo.FullName);
         }
 
         [Benchmark]
         public SongChart FullChartLoading()
         {
-            return SongChart.FromMidi(settings, MidiFile.Read(ChartPath));
+            return SongChart.FromMidi(settings, MidiFile.Read(chartInfo.FullName));
         }
     }
 }
