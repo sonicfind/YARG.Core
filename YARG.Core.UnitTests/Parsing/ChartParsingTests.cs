@@ -55,10 +55,8 @@ namespace YARG.Core.UnitTests.Parsing
             YargLogger.AddLogListener(new DebugYargLogListener());
             Assert.DoesNotThrow(() =>
             {
-                string chartPath = Path.Combine(chartsDirectory!, notesFile);
-                var info = new FileInfo(chartPath);
-                using var file = MemoryMappedArray.Load(info);
-                using var chart = YARGDotChartLoader.Load(file, Song.SongMetadata.Default, ParseSettings.Default, null);
+                var chartInfo = new FileInfo(Path.Combine(chartsDirectory!, notesFile));
+                using var chart = YARGDotChartLoader.Load(chartInfo, null);
             });
         }
 
@@ -80,8 +78,8 @@ namespace YARG.Core.UnitTests.Parsing
             YargLogger.AddLogListener(new DebugYargLogListener());
             Assert.DoesNotThrow(() =>
             {
-                string chartPath = Path.Combine(chartsDirectory!, notesFile);
-                using var chart = DotMidiLoader.LoadSingle(chartPath, Song.SongMetadata.Default, ParseSettings.Default, null);
+                var chartInfo = new FileInfo(Path.Combine(chartsDirectory!, notesFile));
+                using var chart = DotMidiLoader.LoadSingle(chartInfo, null);
             });
         }
     }
