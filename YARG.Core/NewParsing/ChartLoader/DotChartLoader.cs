@@ -110,17 +110,37 @@ namespace YARG.Core.NewParsing
                 chart.LeadVocals = new VocalTrack2(1);
             }
 
+            BasicInstrumentTrack2<ProDrumNote2<FiveLane>>? unknownDrums = null;
             DualTime.SetTruncationLimit(settings, 1);
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
                 if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK)
                     ? !LoadEventsTrack(ref container, chart)
-                    : !SelectChartTrack(ref container, chart, drumsInChart, activeTracks))
+                    : !SelectChartTrack(ref container, chart, ref drumsInChart, activeTracks, ref unknownDrums))
                 {
                     if (YARGTextReader.SkipLinesUntil(ref container, TextConstants<TChar>.CLOSE_BRACE))
                     {
                         YARGTextReader.GotoNextLine(ref container);
                     }
+                }
+            }
+
+            if (unknownDrums != null && unknownDrums.IsOccupied())
+            {
+                switch (drumsInChart)
+                {
+                    case DrumsType.ProDrums:
+                        chart.ProDrums ??= new BasicInstrumentTrack2<ProDrumNote2<FourLane>>();
+                        UnknownDrumTrackConverter.ConvertTo<ProDrumNote2<FourLane>, FourLane>(chart.ProDrums, unknownDrums);
+                        break;
+                    case DrumsType.FiveLane:
+                        chart.FiveLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FiveLane>>();
+                        UnknownDrumTrackConverter.ConvertTo<DrumNote2<FiveLane>, FiveLane>(chart.FiveLaneDrums, unknownDrums);
+                        break;
+                    default:
+                        chart.FourLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane>>();
+                        UnknownDrumTrackConverter.ConvertTo<DrumNote2<FourLane>, FourLane>(chart.FourLaneDrums, unknownDrums);
+                        break;
                 }
             }
 
@@ -248,7 +268,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool SelectChartTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, DrumsType drumsInChart, HashSet<Instrument>? activeTracks)
+        private static bool SelectChartTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref BasicInstrumentTrack2<ProDrumNote2<FiveLane>>? unknownDrums)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (!YARGChartFileReader.ValidateInstrument(ref container, out var instrument, out var difficulty))
@@ -270,6 +290,16 @@ namespace YARG.Core.NewParsing
                 else if (drumsInChart == DrumsType.FiveLane)
                 {
                     instrument = Instrument.FiveLaneDrums;
+                }
+                else if (drumsInChart == DrumsType.Unknown && activeTracks == null)
+                {
+                    unsafe
+                    {
+                        _unknownDrumType = DrumsType.Unknown;
+                        bool result = LoadChartTrack(ref container, chart.Sync, difficulty, ref unknownDrums, &Set);
+                        drumsInChart = _unknownDrumType;
+                        return result;
+                    }
                 }
             }
 
