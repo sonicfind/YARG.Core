@@ -58,7 +58,7 @@ namespace YARG.Core.Chart
         private void HandleTextEvent(MoonText text)
         {
             // Ignore on 5-lane or standard Drums
-            if (_settings.DrumsType != DrumsType.FourLane && _currentInstrument is Instrument.FourLaneDrums)
+            if (_settings.DrumsType == DrumsType.FiveLane || _currentInstrument is Instrument.FourLaneDrums)
                 return;
 
             // Parse out event data
@@ -79,8 +79,9 @@ namespace YARG.Core.Chart
         {
             var pad = _settings.DrumsType switch
             {
-                DrumsType.FourLane => MoonNoteToFourLane(moonNote),
                 DrumsType.FiveLane => GetFourLaneFromFiveLane(moonNote),
+                DrumsType.ProDrums or
+                DrumsType.FourLane => MoonNoteToFourLane(moonNote),
                 _ => throw new InvalidOperationException($"Unexpected drums type {_settings.DrumsType}! (Drums type should have been calculated by now)")
             };
 
@@ -149,6 +150,7 @@ namespace YARG.Core.Chart
             return _settings.DrumsType switch
             {
                 DrumsType.FiveLane => MoonNoteToFiveLane(moonNote),
+                DrumsType.ProDrums or
                 DrumsType.FourLane => GetFiveLaneFromFourLane(moonNote),
                 _ => throw new InvalidOperationException($"Unexpected drums type {_settings.DrumsType}! (Drums type should have been calculated by now)")
             };
