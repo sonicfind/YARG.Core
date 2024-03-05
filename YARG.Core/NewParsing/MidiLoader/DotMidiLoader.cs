@@ -266,17 +266,38 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Keys:          chart.Keys ??=               MidiFiveFretLoader.Load(midiTrack, chart.Sync); break;
 
                 case MidiTrackType.Drums:
-                    if (drumsInChart == DrumsType.ProDrums)
+                    switch (drumsInChart)
                     {
-                        chart.ProDrums ??= MidiDrumsLoader.LoadProDrums(midiTrack, chart.Sync);
-                    }
-                    else if (drumsInChart == DrumsType.FourLane)
-                    {
+                    case DrumsType.FourLane:
                         chart.FourLaneDrums ??= MidiDrumsLoader.LoadBasic<FourLane>(midiTrack, chart.Sync);
-                    }
-                    else if (drumsInChart == DrumsType.FiveLane)
-                    {
+                        break;
+                    case DrumsType.ProDrums:
+                        chart.ProDrums ??= MidiDrumsLoader.LoadProDrums(midiTrack, chart.Sync);
+                        break;
+                    case DrumsType.FiveLane:
                         chart.FiveLaneDrums ??= MidiDrumsLoader.LoadBasic<FiveLane>(midiTrack, chart.Sync);
+                        break;
+                    default:
+                        // No `using/dipose` as events & phrases need to persist
+                        var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, chart.Sync, ref drumsInChart);
+                        // Only possible if pre-type was FourOrFive AND fifth lane was not found
+                        if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
+                        {
+                            chart.FourLaneDrums = UnknownDrumTrackConverter.ConvertTo<DrumNote2<FourLane>, FourLane>(track);
+                            drumsInChart = DrumsType.FourLane;
+                        }
+                        // Only possible if pre-type was ProOrFive AND fifth lane was not found
+                        else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
+                        {
+                            chart.ProDrums = UnknownDrumTrackConverter.ConvertTo<ProDrumNote2<FourLane>, FourLane>(track);
+                            drumsInChart = DrumsType.ProDrums;
+                        }
+                        // Only possible if fifth lane is found
+                        else
+                        {
+                            chart.FiveLaneDrums = UnknownDrumTrackConverter.ConvertTo<DrumNote2<FiveLane>, FiveLane>(track);
+                        }
+                        break;
                     }
                     break;
                 case MidiTrackType.Guitar_6:      chart.SixFretGuitar ??=      MidiSixFretLoader. Load(midiTrack, chart.Sync); break;
