@@ -35,15 +35,13 @@ namespace YARG.Core.Benchmarks
         [Benchmark]
         public void SongParsing_New()
         {
-            using var file = FixedArray<byte>.Load(chartPath);
-            using var chart = YARGDotChartLoader.Load(file, in SongMetadata.Default, in LoaderSettings.Default, DrumsType.Unknown, null);
+            using var chart = YARGDotChartLoader.Load(chartPath, null);
         }
 
         [Benchmark]
         public void SongParsing_New_GuitarOnly()
         {
-            using var file = FixedArray<byte>.Load(chartPath);
-            using var chart = YARGDotChartLoader.Load(file, in SongMetadata.Default, in LoaderSettings.Default, DrumsType.Unknown, guitarOnly);
+            using var chart = YARGDotChartLoader.Load(chartPath, guitarOnly);
         }
 
         [Benchmark]
