@@ -159,7 +159,7 @@ namespace YARG.Core.Song
                 HopoThreshold = Settings.HopoThreshold,
                 SustainCutoffThreshold = Settings.SustainCutoffThreshold,
                 StarPowerNote = Settings.OverdiveMidiNote,
-                DrumsType = DrumsType.FourLane,
+                DrumsType = DrumsType.ProDrums,
                 ChordHopoCancellation = true
             };
             return SongChart.FromMidi(in parseSettings, midi);
