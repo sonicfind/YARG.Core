@@ -329,7 +329,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static unsafe bool LoadChartTrack<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref BasicInstrumentTrack2<TNote>? track, delegate*<ref TNote, int, DualTime, bool> loader)
+        private static unsafe bool LoadChartTrack<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref BasicInstrumentTrack2<TNote>? track, delegate*<ref TNote, int, in DualTime, bool> loader)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TNote : unmanaged, IInstrumentNote
         {
@@ -366,8 +366,8 @@ namespace YARG.Core.NewParsing
                             long tickDuration = YARGTextReader.ExtractInt64AndWhitespace(ref container);
 
                             duration.Ticks = tickDuration;
-                            duration.Seconds = sync.ConvertToSeconds(tickDuration, tempoIndex);
-                            if (!loader(ref note, lane, duration))
+                            duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
+                            if (!loader(ref note, lane, in duration))
                             {
                                 if (note.GetNumActiveLanes() == 0)
                                 {
@@ -389,8 +389,8 @@ namespace YARG.Core.NewParsing
                                 case SpecialPhraseType.Tremolo:
                                 case SpecialPhraseType.Trill:
                                     duration.Ticks = tickDuration;
-                                    duration.Seconds = sync.ConvertToSeconds(tickDuration, tempoIndex);
-                                    difficultyTrack.SpecialPhrases.GetLastOrAppend(position).TryAdd(type, new SpecialPhraseInfo(duration));
+                                    duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
+                                    difficultyTrack.SpecialPhrases.GetLastOrAppend(position).TryAdd(type, new SpecialPhraseInfo(in duration));
                                     break;
                             }
                             break;
