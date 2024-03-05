@@ -224,17 +224,34 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Coop_6:        chart.SixFretCoopGuitar ??=  MidiSixFretLoader. Load(midiTrack, sync, difficulties); break;
 
                 case MidiTrackType.Drums:
-                    if (chart.Settings.DrumsType == DrumsType.ProDrums)
+                    switch (chart.Settings.DrumsType)
                     {
-                        chart.ProDrums ??= MidiProDrumsLoader.Load(midiTrack, sync, difficulties);
-                    }
-                    else if (chart.Settings.DrumsType == DrumsType.FourLane)
-                    {
-                        chart.FourLaneDrums ??= MidiFourLaneLoader.Load(midiTrack, sync, difficulties);
-                    }
-                    else if (chart.Settings.DrumsType == DrumsType.FiveLane)
-                    {
-                        chart.FiveLaneDrums ??= MidiFiveLaneLoader.Load(midiTrack, sync, difficulties);
+                        case DrumsType.FourLane:
+                            chart.FourLaneDrums ??= MidiFourLaneLoader.Load(midiTrack, sync, difficulties);
+                            break;
+                        case DrumsType.ProDrums:
+                            chart.ProDrums ??= MidiProDrumsLoader.Load(midiTrack, sync, difficulties);
+                            break;
+                        case DrumsType.FiveLane:
+                            chart.FiveLaneDrums ??= MidiFiveLaneLoader.Load(midiTrack, sync, difficulties);
+                            break;
+                        case DrumsType.Unknown:
+                        case DrumsType.UnknownPro:
+                            // No `using/dipose` as events & phrases need to persist
+                            var track = MidiUnkownDrumsLoader.Load(midiTrack, sync, difficulties, ref chart.Settings.DrumsType);
+                            switch (chart.Settings.DrumsType)
+                            {
+                                case DrumsType.FourLane:
+                                    chart.FourLaneDrums = UnknownDrumTrackConverter.ConvertTo<DrumNote2<FourLane>, FourLane>(track);
+                                    break;
+                                case DrumsType.ProDrums:
+                                    chart.ProDrums = UnknownDrumTrackConverter.ConvertTo<ProDrumNote2<FourLane>, FourLane>(track);
+                                    break;
+                                case DrumsType.FiveLane:
+                                    chart.FiveLaneDrums = UnknownDrumTrackConverter.ConvertTo<DrumNote2<FiveLane>, FiveLane>(track);
+                                    break;
+                            }
+                            break;
                     }
                     break;
                 case MidiTrackType.Pro_Guitar_17: chart.ProGuitar_17Fret ??=   MidiProGuitarLoader<ProFret_17>.Load(midiTrack, sync, difficulties); break;

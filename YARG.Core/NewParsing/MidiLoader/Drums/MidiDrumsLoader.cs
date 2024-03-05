@@ -4,8 +4,8 @@ using YARG.Core.IO;
 namespace YARG.Core.NewParsing.Midi
 {
     public class MidiDrumsLoader<TDrumConfig, TDiffTracker> : MidiDrumLoader_Base<DrumNote2<TDrumConfig>, TDrumConfig, FourLaneDifficulty>
-            where TDrumConfig : unmanaged, IDrumPadConfig
-            where TDiffTracker : DrumsMidiDifficulty, new()
+        where TDrumConfig : unmanaged, IDrumPadConfig
+        where TDiffTracker : DrumsMidiDifficulty, new()
     {
         public static BasicInstrumentTrack2<DrumNote2<TDrumConfig>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
         {
@@ -48,25 +48,16 @@ namespace YARG.Core.NewParsing.Midi
                 if (midiDiff.Flam)
                     drum.IsFlammed = true;
 
-                if (lane >= MidiDrumLoader_Base.DYNAMIC_MIN)
+                if (enableDynamics && lane >= MidiDrumLoader_Base.DYNAMIC_MIN)
                 {
-                    if (enableDynamics)
+                    int padIndex = lane - MidiDrumLoader_Base.DYNAMIC_MIN;
+                    if (Note.velocity > 100)
                     {
-                        int padIndex = lane - MidiDrumLoader_Base.DYNAMIC_MIN;
-                        unsafe
-                        {
-                            fixed (void* ptr = &drum.Pads)
-                            {
-                                if (Note.velocity > 100)
-                                {
-                                    ((DrumPad*) ptr)->Dynamics = DrumDynamics.Accent;
-                                }
-                                else if (Note.velocity < 100)
-                                {
-                                    ((DrumPad*) ptr)->Dynamics = DrumDynamics.Ghost;
-                                }
-                            }
-                        }
+                        drum.Pads.SetDynamics(padIndex, DrumDynamics.Accent);
+                    }
+                    else if (Note.velocity < 100)
+                    {
+                        drum.Pads.SetDynamics(padIndex, DrumDynamics.Ghost);
                     }
                 }
             }

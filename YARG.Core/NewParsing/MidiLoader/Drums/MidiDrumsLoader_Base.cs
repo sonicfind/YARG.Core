@@ -33,7 +33,7 @@ namespace YARG.Core.NewParsing.Midi
         protected MidiDrumLoader_Base(HashSet<Difficulty>? difficulties, int numBRELanes)
             : base(difficulties, numBRELanes) { }
 
-        protected BasicInstrumentTrack2<TDrumNote> Process(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        internal BasicInstrumentTrack2<TDrumNote> Process(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
             int tempoIndex = 0;
             while (midiTrack.ParseEvent(true))
