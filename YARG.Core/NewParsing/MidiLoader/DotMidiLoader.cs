@@ -6,17 +6,56 @@ using System.Text;
 using YARG.Core.Chart;
 using YARG.Core.IO;
 using YARG.Core.Logging;
+using YARG.Core.IO.Ini;
 using YARG.Core.NewParsing.Midi;
 using YARG.Core.Song;
+using YARG.Core.IO.Disposables;
 
 namespace YARG.Core.NewParsing
 {
     public class DotMidiLoader
     {
-        public static YARGChart LoadSingle(string filename, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
+        public static YARGChart LoadSingle(FileInfo chartInfo, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
         {
-            using FileStream stream = new(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-            return LoadSingle(stream, metadata, settings, activeInstruments);
+            var iniInfo = new FileInfo(Path.Combine(chartInfo.DirectoryName, "song.ini"));
+
+            SongMetadata metadata;
+            ParseSettings settings;
+            if (iniInfo.Exists)
+            {
+                var modifiers = SongIniHandler.ReadSongIniFile(iniInfo);
+                metadata = new SongMetadata(modifiers, string.Empty);
+
+                var drums = DrumsType.UnknownPro;
+                if (modifiers.TryGet("five_lane_drums", out bool fiveLane))
+                {
+                    if (fiveLane)
+                    {
+                        drums = DrumsType.FiveLane;
+                    }
+                    else if (!modifiers.TryGet("pro_drums", out bool prodrums) || prodrums)
+                    {
+                        drums = DrumsType.ProDrums;
+                    }
+                    else
+                    {
+                        drums = DrumsType.Unknown;
+                    }
+                }
+                else if (modifiers.TryGet("pro_drums", out bool prodrums) && !prodrums)
+                {
+                    drums = DrumsType.Unknown;
+                }
+                settings = new ParseSettings(modifiers, drums);
+            }
+            else
+            {
+                metadata = SongMetadata.Default;
+                settings = ParseSettings.Default;
+            }
+
+            using var file = MemoryMappedArray.Load(chartInfo);
+            return LoadSingle(file.ToStream(), metadata, settings, activeInstruments);
         }
 
         public static YARGChart LoadSingle(Stream stream, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
