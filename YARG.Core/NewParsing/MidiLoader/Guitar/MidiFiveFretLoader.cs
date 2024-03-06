@@ -216,23 +216,28 @@ namespace YARG.Core.NewParsing.Midi
                         break;
                     }
 
+                    // We have to reroute index 8 to index 12 to keep tracking simple
                     for (int i = 0; i < 4; ++i)
                         _lanes[12 * i + 8] = 12;
 
-                    var expertPhrases = Track[3]!.SpecialPhrases;
-                    for (int i = 0; i < Track.SpecialPhrases.Count;)
+                    var expert = Track[3];
+                    if (expert != null)
                     {
-                        var node = Track.SpecialPhrases.ElementAtIndex(i);
-                        if (node.Value.Remove(SpecialPhraseType.Solo, out var phrase))
+                        // Plus, we now know prior Expert Soloes are really overdrives
+                        for (int i = 0; i < Track.SpecialPhrases.Count;)
                         {
-                            expertPhrases[node.Key].TryAdd(SpecialPhraseType.StarPower_Diff, phrase);
-                            if (node.Value.Count == 0)
+                            var node = Track.SpecialPhrases.ElementAtIndex(i);
+                            if (node.Value.Remove(SpecialPhraseType.Solo, out var phrase))
                             {
-                                Track.SpecialPhrases.RemoveAtIndex(i);
-                                continue;
+                                expert.SpecialPhrases[node.Key].TryAdd(SpecialPhraseType.StarPower_Diff, phrase);
+                                if (node.Value.Count == 0)
+                                {
+                                    Track.SpecialPhrases.RemoveAtIndex(i);
+                                    continue;
+                                }
                             }
+                            ++i;
                         }
-                        ++i;
                     }
 
                     AddPhrase_ON(midiDiff!.Phrases, diff.SpecialPhrases, SpecialPhraseType.StarPower_Diff, 100);
@@ -282,7 +287,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             if (note->State == GuitarState.Hopo)
                             {
-                                note->State = midiDiff!.HopoOff ? GuitarState.Strum : GuitarState.Natural;
+                                note->State = midiDiff.HopoOff ? GuitarState.Strum : GuitarState.Natural;
                             }
                         }
                     }
@@ -295,7 +300,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             if (note->State == GuitarState.Strum)
                             {
-                                note->State = midiDiff!.HopoOn ? GuitarState.Hopo : GuitarState.Natural;
+                                note->State = midiDiff.HopoOn ? GuitarState.Hopo : GuitarState.Natural;
                             }
                         }
                     }
