@@ -180,7 +180,7 @@ namespace YARG.Core.NewParsing.Midi
                 ref var colorPosition = ref Difficulties[MidiDrumLoader_Base.EXPERT_INDEX].Notes[MidiDrumLoader_Base.DOUBLEBASS_INDEX];
                 if (colorPosition.Ticks != -1)
                 {
-                    Track[MidiDrumLoader_Base.EXPERT_INDEX]!.Notes.Traverse_Backwards_Until(colorPosition)[MidiDrumLoader_Base.DOUBLEBASS_INDEX] = DualTime.Truncate(Position - colorPosition);
+                    Track[MidiDrumLoader_Base.EXPERT_INDEX]!.Notes.TraverseBackwardsUntil(colorPosition)[MidiDrumLoader_Base.DOUBLEBASS_INDEX] = DualTime.Truncate(Position - colorPosition);
                     colorPosition.Ticks = -1;
                 }
             }

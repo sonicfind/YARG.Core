@@ -120,7 +120,7 @@ namespace YARG.Core.NewParsing.Midi
                 ref var colorPosition = ref midiDiff.Notes[lane];
                 if (colorPosition.Ticks != -1)
                 {
-                    loader.Track[diffIndex]!.Notes.Traverse_Backwards_Until(colorPosition)[lane] = DualTime.Truncate(loader.Position - colorPosition);
+                    loader.Track[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)[lane] = DualTime.Truncate(loader.Position - colorPosition);
                     colorPosition.Ticks = -1;
                 }
             }

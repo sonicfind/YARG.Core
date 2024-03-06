@@ -104,7 +104,7 @@ namespace YARG.Core.NewParsing.Midi
             ref var colorPosition = ref lanes[Note.value - NOTE_MIN];
             if (colorPosition.Ticks != -1)
             {
-                Track.Notes.Traverse_Backwards_Until(colorPosition).Add(Note.value, DualTime.Truncate(Position - colorPosition));
+                Track.Notes.TraverseBackwardsUntil(colorPosition).Add(Note.value, DualTime.Truncate(Position - colorPosition));
                 colorPosition.Ticks = -1;
             }
         }
