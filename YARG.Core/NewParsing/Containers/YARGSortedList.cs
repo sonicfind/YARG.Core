@@ -100,7 +100,6 @@ namespace YARG.Core.NewParsing
         public abstract bool RemoveAtIndex(int index);
         public abstract ref TValue GetLastOrAppend(TKey key);
         public abstract int Find(int startIndex, in TKey key);
-        public abstract bool ValidateLastKey(in TKey key);
         public abstract ref TValue Last();
 
         protected abstract void Dispose(bool disposing);
