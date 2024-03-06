@@ -142,9 +142,9 @@ namespace YARG.Core.NewParsing.Midi
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
                                         var diffTrack = instrumentTrack[i]!;
-                                        if (diffTrack.Notes.ValidateLastKey(position))
+                                        if (diffTrack.Notes.TryGetLastValue(position, out var drum))
                                         {
-                                            diffTrack.Notes.Last().IsFlammed = true;
+                                            drum->IsFlammed = true;
                                         }
                                     }
                                     break;
@@ -238,9 +238,9 @@ namespace YARG.Core.NewParsing.Midi
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
                                         var diffTrack = instrumentTrack[i]!;
-                                        if (diffTrack.Notes.ValidateLastKey(position))
+                                        if (diffTrack.Notes.TryGetLastValue(position, out var drum))
                                         {
-                                            diffTrack.Notes.Last().IsFlammed = false;
+                                            drum->IsFlammed = false;
                                         }
                                     }
                                     break;
@@ -389,9 +389,9 @@ namespace YARG.Core.NewParsing.Midi
                             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                             {
                                 var diffTrack = instrumentTrack[i]!;
-                                if (diffTrack.Notes.ValidateLastKey(position))
+                                if (diffTrack.Notes.TryGetLastValue(position, out var drum))
                                 {
-                                    diffTrack.Notes.Last().Cymbals[index] = true;
+                                    drum->Cymbals[index] = true;
                                 }
                             }
                         }
@@ -421,9 +421,9 @@ namespace YARG.Core.NewParsing.Midi
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
                                         var diffTrack = instrumentTrack[i]!;
-                                        if (diffTrack.Notes.ValidateLastKey(position))
+                                        if (diffTrack.Notes.TryGetLastValue(position, out var drum))
                                         {
-                                            diffTrack.Notes.Last().IsFlammed = true;
+                                            drum->IsFlammed = true;
                                         }
                                     }
                                     break;
@@ -470,9 +470,9 @@ namespace YARG.Core.NewParsing.Midi
                             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                             {
                                 var diffTrack = instrumentTrack[i]!;
-                                if (diffTrack.Notes.ValidateLastKey(position))
+                                if (diffTrack.Notes.TryGetLastValue(position, out var drum))
                                 {
-                                    diffTrack.Notes.Last().Cymbals[index] = false;
+                                    drum->Cymbals[index] = false;
                                 }
                             }
                         }
@@ -532,9 +532,9 @@ namespace YARG.Core.NewParsing.Midi
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
                                         var diffTrack = instrumentTrack[i]!;
-                                        if (diffTrack.Notes.ValidateLastKey(position))
+                                        if (diffTrack.Notes.TryGetLastValue(position, out var drum))
                                         {
-                                            diffTrack.Notes.Last().IsFlammed = false;
+                                            drum->IsFlammed = false;
                                         }
                                     }
                                     break;
@@ -689,9 +689,9 @@ namespace YARG.Core.NewParsing.Midi
                                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                 {
                                     var diffTrack = instrumentTrack[i]!;
-                                    if (diffTrack.Notes.ValidateLastKey(position))
+                                    if (diffTrack.Notes.TryGetLastValue(position, out var drum))
                                     {
-                                        diffTrack.Notes.Last().Cymbals[index] = true;
+                                        drum->Cymbals[index] = true;
                                     }
                                 }
                                 type = DrumsType.ProDrums;
@@ -724,9 +724,9 @@ namespace YARG.Core.NewParsing.Midi
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
                                         var diffTrack = instrumentTrack[i]!;
-                                        if (diffTrack.Notes.ValidateLastKey(position))
+                                        if (diffTrack.Notes.TryGetLastValue(position, out var drum))
                                         {
-                                            diffTrack.Notes.Last().IsFlammed = true;
+                                            drum->IsFlammed = true;
                                         }
                                     }
                                     break;
@@ -775,9 +775,9 @@ namespace YARG.Core.NewParsing.Midi
                                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                 {
                                     var diffTrack = instrumentTrack[i]!;
-                                    if (diffTrack.Notes.ValidateLastKey(position))
+                                    if (diffTrack.Notes.TryGetLastValue(position, out var drum))
                                     {
-                                        diffTrack.Notes.Last().Cymbals[index] = false;
+                                        drum->Cymbals[index] = false;
                                     }
                                 }
                             }
@@ -838,9 +838,9 @@ namespace YARG.Core.NewParsing.Midi
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
                                         var diffTrack = instrumentTrack[i]!;
-                                        if (diffTrack.Notes.ValidateLastKey(position))
+                                        if (diffTrack.Notes.TryGetLastValue(position, out var drum))
                                         {
-                                            diffTrack.Notes.Last().IsFlammed = false;
+                                            drum->IsFlammed = false;
                                         }
                                     }
                                     break;
