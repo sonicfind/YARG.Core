@@ -64,6 +64,11 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        ~YARGManagedSortedList()
+        {
+            Dispose(false);
+        }
+
         public override void Clear()
         {
             for (int i = 0; i < _count; ++i)
