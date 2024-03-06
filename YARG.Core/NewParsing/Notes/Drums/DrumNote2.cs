@@ -100,25 +100,12 @@ namespace YARG.Core.NewParsing
         {
             readonly get
             {
-                switch (lane)
+                return lane switch
                 {
-                    case 0: return _bass;
-                    case 1: return _doubleBass;
-                    default:
-                        lane -= 2;
-                        if (lane >= _pads.NumPads)
-                        {
-                            throw new ArgumentOutOfRangeException(nameof(lane));
-                        }
-
-                        unsafe
-                        {
-                            fixed (void* ptr = &_pads)
-                            {
-                                return ((DrumPad*) ptr)[lane - 2].Duration;
-                            }
-                        }
-                }
+                    0 => _bass,
+                    1 => _doubleBass,
+                    _ => _pads[lane - 2].Duration,
+                };
             }
             set
             {
@@ -133,19 +120,7 @@ namespace YARG.Core.NewParsing
                         _bass = default;
                         break;
                     default:
-                        lane -= 2;
-                        if (lane >= _pads.NumPads)
-                        {
-                            throw new ArgumentOutOfRangeException(nameof(lane));
-                        }
-
-                        unsafe
-                        {
-                            fixed (void* ptr = &_pads)
-                            {
-                                ((DrumPad*) ptr)[lane - 2].Duration = value;
-                            }
-                        }
+                        _pads[lane - 2].Duration = value;
                         break;
                 }
             }
