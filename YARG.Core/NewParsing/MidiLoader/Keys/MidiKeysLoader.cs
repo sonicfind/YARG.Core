@@ -99,10 +99,10 @@ namespace YARG.Core.NewParsing.Midi
 
                 var notes = loader.Track[diffIndex]!.Notes;
                 if (notes.Capacity == 0)
+                {
                     notes.Capacity = 5000;
-
-                if (!notes.ValidateLastKey(loader.Position))
-                    notes.Append(loader.Position);
+                }
+                notes.TryAppend(loader.Position);
             }
         }
 

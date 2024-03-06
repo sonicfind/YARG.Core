@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace YARG.Core.NewParsing.Midi
 {
@@ -10,36 +11,49 @@ namespace YARG.Core.NewParsing.Midi
         internal bool HopoOn;
         internal bool HopoOff;
 
-        internal static void ProcessTapSysex(BasicInstrumentTrack2<GuitarNote2<TFretConfig>> track, TDiffTracker?[] trackers, in DualTime position, bool state)
+        internal void ProcessTapSysex(DifficultyTrack2<GuitarNote2<TFretConfig>> diff, in DualTime position, bool state)
         {
-            for (int diffIndex = 0; diffIndex < 4; ++diffIndex)
+            if (state)
             {
-                var tracker = trackers[diffIndex];
-                if (tracker != null)
+                ProcessTapSysex_ON(diff, position);
+            }
+            else
+            {
+                ProcessTapSysex_Off(diff, position);
+            }
+        }
+
+        internal void ProcessTapSysex_ON(DifficultyTrack2<GuitarNote2<TFretConfig>> diff, in DualTime position)
+        {
+            SliderNotes = true;
+            unsafe
+            {
+                if (diff.Notes.TryGetLastValue(position, out var note))
                 {
-                    ProcessTapSysex(track[diffIndex]!, tracker, position, state);
+                    note->State = GuitarState.Tap;
                 }
             }
         }
 
-        internal static void ProcessTapSysex(DifficultyTrack2<GuitarNote2<TFretConfig>> diff, TDiffTracker tracker, in DualTime position, bool state)
+        internal void ProcessTapSysex_Off(DifficultyTrack2<GuitarNote2<TFretConfig>> diff, in DualTime position)
         {
-            tracker.SliderNotes = state;
-            if (diff.Notes.ValidateLastKey(position))
+            SliderNotes = false;
+            unsafe
             {
-                ref var note = ref diff.Notes.Last();
-                if (state)
+                if (diff.Notes.TryGetLastValue(position, out var note))
                 {
-                    note.State = GuitarState.Tap;
-                }
-                else if (note.State == GuitarState.Tap)
-                {
-                    if (tracker.HopoOn)
-                        note.State = GuitarState.Hopo;
-                    else if (tracker.HopoOff)
-                        note.State = GuitarState.Strum;
+                    if (HopoOn)
+                    {
+                        note->State = GuitarState.Hopo;
+                    }
+                    else if (HopoOff)
+                    {
+                        note->State = GuitarState.Strum;
+                    }
                     else
-                        note.State = GuitarState.Natural;
+                    {
+                        note->State = GuitarState.Natural;
+                    }
                 }
             }
         }

@@ -82,8 +82,14 @@ namespace YARG.Core.NewParsing.Midi
                 if (Difficulties[i] != null)
                 {
                     Difficulties[i].Flam = true;
-                    if (Track[i]!.Notes.ValidateLastKey(Position))
-                        Track[i]!.Notes.Last().IsFlammed = true;
+                    unsafe
+                    {
+                        if (Track[i]!.Notes.TryGetLastValue(Position, out var note))
+                        {
+                            note->IsFlammed = true;
+                        }
+                    }
+                    
                 }
             }
             return true;
@@ -157,10 +163,7 @@ namespace YARG.Core.NewParsing.Midi
             if (Difficulties[MidiDrumLoader_Base.EXPERT_INDEX] != null)
             {
                 Difficulties[MidiDrumLoader_Base.EXPERT_INDEX].Notes[MidiDrumLoader_Base.DOUBLEBASS_INDEX] = Position;
-                if (!Track[MidiDrumLoader_Base.EXPERT_INDEX]!.Notes.ValidateLastKey(Position))
-                {
-                    Track[MidiDrumLoader_Base.EXPERT_INDEX]!.Notes.Append(Position);
-                }
+                Track[MidiDrumLoader_Base.EXPERT_INDEX]!.Notes.TryAppend(Position);
             }
             return true;
         }

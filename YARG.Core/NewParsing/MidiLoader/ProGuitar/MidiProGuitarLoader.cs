@@ -154,51 +154,58 @@ namespace YARG.Core.NewParsing.Midi
                 }
                 else
                 {
-                    if (!diffTrack.Notes.ValidateLastKey(Position))
+                    if (diffTrack.Notes.Capacity == 0)
                     {
-                        if (diffTrack.Notes.Capacity == 0)
+                        diffTrack.Notes.Capacity = 5000;
+                    }
+
+                    unsafe
+                    {
+                        if (diffTrack.Notes.TryAppend(Position, out var note))
                         {
-                            diffTrack.Notes.Capacity = 5000;
+                            note->HOPO = midiDiff.Hopo;
+                            note->Slide = midiDiff.Slide;
+                            note->Emphasis = midiDiff.Emphasis;
                         }
 
-                        ProGuitarNote<TProFretConfig> newNote = new()
+                        ref var proString = ref (*note)[lane];
+                        switch (midiTrack.Channel)
                         {
-                            HOPO = midiDiff.Hopo,
-                            Slide = midiDiff.Slide,
-                            Emphasis = midiDiff.Emphasis
-                        };
+                            case 2: proString.Mode = StringMode.Bend; break;
+                            case 3: proString.Mode = StringMode.Muted; break;
+                            case 4: proString.Mode = StringMode.Tapped; break;
+                            case 5: proString.Mode = StringMode.Harmonics; break;
+                            case 6: proString.Mode = StringMode.Pinch_Harmonics; break;
+                        }
 
-                        diffTrack.Notes.Append(Position, in newNote);
+                        proString.Fret = Note.velocity - MidiProGuitarLoader.FRET_MIN;
                     }
 
-                    ref var proString = ref diffTrack.Notes.Last()[lane];
-                    switch (midiTrack.Channel)
-                    {
-                        case 2: proString.Mode = StringMode.Bend; break;
-                        case 3: proString.Mode = StringMode.Muted; break;
-                        case 4: proString.Mode = StringMode.Tapped; break;
-                        case 5: proString.Mode = StringMode.Harmonics; break;
-                        case 6: proString.Mode = StringMode.Pinch_Harmonics; break;
-                    }
-
-                    proString.Fret = Note.velocity - MidiProGuitarLoader.FRET_MIN;
+                    
                     midiDiff.Notes[lane] = Position;
                 }
             }
             else if (lane == MidiProGuitarLoader.HOPO_VALUE)
             {
                 midiDiff.Hopo = true;
-                if (diffTrack.Notes.ValidateLastKey(Position))
+                unsafe
                 {
-                    diffTrack.Notes.Last().HOPO = true;
+                    if (diffTrack.Notes.TryGetLastValue(Position, out var note))
+                    {
+                        note->HOPO = true;
+                    }
                 }
+                
             }
             else if (lane == MidiProGuitarLoader.SLIDE_VALUE)
             {
                 midiDiff.Slide = midiTrack.Channel == 11 ? ProSlide.Reversed : ProSlide.Normal;
-                if (diffTrack.Notes.ValidateLastKey(Position))
+                unsafe
                 {
-                    diffTrack.Notes.Last().Slide = midiDiff.Slide;
+                    if (diffTrack.Notes.TryGetLastValue(Position, out var note))
+                    {
+                        note->Slide = midiDiff.Slide;
+                    }
                 }
             }
             else if (lane == MidiProGuitarLoader.ARPEGGIO_VALUE)
@@ -216,9 +223,12 @@ namespace YARG.Core.NewParsing.Midi
                     default: return;
                 }
 
-                if (diffTrack.Notes.ValidateLastKey(Position))
+                unsafe
                 {
-                    diffTrack.Notes.Last().Emphasis = midiDiff.Emphasis;
+                    if (diffTrack.Notes.TryGetLastValue(Position, out var note))
+                    {
+                        note->Emphasis = midiDiff.Emphasis;
+                    }
                 }
             }
         }

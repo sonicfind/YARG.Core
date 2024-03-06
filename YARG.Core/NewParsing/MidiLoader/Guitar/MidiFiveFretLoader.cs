@@ -84,7 +84,7 @@ namespace YARG.Core.NewParsing.Midi
 
         private void ParseSysEx(ReadOnlySpan<byte> str)
         {
-            if (!str.StartsWith(MidiTrackLoader.SYSEXTAG))
+            if (!str.StartsWith(SYSEXTAG))
             {
                 return;
             }
@@ -107,15 +107,18 @@ namespace YARG.Core.NewParsing.Midi
                         }
                         break;
                     case 4:
-                        FiveFretMidiDifficulty.ProcessTapSysex(Track, Difficulties, in Position, enable);
+                        for (int diffIndex = 0; diffIndex < 4; ++diffIndex)
+                        {
+                            Difficulties[diffIndex]?.ProcessTapSysex_ON(Track[diffIndex]!, Position);
+                        }
                         break;
                 }
             }
             else
             {
                 byte diffIndex = str[4];
-                ref var midiDiff = ref Difficulties[diffIndex];
-                if (midiDiff == null)
+                ref var tracker = ref Difficulties[diffIndex];
+                if (tracker == null)
                     return;
 
                 switch (str[5])
@@ -124,7 +127,7 @@ namespace YARG.Core.NewParsing.Midi
                         _lanes[12 * diffIndex + 1] = str[6] == 0 ? 1 : 0;
                         break;
                     case 4:
-                        FiveFretMidiDifficulty.ProcessTapSysex(Track[diffIndex]!, midiDiff, in Position, enable);
+                        Difficulties[diffIndex]?.ProcessTapSysex_Off(Track[diffIndex]!, Position);
                         break;
                 }
             }
@@ -160,38 +163,50 @@ namespace YARG.Core.NewParsing.Midi
             {
                 case < 6:
                     midiDiff!.Notes[lane] = Position;
-                    if (!diff.Notes.ValidateLastKey(Position))
+                    if (diff.Notes.Capacity == 0)
                     {
-                        if (diff.Notes.Capacity == 0)
-                        {
-                            diff.Notes.Capacity = 5000;
-                        }
-
-                        ref var guitar = ref diff.Notes.Append(Position);
-                        if (midiDiff.SliderNotes)
-                            guitar.State = GuitarState.Tap;
-                        else if (midiDiff.HopoOn)
-                            guitar.State = GuitarState.Hopo;
-                        else if (midiDiff.HopoOff)
-                            guitar.State = GuitarState.Strum;
+                        diff.Notes.Capacity = 5000;
                     }
+
+                    unsafe
+                    {
+                        if (diff.Notes.TryAppend(Position, out var note))
+                        {
+                            if (midiDiff.SliderNotes)
+                                note->State = GuitarState.Tap;
+                            else if (midiDiff.HopoOn)
+                                note->State = GuitarState.Hopo;
+                            else if (midiDiff.HopoOff)
+                                note->State = GuitarState.Strum;
+                        }
+                    }
+                    
                     break;
                 case 6:
                     midiDiff!.HopoOn = true;
-                    if (diff.Notes.ValidateLastKey(Position))
+                    unsafe
                     {
-                        ref var guitar = ref diff.Notes.Last();
-                        if (guitar.State == GuitarState.Natural)
-                            guitar.State = GuitarState.Hopo;
+                        if (diff.Notes.TryGetLastValue(Position, out var note))
+                        {
+                            // In official games, Hopo flag has preference over Strum flags
+                            // Therefore, the only limiter is Tap
+                            if (note->State != GuitarState.Tap)
+                                note->State = GuitarState.Hopo;
+                        }
                     }
+                    
                     break;
                 case 7:
                     midiDiff!.HopoOff = true;
-                    if (diff.Notes.ValidateLastKey(Position))
+                    unsafe
                     {
-                        ref var guitar = ref diff.Notes.Last();
-                        if (guitar.State == GuitarState.Natural)
-                            guitar.State = GuitarState.Strum;
+                        if (diff.Notes.TryGetLastValue(Position, out var note))
+                        {
+                            // In official games, Tap & Hopo both have preference over strum
+                            // Therefore, we only override the Natrual state
+                            if (note->State == GuitarState.Natural)
+                                note->State = GuitarState.Strum;
+                        }
                     }
                     break;
                 case 8:
@@ -261,20 +276,28 @@ namespace YARG.Core.NewParsing.Midi
                     break;
                 case 6:
                     midiDiff!.HopoOn = false;
-                    if (diff.Notes.ValidateLastKey(Position))
+                    unsafe
                     {
-                        ref var guitar = ref diff.Notes.Last();
-                        if (guitar.State != GuitarState.Tap)
-                            guitar.State = GuitarState.Natural;
+                        if (diff.Notes.TryGetLastValue(Position, out var note))
+                        {
+                            if (note->State == GuitarState.Hopo)
+                            {
+                                note->State = midiDiff!.HopoOff ? GuitarState.Strum : GuitarState.Natural;
+                            }
+                        }
                     }
                     break;
                 case 7:
                     midiDiff!.HopoOff = false;
-                    if (diff.Notes.ValidateLastKey(Position))
+                    unsafe
                     {
-                        ref var guitar = ref diff.Notes.Last();
-                        if (guitar.State != GuitarState.Tap)
-                            guitar.State = GuitarState.Natural;
+                        if (diff.Notes.TryGetLastValue(Position, out var note))
+                        {
+                            if (note->State == GuitarState.Strum)
+                            {
+                                note->State = midiDiff!.HopoOn ? GuitarState.Hopo : GuitarState.Natural;
+                            }
+                        }
                     }
                     break;
                 case 8:

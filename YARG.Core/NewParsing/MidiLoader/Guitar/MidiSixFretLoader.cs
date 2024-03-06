@@ -92,47 +92,53 @@ namespace YARG.Core.NewParsing.Midi
             {
                 case < 7:
                     midiDiff.Notes[lane] = loader.Position;
-                    if (!diff.Notes.ValidateLastKey(loader.Position))
+                    if (diff.Notes.Capacity == 0)
                     {
-                        if (diff.Notes.Capacity == 0)
-                        {
-                            diff.Notes.Capacity = 5000;
-                        }
+                        diff.Notes.Capacity = 5000;
+                    }
 
-                        ref var guitar = ref diff.Notes.Append(loader.Position);
-                        if (midiDiff.SliderNotes)
+                    unsafe
+                    {
+                        if (!diff.Notes.TryAppend(loader.Position, out var note))
                         {
-                            guitar.State = GuitarState.Tap;
-                        }
-                        else if (midiDiff.HopoOn)
-                        {
-                            guitar.State = GuitarState.Hopo;
-                        }
-                        else if (midiDiff.HopoOff)
-                        {
-                            guitar.State = GuitarState.Strum;
+                            if (midiDiff.SliderNotes)
+                            {
+                                note->State = GuitarState.Tap;
+                            }
+                            else if (midiDiff.HopoOn)
+                            {
+                                note->State = GuitarState.Hopo;
+                            }
+                            else if (midiDiff.HopoOff)
+                            {
+                                note->State = GuitarState.Strum;
+                            }
                         }
                     }
                     break;
                 case 7:
                     midiDiff.HopoOn = true;
-                    if (diff.Notes.ValidateLastKey(loader.Position))
+                    unsafe
                     {
-                        ref var guitar = ref diff.Notes.Last();
-                        if (guitar.State == GuitarState.Natural)
+                        if (diff.Notes.TryGetLastValue(loader.Position, out var note))
                         {
-                            guitar.State = GuitarState.Hopo;
+                            if (note->State == GuitarState.Natural)
+                            {
+                                note->State = GuitarState.Hopo;
+                            }
                         }
                     }
                     break;
                 case 8:
                     midiDiff.HopoOff = true;
-                    if (diff.Notes.ValidateLastKey(loader.Position))
+                    unsafe
                     {
-                        ref var guitar = ref diff.Notes.Last();
-                        if (guitar.State == GuitarState.Natural)
+                        if (diff.Notes.TryGetLastValue(loader.Position, out var note))
                         {
-                            guitar.State = GuitarState.Strum;
+                            if (note->State == GuitarState.Natural)
+                            {
+                                note->State = GuitarState.Strum;
+                            }
                         }
                     }
                     break;
@@ -165,23 +171,27 @@ namespace YARG.Core.NewParsing.Midi
                     break;
                 case 7:
                     midiDiff.HopoOn = false;
-                    if (diff.Notes.ValidateLastKey(loader.Position))
+                    unsafe
                     {
-                        ref var guitar = ref diff.Notes.Last();
-                        if (guitar.State != GuitarState.Tap)
+                        if (diff.Notes.TryGetLastValue(loader.Position, out var note))
                         {
-                            guitar.State = GuitarState.Natural;
+                            if (note->State != GuitarState.Tap)
+                            {
+                                note->State = GuitarState.Natural;
+                            }
                         }
                     }
                     break;
                 case 8:
                     midiDiff.HopoOff = false;
-                    if (diff.Notes.ValidateLastKey(loader.Position))
+                    unsafe
                     {
-                        ref var guitar = ref diff.Notes.Last();
-                        if (guitar.State != GuitarState.Tap)
+                        if (diff.Notes.TryGetLastValue(loader.Position, out var note))
                         {
-                            guitar.State = GuitarState.Natural;
+                            if (note->State != GuitarState.Tap)
+                            {
+                                note->State = GuitarState.Natural;
+                            }
                         }
                     }
                     break;
@@ -208,16 +218,14 @@ namespace YARG.Core.NewParsing.Midi
             {
                 if (str[4] == (char) 0xFF)
                 {
-                    SixFretMidiDifficulty.ProcessTapSysex(loader.Track, loader.Difficulties, in loader.Position, enable);
+                    for (int diffIndex = 0; diffIndex < 4; ++diffIndex)
+                    {
+                        loader.Difficulties[diffIndex]?.ProcessTapSysex(loader.Track[diffIndex]!, loader.Position, enable);
+                    }
                 }
                 else
                 {
-                    byte diffIndex = str[4];
-                    ref var midiDiff = ref loader.Difficulties[diffIndex];
-                    if (midiDiff != null)
-                    {
-                        SixFretMidiDifficulty.ProcessTapSysex(loader.Track[diffIndex]!, midiDiff, in loader.Position, enable);
-                    }
+                    loader.Difficulties[str[4]]?.ProcessTapSysex(loader.Track[str[4]]!, loader.Position, enable);
                 }
             }
         }

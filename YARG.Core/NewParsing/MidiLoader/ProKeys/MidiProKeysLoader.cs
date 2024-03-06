@@ -95,10 +95,7 @@ namespace YARG.Core.NewParsing.Midi
                 Track.Notes.Capacity = 5000;
             }
 
-            if (!Track.Notes.ValidateLastKey(Position))
-            {
-                Track.Notes.Append(Position);
-            }
+            Track.Notes.TryAppend(Position);
             lanes[Note.value - NOTE_MIN] = Position;
         }
 
