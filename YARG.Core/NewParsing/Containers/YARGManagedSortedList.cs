@@ -228,6 +228,18 @@ namespace YARG.Core.NewParsing
             return ~lo;
         }
 
+        public override ref TValue Last() { return ref _buffer[_count - 1].Value; }
+
+        public override ref TValue TraverseBackwardsUntil(TKey key)
+        {
+            int index = _count - 1;
+            while (index > 0 && key.CompareTo(_buffer[index].Key) < 0)
+            {
+                --index;
+            }
+            return ref _buffer[index].Value;
+        }
+
         public bool TryGetLastValue(in TKey key, out TValue? value)
         {
             if (_count == 0 || !_buffer[_count - 1].Key.Equals(key))
@@ -259,8 +271,6 @@ namespace YARG.Core.NewParsing
             }
             return append;
         }
-
-        public override ref TValue Last() { return ref _buffer[_count - 1].Value; }
 
         private void CheckAndGrow()
         {
