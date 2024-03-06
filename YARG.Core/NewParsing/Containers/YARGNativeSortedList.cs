@@ -292,7 +292,7 @@ namespace YARG.Core.NewParsing
                 while (lo <= hi)
                 {
                     var curr = lo + ((hi - lo) >> 1);
-                    int order = curr->CompareTo(key);
+                    int order = curr->Key.CompareTo(key);
                     if (order == 0)
                     {
                         return (int) (curr - _buffer);
@@ -311,14 +311,6 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        public override bool ValidateLastKey(in TKey key)
-        {
-            unsafe
-            {
-                return _count > 0 && _buffer[_count - 1].Equals(key);
-            }
-        }
-
         public override ref TValue Last()
         {
             unsafe
@@ -327,6 +319,40 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        public unsafe bool TryGetLastValue(in TKey key, out TValue* valuePtr)
+        {
+            if (_count == 0 || !_buffer[_count - 1].Key.Equals(key))
+            {
+                valuePtr = null;
+                return false;
+            }
+            valuePtr = &_buffer[_count - 1].Value;
+            return true;
+        }
+        
+        public unsafe bool TryAppend(in TKey key, out TValue* value)
+        {
+            bool append = _count == 0 || !_buffer[_count - 1].Key.Equals(key);
+            if (append)
+            {
+                Append(key);
+            }
+            value = &_buffer[_count - 1].Value;
+            return append;
+        }
+
+        public bool TryAppend(in TKey key)
+        {
+            unsafe
+            {
+                bool append = _count == 0 || !_buffer[_count - 1].Key.Equals(key);
+                if (append)
+                {
+                    Append(key);
+                }
+                return append;
+            }
+        }
 
         private void CheckAndGrow()
         {
