@@ -319,6 +319,20 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        public override ref TValue TraverseBackwardsUntil(TKey key)
+        {
+            unsafe
+            {
+                var curr = _buffer + _count - 1;
+                while (curr > _buffer && key.CompareTo(curr->Key) < 0)
+                {
+                    --curr;
+                }
+                return ref curr->Value;
+            }
+            
+        }
+
         public unsafe bool TryGetLastValue(in TKey key, out TValue* valuePtr)
         {
             if (_count == 0 || !_buffer[_count - 1].Key.Equals(key))
