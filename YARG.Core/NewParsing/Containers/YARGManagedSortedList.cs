@@ -210,7 +210,7 @@ namespace YARG.Core.NewParsing
             while (lo <= hi)
             {
                 int curr = lo + ((hi - lo) >> 1);
-                int order = _buffer[curr].CompareTo(key);
+                int order = _buffer[curr].Key.CompareTo(key);
                 if (order == 0)
                 {
                     return curr;
@@ -228,9 +228,36 @@ namespace YARG.Core.NewParsing
             return ~lo;
         }
 
-        public override bool ValidateLastKey(in TKey key)
+        public bool TryGetLastValue(in TKey key, out TValue? value)
         {
-            return _count > 0 && _buffer[_count - 1].Equals(key);
+            if (_count == 0 || !_buffer[_count - 1].Key.Equals(key))
+            {
+                value = default;
+                return false;
+            }
+            value = _buffer[_count - 1].Value;
+            return true;
+        }
+
+        public bool TryAppend(in TKey key, out TValue? value)
+        {
+            if (_count != 0 && _buffer[_count - 1].Key.Equals(key))
+            {
+                value = _buffer[_count - 1].Value;
+                return false;
+            }
+            value = Append(key);
+            return true;
+        }
+
+        public bool TryAppend(in TKey key)
+        {
+            bool append = _count == 0 || !_buffer[_count - 1].Key.Equals(key);
+            if (append)
+            {
+                Append(key);
+            }
+            return append;
         }
 
         public override ref TValue Last() { return ref _buffer[_count - 1].Value; }
