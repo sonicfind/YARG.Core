@@ -18,41 +18,6 @@ namespace YARG.Core.NewParsing
         public TFrets Frets;
         public GuitarState State;
 
-        public DualTime this[int lane]
-        {
-            get
-            {
-                if (lane < 0 || Frets.NumColors < lane)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(lane));
-                }
-
-                unsafe
-                {
-                    fixed (void* ptr = &Frets)
-                    {
-                        return ((DualTime*) ptr)[lane];
-                    }
-                }
-            }
-
-            set
-            {
-                if (lane < 0 || Frets.NumColors < lane)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(lane));
-                }
-
-                unsafe
-                {
-                    fixed (void* ptr = &Frets)
-                    {
-                        ((DualTime*) ptr)[lane] = value;
-                    }
-                }
-            }
-        }
-
         public int GetNumActiveLanes()
         {
             unsafe
