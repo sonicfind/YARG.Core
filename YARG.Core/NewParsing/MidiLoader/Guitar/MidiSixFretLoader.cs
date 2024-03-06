@@ -165,7 +165,7 @@ namespace YARG.Core.NewParsing.Midi
                     ref var colorPosition = ref loader.Difficulties[diffIndex].Notes[lane];
                     if (colorPosition.Ticks != -1)
                     {
-                        diff.Notes.TraverseBackwardsUntil(colorPosition)[lane] = DualTime.Truncate(loader.Position - colorPosition);
+                        diff.Notes.TraverseBackwardsUntil(colorPosition).Frets[lane] = DualTime.Truncate(loader.Position - colorPosition);
                         colorPosition.Ticks = -1;
                     }
                     break;
