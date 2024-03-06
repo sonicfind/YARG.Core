@@ -109,20 +109,19 @@ namespace YARG.Core.NewParsing.Midi
                             if (lane < NUM_LANES)
                             {
                                 lanes[diffIndex * NUM_LANES + lane] = position;
-                                if (!diffTrack.Notes.ValidateLastKey(position))
+                                if (diffTrack.Notes.Capacity == 0)
                                 {
-                                    if (diffTrack.Notes.Capacity == 0)
-                                    {
-                                        diffTrack.Notes.Capacity = 5000;
-                                    }
+                                    diffTrack.Notes.Capacity = 5000;
+                                }
 
-                                    ref var guitar = ref diffTrack.Notes.Append(position);
+                                if (!diffTrack.Notes.TryAppend(position, out var guitar))
+                                {
                                     if (diffModifier.BaseDiff.SliderNotes)
-                                        guitar.State = GuitarState.Tap;
+                                        guitar->State = GuitarState.Tap;
                                     else if (diffModifier.BaseDiff.HopoOn)
-                                        guitar.State = GuitarState.Hopo;
+                                        guitar->State = GuitarState.Hopo;
                                     else if (diffModifier.BaseDiff.HopoOff)
-                                        guitar.State = GuitarState.Strum;
+                                        guitar->State = GuitarState.Strum;
                                 }
                             }
                             else
@@ -130,23 +129,25 @@ namespace YARG.Core.NewParsing.Midi
                                 switch (lane)
                                 {
                                     case 6:
-                                        diffModifier.BaseDiff.HopoOn = true;
-                                        if (diffTrack.Notes.ValidateLastKey(position))
                                         {
-                                            ref var guitar = ref diffTrack.Notes.Last();
-                                            if (guitar.State != GuitarState.Tap)
-                                                guitar.State = GuitarState.Hopo;
+                                            diffModifier.BaseDiff.HopoOn = true;
+                                            if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
+                                            {
+                                                if (guitar->State != GuitarState.Tap)
+                                                    guitar->State = GuitarState.Hopo;
+                                            }
+                                            break;
                                         }
-                                        break;
                                     case 7:
-                                        diffModifier.BaseDiff.HopoOff = true;
-                                        if (diffTrack.Notes.ValidateLastKey(position))
                                         {
-                                            ref var guitar = ref diffTrack.Notes.Last();
-                                            if (guitar.State == GuitarState.Natural)
-                                                guitar.State = GuitarState.Strum;
+                                            diffModifier.BaseDiff.HopoOff = true;
+                                            if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
+                                            {
+                                                if (guitar->State == GuitarState.Natural)
+                                                    guitar->State = GuitarState.Strum;
+                                            }
+                                            break;
                                         }
-                                        break;
                                     case 8:
                                         // FIVEFRET_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
                                         //      59      +     3     *   12                                         +   8
@@ -240,25 +241,27 @@ namespace YARG.Core.NewParsing.Midi
                                 switch (lane)
                                 {
                                     case 6:
-                                        diffModifier.BaseDiff.HopoOn = false;
-                                        if (diffTrack.Notes.ValidateLastKey(position))
                                         {
-                                            ref var guitar = ref diffTrack.Notes.Last();
-                                            if (guitar.State != GuitarState.Tap)
+                                            diffModifier.BaseDiff.HopoOn = false;
+                                            if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
                                             {
-                                                guitar.State = diffModifier.BaseDiff.HopoOff ? GuitarState.Strum : GuitarState.Natural;
+                                                if (guitar->State != GuitarState.Tap)
+                                                {
+                                                    guitar->State = diffModifier.BaseDiff.HopoOff ? GuitarState.Strum : GuitarState.Natural;
+                                                }
                                             }
+                                            break;
                                         }
-                                        break;
                                     case 7:
-                                        diffModifier.BaseDiff.HopoOff = false;
-                                        if (diffTrack.Notes.ValidateLastKey(position))
                                         {
-                                            ref var guitar = ref diffTrack.Notes.Last();
-                                            if (guitar.State == GuitarState.Strum)
-                                                guitar.State = GuitarState.Natural;
+                                            diffModifier.BaseDiff.HopoOff = false;
+                                            if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
+                                            {
+                                                if (guitar->State == GuitarState.Strum)
+                                                    guitar->State = GuitarState.Natural;
+                                            }
+                                            break;
                                         }
-                                        break;
                                     case 8:
                                         // FIVEFRET_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
                                         //      59      +     3     *   12                                         +   8
@@ -421,10 +424,9 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     var diffTrack = instrumentTrack[diffIndex]!;
                                     diffModifiers[diffIndex].BaseDiff.SliderNotes = enable;
-                                    if (diffTrack.Notes.ValidateLastKey(position))
+                                    if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
                                     {
-                                        ref var guitarNote = ref diffTrack.Notes.Last();
-                                        diffModifiers[diffIndex].BaseDiff.ModifyNote(ref guitarNote);
+                                        diffModifiers[diffIndex].BaseDiff.ModifyNote(ref *guitar);
                                     }
                                 }
                                 break;
@@ -443,10 +445,9 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     var diffTrack = instrumentTrack[diffIndex]!;
                                     diffModifiers[diffIndex].BaseDiff.SliderNotes = enable;
-                                    if (diffTrack.Notes.ValidateLastKey(position))
+                                    if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
                                     {
-                                        ref var guitarNote = ref diffTrack.Notes.Last();
-                                        diffModifiers[diffIndex].BaseDiff.ModifyNote(ref guitarNote);
+                                        diffModifiers[diffIndex].BaseDiff.ModifyNote(ref *guitar);
                                     }
                                     break;
                                 }
