@@ -101,6 +101,7 @@ namespace YARG.Core.NewParsing
         public abstract ref TValue GetLastOrAppend(TKey key);
         public abstract int Find(int startIndex, in TKey key);
         public abstract ref TValue Last();
+        public abstract ref TValue TraverseBackwardsUntil(TKey key);
 
         protected abstract void Dispose(bool disposing);
 
