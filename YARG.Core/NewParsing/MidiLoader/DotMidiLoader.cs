@@ -235,8 +235,7 @@ namespace YARG.Core.NewParsing
                         case DrumsType.FiveLane:
                             chart.FiveLaneDrums ??= MidiFiveLaneLoader.Load(midiTrack, sync, difficulties);
                             break;
-                        case DrumsType.Unknown:
-                        case DrumsType.UnknownPro:
+                        default:
                             // No `using/dipose` as events & phrases need to persist
                             var track = MidiUnkownDrumsLoader.Load(midiTrack, sync, difficulties, ref chart.Settings.DrumsType);
                             switch (chart.Settings.DrumsType)

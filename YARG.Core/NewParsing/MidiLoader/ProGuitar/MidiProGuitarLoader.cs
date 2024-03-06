@@ -99,7 +99,7 @@ namespace YARG.Core.NewParsing.Midi
         {
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; i++)
             {
-                if (difficulties == null || difficulties.Contains((Difficulty) i))
+                if (difficulties == null || difficulties.Contains((Difficulty) (i + 1)))
                 {
                     Track[i] = new();
                     Difficulties[i] = new();
