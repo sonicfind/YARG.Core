@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using YARG.Core.Chart;
 
@@ -24,7 +25,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        public static (DualTime Position, bool IsEndMarker) GetEndTime(YARGChart chart)
+        public static DualTime GetEndTime(YARGChart chart)
         {
             var globals = chart.Events.Globals.Span;
             for (int i = globals.Length - 1; i >= 0; --i)
@@ -33,7 +34,7 @@ namespace YARG.Core.NewParsing
                 {
                     if (ev == "[end]")
                     {
-                        return (globals[i].Key, true);
+                        return globals[i].Key;
                     }
                 }
             }
@@ -80,27 +81,24 @@ namespace YARG.Core.NewParsing
                         lastNoteTime = lastTime;
                 }
             }
-            return (lastNoteTime, false);
+            return lastNoteTime;
         }
 
         public static void FinalizeBeats(YARGChart chart)
         {
+            var endPosition = GetEndTime(chart);
             if (chart.BeatMap.IsEmpty())
             {
-                GenerateAllBeats(chart);
+                GenerateAllBeats(chart.Sync, chart.BeatMap, endPosition);
             }
             else
             {
-                GenerateLeftoverBeats(chart);
+                GenerateLeftoverBeats(chart.Sync, chart.BeatMap, endPosition);
             }
         }
 
-        private static void GenerateLeftoverBeats(YARGChart chart)
+        private static void GenerateLeftoverBeats(SyncTrack2 sync, YARGNativeSortedList<DualTime, BeatlineType> beats, in DualTime endPosition)
         {
-            var (endPosition, isEndMarker) = GetEndTime(chart);
-
-            var sync = chart.Sync;
-            var beats = chart.BeatMap;
             uint multipliedTickrate = 4u * sync.Tickrate;
 
             int beatIndex = 0;
@@ -123,14 +121,11 @@ namespace YARG.Core.NewParsing
                     else
                     {
                         endTime = endPosition.Ticks;
-                        if (!isEndMarker)
+                        long tickDisplacement = endTime - currSig->Key;
+                        long mod = tickDisplacement % ticksPerMeasure;
+                        if (mod > 0)
                         {
-                            long tickDisplacement = endTime - currSig->Key;
-                            long mod = tickDisplacement % ticksPerMeasure;
-                            if (mod > 0)
-                            {
-                                endTime += ticksPerMeasure - mod;
-                            }
+                            endTime += ticksPerMeasure - mod;
                         }
                     }
 
@@ -166,12 +161,8 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static void GenerateAllBeats(YARGChart chart)
+        private static void GenerateAllBeats(SyncTrack2 sync, YARGNativeSortedList<DualTime, BeatlineType> beats, in DualTime endPosition)
         {
-            var (endPosition, isEndMarker) = GetEndTime(chart);
-
-            var sync = chart.Sync;
-            var beats = chart.BeatMap;
             uint multipliedTickrate = 4u * sync.Tickrate;
 
             int tempoIndex = 0;
@@ -185,7 +176,7 @@ namespace YARG.Core.NewParsing
                     int markersPerClick = (6 << currSig->Value.Denominator) / currSig->Value.Metronome;
                     long ticksPerMarker = multipliedTickrate >> currSig->Value.Denominator;
                     long ticksPerMeasure = (multipliedTickrate * numerator) >> currSig->Value.Denominator;
-                    bool isIrregular = numerator > 4 || (numerator & 1) == 1;
+                    bool isIrregular = (numerator & 1) == 1 && (numerator % 3) > 0;
 
                     long endTime;
                     if (currSig + 1 < end)
@@ -195,49 +186,44 @@ namespace YARG.Core.NewParsing
                     else
                     {
                         endTime = endPosition.Ticks;
-                        if (!isEndMarker)
+                        long tickDisplacement = endTime - currSig->Key;
+                        long mod = tickDisplacement % ticksPerMeasure;
+                        if (mod > 0)
                         {
-                            long tickDisplacement = endTime - currSig->Key;
-                            long mod = tickDisplacement % ticksPerMeasure;
-                            if (mod > 0)
+                            endTime += ticksPerMeasure - mod;
+                        }
+                    }
+
+                    var pattern = new BeatlineType[numerator];
+                    // 0 = measure
+                    for (int i = 1; i < pattern.Length; ++i)
+                    {
+                        if ((i % markersPerClick) > 0)
+                        {
+                            pattern[i] = BeatlineType.Weak; 
+                        }
+                        else
+                        {
+                            pattern[i] = BeatlineType.Strong;
+                            if (isIrregular)
                             {
-                                endTime += ticksPerMeasure - mod;
+                                int leftover = numerator - i;
+                                if (markersPerClick < leftover && 2 * leftover <= 3 * markersPerClick)
+                                {
+                                    break;
+                                }
                             }
                         }
                     }
 
                     while (currSig->Key < endTime)
                     {
-                        var style = BeatlineType.Measure;
                         long position = currSig->Key;
-                        int clickSpacing = markersPerClick;
-                        int triplSpacing = 3 * markersPerClick;
-
-                        for (int count = 0, clickCount = 0; count < numerator && position < endTime; ++count)
+                        for (int i = 0; i < numerator && position < endTime; ++i, position += ticksPerMarker)
                         {
                             buffer.Ticks = position;
                             buffer.Seconds = sync.ConvertToSeconds(position, ref tempoIndex);
-                            beats.Append(buffer, style);
-
-                            position += ticksPerMarker;
-                            ++clickCount;
-                            if (clickCount < clickSpacing)
-                            {
-                                style = BeatlineType.Weak;
-                            }
-                            else
-                            {
-                                clickCount = 0;
-                                style = BeatlineType.Strong;
-                                if (isIrregular)
-                                {
-                                    int leftover = numerator - count;
-                                    if (markersPerClick < leftover && 2 * leftover <= triplSpacing)
-                                    {
-                                        clickSpacing = leftover;
-                                    }
-                                }
-                            }
+                            beats.Append(buffer, pattern[i]);
                         }
                         currSig->Key += ticksPerMeasure;
                     }
