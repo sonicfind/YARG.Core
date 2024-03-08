@@ -47,7 +47,7 @@ namespace YARG.Core.NewParsing
         public VocalTrack2? LeadVocals;
         public VocalTrack2? HarmonyVocals;
 
-        public YARGChart(long tickrate)
+        public YARGChart(long tickrate = 480)
         {
             Sync = new SyncTrack2(tickrate);
             Metadata = SongMetadata.Default;
