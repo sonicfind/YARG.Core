@@ -210,7 +210,7 @@ namespace YARG.Core.NewParsing
                                 int leftover = numerator - i;
                                 if (markersPerClick < leftover && 2 * leftover <= 3 * markersPerClick)
                                 {
-                                    break;
+                                    markersPerClick = leftover;
                                 }
                             }
                         }
