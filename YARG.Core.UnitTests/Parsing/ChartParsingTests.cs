@@ -1,5 +1,4 @@
-﻿using MoonscraperChartEditor.Song;
-using MoonscraperChartEditor.Song.IO;
+﻿using MoonscraperChartEditor.Song.IO;
 using NUnit.Framework;
 using YARG.Core.Chart;
 using YARG.Core.IO.Disposables;
@@ -25,6 +24,19 @@ namespace YARG.Core.UnitTests.Parsing
         }
 
         [TestCase("test.chart")]
+        [TestCase("test.mid")]
+        public void ParseSong(string notesFile)
+        {
+            YargLogger.AddLogListener(new DebugYargLogListener());
+
+            Assert.DoesNotThrow(() =>
+            {
+                string chartPath = Path.Combine(chartsDirectory!, notesFile);
+                var song = SongChart.FromFile(ParseSettings.Default, chartPath);
+            });
+        }
+
+        [TestCase("test.chart")]
         public void ParseChartFile(string notesFile)
         {
             YargLogger.AddLogListener(new DebugYargLogListener());
@@ -33,19 +45,6 @@ namespace YARG.Core.UnitTests.Parsing
             {
                 string chartPath = Path.Combine(chartsDirectory!, notesFile);
                 var song = ChartReader.ReadFromFile(chartPath);
-            });
-        }
-
-        [TestCase("test.chart")]
-        [TestCase("test.mid")]
-        public void ParseChartFile_Full(string notesFile)
-        {
-            YargLogger.AddLogListener(new DebugYargLogListener());
-
-            Assert.DoesNotThrow(() =>
-            {
-                string chartPath = Path.Combine(chartsDirectory!, notesFile);
-                var song = SongChart.FromFile(ParseSettings.Default, chartPath);
             });
         }
 
