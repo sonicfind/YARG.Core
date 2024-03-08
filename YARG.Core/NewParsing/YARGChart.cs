@@ -48,6 +48,8 @@ namespace YARG.Core.NewParsing
         public VocalTrack2? LeadVocals;
         public VocalTrack2? HarmonyVocals;
 
+        public VenueTrack2? Venue;
+
         public YARGChart()
         {
             Sync = new SyncTrack2(480);
