@@ -47,6 +47,13 @@ namespace YARG.Core.NewParsing
         public VocalTrack2? LeadVocals;
         public VocalTrack2? HarmonyVocals;
 
+        public YARGChart()
+        {
+            Sync = new SyncTrack2(480);
+            Metadata = SongMetadata.Default;
+            Settings = LoaderSettings.Default;
+        }
+
         public YARGChart(SyncTrack2 sync, SongMetadata metadata, LoaderSettings settings, string? midiSequenceName)
         {
             Sync = sync;
