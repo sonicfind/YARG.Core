@@ -46,29 +46,29 @@ namespace YARG.Core.Song
             return preparser.validations;
         }
 
-        protected override bool IsNote() { return PROGUITAR_MIN <= note.value && note.value <= PROGUITAR_MAX; }
+        protected override bool IsNote() { return PROGUITAR_MIN <= _note.value && _note.value <= PROGUITAR_MAX; }
 
-        protected override bool ParseLaneColor_ON(YARGMidiTrack track)
+        protected override bool ParseLaneColor_ON()
         {
-            int noteValue = note.value - PROGUITAR_MIN;
+            int noteValue = _note.value - PROGUITAR_MIN;
             int diffIndex = DIFFVALUES[noteValue];
             if (!diffultyTracker[diffIndex])
             {
                 int laneIndex = LANEINDICES[noteValue];
-                if (laneIndex < NUM_STRINGS && track.Channel != ARPEGGIO_CHANNEL && MIN_VELOCITY <= note.velocity && note.velocity <= maxVelocity)
+                if (laneIndex < NUM_STRINGS && _event.Channel != ARPEGGIO_CHANNEL && MIN_VELOCITY <= _note.velocity && _note.velocity <= maxVelocity)
                     statuses[diffIndex, laneIndex] = true;
             }
             return false;
         }
 
-        protected override bool ParseLaneColor_Off(YARGMidiTrack track)
+        protected override bool ParseLaneColor_Off()
         {
-            int noteValue = note.value - PROGUITAR_MIN;
+            int noteValue = _note.value - PROGUITAR_MIN;
             int diffIndex = DIFFVALUES[noteValue];
             if (!diffultyTracker[diffIndex])
             {
                 int laneIndex = LANEINDICES[noteValue];
-                if (laneIndex < NUM_STRINGS && track.Channel != ARPEGGIO_CHANNEL)
+                if (laneIndex < NUM_STRINGS && _event.Channel != ARPEGGIO_CHANNEL)
                 {
                     Validate(diffIndex);
                     diffultyTracker[diffIndex] = true;

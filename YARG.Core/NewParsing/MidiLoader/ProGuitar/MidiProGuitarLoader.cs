@@ -44,35 +44,7 @@ namespace YARG.Core.NewParsing.Midi
         public static ProGuitarInstrumentTrack<TProFretConfig> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
         {
             var loader = new MidiProGuitarLoader<TProFretConfig>(difficulties);
-            int tempoIndex = 0;
-            while (midiTrack.ParseEvent(true))
-            {
-                loader.Position.Ticks = midiTrack.Position;
-                loader.Position.Seconds = sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex);
-                if (midiTrack.Type == MidiEventType.Note_On)
-                {
-                    midiTrack.ExtractMidiNote(ref loader.Note);
-                    if (loader.Note.velocity > 0)
-                    {
-                        loader.ParseNote_ON(midiTrack);
-                    }
-                    else
-                        loader.ParseNote_Off(midiTrack);
-                }
-                else if (midiTrack.Type == MidiEventType.Note_Off)
-                {
-                    midiTrack.ExtractMidiNote(ref loader.Note);
-                    loader.ParseNote_Off(midiTrack);
-                }
-                else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit)
-                {
-                    loader.Track.Events.GetLastOrAppend(loader.Position)
-                                       .Add(Encoding.UTF8.GetString(midiTrack.ExtractTextOrSysEx()));
-                }
-            }
-
-            loader.Track.TrimExcess();
-            return loader.Track;
+            return loader.Process(midiTrack, sync);
         }
 
         private class ProGuitar_MidiDiff
@@ -107,12 +79,12 @@ namespace YARG.Core.NewParsing.Midi
             }
         }
 
-        private void ParseNote_ON(YARGMidiTrack midiTrack)
+        protected override void ParseNote_ON()
         {
             NormalizeNoteOnPosition();
-            if (MidiProGuitarLoader.NOTE_MIN <= Note.value && Note.value <= MidiProGuitarLoader.NOTE_MAX)
+            if (MidiProGuitarLoader.NOTE_MIN <= _note.value && _note.value <= MidiProGuitarLoader.NOTE_MAX)
             {
-                ParseLaneColor(midiTrack);
+                ParseLaneColor();
             }
             else if (!AddPhrase_ON(PhraseMappings))
             {
@@ -123,11 +95,11 @@ namespace YARG.Core.NewParsing.Midi
             }
         }
 
-        private void ParseNote_Off(YARGMidiTrack midiTrack)
+        protected override void ParseNote_Off()
         {
-            if (MidiProGuitarLoader.NOTE_MIN <= Note.value && Note.value <= MidiProGuitarLoader.NOTE_MAX)
+            if (MidiProGuitarLoader.NOTE_MIN <= _note.value && _note.value <= MidiProGuitarLoader.NOTE_MAX)
             {
-                ParseLaneColor_Off(midiTrack);
+                ParseLaneColor_Off();
             }
             else if (!AddPhrase_Off(PhraseMappings))
             {
@@ -135,9 +107,9 @@ namespace YARG.Core.NewParsing.Midi
             }
         }
 
-        private void ParseLaneColor(YARGMidiTrack midiTrack)
+        private void ParseLaneColor()
         {
-            int noteValue = Note.value - MidiProGuitarLoader.NOTE_MIN;
+            int noteValue = _note.value - MidiProGuitarLoader.NOTE_MIN;
             int diffIndex = MidiProGuitarLoader.DIFFVALUES[noteValue];
 
             var midiDiff = Difficulties[diffIndex];
@@ -148,9 +120,9 @@ namespace YARG.Core.NewParsing.Midi
             ref var diffTrack = ref Track[diffIndex]!;
             if (lane < MidiProGuitarLoader.NUM_STRINGS)
             {
-                if (midiTrack.Channel == 1)
+                if (_event.Channel == 1)
                 {
-                    diffTrack.Arpeggios.GetLastOrAppend(Position)[lane] = Note.velocity - MidiProGuitarLoader.FRET_MIN;
+                    diffTrack.Arpeggios.GetLastOrAppend(_position)[lane] = _note.velocity - MidiProGuitarLoader.FRET_MIN;
                 }
                 else
                 {
@@ -161,7 +133,7 @@ namespace YARG.Core.NewParsing.Midi
 
                     unsafe
                     {
-                        if (diffTrack.Notes.TryAppend(Position, out var note))
+                        if (diffTrack.Notes.TryAppend(_position, out var note))
                         {
                             note->HOPO = midiDiff.Hopo;
                             note->Slide = midiDiff.Slide;
@@ -169,7 +141,7 @@ namespace YARG.Core.NewParsing.Midi
                         }
 
                         ref var proString = ref (*note)[lane];
-                        switch (midiTrack.Channel)
+                        switch (_event.Channel)
                         {
                             case 2: proString.Mode = StringMode.Bend; break;
                             case 3: proString.Mode = StringMode.Muted; break;
@@ -178,11 +150,11 @@ namespace YARG.Core.NewParsing.Midi
                             case 6: proString.Mode = StringMode.Pinch_Harmonics; break;
                         }
 
-                        proString.Fret = Note.velocity - MidiProGuitarLoader.FRET_MIN;
+                        proString.Fret = _note.velocity - MidiProGuitarLoader.FRET_MIN;
                     }
 
                     
-                    midiDiff.Notes[lane] = Position;
+                    midiDiff.Notes[lane] = _position;
                 }
             }
             else if (lane == MidiProGuitarLoader.HOPO_VALUE)
@@ -190,7 +162,7 @@ namespace YARG.Core.NewParsing.Midi
                 midiDiff.Hopo = true;
                 unsafe
                 {
-                    if (diffTrack.Notes.TryGetLastValue(Position, out var note))
+                    if (diffTrack.Notes.TryGetLastValue(_position, out var note))
                     {
                         note->HOPO = true;
                     }
@@ -199,10 +171,10 @@ namespace YARG.Core.NewParsing.Midi
             }
             else if (lane == MidiProGuitarLoader.SLIDE_VALUE)
             {
-                midiDiff.Slide = midiTrack.Channel == 11 ? ProSlide.Reversed : ProSlide.Normal;
+                midiDiff.Slide = _event.Channel == 11 ? ProSlide.Reversed : ProSlide.Normal;
                 unsafe
                 {
-                    if (diffTrack.Notes.TryGetLastValue(Position, out var note))
+                    if (diffTrack.Notes.TryGetLastValue(_position, out var note))
                     {
                         note->Slide = midiDiff.Slide;
                     }
@@ -210,12 +182,12 @@ namespace YARG.Core.NewParsing.Midi
             }
             else if (lane == MidiProGuitarLoader.ARPEGGIO_VALUE)
             {
-                diffTrack.Arpeggios.GetLastOrAppend(Position);
-                midiDiff.Arpeggio = Position;
+                diffTrack.Arpeggios.GetLastOrAppend(_position);
+                midiDiff.Arpeggio = _position;
             }
             else if (lane == MidiProGuitarLoader.EMPHASIS_VALUE)
             {
-                switch (midiTrack.Channel)
+                switch (_event.Channel)
                 {
                     case 13: midiDiff.Emphasis = EmphasisType.High; break;
                     case 14: midiDiff.Emphasis = EmphasisType.Middle; break;
@@ -225,7 +197,7 @@ namespace YARG.Core.NewParsing.Midi
 
                 unsafe
                 {
-                    if (diffTrack.Notes.TryGetLastValue(Position, out var note))
+                    if (diffTrack.Notes.TryGetLastValue(_position, out var note))
                     {
                         note->Emphasis = midiDiff.Emphasis;
                     }
@@ -233,9 +205,9 @@ namespace YARG.Core.NewParsing.Midi
             }
         }
 
-        private void ParseLaneColor_Off(YARGMidiTrack midiTrack)
+        private void ParseLaneColor_Off()
         {
-            int noteValue = Note.value - MidiProGuitarLoader.NOTE_MIN;
+            int noteValue = _note.value - MidiProGuitarLoader.NOTE_MIN;
             int diffIndex = MidiProGuitarLoader.DIFFVALUES[noteValue];
             var midiDiff = Difficulties[diffIndex];
             if (midiDiff == null)
@@ -244,12 +216,12 @@ namespace YARG.Core.NewParsing.Midi
             int lane = MidiProGuitarLoader.LANEVALUES[noteValue];
             if (lane < MidiProGuitarLoader.NUM_STRINGS)
             {
-                if (midiTrack.Channel != 1)
+                if (_event.Channel != 1)
                 {
                     ref var colorPosition = ref midiDiff.Notes[lane];
                     if (colorPosition.Ticks != -1)
                     {
-                        Track[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)[lane].Duration = DualTime.Truncate(Position - colorPosition);
+                        Track[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)[lane].Duration = DualTime.Truncate(_position - colorPosition);
                         colorPosition.Ticks = -1;
                     }
                 }
@@ -267,7 +239,7 @@ namespace YARG.Core.NewParsing.Midi
                 ref var arpeggioPosition = ref midiDiff.Arpeggio;
                 if (arpeggioPosition.Ticks != -1)
                 {
-                    Track[diffIndex]!.Arpeggios.Last().Length = DualTime.Normalize(Position - arpeggioPosition);
+                    Track[diffIndex]!.Arpeggios.Last().Length = DualTime.Normalize(_position - arpeggioPosition);
                     arpeggioPosition.Ticks = -1;
                 }
             }
@@ -279,19 +251,19 @@ namespace YARG.Core.NewParsing.Midi
         
         private void ToggleExtraValues()
         {
-            if (MidiProGuitarLoader.ROOT_MIN <= Note.value && Note.value <= MidiProGuitarLoader.ROOT_MAX)
+            if (MidiProGuitarLoader.ROOT_MIN <= _note.value && _note.value <= MidiProGuitarLoader.ROOT_MAX)
             {
-                Track.Roots.Add(Position, MidiProGuitarLoader.ROOTS[Note.value - MidiProGuitarLoader.ROOT_MIN]);
+                Track.Roots.Add(_position, MidiProGuitarLoader.ROOTS[_note.value - MidiProGuitarLoader.ROOT_MIN]);
                 return;
             }
 
-            switch (Note.value)
+            switch (_note.value)
             {
-                case 16:  Track.ChordPhrases.GetLastOrAppend(Position).Add(ChordPhrase.Slash); break;
-                case 17:  Track.ChordPhrases.GetLastOrAppend(Position).Add(ChordPhrase.Hide); break;
-                case 18:  Track.ChordPhrases.GetLastOrAppend(Position).Add(ChordPhrase.Accidental_Switch); break;
-                case 107: Track.ChordPhrases.GetLastOrAppend(Position).Add(ChordPhrase.Force_Numbering); break;
-                case 108: Track.HandPositions.Append(Position).Fret = Note.velocity - MidiProGuitarLoader.FRET_MIN; break;
+                case 16:  Track.ChordPhrases.GetLastOrAppend(_position).Add(ChordPhrase.Slash); break;
+                case 17:  Track.ChordPhrases.GetLastOrAppend(_position).Add(ChordPhrase.Hide); break;
+                case 18:  Track.ChordPhrases.GetLastOrAppend(_position).Add(ChordPhrase.Accidental_Switch); break;
+                case 107: Track.ChordPhrases.GetLastOrAppend(_position).Add(ChordPhrase.Force_Numbering); break;
+                case 108: Track.HandPositions.Append(_position).Fret = _note.velocity - MidiProGuitarLoader.FRET_MIN; break;
             }
         }
     }

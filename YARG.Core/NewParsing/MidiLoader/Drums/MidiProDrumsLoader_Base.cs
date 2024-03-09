@@ -4,7 +4,7 @@ using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing.Midi
 {
-    internal class MidiProDrumsLoader_Base<TDrumConfig, TDiffTracker> : MidiDrumLoader_Base<ProDrumNote2<TDrumConfig>, TDrumConfig, TDiffTracker>
+    public class MidiProDrumsLoader_Base<TDrumConfig, TDiffTracker> : MidiDrumLoader_Base<ProDrumNote2<TDrumConfig>, TDrumConfig, TDiffTracker>
         where TDrumConfig : unmanaged, IDrumPadConfig
         where TDiffTracker : DrumsMidiDifficulty, new()
     {
@@ -26,7 +26,7 @@ namespace YARG.Core.NewParsing.Midi
 
         protected override void ParseLaneColor_ON()
         {
-            int noteValue = Note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
+            int noteValue = _note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
             int diffIndex = MidiBasicInstrumentLoader.DIFFVALUES[noteValue];
             var midiDiff = Difficulties[diffIndex];
             if (midiDiff == null)
@@ -36,12 +36,12 @@ namespace YARG.Core.NewParsing.Midi
             int lane = MidiDrumLoader_Base.LANEVALUES[noteValue];
             if (lane < NUM_DRUMLANES)
             {
-                midiDiff.Notes[lane] = Position;
+                midiDiff.Notes[lane] = _position;
 
                 if (notes.Capacity == 0)
                     notes.Capacity = 5000;
 
-                ref var drum = ref notes.GetLastOrAppend(Position);
+                ref var drum = ref notes.GetLastOrAppend(_position);
                 if (midiDiff.Flam)
                     drum.IsFlammed = true;
 
@@ -50,11 +50,11 @@ namespace YARG.Core.NewParsing.Midi
                     if (enableDynamics)
                     {
                         int padIndex = lane - MidiDrumLoader_Base.DYNAMIC_MIN;
-                        if (Note.velocity > 100)
+                        if (_note.velocity > 100)
                         {
                             drum.Pads.SetDynamics(padIndex, DrumDynamics.Accent);
                         }
-                        else if (Note.velocity < 100)
+                        else if (_note.velocity < 100)
                         {
                             drum.Pads.SetDynamics(padIndex, DrumDynamics.Ghost);
                         }
@@ -78,7 +78,7 @@ namespace YARG.Core.NewParsing.Midi
 
         protected override void ParseLaneColor_Off()
         {
-            int noteValue = Note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
+            int noteValue = _note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
             int diffIndex = MidiBasicInstrumentLoader.DIFFVALUES[noteValue];
             var midiDiff = Difficulties[diffIndex];
             if (midiDiff == null)
@@ -90,7 +90,7 @@ namespace YARG.Core.NewParsing.Midi
                 ref var colorPosition = ref midiDiff.Notes[lane];
                 if (colorPosition.Ticks != -1)
                 {
-                    Track[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)[lane] = DualTime.Truncate(Position - colorPosition);
+                    Track[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)[lane] = DualTime.Truncate(_position - colorPosition);
                     colorPosition.Ticks = -1;
                 }
             }
@@ -100,10 +100,10 @@ namespace YARG.Core.NewParsing.Midi
         {
             if (!base.ToggleExtraValues_ON() && _type != DrumsType.FiveLane)
             {
-                if (TOM_MIN_VALUE <= Note.value && Note.value <= TOM_MAX_VALUE)
+                if (TOM_MIN_VALUE <= _note.value && _note.value <= TOM_MAX_VALUE)
                 {
                     _type = DrumsType.ProDrums;
-                    _toms[Note.value - TOM_MIN_VALUE] = true;
+                    _toms[_note.value - TOM_MIN_VALUE] = true;
                 }
             }
             return true;
@@ -111,9 +111,9 @@ namespace YARG.Core.NewParsing.Midi
 
         protected override bool ToggleExtraValues_Off()
         {
-            if (!base.ToggleExtraValues_Off() && _type != DrumsType.FiveLane && TOM_MIN_VALUE <= Note.value && Note.value <= TOM_MAX_VALUE)
+            if (!base.ToggleExtraValues_Off() && _type != DrumsType.FiveLane && TOM_MIN_VALUE <= _note.value && _note.value <= TOM_MAX_VALUE)
             {
-                _toms[Note.value - TOM_MIN_VALUE] = false;
+                _toms[_note.value - TOM_MIN_VALUE] = false;
             }
             return true;
         }

@@ -26,11 +26,11 @@ namespace YARG.Core.Song
             return preparser.validations;
         }
 
-        protected override bool IsNote() { return NOTE_MIN <= note.value && note.value <= NOTE_MAX; }
+        protected override bool IsNote() { return NOTE_MIN <= _note.value && _note.value <= NOTE_MAX; }
 
-        protected override bool ParseLaneColor_ON(YARGMidiTrack track)
+        protected override bool ParseLaneColor_ON()
         {
-            int noteValue = note.value - NOTE_MIN;
+            int noteValue = _note.value - NOTE_MIN;
             int diffIndex = DIFFVALUES[noteValue];
             if (!difficultyTracker[diffIndex])
             {
@@ -41,9 +41,9 @@ namespace YARG.Core.Song
             return false;
         }
 
-        protected override bool ParseLaneColor_Off(YARGMidiTrack track)
+        protected override bool ParseLaneColor_Off()
         {
-            int noteValue = note.value - NOTE_MIN;
+            int noteValue = _note.value - NOTE_MIN;
             int diffIndex = DIFFVALUES[noteValue];
             if (!difficultyTracker[diffIndex])
             {

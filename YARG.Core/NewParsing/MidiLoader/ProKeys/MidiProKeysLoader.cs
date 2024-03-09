@@ -8,35 +8,7 @@ namespace YARG.Core.NewParsing.Midi
         public static ProKeysDifficultyTrack Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
             var loader = new MidiProKeysLoader();
-            int tempoIndex = 0;
-            while (midiTrack.ParseEvent(true))
-            {
-                loader.Position.Ticks = midiTrack.Position;
-                loader.Position.Seconds = sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex);
-                if (midiTrack.Type == MidiEventType.Note_On)
-                {
-                    midiTrack.ExtractMidiNote(ref loader.Note);
-                    if (loader.Note.velocity > 0)
-                    {
-                        loader.ParseNote_ON();
-                    }
-                    else
-                        loader.ParseNote_Off();
-                }
-                else if (midiTrack.Type == MidiEventType.Note_Off)
-                {
-                    midiTrack.ExtractMidiNote(ref loader.Note);
-                    loader.ParseNote_Off();
-                }
-                else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit)
-                {
-                    loader.Track.Events.GetLastOrAppend(loader.Position)
-                                       .Add(Encoding.UTF8.GetString(midiTrack.ExtractTextOrSysEx()));
-                }
-            }
-
-            loader.Track.TrimExcess();
-            return loader.Track;
+            return loader.Process(midiTrack, sync);
         }
 
         private const int NOTE_MIN = 48;
@@ -60,10 +32,10 @@ namespace YARG.Core.NewParsing.Midi
 
         private MidiProKeysLoader() : base(1) { }
 
-        private void ParseNote_ON()
+        protected override void ParseNote_ON()
         {
             NormalizeNoteOnPosition();
-            if (NOTE_MIN <= Note.value && Note.value <= NOTE_MAX)
+            if (NOTE_MIN <= _note.value && _note.value <= NOTE_MAX)
             {
                 ParseLaneColor_ON();
             }
@@ -76,9 +48,9 @@ namespace YARG.Core.NewParsing.Midi
             }
         }
 
-        private void ParseNote_Off()
+        protected override void ParseNote_Off()
         {
-            if (NOTE_MIN <= Note.value && Note.value <= NOTE_MAX)
+            if (NOTE_MIN <= _note.value && _note.value <= NOTE_MAX)
             {
                 ParseLaneColor_Off();
             }
@@ -95,30 +67,30 @@ namespace YARG.Core.NewParsing.Midi
                 Track.Notes.Capacity = 5000;
             }
 
-            Track.Notes.TryAppend(Position);
-            lanes[Note.value - NOTE_MIN] = Position;
+            Track.Notes.TryAppend(_position);
+            lanes[_note.value - NOTE_MIN] = _position;
         }
 
         private void ParseLaneColor_Off()
         {
-            ref var colorPosition = ref lanes[Note.value - NOTE_MIN];
+            ref var colorPosition = ref lanes[_note.value - NOTE_MIN];
             if (colorPosition.Ticks != -1)
             {
-                Track.Notes.TraverseBackwardsUntil(colorPosition).Add(Note.value, DualTime.Truncate(Position - colorPosition));
+                Track.Notes.TraverseBackwardsUntil(colorPosition).Add(_note.value, DualTime.Truncate(_position - colorPosition));
                 colorPosition.Ticks = -1;
             }
         }
 
         private void AddRangeShift()
         {
-            switch (Note.value)
+            switch (_note.value)
             {
-                case 0: Track.Ranges.GetLastOrAppend(Position) = ProKey_Ranges.C1_E2; break;
-                case 2: Track.Ranges.GetLastOrAppend(Position) = ProKey_Ranges.D1_F2; break;
-                case 4: Track.Ranges.GetLastOrAppend(Position) = ProKey_Ranges.E1_G2; break;
-                case 5: Track.Ranges.GetLastOrAppend(Position) = ProKey_Ranges.F1_A2; break;
-                case 7: Track.Ranges.GetLastOrAppend(Position) = ProKey_Ranges.G1_B2; break;
-                case 9: Track.Ranges.GetLastOrAppend(Position) = ProKey_Ranges.A1_C3; break;
+                case 0: Track.Ranges.GetLastOrAppend(_position) = ProKey_Ranges.C1_E2; break;
+                case 2: Track.Ranges.GetLastOrAppend(_position) = ProKey_Ranges.D1_F2; break;
+                case 4: Track.Ranges.GetLastOrAppend(_position) = ProKey_Ranges.E1_G2; break;
+                case 5: Track.Ranges.GetLastOrAppend(_position) = ProKey_Ranges.F1_A2; break;
+                case 7: Track.Ranges.GetLastOrAppend(_position) = ProKey_Ranges.G1_B2; break;
+                case 9: Track.Ranges.GetLastOrAppend(_position) = ProKey_Ranges.A1_C3; break;
             };
         }
     }

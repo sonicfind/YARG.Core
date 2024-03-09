@@ -7,41 +7,42 @@ namespace YARG.Core.Song
     public abstract class Midi_Preparser
     {
         protected static readonly byte[] SYSEXTAG = Encoding.ASCII.GetBytes("PS");
-        protected MidiNote note;
+        protected MidiNote _note;
+        protected MidiEvent _event = MidiEvent.Default;
 
         protected Midi_Preparser() { }
 
         protected bool Process(YARGMidiTrack track)
         {
-            while (track.ParseEvent(false))
+            while (track.ParseEvent(false, ref _event))
             {
-                switch (track.Type)
+                switch (_event.Type)
                 {
                     case MidiEventType.Note_On:
-                        track.ExtractMidiNote(ref note);
-                        if (note.velocity > 0 ? ParseNote_ON(track) : ParseNote_Off(track))
+                        track.ExtractMidiNote(ref _note);
+                        if (_note.velocity > 0 ? ParseNote_ON() : ParseNote_Off())
                             return true;
                         break;
                     case MidiEventType.Note_Off:
-                        track.ExtractMidiNote(ref note);
-                        if (ParseNote_Off(track))
+                        track.ExtractMidiNote(ref _note);
+                        if (ParseNote_Off())
                             return true;
                         break;
                     case MidiEventType.SysEx:
                     case MidiEventType.SysEx_End:
-                        ParseSysEx(track.ExtractTextOrSysEx());
+                        ParseSysEx(track.ExtractTextOrSysEx(in _event));
                         break;
                     case >= MidiEventType.Text and <= MidiEventType.Text_EnumLimit:
-                        ParseText(track.ExtractTextOrSysEx());
+                        ParseText(track.ExtractTextOrSysEx(in _event));
                         break;
                 }
             }
             return false;
         }
 
-        protected abstract bool ParseNote_ON(YARGMidiTrack track);
+        protected abstract bool ParseNote_ON();
 
-        protected abstract bool ParseNote_Off(YARGMidiTrack track);
+        protected abstract bool ParseNote_Off();
 
         protected virtual void ParseSysEx(ReadOnlySpan<byte> str) { }
 

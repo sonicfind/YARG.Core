@@ -6,12 +6,15 @@ using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing.Midi
 {
-    public static class MidiProDrumsLoader
+    public class MidiProDrumsLoader : MidiProDrumsLoader_Base<FourLane, FourLaneDifficulty>
     {
         public static BasicInstrumentTrack2<ProDrumNote2<FourLane>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
         {
-            var loader = new MidiProDrumsLoader_Base<FourLane, FourLaneDifficulty>(difficulties, DrumsType.ProDrums);
+            var loader = new MidiProDrumsLoader(difficulties);
             return loader.Process(midiTrack, sync);
         }
+
+        private MidiProDrumsLoader(HashSet<Difficulty>? difficulties)
+            : base(difficulties, DrumsType.ProDrums) { }
     }
 }

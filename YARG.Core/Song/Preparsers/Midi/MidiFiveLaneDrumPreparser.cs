@@ -5,7 +5,7 @@ namespace YARG.Core.Song
     public class Midi_FiveLane_Preparser : Midi_Drum_Preparser_Base
     {
         private const int NUM_LANES = MAX_NUMPADS;
-        protected override bool IsNote() { return DEFAULT_MIN <= note.value && note.value <= FIVELANE_MAX; }
+        protected override bool IsNote() { return DEFAULT_MIN <= _note.value && _note.value <= FIVELANE_MAX; }
 
         protected override bool IsFullyScanned() { return validations == ALL_DIFFICULTIES_PLUS; }
 
@@ -18,9 +18,9 @@ namespace YARG.Core.Song
             return preparser.validations;
         }
 
-        protected override bool ParseLaneColor_ON(YARGMidiTrack track)
+        protected override bool ParseLaneColor_ON()
         {
-            int noteValue = note.value - DEFAULT_MIN;
+            int noteValue = _note.value - DEFAULT_MIN;
             int diffIndex = DIFFVALUES[noteValue];
             if (!difficultyTracker[diffIndex])
             {
@@ -31,9 +31,9 @@ namespace YARG.Core.Song
             return false;
         }
 
-        protected override bool ParseLaneColor_Off(YARGMidiTrack track)
+        protected override bool ParseLaneColor_Off()
         {
-            int noteValue = note.value - DEFAULT_MIN;
+            int noteValue = _note.value - DEFAULT_MIN;
             int diffIndex = DIFFVALUES[noteValue];
             if (!difficultyTracker[diffIndex])
             {

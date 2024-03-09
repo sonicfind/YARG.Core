@@ -29,7 +29,7 @@ namespace YARG.Core.NewParsing.Midi
 
         protected override void ParseLaneColor_ON()
         {
-            int noteValue = Note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
+            int noteValue = _note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
             int diffIndex = MidiBasicInstrumentLoader.DIFFVALUES[noteValue];
             var midiDiff = Difficulties[diffIndex];
             if (midiDiff == null)
@@ -39,23 +39,23 @@ namespace YARG.Core.NewParsing.Midi
             int lane = MidiDrumLoader_Base.LANEVALUES[noteValue];
             if (lane < NUM_DRUMLANES)
             {
-                midiDiff.Notes[lane] = Position;
+                midiDiff.Notes[lane] = _position;
 
                 if (notes.Capacity == 0)
                     notes.Capacity = 5000;
 
-                ref var drum = ref notes.GetLastOrAppend(Position);
+                ref var drum = ref notes.GetLastOrAppend(_position);
                 if (midiDiff.Flam)
                     drum.IsFlammed = true;
 
                 if (enableDynamics && lane >= MidiDrumLoader_Base.DYNAMIC_MIN)
                 {
                     int padIndex = lane - MidiDrumLoader_Base.DYNAMIC_MIN;
-                    if (Note.velocity > 100)
+                    if (_note.velocity > 100)
                     {
                         drum.Pads.SetDynamics(padIndex, DrumDynamics.Accent);
                     }
-                    else if (Note.velocity < 100)
+                    else if (_note.velocity < 100)
                     {
                         drum.Pads.SetDynamics(padIndex, DrumDynamics.Ghost);
                     }
@@ -65,7 +65,7 @@ namespace YARG.Core.NewParsing.Midi
 
         protected override void ParseLaneColor_Off()
         {
-            int noteValue = Note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
+            int noteValue = _note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
             int diffIndex = MidiBasicInstrumentLoader.DIFFVALUES[noteValue];
             var midiDiff = Difficulties[diffIndex];
             if (midiDiff == null)
@@ -77,7 +77,7 @@ namespace YARG.Core.NewParsing.Midi
                 ref var colorPosition = ref midiDiff.Notes[lane];
                 if (colorPosition.Ticks != -1)
                 {
-                    Track[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)[lane] = DualTime.Truncate(Position - colorPosition);
+                    Track[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)[lane] = DualTime.Truncate(_position - colorPosition);
                     colorPosition.Ticks = -1;
                 }
             }

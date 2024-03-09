@@ -33,46 +33,14 @@ namespace YARG.Core.NewParsing.Midi
         protected MidiDrumLoader_Base(HashSet<Difficulty>? difficulties, int numBRELanes)
             : base(difficulties, numBRELanes) { }
 
-        internal BasicInstrumentTrack2<TDrumNote> Process(YARGMidiTrack midiTrack, SyncTrack2 sync)
-        {
-            int tempoIndex = 0;
-            while (midiTrack.ParseEvent(true))
-            {
-                Position.Ticks = midiTrack.Position;
-                Position.Seconds = sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex);
-                if (midiTrack.Type == MidiEventType.Note_On)
-                {
-                    midiTrack.ExtractMidiNote(ref Note);
-                    if (Note.velocity > 0)
-                    {
-                        ParseNote_ON();
-                    }
-                    else
-                    {
-                        ParseNote_Off();
-                    }
-                }
-                else if (midiTrack.Type == MidiEventType.Note_Off)
-                {
-                    midiTrack.ExtractMidiNote(ref Note);
-                    ParseNote_Off();
-                }
-                else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit)
-                    ParseText(midiTrack.ExtractTextOrSysEx());
-            }
-
-            Track.TrimExcess();
-            return Track;
-        }
-
         protected virtual bool IsNote()
         {
-            return MidiBasicInstrumentLoader.DEFAULT_MIN <= Note.value && Note.value <= MidiBasicInstrumentLoader.DEFAULT_MAX;
+            return MidiBasicInstrumentLoader.DEFAULT_MIN <= _note.value && _note.value <= MidiBasicInstrumentLoader.DEFAULT_MAX;
         }
 
         protected virtual bool ToggleExtraValues_ON()
         {
-            if (Note.value != MidiDrumLoader_Base.FLAM_VALUE)
+            if (_note.value != MidiDrumLoader_Base.FLAM_VALUE)
             {
                 return false;
             }
@@ -84,7 +52,7 @@ namespace YARG.Core.NewParsing.Midi
                     Difficulties[i].Flam = true;
                     unsafe
                     {
-                        if (Track[i]!.Notes.TryGetLastValue(Position, out var note))
+                        if (Track[i]!.Notes.TryGetLastValue(_position, out var note))
                         {
                             note->IsFlammed = true;
                         }
@@ -97,7 +65,7 @@ namespace YARG.Core.NewParsing.Midi
 
         protected virtual bool ToggleExtraValues_Off()
         {
-            if (Note.value != MidiDrumLoader_Base.FLAM_VALUE)
+            if (_note.value != MidiDrumLoader_Base.FLAM_VALUE)
             {
                 return false;
             }
@@ -116,7 +84,7 @@ namespace YARG.Core.NewParsing.Midi
 
         protected abstract void ParseLaneColor_Off();
 
-        private void ParseNote_ON()
+        protected override void ParseNote_ON()
         {
             NormalizeNoteOnPosition();
             if (ProcessSpecialNote_ON())
@@ -135,7 +103,7 @@ namespace YARG.Core.NewParsing.Midi
             }
         }
 
-        private void ParseNote_Off()
+        protected override void ParseNote_Off()
         {
             if (ProcessSpecialNote_Off())
                 return;
@@ -153,24 +121,36 @@ namespace YARG.Core.NewParsing.Midi
             }
         }
 
+        protected override void ParseText(ReadOnlySpan<byte> str)
+        {
+            if (!enableDynamics && str.SequenceEqual(MidiDrumLoader_Base.DYNAMICS_STRING))
+            {
+                enableDynamics = true;
+            }
+            else
+            {
+                Track.Events.GetLastOrAppend(_position).Add(Encoding.UTF8.GetString(str));
+            }
+        }
+
         private bool ProcessSpecialNote_ON()
         {
-            if (Note.value != MidiDrumLoader_Base.DOUBLEBASS_VALUE)
+            if (_note.value != MidiDrumLoader_Base.DOUBLEBASS_VALUE)
             {
                 return false;
             }
 
             if (Difficulties[MidiDrumLoader_Base.EXPERT_INDEX] != null)
             {
-                Difficulties[MidiDrumLoader_Base.EXPERT_INDEX].Notes[MidiDrumLoader_Base.DOUBLEBASS_INDEX] = Position;
-                Track[MidiDrumLoader_Base.EXPERT_INDEX]!.Notes.TryAppend(Position);
+                Difficulties[MidiDrumLoader_Base.EXPERT_INDEX].Notes[MidiDrumLoader_Base.DOUBLEBASS_INDEX] = _position;
+                Track[MidiDrumLoader_Base.EXPERT_INDEX]!.Notes.TryAppend(_position);
             }
             return true;
         }
 
         private bool ProcessSpecialNote_Off()
         {
-            if (Note.value != MidiDrumLoader_Base.DOUBLEBASS_VALUE)
+            if (_note.value != MidiDrumLoader_Base.DOUBLEBASS_VALUE)
             {
                 return false;
             }
@@ -180,23 +160,11 @@ namespace YARG.Core.NewParsing.Midi
                 ref var colorPosition = ref Difficulties[MidiDrumLoader_Base.EXPERT_INDEX].Notes[MidiDrumLoader_Base.DOUBLEBASS_INDEX];
                 if (colorPosition.Ticks != -1)
                 {
-                    Track[MidiDrumLoader_Base.EXPERT_INDEX]!.Notes.TraverseBackwardsUntil(colorPosition)[MidiDrumLoader_Base.DOUBLEBASS_INDEX] = DualTime.Truncate(Position - colorPosition);
+                    Track[MidiDrumLoader_Base.EXPERT_INDEX]!.Notes.TraverseBackwardsUntil(colorPosition)[MidiDrumLoader_Base.DOUBLEBASS_INDEX] = DualTime.Truncate(_position - colorPosition);
                     colorPosition.Ticks = -1;
                 }
             }
             return true;
-        }
-
-        private void ParseText(ReadOnlySpan<byte> str)
-        {
-            if (!enableDynamics && str.SequenceEqual(MidiDrumLoader_Base.DYNAMICS_STRING))
-            {
-                enableDynamics = true;
-            }
-            else
-            {
-                Track.Events.GetLastOrAppend(Position).Add(Encoding.UTF8.GetString(str));
-            }
         }
     }
 }

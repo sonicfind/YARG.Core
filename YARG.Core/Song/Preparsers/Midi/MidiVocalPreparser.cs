@@ -31,24 +31,24 @@ namespace YARG.Core.Song
             return preparser.Process(track);
         }
 
-        protected override bool ParseNote_ON(YARGMidiTrack track)
+        protected override bool ParseNote_ON()
         {
-            if (VOACAL_MIN <= note.value && note.value <= VOCAL_MAX)
+            if (VOACAL_MIN <= _note.value && _note.value <= VOCAL_MAX)
             {
                 if (vocal && lyric)
                     return true;
                 vocal = true;
             }
-            else if (checkForPercussion && note.value == PERCUSSION_NOTE)
+            else if (checkForPercussion && _note.value == PERCUSSION_NOTE)
                 percussion = true;
             return false;
         }
 
-        protected override bool ParseNote_Off(YARGMidiTrack track)
+        protected override bool ParseNote_Off()
         {
-            if (VOACAL_MIN <= note.value && note.value <= VOCAL_MAX)
+            if (VOACAL_MIN <= _note.value && _note.value <= VOCAL_MAX)
                 return vocal && lyric;
-            return checkForPercussion && note.value == PERCUSSION_NOTE && percussion;
+            return checkForPercussion && _note.value == PERCUSSION_NOTE && percussion;
         }
 
         protected override void ParseText(ReadOnlySpan<byte> str)

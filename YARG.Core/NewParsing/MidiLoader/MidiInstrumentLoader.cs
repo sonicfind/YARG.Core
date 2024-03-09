@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using YARG.Core.Chart;
+using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing.Midi
 {
@@ -18,29 +20,36 @@ namespace YARG.Core.NewParsing.Midi
             }
         }
 
+        protected new TTrack Process(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        {
+            base.Process(midiTrack, sync);
+            Track.TrimExcess();
+            return Track;
+        }
+
         private DualTime _lastOnTick = default;
         internal void NormalizeNoteOnPosition()
         {
-            if (Position.Ticks < _lastOnTick.Ticks + 16)
-                Position = _lastOnTick;
+            if (_position.Ticks < _lastOnTick.Ticks + 16)
+                _position = _lastOnTick;
             else
-                _lastOnTick = Position;
+                _lastOnTick = _position;
         }
 
         internal bool ParseBRE_ON()
         {
-            if (Note.value < 120 || 124 < Note.value)
+            if (_note.value < 120 || 124 < _note.value)
             {
                 return false;
             }
 
-            _BRENotes[Note.value - 120] = Position;
+            _BRENotes[_note.value - 120] = _position;
             return true;
         }
 
         internal bool ParseBRE_Off()
         {
-            if (Note.value < 120 || 124 < Note.value)
+            if (_note.value < 120 || 124 < _note.value)
             {
                 return false;
             }
@@ -53,7 +62,7 @@ namespace YARG.Core.NewParsing.Midi
                 }
             }
 
-            Track.SpecialPhrases[_BRENotes[0]].Add(SpecialPhraseType.BRE, new SpecialPhraseInfo(Position - _BRENotes[0]));
+            Track.SpecialPhrases[_BRENotes[0]].Add(SpecialPhraseType.BRE, new SpecialPhraseInfo(_position - _BRENotes[0]));
 
             for (int i = 0; i < _BRENotes.Length; i++)
             {
@@ -94,7 +103,7 @@ namespace YARG.Core.NewParsing.Midi
         static MidiBasicInstrumentLoader() { }
     }
 
-    public class MidiBasicInstrumentLoader<TNote, TDiffTracker> : MidiInstrumentLoader<BasicInstrumentTrack2<TNote>>
+    public abstract class MidiBasicInstrumentLoader<TNote, TDiffTracker> : MidiInstrumentLoader<BasicInstrumentTrack2<TNote>>
         where TNote : unmanaged, IInstrumentNote
         where TDiffTracker : new()
     {

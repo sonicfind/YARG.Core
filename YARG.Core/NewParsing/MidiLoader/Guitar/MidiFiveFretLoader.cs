@@ -10,38 +10,7 @@ namespace YARG.Core.NewParsing.Midi
         public static BasicInstrumentTrack2<GuitarNote2<FiveFret>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
         {
             var loader = new MidiFiveFretLoader(difficulties);
-            int tempoIndex = 0;
-            while (midiTrack.ParseEvent(true))
-            {
-                loader.Position.Ticks = midiTrack.Position;
-                loader.Position.Seconds = sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex);
-                if (midiTrack.Type == MidiEventType.Note_On)
-                {
-                    midiTrack.ExtractMidiNote(ref loader.Note);
-                    if (loader.Note.velocity > 0)
-                    {
-                        loader.ParseNote_ON();
-                    }
-                    else
-                        loader.ParseNote_Off();
-                }
-                else if (midiTrack.Type == MidiEventType.Note_Off)
-                {
-                    midiTrack.ExtractMidiNote(ref loader.Note);
-                    loader.ParseNote_Off();
-                }
-                else if (midiTrack.Type == MidiEventType.SysEx || midiTrack.Type == MidiEventType.SysEx_End)
-                {
-                    loader.ParseSysEx(midiTrack.ExtractTextOrSysEx());
-                }
-                else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit)
-                {
-                    loader.ParseText(midiTrack.ExtractTextOrSysEx());
-                }
-            }
-
-            loader.Track.TrimExcess();
-            return loader.Track;
+            return loader.Process(midiTrack, sync);
         }
 
         private static readonly byte[][] ENHANCED_STRINGS = new byte[][] { Encoding.ASCII.GetBytes("[ENHANCED_OPENS]"), Encoding.ASCII.GetBytes("ENHANCED_OPENS") };
@@ -57,10 +26,10 @@ namespace YARG.Core.NewParsing.Midi
         private MidiFiveFretLoader(HashSet<Difficulty>? difficulties)
             : base(difficulties, 5) { }
 
-        private void ParseNote_ON()
+        protected override void ParseNote_ON()
         {
             NormalizeNoteOnPosition();
-            if (59 <= Note.value && Note.value <= 107)
+            if (59 <= _note.value && _note.value <= 107)
             {
                 ParseLaneColor_ON();
             }
@@ -70,9 +39,9 @@ namespace YARG.Core.NewParsing.Midi
             }
         }
 
-        private void ParseNote_Off()
+        protected override void ParseNote_Off()
         {
-            if (59 <= Note.value && Note.value <= 107)
+            if (59 <= _note.value && _note.value <= 107)
             {
                 ParseLaneColor_Off();
             }
@@ -82,7 +51,7 @@ namespace YARG.Core.NewParsing.Midi
             }
         }
 
-        private void ParseSysEx(ReadOnlySpan<byte> str)
+        protected override void ParseSysEx(ReadOnlySpan<byte> str)
         {
             if (!str.StartsWith(SYSEXTAG))
             {
@@ -109,7 +78,7 @@ namespace YARG.Core.NewParsing.Midi
                     case 4:
                         for (int diffIndex = 0; diffIndex < 4; ++diffIndex)
                         {
-                            Difficulties[diffIndex]?.ProcessTapSysex_ON(Track[diffIndex]!, Position);
+                            Difficulties[diffIndex]?.ProcessTapSysex_ON(Track[diffIndex]!, _position);
                         }
                         break;
                 }
@@ -127,13 +96,13 @@ namespace YARG.Core.NewParsing.Midi
                         _lanes[12 * diffIndex + 1] = str[6] == 0 ? 1 : 0;
                         break;
                     case 4:
-                        Difficulties[diffIndex]?.ProcessTapSysex_Off(Track[diffIndex]!, Position);
+                        Difficulties[diffIndex]?.ProcessTapSysex_Off(Track[diffIndex]!, _position);
                         break;
                 }
             }
         }
 
-        private void ParseText(ReadOnlySpan<byte> str)
+        protected override void ParseText(ReadOnlySpan<byte> str)
         {
             if (_lanes[0] == 13 && (str.SequenceEqual(ENHANCED_STRINGS[0]) || str.SequenceEqual(ENHANCED_STRINGS[1])))
             {
@@ -144,13 +113,13 @@ namespace YARG.Core.NewParsing.Midi
             }
             else
             {
-                Track.Events.GetLastOrAppend(Position).Add(Encoding.UTF8.GetString(str));
+                Track.Events.GetLastOrAppend(_position).Add(Encoding.UTF8.GetString(str));
             }
         }
 
         private void ParseLaneColor_ON()
         {
-            int noteValue = Note.value - 59;
+            int noteValue = _note.value - 59;
             int diffIndex = MidiBasicInstrumentLoader.DIFFVALUES[noteValue];
             int lane = _lanes[noteValue];
 
@@ -162,7 +131,7 @@ namespace YARG.Core.NewParsing.Midi
             switch(lane)
             {
                 case < 6:
-                    midiDiff!.Notes[lane] = Position;
+                    midiDiff!.Notes[lane] = _position;
                     if (diff.Notes.Capacity == 0)
                     {
                         diff.Notes.Capacity = 5000;
@@ -170,7 +139,7 @@ namespace YARG.Core.NewParsing.Midi
 
                     unsafe
                     {
-                        if (diff.Notes.TryAppend(Position, out var note))
+                        if (diff.Notes.TryAppend(_position, out var note))
                         {
                             if (midiDiff.SliderNotes)
                                 note->State = GuitarState.Tap;
@@ -186,7 +155,7 @@ namespace YARG.Core.NewParsing.Midi
                     midiDiff!.HopoOn = true;
                     unsafe
                     {
-                        if (diff.Notes.TryGetLastValue(Position, out var note))
+                        if (diff.Notes.TryGetLastValue(_position, out var note))
                         {
                             // In official games, Hopo flag has preference over Strum flags
                             // Therefore, the only limiter is Tap
@@ -200,7 +169,7 @@ namespace YARG.Core.NewParsing.Midi
                     midiDiff!.HopoOff = true;
                     unsafe
                     {
-                        if (diff.Notes.TryGetLastValue(Position, out var note))
+                        if (diff.Notes.TryGetLastValue(_position, out var note))
                         {
                             // In official games, Tap & Hopo both have preference over strum
                             // Therefore, we only override the Natrual state
@@ -260,7 +229,7 @@ namespace YARG.Core.NewParsing.Midi
 
         private void ParseLaneColor_Off()
         {
-            int noteValue = Note.value - 59;
+            int noteValue = _note.value - 59;
             int diffIndex = MidiBasicInstrumentLoader.DIFFVALUES[noteValue];
             int lane = _lanes[noteValue];
 
@@ -275,7 +244,7 @@ namespace YARG.Core.NewParsing.Midi
                     ref var colorPosition = ref Difficulties[diffIndex].Notes[lane];
                     if (colorPosition.Ticks != -1)
                     {
-                        diff.Notes.TraverseBackwardsUntil(colorPosition).Frets[lane] = DualTime.Truncate(Position - colorPosition);
+                        diff.Notes.TraverseBackwardsUntil(colorPosition).Frets[lane] = DualTime.Truncate(_position - colorPosition);
                         colorPosition.Ticks = -1;
                     }
                     break;
@@ -283,7 +252,7 @@ namespace YARG.Core.NewParsing.Midi
                     midiDiff!.HopoOn = false;
                     unsafe
                     {
-                        if (diff.Notes.TryGetLastValue(Position, out var note))
+                        if (diff.Notes.TryGetLastValue(_position, out var note))
                         {
                             if (note->State == GuitarState.Hopo)
                             {
@@ -296,7 +265,7 @@ namespace YARG.Core.NewParsing.Midi
                     midiDiff!.HopoOff = false;
                     unsafe
                     {
-                        if (diff.Notes.TryGetLastValue(Position, out var note))
+                        if (diff.Notes.TryGetLastValue(_position, out var note))
                         {
                             if (note->State == GuitarState.Strum)
                             {

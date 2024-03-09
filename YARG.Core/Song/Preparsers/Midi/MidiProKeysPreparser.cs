@@ -18,17 +18,17 @@ namespace YARG.Core.Song
             return preparser.Process(track);
         }
 
-        protected override bool IsNote() { return PROKEYS_MIN <= note.value && note.value <= PROKEYS_MAX; }
+        protected override bool IsNote() { return PROKEYS_MIN <= _note.value && _note.value <= PROKEYS_MAX; }
 
-        protected override bool ParseLaneColor_ON(YARGMidiTrack track)
+        protected override bool ParseLaneColor_ON()
         {
-            statuses[note.value - PROKEYS_MIN] = true;
+            statuses[_note.value - PROKEYS_MIN] = true;
             return false;
         }
 
-        protected override bool ParseLaneColor_Off(YARGMidiTrack track)
+        protected override bool ParseLaneColor_Off()
         {
-            return statuses[note.value - PROKEYS_MIN];
+            return statuses[_note.value - PROKEYS_MIN];
         }
     }
 }

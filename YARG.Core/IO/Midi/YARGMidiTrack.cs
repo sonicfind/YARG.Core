@@ -8,6 +8,18 @@ using YARG.Core.NewParsing;
 
 namespace YARG.Core.IO
 {
+    public struct MidiEvent
+    {
+        public static readonly MidiEvent Default = new()
+        {
+            Type = MidiEventType.Reset_Or_Meta,
+        };
+
+        public MidiEventType Type;
+        public int Channel;
+        public int Length;
+    }
+    
     public sealed unsafe class YARGMidiTrack : IDisposable
     {
         public static readonly Dictionary<string, MidiTrackType> TRACKNAMES = new()
@@ -42,24 +54,14 @@ namespace YARG.Core.IO
             {"BEAT",                 MidiTrackType.Beat},
         };
 
-        private struct MidiEvent
-        {
-            public MidiEventType Type;
-            public int Channel;
-            public int Length;
-        }
-
         private long _tickPosition;
-        private MidiEvent _event;
-        private MidiEvent _running;
+        private MidiEvent _running = MidiEvent.Default;
 
         private readonly AllocatedArray<byte>? _buffer;
         private readonly byte* _end;
         private byte* _position;
 
         public long Position => _tickPosition;
-        public MidiEventType Type => _event.Type;
-        public int Channel => _event.Channel;
 
         public YARGMidiTrack(Stream stream)
         {
@@ -75,18 +77,19 @@ namespace YARG.Core.IO
                 _position = _buffer.Ptr;
             }
             _end = _position + length;
-            _event.Type = _running.Type = MidiEventType.Reset_Or_Meta;
+            _running.Type = MidiEventType.Reset_Or_Meta;
         }
 
         public string? FindTrackName(Encoding encoding)
         {
             string trackname = string.Empty;
             var start = _position;
-            while (ParseEvent(true) && _tickPosition == 0)
+            var midiEvent = MidiEvent.Default;
+            while (ParseEvent(true, ref midiEvent) && _tickPosition == 0)
             {
-                if (_event.Type == MidiEventType.Text_TrackName)
+                if (midiEvent.Type == MidiEventType.Text_TrackName)
                 {
-                    string ev = encoding.GetString(ExtractTextOrSysEx());
+                    string ev = encoding.GetString(ExtractTextOrSysEx(in midiEvent));
                     if (trackname.Length > 0 && trackname != ev)
                         return null;
                     trackname = ev;
@@ -95,17 +98,16 @@ namespace YARG.Core.IO
 
             _position = start;
             _tickPosition = 0;
-            _event.Length = 0;
-            _event.Type = _running.Type = MidiEventType.Reset_Or_Meta;
+            _running.Type = MidiEventType.Reset_Or_Meta;
             return trackname;
         }
 
         private const int CHANNEL_MASK = 0x0F;
         private const int EVENTTYPE_MASK = 0xF0;
 
-        public bool ParseEvent(bool parseVLQ)
+        public bool ParseEvent(bool parseVLQ, ref MidiEvent midiEvent)
         {
-            _position += _event.Length;
+            _position += midiEvent.Length;
             if (!parseVLQ)
                 AbsorbVLQ();
             else
@@ -117,16 +119,16 @@ namespace YARG.Core.IO
             {
                 if (_running.Type == MidiEventType.Reset_Or_Meta)
                     throw new Exception("Invalid running event");
-                _event = _running;
+                midiEvent = _running;
             }
             else
             {
                 ++_position;
                 if (type < MidiEventType.SysEx)
                 {
-                    _event.Channel = _running.Channel = (byte) (tmp & CHANNEL_MASK);
-                    _event.Type    = _running.Type    = (MidiEventType) (tmp & EVENTTYPE_MASK);
-                    _event.Length  = _running.Length  = _running.Type switch
+                    midiEvent.Channel = _running.Channel = (byte) (tmp & CHANNEL_MASK);
+                    midiEvent.Type    = _running.Type    = (MidiEventType) (tmp & EVENTTYPE_MASK);
+                    midiEvent.Length  = _running.Length  = _running.Type switch
                     {
                         MidiEventType.Note_On or
                         MidiEventType.Note_Off or
@@ -145,25 +147,25 @@ namespace YARG.Core.IO
                             goto case MidiEventType.SysEx_End;
                         case MidiEventType.SysEx:
                         case MidiEventType.SysEx_End:
-                            _event.Length = (int) ReadVLQ();
+                            midiEvent.Length = (int) ReadVLQ();
                             break;
                         case MidiEventType.Song_Position:
-                            _event.Length = 2;
+                            midiEvent.Length = 2;
                             break;
                         case MidiEventType.Song_Select:
-                            _event.Length = 1;
+                            midiEvent.Length = 1;
                             break;
                         default:
-                            _event.Length = 0;
+                            midiEvent.Length = 0;
                             break;
                     }
                     if (type == MidiEventType.End_Of_Track)
                         return false;
-                    _event.Type = type;
+                    midiEvent.Type = type;
                 }
             }
 
-            if (_position + _event.Length > _end)
+            if (_position + midiEvent.Length > _end)
                 throw new EndOfStreamException();
             return true;
         }
@@ -182,9 +184,9 @@ namespace YARG.Core.IO
             throw new InvalidOperationException();
         }
 
-        public ReadOnlySpan<byte> ExtractTextOrSysEx()
+        public ReadOnlySpan<byte> ExtractTextOrSysEx(in MidiEvent midiEvent)
         {
-            return new ReadOnlySpan<byte>(_position, _event.Length);
+            return new ReadOnlySpan<byte>(_position, midiEvent.Length);
         }
 
         public void ExtractMidiNote(ref MidiNote note)

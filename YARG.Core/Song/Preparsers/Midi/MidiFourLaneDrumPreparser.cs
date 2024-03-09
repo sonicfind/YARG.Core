@@ -26,13 +26,13 @@ namespace YARG.Core.Song
             return preparser.validations;
         }
 
-        protected override bool IsNote() { return DEFAULT_MIN <= note.value && note.value <= 100; }
+        protected override bool IsNote() { return DEFAULT_MIN <= _note.value && _note.value <= 100; }
 
         protected override bool IsFullyScanned() { return validations == ALL_DIFFICULTIES_PLUS && _type == DrumsType.ProDrums; }
 
-        protected override bool ParseLaneColor_ON(YARGMidiTrack track)
+        protected override bool ParseLaneColor_ON()
         {
-            int noteValue = note.value - DEFAULT_MIN;
+            int noteValue = _note.value - DEFAULT_MIN;
             int diffIndex = DIFFVALUES[noteValue];
             if (!difficultyTracker[diffIndex])
             {
@@ -43,9 +43,9 @@ namespace YARG.Core.Song
             return false;
         }
 
-        protected override bool ParseLaneColor_Off(YARGMidiTrack track)
+        protected override bool ParseLaneColor_Off()
         {
-            int noteValue = note.value - DEFAULT_MIN;
+            int noteValue = _note.value - DEFAULT_MIN;
             int diffIndex = DIFFVALUES[noteValue];
             if (!difficultyTracker[diffIndex])
             {
@@ -60,9 +60,9 @@ namespace YARG.Core.Song
             return false;
         }
 
-        protected override bool ToggleExtraValues(YARGMidiTrack track)
+        protected override bool ToggleExtraValues()
         {
-            if (YELLOW_FLAG <= note.value && note.value <= GREEN_FLAG)
+            if (YELLOW_FLAG <= _note.value && _note.value <= GREEN_FLAG)
             {
                 _type = DrumsType.ProDrums;
                 return IsFullyScanned();

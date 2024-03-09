@@ -23,18 +23,18 @@ namespace YARG.Core.Song
 
         protected readonly bool[,] statuses = new bool[NUM_DIFFICULTIES, MAX_NUMPADS];
 
-        protected override bool ProcessSpecialNote_ON(YARGMidiTrack track)
+        protected override bool ProcessSpecialNote_ON()
         {
-            if (note.value != DOUBLE_BASS_NOTE)
+            if (_note.value != DOUBLE_BASS_NOTE)
                 return false;
 
             statuses[EXPERT_INDEX, DOUBLE_BASS_INDEX] = true;
             return true;
         }
 
-        protected override bool ProcessSpecialNote_Off(YARGMidiTrack track)
+        protected override bool ProcessSpecialNote_Off()
         {
-            if (note.value != DOUBLE_BASS_NOTE)
+            if (_note.value != DOUBLE_BASS_NOTE)
                 return false;
 
             if (statuses[EXPERT_INDEX, DOUBLE_BASS_INDEX])

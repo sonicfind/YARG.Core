@@ -104,9 +104,10 @@ namespace YARG.Core.NewParsing
 
             var midiTrack = midi.LoadNextTrack()!;
             string sequenceName = midiTrack.FindTrackName(Encoding.UTF8)!;
-            while (midiTrack.ParseEvent(true))
+            var midiEvent = MidiEvent.Default;
+            while (midiTrack.ParseEvent(true, ref midiEvent))
             {
-                switch (midiTrack.Type)
+                switch (midiEvent.Type)
                 {
                     case MidiEventType.Tempo:
                         sync.TempoMarkers.GetLastOrAppend(midiTrack.Position).MicrosPerQuarter = midiTrack.ExtractMicrosPerQuarter();
@@ -157,14 +158,15 @@ namespace YARG.Core.NewParsing
 
             int tempoIndex = 0;
             var position = default(DualTime);
-            while (midiTrack.ParseEvent(true))
+            var midiEvent = MidiEvent.Default;
+            while (midiTrack.ParseEvent(true, ref midiEvent))
             {
-                if (midiTrack.Type <= MidiEventType.Text_EnumLimit)
+                if (midiEvent.Type <= MidiEventType.Text_EnumLimit)
                 {
                     position.Ticks = midiTrack.Position;
                     position.Seconds = sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex);
 
-                    var bytes = midiTrack.ExtractTextOrSysEx();
+                    var bytes = midiTrack.ExtractTextOrSysEx(in midiEvent);
                     if (bytes.StartsWith(PREFIXES[0]))
                     {
                         events.Sections.GetLastOrAppend(position) = Encoding.UTF8.GetString(bytes[PREFIXES[0].Length..(bytes.Length - 1)]);
@@ -194,9 +196,10 @@ namespace YARG.Core.NewParsing
             int tempoIndex = 0;
             var note = default(MidiNote);
             var position = default(DualTime);
-            while (midiTrack.ParseEvent(true))
+            var midiEvent = MidiEvent.Default;
+            while (midiTrack.ParseEvent(true, ref midiEvent))
             {
-                if (midiTrack.Type == MidiEventType.Note_On)
+                if (midiEvent.Type == MidiEventType.Note_On)
                 {
                     midiTrack.ExtractMidiNote(ref note);
                     if (note.velocity > 0)

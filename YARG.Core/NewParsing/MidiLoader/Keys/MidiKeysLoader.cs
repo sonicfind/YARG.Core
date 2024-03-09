@@ -5,122 +5,95 @@ using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing.Midi
 {
-    public static class MidiKeysLoader
+    public class KeysMidiDiff
+    {
+        public readonly DualTime[] Notes =
+        {
+            DualTime.Inactive, DualTime.Inactive,
+            DualTime.Inactive, DualTime.Inactive, DualTime.Inactive
+        };
+    }
+
+    public class MidiKeysLoader : MidiBasicInstrumentLoader<KeysNote2, KeysMidiDiff>
     {
         public static BasicInstrumentTrack2<KeysNote2> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
         {
-            var loader = new MidiBasicInstrumentLoader<KeysNote2, KeysMidiDiff>(difficulties, 5);
-            int tempoIndex = 0;
-            while (midiTrack.ParseEvent(true))
-            {
-                loader.Position.Ticks = midiTrack.Position;
-                loader.Position.Seconds = sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex);
-                if (midiTrack.Type == MidiEventType.Note_On)
-                {
-                    midiTrack.ExtractMidiNote(ref loader.Note);
-                    if (loader.Note.velocity > 0)
-                    {
-                        loader.ParseNote_ON();
-                    }
-                    else
-                    {
-                        loader.ParseNote_Off();
-                    }
-                }
-                else if (midiTrack.Type == MidiEventType.Note_Off)
-                {
-                    midiTrack.ExtractMidiNote(ref loader.Note);
-                    loader.ParseNote_Off();
-                }
-                else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit)
-                {
-                    loader.Track.Events.GetLastOrAppend(loader.Position)
-                                       .Add(Encoding.UTF8.GetString(midiTrack.ExtractTextOrSysEx()));
-                }
-            }
-
-            loader.Track.TrimExcess();
-            return loader.Track;
+            var loader = new MidiKeysLoader(difficulties);
+            return loader.Process(midiTrack, sync);
         }
 
-        private class KeysMidiDiff
-        {
-            public readonly DualTime[] Notes =
-            {
-                DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive
-            };
-        }
-
+        private const int NUM_BRELANES = 5;
         private static readonly int[] LANEVALUES = new int[] {
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
         };
+        private MidiKeysLoader(HashSet<Difficulty>? difficulties)
+            : base(difficulties, NUM_BRELANES) { }
 
-        private static void ParseNote_ON(this MidiBasicInstrumentLoader<KeysNote2, KeysMidiDiff> loader)
+        protected override void ParseNote_ON()
         {
-            loader.NormalizeNoteOnPosition();
-            if (MidiBasicInstrumentLoader.DEFAULT_MIN <= loader.Note.value && loader.Note.value <= MidiBasicInstrumentLoader.DEFAULT_MAX)
+            NormalizeNoteOnPosition();
+            if (MidiBasicInstrumentLoader.DEFAULT_MIN <= _note.value && _note.value <= MidiBasicInstrumentLoader.DEFAULT_MAX)
             {
-                loader.ParseLaneColor_ON();
+                ParseLaneColor_ON();
             }
-            else if (!loader.AddPhrase_ON())
+            else if (!AddPhrase_ON())
             {
-                loader.ParseBRE_ON();
+                ParseBRE_ON();
             }
         }
 
-        private static void ParseNote_Off(this MidiBasicInstrumentLoader<KeysNote2, KeysMidiDiff> loader)
+        protected override void ParseNote_Off()
         {
-            if (MidiBasicInstrumentLoader.DEFAULT_MIN <= loader.Note.value && loader.Note.value <= MidiBasicInstrumentLoader.DEFAULT_MAX)
+            if (MidiBasicInstrumentLoader.DEFAULT_MIN <= _note.value && _note.value <= MidiBasicInstrumentLoader.DEFAULT_MAX)
             {
-                ParseLaneColor_Off(loader);
+                ParseLaneColor_Off();
             }
-            else if (!loader.AddPhrase_Off())
+            else if (!AddPhrase_Off())
             {
-                loader.ParseBRE_Off();
+                ParseBRE_Off();
             }
         }
 
-        private static void ParseLaneColor_ON(this MidiBasicInstrumentLoader<KeysNote2, KeysMidiDiff> loader)
+        private void ParseLaneColor_ON()
         {
-            int noteValue = loader.Note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
+            int noteValue = _note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
             int lane = LANEVALUES[noteValue];
             if (lane < 5)
             {
                 int diffIndex = MidiBasicInstrumentLoader.DIFFVALUES[noteValue];
-                var midiDiff =loader.Difficulties[diffIndex];
+                var midiDiff = Difficulties[diffIndex];
                 if (midiDiff == null)
                     return;
 
-                midiDiff.Notes[lane] = loader.Position;
+                midiDiff.Notes[lane] = _position;
 
-                var notes = loader.Track[diffIndex]!.Notes;
+                var notes = Track[diffIndex]!.Notes;
                 if (notes.Capacity == 0)
                 {
                     notes.Capacity = 5000;
                 }
-                notes.TryAppend(loader.Position);
+                notes.TryAppend(_position);
             }
         }
 
-        private static void ParseLaneColor_Off(this MidiBasicInstrumentLoader<KeysNote2, KeysMidiDiff> loader)
+        private void ParseLaneColor_Off()
         {
-            int noteValue = loader.Note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
+            int noteValue = _note.value - MidiBasicInstrumentLoader.DEFAULT_MIN;
             int lane = LANEVALUES[noteValue];
             if (lane < 5)
             {
                 int diffIndex = MidiBasicInstrumentLoader.DIFFVALUES[noteValue];
-                var midiDiff = loader.Difficulties[diffIndex];
+                var midiDiff = Difficulties[diffIndex];
                 if (midiDiff == null)
                     return;
 
                 ref var colorPosition = ref midiDiff.Notes[lane];
                 if (colorPosition.Ticks != -1)
                 {
-                    loader.Track[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)[lane] = DualTime.Truncate(loader.Position - colorPosition);
+                    Track[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)[lane] = DualTime.Truncate(_position - colorPosition);
                     colorPosition.Ticks = -1;
                 }
             }

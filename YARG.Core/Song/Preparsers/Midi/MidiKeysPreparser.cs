@@ -25,7 +25,7 @@ namespace YARG.Core.Song
     //        return preparser.validations;
     //    }
 
-    //    protected override bool ParseLaneColor_ON(YARGMidiTrack track)
+    //    protected override bool ParseLaneColor_ON()
     //    {
     //        int noteValue = note.value - DEFAULT_MIN;
     //        int diffIndex = DIFFVALUES[noteValue];
@@ -38,7 +38,7 @@ namespace YARG.Core.Song
     //        return false;
     //    }
 
-    //    protected override bool ParseLaneColor_Off(YARGMidiTrack track)
+    //    protected override bool ParseLaneColor_Off()
     //    {
     //        int noteValue = note.value - DEFAULT_MIN;
     //        int diffIndex = DIFFVALUES[noteValue];
