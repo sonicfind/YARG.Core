@@ -141,7 +141,7 @@ namespace YARG.Core.NewParsing
         {
             var sync = new SyncTrack2(midi.Resolution);
 
-            var midiTrack = midi.LoadNextTrack()!;
+            using var midiTrack = midi.LoadNextTrack()!;
             string sequenceName = midiTrack.FindTrackName(Encoding.UTF8)!;
             while (midiTrack.ParseEvent())
             {
