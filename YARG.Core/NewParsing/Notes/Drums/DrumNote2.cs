@@ -129,17 +129,10 @@ namespace YARG.Core.NewParsing
         public int GetNumActiveLanes()
         {
             int numActive = _bass.IsActive() || _doubleBass.IsActive() ? 1 : 0;
-            unsafe
+            for (int i = 0; i < _pads.NumPads; ++i)
             {
-                fixed (void* ptr = &_pads)
-                {
-                    var pads = (DrumPad*) ptr;
-                    for (int i = 0; i < _pads.NumPads; ++i)
-                    {
-                        bool active = pads[i].IsActive();
-                        numActive += Unsafe.As<bool, byte>(ref active);
-                    }
-                }
+                bool active = _pads[i].IsActive();
+                numActive += Unsafe.As<bool, byte>(ref active);
             }
             return numActive;
         }
@@ -152,18 +145,11 @@ namespace YARG.Core.NewParsing
                 sustain = _doubleBass;
             }
 
-            unsafe
+            for (int i = 0; i < _pads.NumPads; ++i)
             {
-                fixed (void* ptr = &_pads)
+                if (_pads[i].Duration > sustain)
                 {
-                    var pads = (DrumPad*) ptr;
-                    for (int i = 0; i < _pads.NumPads; ++i)
-                    {
-                        if (pads[i].Duration > sustain)
-                        {
-                            sustain = pads[i].Duration;
-                        }
-                    }
+                    sustain = _pads[i].Duration;
                 }
             }
             return sustain;
@@ -194,13 +180,9 @@ namespace YARG.Core.NewParsing
             _doubleBass = unknown.DoubleBass;
             _flammed = unknown.IsFlammed;
 
-            unsafe
+            for (int i = 0; i < _pads.NumPads; ++i)
             {
-                fixed (void* ptr = &_pads)
-                fixed (void* otherPads = &unknown.Pads)
-                {
-                    Unsafe.CopyBlock(ptr, otherPads, (uint) sizeof(TPads));
-                }
+                _pads[i] = unknown.Pads[i];
             }
         }
     }
@@ -208,19 +190,29 @@ namespace YARG.Core.NewParsing
     public struct ProDrumNote2<TPads> : IDrumNote<TPads>
         where TPads : unmanaged, IDrumPadConfig
     {
-        public unsafe struct CymbalArray
+        public struct CymbalArray
         {
-            public const int NUM_CYMBALS = 3;
-            private fixed bool values[NUM_CYMBALS];
+            public bool Yellow;
+            public bool Blue;
+            public bool Green;
+
             public ref bool this[int lane]
             {
                 get
                 {
-                    if (lane < 0 || NUM_CYMBALS <= lane)
+                    unsafe
                     {
-                        throw new ArgumentOutOfRangeException(nameof(lane));
+                        switch (lane)
+                        {
+#pragma warning disable CS9084 // Struct member returns 'this' or other instance members by reference
+                            case 0: return ref Yellow;
+                            case 1: return ref Blue;
+                            case 2: return ref Green;
+                            default:
+                                throw new ArgumentOutOfRangeException(nameof(lane));
+#pragma warning restore CS9084 // Struct member returns 'this' or other instance members by reference
+                        }
                     }
-                    return ref values[lane];
                 }
             }
         }
@@ -265,15 +257,15 @@ namespace YARG.Core.NewParsing
         public override string ToString()
         {
             StringBuilder builder = new(_baseDrumNote.ToString());
-            if (Cymbals[0])
+            if (Cymbals.Yellow)
             {
                 builder.Append($"Y-Cymbal | ");
             }
-            if (Cymbals[1])
+            if (Cymbals.Blue)
             {
                 builder.Append($"B-Cymbal | ");
             }
-            if (Cymbals[2])
+            if (Cymbals.Green)
             {
                 builder.Append($"G-Cymbal | ");
             }
@@ -287,13 +279,9 @@ namespace YARG.Core.NewParsing
         public void LoadFrom(in ProDrumNote2<FiveLane> unknown)
         {
             _baseDrumNote.LoadFrom(in unknown);
-            unsafe
-            {
-                for (int i = 0; i < CymbalArray.NUM_CYMBALS; ++i)
-                {
-                    Cymbals[i] = unknown.Cymbals[i];
-                }
-            }
+            Cymbals.Yellow = unknown.Cymbals.Yellow;
+            Cymbals.Blue = unknown.Cymbals.Blue;
+            Cymbals.Green = unknown.Cymbals.Green;
         }
     }
 }
