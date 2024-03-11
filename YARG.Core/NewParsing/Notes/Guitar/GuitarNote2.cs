@@ -13,7 +13,7 @@ namespace YARG.Core.NewParsing
     }
 
     public struct GuitarNote2<TFrets> : IInstrumentNote
-        where TFrets : unmanaged, IFretConfig
+        where TFrets : unmanaged, IFretConfig<TFrets>
     {
         public TFrets Frets;
         public GuitarState State;
