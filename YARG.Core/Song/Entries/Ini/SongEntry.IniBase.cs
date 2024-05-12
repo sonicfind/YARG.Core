@@ -220,8 +220,7 @@ namespace YARG.Core.Song
             {
                 if (!ParseChartTrack(ref reader, drums, ref parts))
                 {
-                    YARGTextReader.SkipLinesUntil(ref reader, '}');
-                    if (!reader.IsEndOfFile())
+                    if (YARGTextReader.SkipLinesUntil(ref reader, '}'))
                     {
                         YARGTextReader.GotoNextLine(ref reader);
                     }
