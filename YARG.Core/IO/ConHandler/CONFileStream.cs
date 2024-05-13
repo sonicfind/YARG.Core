@@ -163,73 +163,83 @@ namespace YARG.Core.IO
             _filestream = filestream;
             this.fileSize = fileSize;
 
-            int block = firstBlock;
-            if (isContinguous)
+            try
             {
-                dataBuffer = FixedArray<byte>.Alloc(BYTES_PER_SECTION);
-
-                int blockOffset = firstBlock % BLOCKS_PER_SECTION;
-                initialOffset = blockOffset * BYTES_PER_BLOCK;
-
-                int totalSpace = fileSize + initialOffset;
-                int numBlocks = totalSpace % BYTES_PER_SECTION == 0 ? totalSpace / BYTES_PER_SECTION : totalSpace / BYTES_PER_SECTION + 1;
-                blockLocations = FixedArray<long>.Alloc(numBlocks);
-
-                int blockMovement = BLOCKS_PER_SECTION - blockOffset;
-                int byteMovement = blockMovement * BYTES_PER_BLOCK;
-                int skipVal = BYTES_PER_BLOCK << shift;
-                int threshold = firstBlock - firstBlock % NUM_BLOCKS_SQUARED + NUM_BLOCKS_SQUARED;
-                long location = CalculateBlockLocation(firstBlock, shift);
-                for (int i = 0; i < numBlocks; i++)
+                int block = firstBlock;
+                if (isContinguous)
                 {
-                    blockLocations[i] = location;
-                    if (i < numBlocks - 1)
-                    {
-                        block += blockMovement;
+                    dataBuffer = FixedArray<byte>.Alloc(BYTES_PER_SECTION);
 
-                        int seekCount = 1;
-                        if (block == BLOCKS_PER_SECTION)
-                            seekCount = 2;
-                        else if (block == threshold)
+                    int blockOffset = firstBlock % BLOCKS_PER_SECTION;
+                    initialOffset = blockOffset * BYTES_PER_BLOCK;
+
+                    int totalSpace = fileSize + initialOffset;
+                    int numBlocks = totalSpace % BYTES_PER_SECTION == 0 ? totalSpace / BYTES_PER_SECTION : totalSpace / BYTES_PER_SECTION + 1;
+                    blockLocations = FixedArray<long>.Alloc(numBlocks);
+
+                    int blockMovement = BLOCKS_PER_SECTION - blockOffset;
+                    int byteMovement = blockMovement * BYTES_PER_BLOCK;
+                    int skipVal = BYTES_PER_BLOCK << shift;
+                    int threshold = firstBlock - firstBlock % NUM_BLOCKS_SQUARED + NUM_BLOCKS_SQUARED;
+                    long location = CalculateBlockLocation(firstBlock, shift);
+                    for (int i = 0; i < numBlocks; i++)
+                    {
+                        blockLocations[i] = location;
+                        if (i < numBlocks - 1)
                         {
-                            if (block == NUM_BLOCKS_SQUARED)
+                            block += blockMovement;
+
+                            int seekCount = 1;
+                            if (block == BLOCKS_PER_SECTION)
                                 seekCount = 2;
-                            ++seekCount;
-                            threshold += NUM_BLOCKS_SQUARED;
+                            else if (block == threshold)
+                            {
+                                if (block == NUM_BLOCKS_SQUARED)
+                                    seekCount = 2;
+                                ++seekCount;
+                                threshold += NUM_BLOCKS_SQUARED;
+                            }
+
+                            location += byteMovement + seekCount * skipVal;
+                            blockMovement = BLOCKS_PER_SECTION;
+                            byteMovement = BYTES_PER_SECTION;
                         }
-
-                        location += byteMovement + seekCount * skipVal;
-                        blockMovement = BLOCKS_PER_SECTION;
-                        byteMovement = BYTES_PER_SECTION;
                     }
                 }
-            }
-            else
-            {
-                dataBuffer = FixedArray<byte>.Alloc(BYTES_PER_BLOCK);
-
-                int numBlocks = fileSize % BYTES_PER_BLOCK == 0 ? fileSize / BYTES_PER_BLOCK : fileSize / BYTES_PER_BLOCK + 1;
-                blockLocations = FixedArray<long>.Alloc(numBlocks);
-
-                Span<byte> buffer = stackalloc byte[3];
-                initialOffset = 0;
-                for (int i = 0; i < numBlocks; i++)
+                else
                 {
-                    long location = CalculateBlockLocation(block, shift);
-                    blockLocations[i] = location;
+                    dataBuffer = FixedArray<byte>.Alloc(BYTES_PER_BLOCK);
 
-                    if (i < numBlocks - 1)
+                    int numBlocks = fileSize % BYTES_PER_BLOCK == 0 ? fileSize / BYTES_PER_BLOCK : fileSize / BYTES_PER_BLOCK + 1;
+                    blockLocations = FixedArray<long>.Alloc(numBlocks);
+
+                    Span<byte> buffer = stackalloc byte[3];
+                    initialOffset = 0;
+                    for (int i = 0; i < numBlocks; i++)
                     {
-                        long hashlocation = location - ((long) (block % BLOCKS_PER_SECTION) * DIST_PER_HASH + HASHBLOCK_OFFSET);
-                        _filestream.Seek(hashlocation, SeekOrigin.Begin);
-                        if (_filestream.Read(buffer) != 3)
-                            throw new Exception("Hashblock Read error in CON subfile");
+                        long location = CalculateBlockLocation(block, shift);
+                        blockLocations[i] = location;
 
-                        block = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
+                        if (i < numBlocks - 1)
+                        {
+                            long hashlocation = location - ((long) (block % BLOCKS_PER_SECTION) * DIST_PER_HASH + HASHBLOCK_OFFSET);
+                            _filestream.Seek(hashlocation, SeekOrigin.Begin);
+                            if (_filestream.Read(buffer) != 3)
+                            {
+                                throw new Exception("Hashblock Read error in CON subfile");
+                            }
+                            block = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
+                        }
                     }
                 }
+                UpdateBuffer();
             }
-            UpdateBuffer();
+            catch (Exception)
+            {
+                dataBuffer.Dispose();
+                blockLocations.Dispose();
+                throw;
+            }
         }
 
         public override void Flush()

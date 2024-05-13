@@ -21,7 +21,7 @@ namespace YARG.Core.IO
     /// <typeparam name="T">The unmanaged type contained in the block of memory</typeparam>
     [DebuggerDisplay("Length = {Length}")]
     [DebuggerTypeProxy(typeof(FixedArray<>.FixedArrayDebugView))]
-    public sealed unsafe class FixedArray<T> : IEnumerable<T>, IDisposable
+    public readonly unsafe struct FixedArray<T> : IEnumerable<T>, IDisposable
         where T : unmanaged
     {
         /// <summary>
@@ -34,9 +34,9 @@ namespace YARG.Core.IO
         /// Number of elements within the block
         /// </summary>
         public readonly int Length;
-
-        private bool _disposedValue;
         private readonly GCHandle _handle;
+
+        public bool IsAllocated => Ptr != null;
 
         /// <summary>
         /// Fully loads the data of a file into a fixed location in memory
@@ -130,11 +130,6 @@ namespace YARG.Core.IO
         {
             get
             {
-                if (_disposedValue)
-                {
-                    throw new ObjectDisposedException(GetType().Name);
-                }
-
                 if (index < 0 || Length <= index )
                 {
                     throw new IndexOutOfRangeException();
@@ -153,13 +148,10 @@ namespace YARG.Core.IO
         /// <exception cref="IndexOutOfRangeException"></exception>
         public Span<T> Slice(int offset, int count)
         {
-            if (_disposedValue)
-            {
-                throw new ObjectDisposedException(GetType().Name);
-            }
-
             if (0 <= offset && offset + count <= Length)
+            {
                 return new Span<T>(Ptr + offset, count);
+            }
             throw new IndexOutOfRangeException();
         }
 
@@ -171,10 +163,6 @@ namespace YARG.Core.IO
         {
             get
             {
-                if (_disposedValue)
-                {
-                    throw new ObjectDisposedException(GetType().Name);
-                }
                 return (IntPtr)Ptr;
             }
         }
@@ -187,10 +175,6 @@ namespace YARG.Core.IO
         {
             get
             {
-                if (_disposedValue)
-                {
-                    throw new ObjectDisposedException(GetType().Name);
-                }
                 return new Span<T>(Ptr, Length);
             }
         }
@@ -203,10 +187,6 @@ namespace YARG.Core.IO
         {
             get
             {
-                if (_disposedValue)
-                {
-                    throw new ObjectDisposedException(GetType().Name);
-                }
                 return new ReadOnlySpan<T>(Ptr, Length);
             }
         }
@@ -218,46 +198,30 @@ namespace YARG.Core.IO
         /// <exception cref="ObjectDisposedException"></exception>
         public T[] ToArray()
         {
-            if (_disposedValue)
-            {
-                throw new ObjectDisposedException(GetType().Name);
-            }
-
             var array = new T[Length];
             Span.CopyTo(array);
             return array;
         }
 
-        private void Dispose(bool disposing)
-        {
-            if (!_disposedValue)
-            {
-                if (!_handle.IsAllocated)
-                {
-                    Marshal.FreeHGlobal(IntPtr);
-                }
-                else
-                {
-                    _handle.Free();
-                }
-                _disposedValue = true;
-            }
-        }
-
         public void Dispose()
         {
-            Dispose(true);
+            if (_handle.IsAllocated)
+            {
+                _handle.Free();
+            }
+            else
+            {
+                Marshal.FreeHGlobal(IntPtr);
+            }
             GC.SuppressFinalize(this);
         }
-
-        ~FixedArray() { Dispose(false); }
 
         private sealed class FixedArrayDebugView
         {
             private readonly FixedArray<T> array;
             public FixedArrayDebugView(FixedArray<T> array)
             {
-                this.array = array ?? throw new ArgumentNullException(nameof(array));
+                this.array = array;
             }
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]

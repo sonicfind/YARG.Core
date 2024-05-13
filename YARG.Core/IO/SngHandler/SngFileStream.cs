@@ -44,9 +44,10 @@ namespace YARG.Core.IO
                     var buffPosition = ptr + buffIndex;
 
                     var vecPtr = (Vector<byte>*) ptr;
+                    var maskVecPtr = (Vector<byte>*) mask.Keys;
                     Parallel.For(0, SngMask.NUMVECTORS, i =>
                     {
-                        var xor = mask.Vectors[i];
+                        var xor = maskVecPtr[i];
                         for (var loc = vecPtr + i; loc < buffPosition; loc += SngMask.NUMVECTORS)
                         {
                             *loc ^= xor;
@@ -56,7 +57,7 @@ namespace YARG.Core.IO
                     long keyIndex = buffIndex & KEY_MASK;
                     while (buffPosition < buffEnd)
                     {
-                        *buffPosition++ ^= mask.Keys.Ptr[keyIndex++];
+                        *buffPosition++ ^= mask.Keys[keyIndex++];
                     }
                 }
             }
@@ -73,7 +74,7 @@ namespace YARG.Core.IO
         private readonly long initialOffset;
 
         private readonly SngMask mask;
-        private readonly FixedArray<byte> dataBuffer = FixedArray<byte>.Alloc(BUFFER_SIZE);
+        private readonly FixedArray<byte> dataBuffer;
 
         public  readonly string Name;
 
@@ -114,8 +115,21 @@ namespace YARG.Core.IO
 
             initialOffset = position;
 
-            _stream.Seek(position, SeekOrigin.Begin);
-            UpdateBuffer();
+            try
+            {
+                _stream.Seek(position, SeekOrigin.Begin);
+                dataBuffer = FixedArray<byte>.Alloc(BUFFER_SIZE);
+                UpdateBuffer();
+            }
+            catch (Exception)
+            {
+                if (dataBuffer.IsAllocated)
+                {
+                    dataBuffer.Dispose();
+                }
+                throw;
+            }
+            
         }
 
         public override int Read(byte[] buffer, int offset, int count)
@@ -199,7 +213,6 @@ namespace YARG.Core.IO
                 {
                     _stream.Dispose();
                     dataBuffer.Dispose();
-                    mask.Dispose();
                 }
                 disposedStream = true;
             }
@@ -227,7 +240,7 @@ namespace YARG.Core.IO
                 int key = buffIndex & KEY_MASK;
                 for (int i = 0; i < count; ++i)
                 {
-                    dataBuffer.Ptr[buffIndex++] ^= mask.Keys.Ptr[key++];
+                    dataBuffer.Ptr[buffIndex++] ^= mask.Keys[key++];
                 }
 
                 // No need to do anything else
@@ -245,20 +258,25 @@ namespace YARG.Core.IO
             
             var buffPosition = dataBuffer.Ptr + vectorMax;
             var vecPtr = (Vector<byte>*) (dataBuffer.Ptr + buffIndex);
-            Parallel.For(0, SngMask.NUMVECTORS, i =>
+            fixed (byte* maskPtr = mask.Keys)
             {
-                // Faster "% NUM_VECTORS"
-                var xor = mask.Vectors[(i + vectorIndex) & NUM_VECTORS_MASK];
-                for (var loc = vecPtr + i; loc < buffPosition; loc += SngMask.NUMVECTORS)
+                var maskVecPtr = (Vector<byte>*) maskPtr;
+                Parallel.For(0, SngMask.NUMVECTORS, i =>
                 {
-                    *loc ^= xor;
-                }
-            });
+                    // Faster "% NUM_VECTORS"
+                    var xor = maskVecPtr[(i + vectorIndex) & NUM_VECTORS_MASK];
+                    for (var loc = vecPtr + i; loc < buffPosition; loc += SngMask.NUMVECTORS)
+                    {
+                        *loc ^= xor;
+                    }
+                });
+            }
+            
 
             long keyIndex = vectorMax & KEY_MASK;
             while (buffPosition < endPtr)
             {
-                *buffPosition++ ^= mask.Keys.Ptr[keyIndex++];
+                *buffPosition++ ^= mask.Keys[keyIndex++];
             }
             return readCount;
         }
