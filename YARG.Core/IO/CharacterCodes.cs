@@ -14,38 +14,34 @@ namespace YARG.Core.IO
     /// These are read and written in big-endian, so that the characters used are
     /// human-readable in a hex editor, for example.
     /// </remarks>
-    public readonly struct FourCC : IBinarySerializable
+    public readonly struct FourCC
     {
         private readonly uint _code;
 
-        private FourCC(uint code)
-        {
-            _code = code;
-        }
-
         public FourCC(char a, char b, char c, char d)
-            : this((byte) a, (byte) b, (byte) c, (byte) d) {}
-
-        public FourCC(byte a, byte b, byte c, byte d)
         {
-            _code = ((uint) a << 24) | ((uint) b << 16) | ((uint) c << 8) | d;
+            _code = a | ((uint) b << 8) | ((uint) c << 16) | ((uint) d << 24);
         }
 
         public FourCC(ReadOnlySpan<byte> data)
         {
-            _code = BinaryPrimitives.ReadUInt32BigEndian(data);
+            _code = BinaryPrimitives.ReadUInt32LittleEndian(data);
         }
 
-        public static FourCC Read(Stream stream) => new(stream.Read<uint>(Endianness.Big));
+        public FourCC(Stream stream)
+        {
+            _code = stream.Read<uint>(Endianness.Little);
+        }
+
+        public bool Matches(Stream stream)
+        {
+           return stream.Read<uint>(Endianness.Little) == _code;
+        }
 
         public void Serialize(BinaryWriter writer)
         {
-            writer.BaseStream.Write(_code, Endianness.Big);
+            writer.BaseStream.Write(_code, Endianness.Little);
         }
-
-        [Obsolete("FourCC is a readonly struct, use the Read static method instead.", true)]
-        public void Deserialize(BinaryReader reader, int version = 0)
-            => throw new InvalidOperationException("FourCC is a readonly struct, use the Read static method instead.");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(FourCC left, FourCC right) => left._code == right._code;
@@ -59,10 +55,10 @@ namespace YARG.Core.IO
 
         public override string ToString()
         {
-            char a = (char) ((_code >> 24) & 0xFF);
-            char b = (char) ((_code >> 16) & 0xFF);
-            char c = (char) ((_code >> 8) & 0xFF);
-            char d = (char) (_code & 0xFF);
+            char a = (char) (_code & 0xFF);
+            char b = (char) ((_code >> 8) & 0xFF);
+            char c = (char) ((_code >> 16) & 0xFF);
+            char d = (char) ((_code >> 24) & 0xFF);
             return $"{a}{b}{c}{d}";
         }
     }
@@ -84,24 +80,29 @@ namespace YARG.Core.IO
         }
 
         public EightCC(char a, char b, char c, char d, char e, char f, char g, char h)
-            : this((byte) a, (byte) b, (byte) c, (byte) d, (byte) e, (byte) f, (byte) g, (byte) h) {}
-
-        public EightCC(byte a, byte b, byte c, byte d, byte e, byte f, byte g, byte h)
         {
-            _code = ((ulong) a << 56) | ((ulong) b << 48) | ((ulong) c << 40) | ((ulong) d << 32) |
-                ((ulong) e << 24) | ((ulong) f << 16) | ((ulong) g << 8) | h;
+            _code =                 a | ((ulong) b << 8)  | ((ulong) c << 16) | ((ulong) d << 24) |
+                    ((ulong) e << 32) | ((ulong) f << 40) | ((ulong) g << 48) | ((ulong) h << 56) ;
         }
 
         public EightCC(ReadOnlySpan<byte> data)
         {
-            _code = BinaryPrimitives.ReadUInt64BigEndian(data);
+            _code = BinaryPrimitives.ReadUInt64LittleEndian(data);
         }
 
-        public static EightCC Read(Stream stream) => new(stream.Read<ulong>(Endianness.Big));
+        public EightCC(Stream stream)
+        {
+            _code = stream.Read<ulong>(Endianness.Little);
+        }
+
+        public bool Matches(Stream stream)
+        {
+            return stream.Read<ulong>(Endianness.Little) == _code;
+        }
 
         public void Serialize(BinaryWriter writer)
         {
-            writer.BaseStream.Write(_code, Endianness.Big);
+            writer.BaseStream.Write(_code, Endianness.Little);
         }
 
         [Obsolete("EightCC is a readonly struct, use the Read static method instead.", true)]
@@ -120,14 +121,14 @@ namespace YARG.Core.IO
 
         public override string ToString()
         {
-            char a = (char) ((_code >> 56) & 0xFF);
-            char b = (char) ((_code >> 48) & 0xFF);
-            char c = (char) ((_code >> 40) & 0xFF);
-            char d = (char) ((_code >> 32) & 0xFF);
-            char e = (char) ((_code >> 24) & 0xFF);
-            char f = (char) ((_code >> 16) & 0xFF);
-            char g = (char) ((_code >> 8) & 0xFF);
-            char h = (char) (_code & 0xFF);
+            char a = (char) (_code & 0xFF);
+            char b = (char) ((_code >> 8) & 0xFF);
+            char c = (char) ((_code >> 16) & 0xFF);
+            char d = (char) ((_code >> 24) & 0xFF);
+            char e = (char) ((_code >> 32) & 0xFF);
+            char f = (char) ((_code >> 40) & 0xFF);
+            char g = (char) ((_code >> 48) & 0xFF);
+            char h = (char) ((_code >> 56) & 0xFF);
             return $"{a}{b}{c}{d}{e}{f}{g}{h}";
         }
     }

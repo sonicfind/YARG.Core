@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Net;
 
 namespace YARG.Core.Game
 {
-    public partial class ColorProfile
+    public partial struct ColorConfig
     {
         #region Default Colors
 
@@ -41,9 +43,9 @@ namespace YARG.Core.Game
 
         #endregion
 
-        public static readonly ColorProfile Default = new("Default", true);
+        public static readonly ColorProfile Default = new("Default");
 
-        public static readonly ColorProfile CircularDefault = new("Circular", true)
+        public static readonly ColorProfile CircularDefault = new("Circular")
         {
             FiveFretGuitar = new FiveFretGuitarColors
             {
@@ -77,7 +79,7 @@ namespace YARG.Core.Game
             }
         };
 
-        public static readonly ColorProfile AprilFoolsDefault = new("YARG on Fire", true)
+        public static readonly ColorProfile AprilFoolsDefault = new("YARG on Fire")
         {
             FiveFretGuitar = new FiveFretGuitarColors
             {
@@ -185,5 +187,21 @@ namespace YARG.Core.Game
             CircularDefault,
             AprilFoolsDefault
         };
+
+        private static readonly HashSet<Guid> _defaultIDs;
+
+        static ColorConfig()
+        {
+            _defaultIDs = new();
+            foreach (var def in Defaults)
+            {
+                _defaultIDs.Add(def.Id);
+            }
+        }
+
+        public static bool IsDefault(in ColorProfile profile)
+        {
+            return _defaultIDs.Contains(profile.Id);
+        }
     }
 }

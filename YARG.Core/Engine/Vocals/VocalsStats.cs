@@ -24,6 +24,13 @@ namespace YARG.Core.Engine.Vocals
             VocalTicksMissed = stats.VocalTicksMissed;
         }
 
+        public VocalsStats(BinaryReader reader)
+            : base(reader)
+        {
+            VocalTicksHit = reader.ReadUInt32();
+            VocalTicksMissed = reader.ReadUInt32();
+        }
+
         public override void Reset()
         {
             base.Reset();
@@ -37,14 +44,6 @@ namespace YARG.Core.Engine.Vocals
 
             writer.Write(VocalTicksHit);
             writer.Write(VocalTicksMissed);
-        }
-
-        public override void Deserialize(BinaryReader reader, int version = 0)
-        {
-            base.Deserialize(reader, version);
-
-            VocalTicksHit = reader.ReadUInt32();
-            VocalTicksMissed = reader.ReadUInt32();
         }
     }
 }

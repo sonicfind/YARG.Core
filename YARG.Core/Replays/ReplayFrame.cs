@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using YARG.Core.Engine;
@@ -11,23 +11,61 @@ using YARG.Core.Utility;
 
 namespace YARG.Core.Replays
 {
-    public class ReplayFrame : IBinarySerializable
+    public class ReplayFrame
     {
-        public ReplayPlayerInfo     PlayerInfo;
-        public BaseEngineParameters EngineParameters;
-        public BaseStats            Stats;
-        public int                  InputCount;
-        public GameInput[]          Inputs;
-        public EngineEventLogger    EventLog;
+        public readonly ReplayPlayerInfo     PlayerInfo;
+        public readonly BaseEngineParameters EngineParameters;
+        public readonly BaseStats            Stats;
+        public readonly GameInput[]          Inputs;
+        public readonly EngineEventLogger    EventLog;
 
-        // Disabling this because it looks ugly with the initializers lol
-        // ReSharper disable once ConvertConstructorToMemberInitializers
-        public ReplayFrame()
+        public int InputCount => Inputs.Length;
+
+        public ReplayFrame(ReplayPlayerInfo info, BaseEngineParameters param, BaseStats stats, GameInput[] inputs, EngineEventLogger logger)
         {
-            EngineParameters = new GuitarEngineParameters();
-            Stats = new GuitarStats();
-            Inputs = Array.Empty<GameInput>();
-            EventLog = new EngineEventLogger();
+            PlayerInfo = info;
+            Stats = stats;
+            EngineParameters = param;
+            Inputs = inputs;
+            EventLog = logger;
+        }
+
+        public ReplayFrame(BinaryReader reader, int version)
+        {
+            PlayerInfo = new ReplayPlayerInfo(reader);
+
+            switch (PlayerInfo.Profile.CurrentInstrument.ToGameMode())
+            {
+                case GameMode.FiveFretGuitar:
+                case GameMode.SixFretGuitar:
+                    EngineParameters = new GuitarEngineParameters(reader, version);
+                    Stats = new GuitarStats(reader);
+                    break;
+                case GameMode.FourLaneDrums:
+                case GameMode.FiveLaneDrums:
+                    EngineParameters = new DrumsEngineParameters(reader, version);
+                    Stats = new DrumsStats(reader);
+                    break;
+                case GameMode.Vocals:
+                    EngineParameters = new VocalsEngineParameters(reader, version);
+                    Stats = new VocalsStats(reader);
+                    break;
+                default:
+                    throw new InvalidOperationException("Stat creation not implemented.");
+            }
+
+            int count = reader.ReadInt32();
+            Inputs = new GameInput[count];
+            for (int i = 0; i < count; i++)
+            {
+                double time = reader.ReadDouble();
+                int action = reader.ReadInt32();
+                int value = reader.ReadInt32();
+
+                Inputs[i] = new GameInput(time, action, value);
+            }
+
+            EventLog = new EngineEventLogger(reader);
         }
 
         public void Serialize(BinaryWriter writer)
@@ -45,51 +83,6 @@ namespace YARG.Core.Replays
             }
             
             EventLog.Serialize(writer);
-        }
-
-        [MemberNotNull(nameof(EngineParameters))]
-        [MemberNotNull(nameof(Stats))]
-        [MemberNotNull(nameof(Inputs))]
-        public void Deserialize(BinaryReader reader, int version = 0)
-        {
-            PlayerInfo = new ReplayPlayerInfo(reader, version);
-
-            switch (PlayerInfo.Profile.CurrentInstrument.ToGameMode())
-            {
-                case GameMode.FiveFretGuitar:
-                case GameMode.SixFretGuitar:
-                    Stats = new GuitarStats();
-                    EngineParameters = new GuitarEngineParameters();
-                    break;
-                case GameMode.FourLaneDrums:
-                case GameMode.FiveLaneDrums:
-                    Stats = new DrumsStats();
-                    EngineParameters = new DrumsEngineParameters();
-                    break;
-                case GameMode.Vocals:
-                    Stats = new VocalsStats();
-                    EngineParameters = new VocalsEngineParameters();
-                    break;
-                default:
-                    throw new InvalidOperationException("Stat creation not implemented.");
-            }
-
-            EngineParameters.Deserialize(reader, version);
-            Stats.Deserialize(reader, version);
-
-            InputCount = reader.ReadInt32();
-
-            Inputs = new GameInput[InputCount];
-            for (int i = 0; i < InputCount; i++)
-            {
-                double time = reader.ReadDouble();
-                int action = reader.ReadInt32();
-                int value = reader.ReadInt32();
-
-                Inputs[i] = new GameInput(time, action, value);
-            }
-            
-            EventLog.Deserialize(reader, version);
         }
     }
 }

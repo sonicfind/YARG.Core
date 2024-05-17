@@ -14,11 +14,7 @@ namespace YARG.Core.Engine.Drums
         /// <summary>
         /// What mode the inputs should be processed in.
         /// </summary>
-        public DrumMode Mode { get; private set; }
-
-        public DrumsEngineParameters()
-        {
-        }
+        public readonly DrumMode Mode;
 
         public DrumsEngineParameters(HitWindowSettings hitWindow, int maxMultiplier, float[] starMultiplierThresholds,
             DrumMode mode)
@@ -27,18 +23,17 @@ namespace YARG.Core.Engine.Drums
             Mode = mode;
         }
 
+        public DrumsEngineParameters(BinaryReader reader, int version)
+            : base(reader, version)
+        {
+            Mode = (DrumMode) reader.ReadByte();
+        }
+
         public override void Serialize(BinaryWriter writer)
         {
             base.Serialize(writer);
 
             writer.Write((byte) Mode);
-        }
-
-        public override void Deserialize(BinaryReader reader, int version = 0)
-        {
-            base.Deserialize(reader, version);
-
-            Mode = (DrumMode) reader.ReadByte();
         }
     }
 }

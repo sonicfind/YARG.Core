@@ -123,15 +123,14 @@ catch (Exception e)
     return;
 }
 
-var result = ReplayIO.ReadReplay(replayPath, out var replayFile);
-var replay = replayFile?.Replay;
-
-if (result != ReplayReadResult.Valid || replay is null)
+var result = ReplayFile.TryLoad(replayPath, out var replayFile);
+if (result != ReplayReadResult.Valid)
 {
     Console.WriteLine($"ERROR: Failed to load replay. Read Result: {result}.");
     return;
 }
 
+var replay = replayFile!.Replay;
 Console.WriteLine($"Players ({replay.PlayerCount}):");
 for (int i = 0; i < replay.Frames.Length; i++)
 {

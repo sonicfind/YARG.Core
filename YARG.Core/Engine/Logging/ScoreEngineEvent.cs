@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 
 namespace YARG.Core.Engine.Logging
 {
@@ -10,6 +10,12 @@ namespace YARG.Core.Engine.Logging
         {
         }
 
+        public ScoreEngineEvent(BinaryReader reader)
+            : base(reader)
+        {
+            Score = reader.ReadInt32();
+        }
+
         public override void Serialize(BinaryWriter writer)
         {
             base.Serialize(writer);
@@ -17,11 +23,6 @@ namespace YARG.Core.Engine.Logging
             writer.Write(Score);
         }
 
-        public override void Deserialize(BinaryReader reader, int version = 0)
-        {
-            base.Deserialize(reader, version);
-
-            Score = reader.ReadInt32();
-        }
+        
     }
 }

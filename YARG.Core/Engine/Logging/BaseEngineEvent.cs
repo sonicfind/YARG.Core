@@ -4,7 +4,7 @@ using YARG.Core.Utility;
 
 namespace YARG.Core.Engine.Logging
 {
-    public abstract class BaseEngineEvent : IBinarySerializable
+    public abstract class BaseEngineEvent
     {
         public EngineEventType EventType { get; }
 
@@ -16,17 +16,17 @@ namespace YARG.Core.Engine.Logging
             EventTime = eventTime;
         }
 
-        public virtual void Serialize(BinaryWriter writer)
-        {
-            writer.Write((int) EventType);
-            writer.Write(EventTime);
-        }
-
-        public virtual void Deserialize(BinaryReader reader, int version = 0)
+        protected BaseEngineEvent(BinaryReader reader)
         {
             // Don't deserialize event type as it's done manually to determine object type
 
             EventTime = reader.ReadDouble();
+        }
+
+        public virtual void Serialize(BinaryWriter writer)
+        {
+            writer.Write((int) EventType);
+            writer.Write(EventTime);
         }
 
         public static bool operator ==(BaseEngineEvent? a, BaseEngineEvent? b)

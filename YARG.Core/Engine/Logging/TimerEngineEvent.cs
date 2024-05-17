@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 
 namespace YARG.Core.Engine.Logging
@@ -17,6 +17,16 @@ namespace YARG.Core.Engine.Logging
         {
         }
 
+        public TimerEngineEvent(BinaryReader reader)
+            : base(reader)
+        {
+            TimerName = reader.ReadString();
+            TimerValue = reader.ReadDouble();
+            TimerStarted = reader.ReadBoolean();
+            TimerStopped = reader.ReadBoolean();
+            TimerExpired = reader.ReadBoolean();
+        }
+
         public override void Serialize(BinaryWriter writer)
         {
             base.Serialize(writer);
@@ -26,17 +36,6 @@ namespace YARG.Core.Engine.Logging
             writer.Write(TimerStarted);
             writer.Write(TimerStopped);
             writer.Write(TimerExpired);
-        }
-
-        public override void Deserialize(BinaryReader reader, int version = 0)
-        {
-            base.Deserialize(reader, version);
-
-            TimerName = reader.ReadString();
-            TimerValue = reader.ReadDouble();
-            TimerStarted = reader.ReadBoolean();
-            TimerStopped = reader.ReadBoolean();
-            TimerExpired = reader.ReadBoolean();
         }
 
         public override bool Equals(BaseEngineEvent? engineEvent)

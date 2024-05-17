@@ -4,27 +4,40 @@ using YARG.Core.Utility;
 
 namespace YARG.Core.Engine
 {
-    public abstract class BaseEngineParameters : IBinarySerializable
+    public abstract class BaseEngineParameters
     {
-        public readonly HitWindowSettings HitWindow;
+        public HitWindowSettings HitWindow;
 
-        public int MaxMultiplier { get; private set; }
+        public readonly int MaxMultiplier;
 
-        public float[] StarMultiplierThresholds { get; private set; }
+        public readonly float[] StarMultiplierThresholds;
 
         public double SongSpeed;
-
-        protected BaseEngineParameters()
-        {
-            HitWindow = new HitWindowSettings();
-            StarMultiplierThresholds = Array.Empty<float>();
-        }
 
         protected BaseEngineParameters(HitWindowSettings hitWindow, int maxMultiplier, float[] starMultiplierThresholds)
         {
             HitWindow = hitWindow;
             MaxMultiplier = maxMultiplier;
             StarMultiplierThresholds = starMultiplierThresholds;
+        }
+
+        protected BaseEngineParameters(BinaryReader reader, int version)
+        {
+            HitWindow = new HitWindowSettings(reader);
+
+            MaxMultiplier = reader.ReadInt32();
+
+            // Read star multiplier thresholds
+            StarMultiplierThresholds = new float[reader.ReadInt32()];
+            for (int i = 0; i < StarMultiplierThresholds.Length; i++)
+            {
+                StarMultiplierThresholds[i] = reader.ReadSingle();
+            }
+
+            if (version >= 5)
+            {
+                SongSpeed = reader.ReadDouble();
+            }
         }
 
         public virtual void Serialize(BinaryWriter writer)
@@ -41,25 +54,6 @@ namespace YARG.Core.Engine
             }
 
             writer.Write(SongSpeed);
-        }
-
-        public virtual void Deserialize(BinaryReader reader, int version = 0)
-        {
-            HitWindow.Deserialize(reader, version);
-
-            MaxMultiplier = reader.ReadInt32();
-
-            // Read star multiplier thresholds
-            StarMultiplierThresholds = new float[reader.ReadInt32()];
-            for (int i = 0; i < StarMultiplierThresholds.Length; i++)
-            {
-                StarMultiplierThresholds[i] = reader.ReadSingle();
-            }
-
-            if (version >= 5)
-            {
-                SongSpeed = reader.ReadDouble();
-            }
         }
     }
 }

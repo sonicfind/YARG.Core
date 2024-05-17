@@ -36,6 +36,15 @@ namespace YARG.Core.Engine.Guitar
             StarPowerWhammyGain = stats.StarPowerWhammyGain;
         }
 
+        public GuitarStats(BinaryReader reader)
+            : base(reader)
+        {
+            Overstrums = reader.ReadInt32();
+            HoposStrummed = reader.ReadInt32();
+            GhostInputs = reader.ReadInt32();
+            StarPowerWhammyGain = reader.ReadDouble();
+        }
+
         public override void Reset()
         {
             base.Reset();
@@ -53,16 +62,6 @@ namespace YARG.Core.Engine.Guitar
             writer.Write(HoposStrummed);
             writer.Write(GhostInputs);
             writer.Write(StarPowerWhammyGain);
-        }
-
-        public override void Deserialize(BinaryReader reader, int version = 0)
-        {
-            base.Deserialize(reader, version);
-
-            Overstrums = reader.ReadInt32();
-            HoposStrummed = reader.ReadInt32();
-            GhostInputs = reader.ReadInt32();
-            StarPowerWhammyGain = reader.ReadDouble();
         }
     }
 }

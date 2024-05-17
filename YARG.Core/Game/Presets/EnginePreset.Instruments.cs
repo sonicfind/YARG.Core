@@ -6,7 +6,7 @@ using YARG.Core.Engine.Vocals;
 
 namespace YARG.Core.Game
 {
-    public partial class EnginePreset
+    public partial struct EngineConfig
     {
         public const double DEFAULT_WHAMMY_BUFFER = 0.25;
 
@@ -26,7 +26,7 @@ namespace YARG.Core.Game
 
             public double FrontToBackRatio;
 
-            public HitWindowSettings Create()
+            public readonly HitWindowSettings Create()
             {
                 return new HitWindowSettings(MaxWindow, MinWindow, FrontToBackRatio, IsDynamic);
             }
@@ -35,38 +35,35 @@ namespace YARG.Core.Game
         /// <summary>
         /// The engine preset for five fret guitar.
         /// </summary>
-        public class FiveFretGuitarPreset
+        public struct FiveFretGuitarPreset
         {
-            public bool AntiGhosting     = true;
-            public bool InfiniteFrontEnd = false;
-
-            public double HopoLeniency = 0.08;
-
-            public double StrumLeniency      = 0.05;
-            public double StrumLeniencySmall = 0.025;
-
-            public HitWindowPreset HitWindow = new()
+            public static readonly FiveFretGuitarPreset Default = new()
             {
-                MaxWindow = 0.14,
-                MinWindow = 0.14,
-                IsDynamic = false,
-                FrontToBackRatio = 1.0
+                AntiGhosting = true,
+                InfiniteFrontEnd = false,
+                HopoLeniency = 0.08,
+                StrumLeniency = 0.05,
+                StrumLeniencySmall = 0.025,
+                HitWindow = new()
+                {
+                    MaxWindow = 0.14,
+                    MinWindow = 0.14,
+                    IsDynamic = false,
+                    FrontToBackRatio = 1.0
+                }
             };
 
-            public FiveFretGuitarPreset Copy()
-            {
-                return new FiveFretGuitarPreset
-                {
-                    AntiGhosting = AntiGhosting,
-                    InfiniteFrontEnd = InfiniteFrontEnd,
-                    HopoLeniency = HopoLeniency,
-                    StrumLeniency = StrumLeniency,
-                    StrumLeniencySmall = StrumLeniencySmall,
-                    HitWindow = HitWindow,
-                };
-            }
+            public bool AntiGhosting;
+            public bool InfiniteFrontEnd;
 
-            public GuitarEngineParameters Create(float[] starMultiplierThresholds, bool isBass)
+            public double HopoLeniency;
+
+            public double StrumLeniency;
+            public double StrumLeniencySmall;
+
+            public HitWindowPreset HitWindow;
+
+            public readonly GuitarEngineParameters Create(float[] starMultiplierThresholds, bool isBass)
             {
                 var hitWindow = HitWindow.Create();
                 return new GuitarEngineParameters(
@@ -86,25 +83,22 @@ namespace YARG.Core.Game
         /// The engine preset for four and five lane drums. These two game modes
         /// use the same engine, so there's no point in splitting them up.
         /// </summary>
-        public class DrumsPreset
+        public struct DrumsPreset
         {
-            public HitWindowPreset HitWindow = new()
+            public static readonly DrumsPreset Default = new()
             {
-                MaxWindow = 0.14,
-                MinWindow = 0.14,
-                IsDynamic = false,
-                FrontToBackRatio = 1.0
+                HitWindow = new()
+                {
+                    MaxWindow = 0.14,
+                    MinWindow = 0.14,
+                    IsDynamic = false,
+                    FrontToBackRatio = 1.0
+                }
             };
 
-            public DrumsPreset Copy()
-            {
-                return new DrumsPreset
-                {
-                    HitWindow = HitWindow
-                };
-            }
+            public HitWindowPreset HitWindow;
 
-            public DrumsEngineParameters Create(float[] starMultiplierThresholds, DrumsEngineParameters.DrumMode mode)
+            public readonly DrumsEngineParameters Create(float[] starMultiplierThresholds, DrumsEngineParameters.DrumMode mode)
             {
                 var hitWindow = HitWindow.Create();
                 return new DrumsEngineParameters(
@@ -119,37 +113,34 @@ namespace YARG.Core.Game
         /// <summary>
         /// The engine preset for vocals/harmonies.
         /// </summary>
-        public class VocalsPreset
+        public struct VocalsPreset
         {
+            public static readonly VocalsPreset Default = new()
+            {
+                WindowSizeE = 1.7,
+                WindowSizeM = 1.4,
+                WindowSizeH = 1.1,
+                WindowSizeX = 0.8,
+                HitPercentE = 0.325,
+                HitPercentM = 0.400,
+                HitPercentH = 0.450,
+                HitPercentX = 0.575,
+            };
+
             // Hit window is in semitones (max. difference between correct pitch and sung pitch).
-            public double WindowSizeE = 1.7;
-            public double WindowSizeM = 1.4;
-            public double WindowSizeH = 1.1;
-            public double WindowSizeX = 0.8;
+            public double WindowSizeE;
+            public double WindowSizeM;
+            public double WindowSizeH;
+            public double WindowSizeX;
 
             // These percentages may seem low, but accounting for delay,
             // plosives not being detected, etc., it's pretty good.
-            public double HitPercentE = 0.325;
-            public double HitPercentM = 0.400;
-            public double HitPercentH = 0.450;
-            public double HitPercentX = 0.575;
+            public double HitPercentE;
+            public double HitPercentM;
+            public double HitPercentH;
+            public double HitPercentX;
 
-            public VocalsPreset Copy()
-            {
-                return new VocalsPreset
-                {
-                    WindowSizeE = WindowSizeE,
-                    WindowSizeM = WindowSizeM,
-                    WindowSizeH = WindowSizeH,
-                    WindowSizeX = WindowSizeX,
-                    HitPercentE = HitPercentE,
-                    HitPercentM = HitPercentM,
-                    HitPercentH = HitPercentH,
-                    HitPercentX = HitPercentX,
-                };
-            }
-
-            public VocalsEngineParameters Create(float[] starMultiplierThresholds, Difficulty difficulty, float updatesPerSecond)
+            public readonly VocalsEngineParameters Create(float[] starMultiplierThresholds, Difficulty difficulty, float updatesPerSecond)
             {
                 // Hit window is in semitones (max. difference between correct pitch and sung pitch).
                 double windowSize = difficulty switch
@@ -171,8 +162,8 @@ namespace YARG.Core.Game
                 };
                 var hitWindow = new HitWindowSettings(windowSize, 0.03, 1, false);
                 return new VocalsEngineParameters(
-                    hitWindow, 
-                    EnginePreset.DEFAULT_MAX_MULTIPLIER,
+                    hitWindow,
+                    DEFAULT_MAX_MULTIPLIER,
                     starMultiplierThresholds, 
                     hitPercent, 
                     true, 

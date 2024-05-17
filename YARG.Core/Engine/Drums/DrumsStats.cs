@@ -1,4 +1,6 @@
-﻿namespace YARG.Core.Engine.Drums
+﻿using System.IO;
+
+namespace YARG.Core.Engine.Drums
 {
     public class DrumsStats : BaseStats
     {
@@ -17,5 +19,7 @@
 
         }
 
+        public DrumsStats(BinaryReader reader)
+            : base(reader) { }
     }
 }

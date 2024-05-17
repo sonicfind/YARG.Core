@@ -5,9 +5,9 @@ using YARG.Core.Utility;
 
 namespace YARG.Core.Game
 {
-    public partial class ColorProfile
+    public partial struct ColorConfig
     {
-        public struct FiveFretGuitarColors : IFretColorProvider, IBinarySerializable
+        public struct FiveFretGuitarColors : IFretColorProvider
         {
             public static readonly FiveFretGuitarColors Default = new()
             {
@@ -182,6 +182,44 @@ namespace YARG.Core.Game
 
             #region Serialization
 
+            public FiveFretGuitarColors(BinaryReader reader)
+            {
+                OpenFret = reader.ReadColor();
+                GreenFret = reader.ReadColor();
+                RedFret = reader.ReadColor();
+                YellowFret = reader.ReadColor();
+                BlueFret = reader.ReadColor();
+                OrangeFret = reader.ReadColor();
+
+                OpenFretInner = reader.ReadColor();
+                GreenFretInner = reader.ReadColor();
+                RedFretInner = reader.ReadColor();
+                YellowFretInner = reader.ReadColor();
+                BlueFretInner = reader.ReadColor();
+                OrangeFretInner = reader.ReadColor();
+
+                OpenParticles = reader.ReadColor();
+                GreenParticles = reader.ReadColor();
+                RedParticles = reader.ReadColor();
+                YellowParticles = reader.ReadColor();
+                BlueParticles = reader.ReadColor();
+                OrangeParticles = reader.ReadColor();
+
+                OpenNote = reader.ReadColor();
+                GreenNote = reader.ReadColor();
+                RedNote = reader.ReadColor();
+                YellowNote = reader.ReadColor();
+                BlueNote = reader.ReadColor();
+                OrangeNote = reader.ReadColor();
+
+                OpenNoteStarPower = reader.ReadColor();
+                GreenNoteStarPower = reader.ReadColor();
+                RedNoteStarPower = reader.ReadColor();
+                YellowNoteStarPower = reader.ReadColor();
+                BlueNoteStarPower = reader.ReadColor();
+                OrangeNoteStarPower = reader.ReadColor();
+            }
+
             public readonly void Serialize(BinaryWriter writer)
             {
                 writer.Write(OpenFret);
@@ -218,44 +256,6 @@ namespace YARG.Core.Game
                 writer.Write(YellowNoteStarPower);
                 writer.Write(BlueNoteStarPower);
                 writer.Write(OrangeNoteStarPower);
-            }
-
-            public void Deserialize(BinaryReader reader, int version = 0)
-            {
-                OpenFret = reader.ReadColor();
-                GreenFret = reader.ReadColor();
-                RedFret = reader.ReadColor();
-                YellowFret = reader.ReadColor();
-                BlueFret = reader.ReadColor();
-                OrangeFret = reader.ReadColor();
-
-                OpenFretInner = reader.ReadColor();
-                GreenFretInner = reader.ReadColor();
-                RedFretInner = reader.ReadColor();
-                YellowFretInner = reader.ReadColor();
-                BlueFretInner = reader.ReadColor();
-                OrangeFretInner = reader.ReadColor();
-
-                OpenParticles = reader.ReadColor();
-                GreenParticles = reader.ReadColor();
-                RedParticles = reader.ReadColor();
-                YellowParticles = reader.ReadColor();
-                BlueParticles = reader.ReadColor();
-                OrangeParticles = reader.ReadColor();
-
-                OpenNote = reader.ReadColor();
-                GreenNote = reader.ReadColor();
-                RedNote = reader.ReadColor();
-                YellowNote = reader.ReadColor();
-                BlueNote = reader.ReadColor();
-                OrangeNote = reader.ReadColor();
-
-                OpenNoteStarPower = reader.ReadColor();
-                GreenNoteStarPower = reader.ReadColor();
-                RedNoteStarPower = reader.ReadColor();
-                YellowNoteStarPower = reader.ReadColor();
-                BlueNoteStarPower = reader.ReadColor();
-                OrangeNoteStarPower = reader.ReadColor();
             }
 
             #endregion

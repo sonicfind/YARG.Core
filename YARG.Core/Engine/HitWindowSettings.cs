@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.IO;
 using YARG.Core.Utility;
 
 namespace YARG.Core.Engine
 {
-    public class HitWindowSettings : IBinarySerializable
+    public struct HitWindowSettings
     {
         /// <summary>
         /// The scale factor of the hit window. This should be used to scale the window
@@ -14,33 +14,29 @@ namespace YARG.Core.Engine
         /// This value is <b>NOT</b> serialized as it should be set when first creating the
         /// engine based on the song speed.
         /// </remarks>
-        public double Scale { get; set; }
+        public double Scale;
 
         /// <summary>
         /// The maximum window size. If the hit window is not dynamic, this value will be used.
         /// </summary>
-        public double MaxWindow { get; private set; }
+        public readonly double MaxWindow;
         /// <summary>
         /// The minimum window size. This value will only be used if the window is dynamic.
         /// </summary>
-        public double MinWindow { get; private set; }
+        public readonly double MinWindow;
 
         /// <summary>
         /// Whether or not the hit window size can change over time.
         /// This is usually done by looking at the time in between notes.
         /// </summary>
-        public bool IsDynamic { get; private set; }
+        public readonly bool IsDynamic;
 
         /// <summary>
         /// The front to back ratio of the hit window.
         /// </summary>
-        public double FrontToBackRatio { get; private set; }
+        public readonly double FrontToBackRatio;
 
         private double _minMaxWindowRatio;
-
-        public HitWindowSettings()
-        {
-        }
 
         public HitWindowSettings(double maxWindow, double minWindow, double frontToBackRatio, bool isDynamic)
         {
@@ -55,6 +51,17 @@ namespace YARG.Core.Engine
             MinWindow = minWindow;
             FrontToBackRatio = frontToBackRatio;
             IsDynamic = isDynamic;
+
+            _minMaxWindowRatio = MinWindow / MaxWindow;
+        }
+
+        public HitWindowSettings(BinaryReader reader)
+        {
+            Scale = 1;
+            MaxWindow = reader.ReadDouble();
+            MinWindow = reader.ReadDouble();
+            IsDynamic = reader.ReadBoolean();
+            FrontToBackRatio = reader.ReadDouble();
 
             _minMaxWindowRatio = MinWindow / MaxWindow;
         }
@@ -154,16 +161,6 @@ namespace YARG.Core.Engine
             writer.Write(MinWindow);
             writer.Write(IsDynamic);
             writer.Write(FrontToBackRatio);
-        }
-
-        public void Deserialize(BinaryReader reader, int version = 0)
-        {
-            MaxWindow = reader.ReadDouble();
-            MinWindow = reader.ReadDouble();
-            IsDynamic = reader.ReadBoolean();
-            FrontToBackRatio = reader.ReadDouble();
-
-            _minMaxWindowRatio = MinWindow / MaxWindow;
         }
     }
 }

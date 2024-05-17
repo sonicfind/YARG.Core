@@ -5,9 +5,9 @@ using YARG.Core.Utility;
 
 namespace YARG.Core.Game
 {
-    public partial class ColorProfile
+    public partial struct ColorConfig
     {
-        public struct FourLaneDrumsColors : IFretColorProvider, IBinarySerializable
+        public struct FourLaneDrumsColors : IFretColorProvider
         {
             public static readonly FourLaneDrumsColors Default = new()
             {
@@ -210,52 +210,7 @@ namespace YARG.Core.Game
 
             #region Serialization
 
-            public void Serialize(BinaryWriter writer)
-            {
-                writer.Write(KickFret);
-                writer.Write(RedFret);
-                writer.Write(YellowFret);
-                writer.Write(BlueFret);
-                writer.Write(GreenFret);
-
-                writer.Write(KickFretInner);
-                writer.Write(RedFretInner);
-                writer.Write(YellowFretInner);
-                writer.Write(BlueFretInner);
-                writer.Write(GreenFretInner);
-
-                writer.Write(KickParticles);
-                writer.Write(RedParticles);
-                writer.Write(YellowParticles);
-                writer.Write(BlueParticles);
-                writer.Write(GreenParticles);
-
-                writer.Write(KickNote);
-                writer.Write(RedDrum);
-                writer.Write(YellowDrum);
-                writer.Write(BlueDrum);
-                writer.Write(GreenDrum);
-
-                writer.Write(RedCymbal);
-                writer.Write(YellowCymbal);
-                writer.Write(BlueCymbal);
-                writer.Write(GreenCymbal);
-
-                writer.Write(KickStarpower);
-                writer.Write(RedDrumStarpower);
-                writer.Write(YellowDrumStarpower);
-                writer.Write(BlueDrumStarpower);
-                writer.Write(GreenDrumStarpower);
-
-                writer.Write(RedCymbalStarpower);
-                writer.Write(YellowCymbalStarpower);
-                writer.Write(BlueCymbalStarpower);
-                writer.Write(GreenCymbalStarpower);
-
-                writer.Write(ActivationNote);
-            }
-
-            public void Deserialize(BinaryReader reader, int version = 0)
+            public FourLaneDrumsColors(BinaryReader reader)
             {
                 KickFret = reader.ReadColor();
                 RedFret = reader.ReadColor();
@@ -300,6 +255,50 @@ namespace YARG.Core.Game
                 ActivationNote = reader.ReadColor();
             }
 
+            public readonly void Serialize(BinaryWriter writer)
+            {
+                writer.Write(KickFret);
+                writer.Write(RedFret);
+                writer.Write(YellowFret);
+                writer.Write(BlueFret);
+                writer.Write(GreenFret);
+
+                writer.Write(KickFretInner);
+                writer.Write(RedFretInner);
+                writer.Write(YellowFretInner);
+                writer.Write(BlueFretInner);
+                writer.Write(GreenFretInner);
+
+                writer.Write(KickParticles);
+                writer.Write(RedParticles);
+                writer.Write(YellowParticles);
+                writer.Write(BlueParticles);
+                writer.Write(GreenParticles);
+
+                writer.Write(KickNote);
+                writer.Write(RedDrum);
+                writer.Write(YellowDrum);
+                writer.Write(BlueDrum);
+                writer.Write(GreenDrum);
+
+                writer.Write(RedCymbal);
+                writer.Write(YellowCymbal);
+                writer.Write(BlueCymbal);
+                writer.Write(GreenCymbal);
+
+                writer.Write(KickStarpower);
+                writer.Write(RedDrumStarpower);
+                writer.Write(YellowDrumStarpower);
+                writer.Write(BlueDrumStarpower);
+                writer.Write(GreenDrumStarpower);
+
+                writer.Write(RedCymbalStarpower);
+                writer.Write(YellowCymbalStarpower);
+                writer.Write(BlueCymbalStarpower);
+                writer.Write(GreenCymbalStarpower);
+
+                writer.Write(ActivationNote);
+            }
             #endregion
         }
     }

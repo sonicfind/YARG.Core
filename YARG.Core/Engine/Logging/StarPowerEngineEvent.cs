@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 
 namespace YARG.Core.Engine.Logging
 {
@@ -10,18 +10,17 @@ namespace YARG.Core.Engine.Logging
         {
         }
 
+        public StarPowerEngineEvent(BinaryReader reader)
+            : base(reader)
+        {
+            IsActive = reader.ReadBoolean();
+        }
+
         public override void Serialize(BinaryWriter writer)
         {
             base.Serialize(writer);
 
             writer.Write(IsActive);
-        }
-
-        public override void Deserialize(BinaryReader reader, int version = 0)
-        {
-            base.Deserialize(reader, version);
-
-            IsActive = reader.ReadBoolean();
         }
     }
 }

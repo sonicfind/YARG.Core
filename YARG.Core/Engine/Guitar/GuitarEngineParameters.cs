@@ -4,19 +4,15 @@ namespace YARG.Core.Engine.Guitar
 {
     public class GuitarEngineParameters : BaseEngineParameters
     {
-        public double HopoLeniency { get; private set; }
+        public readonly double HopoLeniency;
 
-        public double StrumLeniency      { get; private set; }
-        public double StrumLeniencySmall { get; private set; }
+        public readonly double StrumLeniency;
+        public readonly double StrumLeniencySmall;
 
-        public double StarPowerWhammyBuffer { get; private set; }
+        public readonly double StarPowerWhammyBuffer;
 
-        public bool InfiniteFrontEnd { get; private set; }
-        public bool AntiGhosting     { get; private set; }
-
-        public GuitarEngineParameters()
-        {
-        }
+        public readonly bool InfiniteFrontEnd;
+        public readonly bool AntiGhosting;
 
         public GuitarEngineParameters(HitWindowSettings hitWindow, int maxMultiplier, float[] starMultiplierThresholds,
             double hopoLeniency, double strumLeniency, double strumLeniencySmall, double spWhammyBuffer,
@@ -34,6 +30,20 @@ namespace YARG.Core.Engine.Guitar
             AntiGhosting = antiGhosting;
         }
 
+        public GuitarEngineParameters(BinaryReader reader, int version)
+            : base(reader, version)
+        {
+            HopoLeniency = reader.ReadDouble();
+
+            StrumLeniency = reader.ReadDouble();
+            StrumLeniencySmall = reader.ReadDouble();
+
+            StarPowerWhammyBuffer = reader.ReadDouble();
+
+            InfiniteFrontEnd = reader.ReadBoolean();
+            AntiGhosting = reader.ReadBoolean();
+        }
+
         public override void Serialize(BinaryWriter writer)
         {
             base.Serialize(writer);
@@ -47,21 +57,6 @@ namespace YARG.Core.Engine.Guitar
 
             writer.Write(InfiniteFrontEnd);
             writer.Write(AntiGhosting);
-        }
-
-        public override void Deserialize(BinaryReader reader, int version = 0)
-        {
-            base.Deserialize(reader, version);
-
-            HopoLeniency = reader.ReadDouble();
-
-            StrumLeniency = reader.ReadDouble();
-            StrumLeniencySmall = reader.ReadDouble();
-
-            StarPowerWhammyBuffer = reader.ReadDouble();
-
-            InfiniteFrontEnd = reader.ReadBoolean();
-            AntiGhosting = reader.ReadBoolean();
         }
     }
 }

@@ -13,7 +13,7 @@ namespace YARG.Core.Replays
     /// A container that stores the presets used in a replay, and allows for easy access of
     /// said presets. The container has separate versioning from the replay itself.
     /// </summary>
-    public class ReplayPresetContainer : IBinarySerializable
+    public class ReplayPresetContainer
     {
         private static readonly JsonSerializerSettings _jsonSettings = new()
         {
@@ -28,6 +28,17 @@ namespace YARG.Core.Replays
         private readonly Dictionary<Guid, ColorProfile> _colorProfiles = new();
         private readonly Dictionary<Guid, CameraPreset> _cameraPresets = new();
 
+        public ReplayPresetContainer() { }
+
+        public ReplayPresetContainer(BinaryReader reader)
+        {
+            // This container has separate versioning
+            int version = reader.ReadInt32();
+
+            DeserializeDict(reader, _colorProfiles);
+            DeserializeDict(reader, _cameraPresets);
+        }
+
         /// <returns>
         /// The color profile if it's in this container, otherwise, <c>null</c>.
         /// </returns>
@@ -40,9 +51,9 @@ namespace YARG.Core.Replays
         /// Stores the specified color profile into this container. If the color profile
         /// is a default one, nothing is stored.
         /// </summary>
-        public void StoreColorProfile(ColorProfile colorProfile)
+        public void StoreColorProfile(in ColorProfile colorProfile)
         {
-            if (colorProfile.DefaultPreset)
+            if (ColorProfile.IsDefault(in colorProfile))
             {
                 return;
             }
@@ -62,9 +73,9 @@ namespace YARG.Core.Replays
         /// Stores the specified camera preset into this container. If the camera preset
         /// is a default one, nothing is stored.
         /// </summary>
-        public void StoreCameraPreset(CameraPreset cameraPreset)
+        public void StoreCameraPreset(in CameraPreset cameraPreset)
         {
-            if (cameraPreset.DefaultPreset)
+            if (CameraPreset.IsDefault(cameraPreset))
             {
                 return;
             }
@@ -78,15 +89,6 @@ namespace YARG.Core.Replays
 
             SerializeDict(writer, _colorProfiles);
             SerializeDict(writer, _cameraPresets);
-        }
-
-        public void Deserialize(BinaryReader reader, int version = 0)
-        {
-            // This container has separate versioning
-            version = reader.ReadInt32();
-
-            DeserializeDict(reader, _colorProfiles);
-            DeserializeDict(reader, _cameraPresets);
         }
 
         private static void SerializeDict<T>(BinaryWriter writer, Dictionary<Guid, T> dict)

@@ -6,9 +6,9 @@ using YARG.Core.Utility;
 
 namespace YARG.Core.Game
 {
-    public partial class ColorProfile
+    public partial struct ColorConfig
     {
-        public struct FiveLaneDrumsColors : IFretColorProvider, IBinarySerializable
+        public struct FiveLaneDrumsColors : IFretColorProvider
         {
             public static readonly FiveLaneDrumsColors Default = new()
             {
@@ -192,47 +192,7 @@ namespace YARG.Core.Game
 
             #region Serialization
 
-            public void Serialize(BinaryWriter writer)
-            {
-                writer.Write(KickFret);
-                writer.Write(RedFret);
-                writer.Write(YellowFret);
-                writer.Write(BlueFret);
-                writer.Write(OrangeFret);
-                writer.Write(GreenFret);
-
-                writer.Write(KickFretInner);
-                writer.Write(RedFretInner);
-                writer.Write(YellowFretInner);
-                writer.Write(BlueFretInner);
-                writer.Write(OrangeFretInner);
-                writer.Write(GreenFretInner);
-
-                writer.Write(KickParticles);
-                writer.Write(RedParticles);
-                writer.Write(YellowParticles);
-                writer.Write(BlueParticles);
-                writer.Write(OrangeParticles);
-                writer.Write(GreenParticles);
-
-                writer.Write(KickNote);
-                writer.Write(RedNote);
-                writer.Write(YellowNote);
-                writer.Write(BlueNote);
-                writer.Write(OrangeNote);
-                writer.Write(GreenNote);
-
-                writer.Write(KickStarpower);
-                writer.Write(RedStarpower);
-                writer.Write(YellowStarpower);
-                writer.Write(BlueStarpower);
-                writer.Write(OrangeStarpower);
-                writer.Write(GreenStarpower);
-
-                writer.Write(ActivationNote);
-            }
-
-            public void Deserialize(BinaryReader reader, int version = 0)
+            public FiveLaneDrumsColors(BinaryReader reader)
             {
                 KickFret = reader.ReadColor();
                 RedFret = reader.ReadColor();
@@ -272,6 +232,45 @@ namespace YARG.Core.Game
                 ActivationNote = reader.ReadColor();
             }
 
+            public readonly void Serialize(BinaryWriter writer)
+            {
+                writer.Write(KickFret);
+                writer.Write(RedFret);
+                writer.Write(YellowFret);
+                writer.Write(BlueFret);
+                writer.Write(OrangeFret);
+                writer.Write(GreenFret);
+
+                writer.Write(KickFretInner);
+                writer.Write(RedFretInner);
+                writer.Write(YellowFretInner);
+                writer.Write(BlueFretInner);
+                writer.Write(OrangeFretInner);
+                writer.Write(GreenFretInner);
+
+                writer.Write(KickParticles);
+                writer.Write(RedParticles);
+                writer.Write(YellowParticles);
+                writer.Write(BlueParticles);
+                writer.Write(OrangeParticles);
+                writer.Write(GreenParticles);
+
+                writer.Write(KickNote);
+                writer.Write(RedNote);
+                writer.Write(YellowNote);
+                writer.Write(BlueNote);
+                writer.Write(OrangeNote);
+                writer.Write(GreenNote);
+
+                writer.Write(KickStarpower);
+                writer.Write(RedStarpower);
+                writer.Write(YellowStarpower);
+                writer.Write(BlueStarpower);
+                writer.Write(OrangeStarpower);
+                writer.Write(GreenStarpower);
+
+                writer.Write(ActivationNote);
+            }
             #endregion
         }
     }
