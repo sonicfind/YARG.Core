@@ -7,7 +7,7 @@ namespace YARG.Core.Game
 {
     public partial struct ColorProfile : IPreset<ColorProfile>
     {
-        private const int COLOR_PROFILE_VERSION = 1;
+        public const int COLOR_PROFILE_VERSION = 1;
 
         /// <summary>
         /// Interface that has methods that allows for generic fret color retrieval.
@@ -26,7 +26,6 @@ namespace YARG.Core.Game
 
         public string Name { get; set; }
         public readonly Guid Id { get; }
-        public readonly string Type => "ColorProfile";
 
         // Have to do this instead of a constructor because
         // the order the data is saved means you can't send the "name" to the base type.

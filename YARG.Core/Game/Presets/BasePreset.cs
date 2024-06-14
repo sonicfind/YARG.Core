@@ -22,7 +22,6 @@ namespace YARG.Core.Game
     {
         public string Name { get; set; }
         public Guid Id { get; }
-        public string Type { get; }
         TPreset Copy(string name);
     }
 }

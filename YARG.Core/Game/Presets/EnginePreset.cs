@@ -11,7 +11,6 @@ namespace YARG.Core.Game
 
         public string Name { get; set; }
         public readonly Guid Id { get; }
-        public readonly string Type => "EnginePreset";
 
         public EnginePreset(string name)
         {
