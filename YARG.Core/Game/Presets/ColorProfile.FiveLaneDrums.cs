@@ -46,6 +46,8 @@ namespace YARG.Core.Game
                 BlueStarpower = DefaultStarpower,
                 OrangeStarpower = DefaultStarpower,
                 GreenStarpower = DefaultStarpower,
+
+                ActivationNote = DefaultPurple,
             };
 
 

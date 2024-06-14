@@ -52,6 +52,8 @@ namespace YARG.Core.Game
                 YellowCymbalStarpower = DefaultStarpower,
                 BlueCymbalStarpower = DefaultStarpower,
                 GreenCymbalStarpower = DefaultStarpower,
+
+                ActivationNote = DefaultPurple,
             };
 
 
