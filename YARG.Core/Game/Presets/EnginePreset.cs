@@ -1,26 +1,40 @@
-﻿namespace YARG.Core.Game
+﻿using Newtonsoft.Json;
+using System;
+
+namespace YARG.Core.Game
 {
-    public partial class EnginePreset : BasePreset
+    public partial struct EnginePreset : IPreset<EnginePreset>
     {
         public FiveFretGuitarPreset FiveFretGuitar;
         public DrumsPreset          Drums;
         public VocalsPreset         Vocals;
 
-        public EnginePreset(string name, bool defaultPreset = false) : base(name, defaultPreset)
+        public string Name { get; set; }
+        public readonly Guid Id { get; }
+        public readonly string Type => "EnginePreset";
+
+        public EnginePreset(string name)
         {
-            FiveFretGuitar = new FiveFretGuitarPreset();
-            Drums = new DrumsPreset();
-            Vocals = new VocalsPreset();
+            Name = name;
+            Id = PresetGuid.GetGuidForBasePreset(name);
+            FiveFretGuitar = FiveFretGuitarPreset.Default;
+            Drums = DrumsPreset.Default;
+            Vocals = VocalsPreset.Default;
         }
 
-        public override BasePreset CopyWithNewName(string name)
+        [JsonConstructor]
+        public EnginePreset(in FiveFretGuitarPreset fivefret, in DrumsPreset drums, in VocalsPreset vocals, string name, Guid id)
         {
-            return new EnginePreset(name)
-            {
-                FiveFretGuitar = FiveFretGuitar.Copy(),
-                Drums = Drums.Copy(),
-                Vocals = Vocals.Copy(),
-            };
+            Name = name;
+            Id = id;
+            FiveFretGuitar = fivefret;
+            Drums = drums;
+            Vocals = vocals;
+        }
+
+        public readonly EnginePreset Copy(string name)
+        {
+            return new EnginePreset(in FiveFretGuitar, in Drums, in Vocals, name, Guid.NewGuid());
         }
     }
 }

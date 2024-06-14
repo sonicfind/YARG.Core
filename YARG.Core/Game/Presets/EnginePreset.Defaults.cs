@@ -1,32 +1,35 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace YARG.Core.Game
 {
-    public partial class EnginePreset
+    public partial struct EnginePreset
     {
-        public static EnginePreset Default = new("Default", true);
+        public static EnginePreset Default = new("Default");
 
-        public static EnginePreset Casual = new("Casual", true)
+        public static EnginePreset Casual = new("Casual")
         {
-            FiveFretGuitar =
+            FiveFretGuitar = new FiveFretGuitarPreset
             {
                 AntiGhosting = false,
                 InfiniteFrontEnd = true,
                 StrumLeniency = 0.06,
                 StrumLeniencySmall = 0.03
             },
-            Vocals =
+            Drums = DrumsPreset.Default,
+            Vocals = new VocalsPreset
             {
                 WindowSizeE = 2.2,
                 WindowSizeM = 1.8,
                 WindowSizeH = 1.4,
-                WindowSizeX = 1
-            }
+                WindowSizeX = 1,
+            },
         };
 
-        public static EnginePreset Precision = new("Precision", true)
+        public static EnginePreset Precision = new("Precision")
         {
-            FiveFretGuitar =
+            FiveFretGuitar = new FiveFretGuitarPreset
             {
                 StrumLeniency = 0.04,
                 StrumLeniencySmall = 0.02,
@@ -37,7 +40,7 @@ namespace YARG.Core.Game
                     IsDynamic = true,
                 }
             },
-            Drums =
+            Drums = new DrumsPreset
             {
                 HitWindow =
                 {
@@ -46,7 +49,7 @@ namespace YARG.Core.Game
                     IsDynamic = true,
                 }
             },
-            Vocals =
+            Vocals = new VocalsPreset
             {
                 WindowSizeE = 1.2,
                 WindowSizeM = 1,
@@ -55,11 +58,27 @@ namespace YARG.Core.Game
             }
         };
 
-        public static readonly List<EnginePreset> Defaults = new()
+        public static readonly EnginePreset[] Defaults =
         {
             Default,
             Casual,
             Precision
         };
+
+        private static readonly HashSet<Guid> _defaultIDs;
+
+        static EnginePreset()
+        {
+            _defaultIDs = new();
+            foreach (var def in Defaults)
+            {
+                _defaultIDs.Add(def.Id);
+            }
+        }
+
+        public static bool IsDefault(in EnginePreset profile)
+        {
+            return _defaultIDs.Contains(profile.Id);
+        }
     }
 }

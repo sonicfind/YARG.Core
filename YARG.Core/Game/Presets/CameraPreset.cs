@@ -1,32 +1,64 @@
-﻿namespace YARG.Core.Game
+﻿using Newtonsoft.Json;
+using System;
+
+namespace YARG.Core.Game
 {
-    public partial class CameraPreset : BasePreset
+    public partial struct CameraPreset : IPreset<CameraPreset>
     {
-        public float FieldOfView = 55f;
+        public float FieldOfView;
 
-        public float PositionY = 2.66f;
-        public float PositionZ = 1.14f;
-        public float Rotation  = 24.12f;
+        public float PositionY;
+        public float PositionZ;
+        public float Rotation;
 
-        public float FadeLength = 1.25f;
+        public float FadeLength;
 
-        public float CurveFactor = 0.5f;
+        public float CurveFactor;
 
-        public CameraPreset(string name, bool defaultPreset = false) : base(name, defaultPreset)
+        public string Name { get; set; }
+        public readonly Guid Id { get; }
+        public readonly string Type => "CameraPreset";
+
+        public CameraPreset(string name)
         {
+            Name = name;
+            Id = PresetGuid.GetGuidForBasePreset(name);
+            FieldOfView = default;
+            PositionY = default;
+            PositionZ = default;
+            Rotation = default;
+            FadeLength = default;
+            CurveFactor = default;
         }
 
-        public override BasePreset CopyWithNewName(string name)
+        private CameraPreset(string name, in CameraPreset preset)
         {
-            return new CameraPreset(name)
-            {
-                FieldOfView = FieldOfView,
-                PositionY = PositionY,
-                PositionZ = PositionZ,
-                Rotation = Rotation,
-                FadeLength = FadeLength,
-                CurveFactor = CurveFactor,
-            };
+            Name = name;
+            Id = Guid.NewGuid();
+            FieldOfView = preset.FieldOfView;
+            PositionY = preset.PositionY;
+            PositionZ = preset.PositionZ;
+            Rotation = preset.Rotation;
+            FadeLength = preset.FadeLength;
+            CurveFactor = preset.CurveFactor;
+        }
+
+        [JsonConstructor]
+        public CameraPreset(float fov, float posY, float posZ, float rot, float fade, float curve, string name, Guid id)
+        {
+            Name = name;
+            Id = id;
+            FieldOfView = fov;
+            PositionY = posY;
+            PositionZ = posZ;
+            Rotation = rot;
+            FadeLength = fade;
+            CurveFactor = curve;
+        }
+
+        public readonly CameraPreset Copy(string name)
+        {
+            return new CameraPreset(name, in this);
         }
     }
 }

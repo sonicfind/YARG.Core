@@ -42,7 +42,7 @@ namespace YARG.Core.Replays
         /// </summary>
         public void StoreColorProfile(ColorProfile colorProfile)
         {
-            if (colorProfile.DefaultPreset)
+            if (ColorProfile.IsDefault(in colorProfile))
             {
                 return;
             }
@@ -64,7 +64,7 @@ namespace YARG.Core.Replays
         /// </summary>
         public void StoreCameraPreset(CameraPreset cameraPreset)
         {
-            if (cameraPreset.DefaultPreset)
+            if (CameraPreset.IsDefault(in cameraPreset))
             {
                 return;
             }

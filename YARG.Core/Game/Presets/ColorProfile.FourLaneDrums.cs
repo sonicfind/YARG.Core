@@ -5,53 +5,53 @@ using YARG.Core.Utility;
 
 namespace YARG.Core.Game
 {
-    public partial class ColorProfile
+    public partial struct ColorProfile
     {
-        public struct FourLaneDrumsColors : IFretColorProvider, IBinarySerializable
+        public struct FourLaneDrumsColors : IFretColorProvider
         {
             public static readonly FourLaneDrumsColors Default = new()
             {
-                KickFret   = DefaultOrange,
-                RedFret    = DefaultRed,
+                KickFret = DefaultOrange,
+                RedFret = DefaultRed,
                 YellowFret = DefaultYellow,
-                BlueFret   = DefaultBlue,
-                GreenFret  = DefaultGreen,
+                BlueFret = DefaultBlue,
+                GreenFret = DefaultGreen,
 
-                KickFretInner   = DefaultOrange,
-                RedFretInner    = DefaultRed,
+                KickFretInner = DefaultOrange,
+                RedFretInner = DefaultRed,
                 YellowFretInner = DefaultYellow,
-                BlueFretInner   = DefaultBlue,
-                GreenFretInner  = DefaultGreen,
+                BlueFretInner = DefaultBlue,
+                GreenFretInner = DefaultGreen,
 
-                KickParticles   = Color.FromArgb(0xFF, 0xFF, 0xB6, 0x00),
-                RedParticles    = DefaultRed,
+                KickParticles = Color.FromArgb(0xFF, 0xFF, 0xB6, 0x00),
+                RedParticles = DefaultRed,
                 YellowParticles = DefaultYellow,
-                BlueParticles   = DefaultBlue,
-                GreenParticles  = DefaultGreen,
+                BlueParticles = DefaultBlue,
+                GreenParticles = DefaultGreen,
 
                 KickNote = DefaultOrange,
-                
-                RedDrum    = DefaultRed,
+
+                RedDrum = DefaultRed,
                 YellowDrum = DefaultYellow,
-                BlueDrum   = DefaultBlue,
-                GreenDrum  = DefaultGreen,
-                
-                RedCymbal    = DefaultRed,
+                BlueDrum = DefaultBlue,
+                GreenDrum = DefaultGreen,
+
+                RedCymbal = DefaultRed,
                 YellowCymbal = DefaultYellow,
-                BlueCymbal   = DefaultBlue,
-                GreenCymbal  = DefaultGreen,
+                BlueCymbal = DefaultBlue,
+                GreenCymbal = DefaultGreen,
 
                 KickStarpower = DefaultStarpower,
-                
-                RedDrumStarpower    = DefaultStarpower,
+
+                RedDrumStarpower = DefaultStarpower,
                 YellowDrumStarpower = DefaultStarpower,
-                BlueDrumStarpower   = DefaultStarpower,
-                GreenDrumStarpower  = DefaultStarpower,
-                
-                RedCymbalStarpower    = DefaultStarpower,
+                BlueDrumStarpower = DefaultStarpower,
+                GreenDrumStarpower = DefaultStarpower,
+
+                RedCymbalStarpower = DefaultStarpower,
                 YellowCymbalStarpower = DefaultStarpower,
-                BlueCymbalStarpower   = DefaultStarpower,
-                GreenCymbalStarpower  = DefaultStarpower,
+                BlueCymbalStarpower = DefaultStarpower,
+                GreenCymbalStarpower = DefaultStarpower,
             };
 
 
@@ -210,52 +210,7 @@ namespace YARG.Core.Game
 
             #region Serialization
 
-            public void Serialize(BinaryWriter writer)
-            {
-                writer.Write(KickFret);
-                writer.Write(RedFret);
-                writer.Write(YellowFret);
-                writer.Write(BlueFret);
-                writer.Write(GreenFret);
-
-                writer.Write(KickFretInner);
-                writer.Write(RedFretInner);
-                writer.Write(YellowFretInner);
-                writer.Write(BlueFretInner);
-                writer.Write(GreenFretInner);
-
-                writer.Write(KickParticles);
-                writer.Write(RedParticles);
-                writer.Write(YellowParticles);
-                writer.Write(BlueParticles);
-                writer.Write(GreenParticles);
-
-                writer.Write(KickNote);
-                writer.Write(RedDrum);
-                writer.Write(YellowDrum);
-                writer.Write(BlueDrum);
-                writer.Write(GreenDrum);
-
-                writer.Write(RedCymbal);
-                writer.Write(YellowCymbal);
-                writer.Write(BlueCymbal);
-                writer.Write(GreenCymbal);
-
-                writer.Write(KickStarpower);
-                writer.Write(RedDrumStarpower);
-                writer.Write(YellowDrumStarpower);
-                writer.Write(BlueDrumStarpower);
-                writer.Write(GreenDrumStarpower);
-
-                writer.Write(RedCymbalStarpower);
-                writer.Write(YellowCymbalStarpower);
-                writer.Write(BlueCymbalStarpower);
-                writer.Write(GreenCymbalStarpower);
-
-                writer.Write(ActivationNote);
-            }
-
-            public void Deserialize(BinaryReader reader, int version = 0)
+            public FourLaneDrumsColors(BinaryReader reader)
             {
                 KickFret = reader.ReadColor();
                 RedFret = reader.ReadColor();
@@ -300,6 +255,50 @@ namespace YARG.Core.Game
                 ActivationNote = reader.ReadColor();
             }
 
+            public readonly void Serialize(BinaryWriter writer)
+            {
+                writer.Write(KickFret);
+                writer.Write(RedFret);
+                writer.Write(YellowFret);
+                writer.Write(BlueFret);
+                writer.Write(GreenFret);
+
+                writer.Write(KickFretInner);
+                writer.Write(RedFretInner);
+                writer.Write(YellowFretInner);
+                writer.Write(BlueFretInner);
+                writer.Write(GreenFretInner);
+
+                writer.Write(KickParticles);
+                writer.Write(RedParticles);
+                writer.Write(YellowParticles);
+                writer.Write(BlueParticles);
+                writer.Write(GreenParticles);
+
+                writer.Write(KickNote);
+                writer.Write(RedDrum);
+                writer.Write(YellowDrum);
+                writer.Write(BlueDrum);
+                writer.Write(GreenDrum);
+
+                writer.Write(RedCymbal);
+                writer.Write(YellowCymbal);
+                writer.Write(BlueCymbal);
+                writer.Write(GreenCymbal);
+
+                writer.Write(KickStarpower);
+                writer.Write(RedDrumStarpower);
+                writer.Write(YellowDrumStarpower);
+                writer.Write(BlueDrumStarpower);
+                writer.Write(GreenDrumStarpower);
+
+                writer.Write(RedCymbalStarpower);
+                writer.Write(YellowCymbalStarpower);
+                writer.Write(BlueCymbalStarpower);
+                writer.Write(GreenCymbalStarpower);
+
+                writer.Write(ActivationNote);
+            }
             #endregion
         }
     }
