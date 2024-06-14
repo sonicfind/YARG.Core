@@ -31,9 +31,9 @@ namespace YARG.Core.Replays
         /// <returns>
         /// The color profile if it's in this container, otherwise, <c>null</c>.
         /// </returns>
-        public ColorProfile? GetColorProfile(Guid guid)
+        public bool TryGetColorProfile(Guid guid, out ColorProfile profile)
         {
-            return _colorProfiles.GetValueOrDefault(guid);
+            return _colorProfiles.TryGetValue(guid, out profile);
         }
 
         /// <summary>
@@ -53,9 +53,9 @@ namespace YARG.Core.Replays
         /// <returns>
         /// The camera preset if it's in this container, otherwise, <c>null</c>.
         /// </returns>
-        public CameraPreset? GetCameraPreset(Guid guid)
+        public bool TryGetCameraPreset(Guid guid, out CameraPreset preset)
         {
-            return _cameraPresets.GetValueOrDefault(guid);
+            return _cameraPresets.TryGetValue(guid, out preset);
         }
 
         /// <summary>
