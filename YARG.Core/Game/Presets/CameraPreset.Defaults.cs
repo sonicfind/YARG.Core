@@ -122,20 +122,16 @@ namespace YARG.Core.Game
             }
         };
 
-        private static readonly HashSet<Guid> _defaultIDs;
-
-        static CameraPreset()
+        public static bool IsDefault(in CameraPreset camera)
         {
-            _defaultIDs = new();
             foreach (var def in Defaults)
             {
-                _defaultIDs.Add(def.Id);
+                if (def.Id == camera.Id)
+                {
+                    return true;
+                }
             }
-        }
-
-        public static bool IsDefault(in CameraPreset profile)
-        {
-            return _defaultIDs.Contains(profile.Id);
+            return false;
         }
     }
 }

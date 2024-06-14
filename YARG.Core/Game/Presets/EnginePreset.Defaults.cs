@@ -65,20 +65,16 @@ namespace YARG.Core.Game
             Precision
         };
 
-        private static readonly HashSet<Guid> _defaultIDs;
-
-        static EnginePreset()
+        public static bool IsDefault(in EnginePreset engine)
         {
-            _defaultIDs = new();
             foreach (var def in Defaults)
             {
-                _defaultIDs.Add(def.Id);
+                if (def.Id == engine.Id)
+                {
+                    return true;
+                }
             }
-        }
-
-        public static bool IsDefault(in EnginePreset profile)
-        {
-            return _defaultIDs.Contains(profile.Id);
+            return false;
         }
     }
 }

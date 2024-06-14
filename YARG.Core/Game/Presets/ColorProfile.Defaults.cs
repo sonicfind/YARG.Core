@@ -188,20 +188,16 @@ namespace YARG.Core.Game
             AprilFoolsDefault
         };
 
-        private static readonly HashSet<Guid> _defaultIDs;
-
-        static ColorProfile()
-        {
-            _defaultIDs = new();
-            foreach (var def in Defaults)
-            {
-                _defaultIDs.Add(def.Id);
-            }
-        }
-
         public static bool IsDefault(in ColorProfile profile)
         {
-            return _defaultIDs.Contains(profile.Id);
+            foreach (var def in Defaults)
+            {
+                if (def.Id == profile.Id)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
