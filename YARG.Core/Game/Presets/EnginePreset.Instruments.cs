@@ -8,6 +8,13 @@ namespace YARG.Core.Game
 {
     public partial struct EnginePreset
     {
+        public enum Type
+        {
+            FiveFretGuitarPreset,
+            DrumsPreset,
+            VocalsPreset,
+        }
+
         public const double DEFAULT_WHAMMY_BUFFER = 0.25;
 
         public const int DEFAULT_MAX_MULTIPLIER = 4;
