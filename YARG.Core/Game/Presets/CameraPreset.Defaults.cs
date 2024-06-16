@@ -6,7 +6,7 @@ namespace YARG.Core.Game
 {
     public partial struct CameraPreset
     {
-        public static readonly CameraPreset Default = new("Default")
+        public static readonly PresetContainer<CameraPreset> Default = new("Default", new CameraPreset()
         {
             FieldOfView = 55f,
             PositionY = 2.66f,
@@ -14,9 +14,9 @@ namespace YARG.Core.Game
             Rotation = 24.12f,
             FadeLength = 1.25f,
             CurveFactor = 0.5f
-        };
+        });
 
-        public static readonly CameraPreset CircularDefault = new("Circular")
+        public static readonly PresetContainer<CameraPreset> CircularDefault = new("Circular", new CameraPreset()
         {
             FieldOfView = 60f,
             PositionY = 2.39f,
@@ -24,13 +24,13 @@ namespace YARG.Core.Game
             Rotation = 24.12f,
             FadeLength = 1.25f,
             CurveFactor = 0f,
-        };
+        });
 
-        public static readonly CameraPreset[] Defaults =
+        public static readonly PresetContainer<CameraPreset>[] Defaults =
         {
             Default,
             CircularDefault,
-            new("High FOV")
+            new("High FOV", new CameraPreset()
             {
                 FieldOfView = 60f,
                 PositionY   = 2.66f,
@@ -38,8 +38,8 @@ namespace YARG.Core.Game
                 Rotation    = 24.12f,
                 FadeLength  = 1.25f,
                 CurveFactor = 0.5f,
-            },
-            new("The Band 1")
+            }),
+            new("The Band 1", new CameraPreset()
             {
                 FieldOfView = 47.84f,
                 PositionY   = 2.32f,
@@ -47,8 +47,8 @@ namespace YARG.Core.Game
                 Rotation    = 26f,
                 FadeLength  = 1.25f,
                 CurveFactor = 0.5f,
-            },
-            new("The Band 2")
+            }),
+            new("The Band 2", new CameraPreset()
             {
                 FieldOfView = 44.97f,
                 PositionY   = 2.72f,
@@ -56,8 +56,8 @@ namespace YARG.Core.Game
                 Rotation    = 24.12f,
                 FadeLength  = 1.25f,
                 CurveFactor = 0.5f,
-            },
-            new("The Band 3")
+            }),
+            new("The Band 3", new CameraPreset()
             {
                 FieldOfView = 57.29f,
                 PositionY   = 2.22f,
@@ -65,8 +65,8 @@ namespace YARG.Core.Game
                 Rotation    = 23.65f,
                 FadeLength  = 1.25f,
                 CurveFactor = 0.5f,
-            },
-            new("The Band 4")
+            }),
+            new("The Band 4", new CameraPreset()
             {
                 FieldOfView = 62.16f,
                 PositionY   = 2.56f,
@@ -74,8 +74,8 @@ namespace YARG.Core.Game
                 Rotation    = 19.43f,
                 FadeLength  = 1.25f,
                 CurveFactor = 0.5f,
-            },
-            new("Hero 2")
+            }),
+            new("Hero 2", new CameraPreset()
             {
                 FieldOfView = 58.15f,
                 PositionY   = 1.82f,
@@ -83,8 +83,8 @@ namespace YARG.Core.Game
                 Rotation    = 12.40f,
                 FadeLength  = 1.5f,
                 CurveFactor = 0f,
-            },
-            new("Hero 3")
+            }),
+            new("Hero 3", new CameraPreset()
             {
                 FieldOfView = 52.71f,
                 PositionY   = 2.17f,
@@ -92,8 +92,8 @@ namespace YARG.Core.Game
                 Rotation    = 15.21f,
                 FadeLength  = 1.5f,
                 CurveFactor = 0f,
-            },
-            new("Hero Traveling the World")
+            }),
+            new("Hero Traveling the World", new CameraPreset()
             {
                 FieldOfView  = 53.85f,
                 PositionY    = 1.97f,
@@ -101,8 +101,8 @@ namespace YARG.Core.Game
                 Rotation     = 16.62f,
                 FadeLength   = 1.5f,
                 CurveFactor  = 0f,
-            },
-            new CameraPreset("Hero Live")
+            }),
+            new("Hero Live", new CameraPreset()
             {
                 FieldOfView = 62.16f,
                 PositionY   = 2.40f,
@@ -110,8 +110,8 @@ namespace YARG.Core.Game
                 Rotation    = 21.31f,
                 FadeLength  = 1.25f,
                 CurveFactor = 0f,
-            },
-            new("Clone")
+            }),
+            new("Clone", new CameraPreset()
             {
                 FieldOfView = 55f,
                 PositionY   = 2.07f,
@@ -119,10 +119,10 @@ namespace YARG.Core.Game
                 Rotation    = 17.09f,
                 FadeLength  = 1.5f,
                 CurveFactor = 0f,
-            }
+            })
         };
 
-        public static bool IsDefault(in CameraPreset camera)
+        public static bool IsDefault(in PresetContainer<CameraPreset> camera)
         {
             foreach (var def in Defaults)
             {

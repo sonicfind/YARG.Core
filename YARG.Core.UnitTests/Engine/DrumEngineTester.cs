@@ -16,7 +16,7 @@ public class DrumEngineTester
     };
 
     private readonly DrumsEngineParameters _engineParams =
-        EnginePreset.Default.Drums.Create(StarMultiplierThresholds, DrumsEngineParameters.DrumMode.ProFourLane);
+        EnginePreset.Default.Config.Drums.Create(StarMultiplierThresholds, DrumsEngineParameters.DrumMode.ProFourLane);
 
     private string? _chartsDirectory;
 

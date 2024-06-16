@@ -6,9 +6,14 @@ namespace YARG.Core.Game
 {
     public partial struct EnginePreset
     {
-        public static EnginePreset Default = new("Default");
+        public static readonly PresetContainer<EnginePreset> Default = new("Default", new EnginePreset()
+        {
+            FiveFretGuitar = FiveFretGuitarPreset.Default,
+            Drums = DrumsPreset.Default,
+            Vocals = VocalsPreset.Default,
+        });
 
-        public static EnginePreset Casual = new("Casual")
+        public static readonly PresetContainer<EnginePreset> Casual = new("Casual", new EnginePreset()
         {
             FiveFretGuitar = new FiveFretGuitarPreset
             {
@@ -25,9 +30,9 @@ namespace YARG.Core.Game
                 WindowSizeH = 1.4,
                 WindowSizeX = 1,
             },
-        };
+        });
 
-        public static EnginePreset Precision = new("Precision")
+        public static PresetContainer<EnginePreset> Precision = new("Precision", new EnginePreset()
         {
             FiveFretGuitar = new FiveFretGuitarPreset
             {
@@ -56,16 +61,16 @@ namespace YARG.Core.Game
                 WindowSizeH = 0.8,
                 WindowSizeX = 0.6
             }
-        };
+        });
 
-        public static readonly EnginePreset[] Defaults =
+        public static readonly PresetContainer<EnginePreset>[] Defaults =
         {
             Default,
             Casual,
             Precision
         };
 
-        public static bool IsDefault(in EnginePreset engine)
+        public static bool IsDefault(in PresetContainer<EnginePreset> engine)
         {
             foreach (var def in Defaults)
             {

@@ -40,14 +40,14 @@ namespace YARG.Core.Replays
         /// Stores the specified color profile into this container. If the color profile
         /// is a default one, nothing is stored.
         /// </summary>
-        public void StoreColorProfile(ColorProfile colorProfile)
+        public void StoreColorProfile(PresetContainer<ColorProfile> colorProfile)
         {
             if (ColorProfile.IsDefault(in colorProfile))
             {
                 return;
             }
 
-            _colorProfiles[colorProfile.Id] = colorProfile;
+            _colorProfiles[colorProfile.Id] = colorProfile.Config;
         }
 
         /// <returns>
@@ -62,14 +62,14 @@ namespace YARG.Core.Replays
         /// Stores the specified camera preset into this container. If the camera preset
         /// is a default one, nothing is stored.
         /// </summary>
-        public void StoreCameraPreset(CameraPreset cameraPreset)
+        public void StoreCameraPreset(PresetContainer<CameraPreset> cameraPreset)
         {
             if (CameraPreset.IsDefault(in cameraPreset))
             {
                 return;
             }
 
-            _cameraPresets[cameraPreset.Id] = cameraPreset;
+            _cameraPresets[cameraPreset.Id] = cameraPreset.Config;
         }
 
         public void Serialize(BinaryWriter writer)

@@ -43,11 +43,16 @@ namespace YARG.Core.Game
 
         #endregion
 
-        public static readonly ColorProfile Default = new("Default");
-
-        public static readonly ColorProfile CircularDefault = new("Circular")
+        public static readonly PresetContainer<ColorProfile> Default = new("Default", new ColorProfile()
         {
-            FiveFretGuitar = new FiveFretGuitarColors
+            FiveFretGuitar = FiveFretGuitarColors.Default,
+            FourLaneDrums = FourLaneDrumsColors.Default,
+            FiveLaneDrums = FiveLaneDrumsColors.Default,
+        });
+
+        public static readonly PresetContainer<ColorProfile> CircularDefault = new("Circular", new ColorProfile()
+        {
+            FiveFretGuitar = new FiveFretGuitarColors()
             {
                 OpenFret   = CircularPurple,
                 GreenFret  = CircularGreen,
@@ -76,10 +81,12 @@ namespace YARG.Core.Game
                 YellowNoteStarPower = CircularStarpower,
                 BlueNoteStarPower   = CircularStarpower,
                 OrangeNoteStarPower = CircularStarpower,
-            }
-        };
+            },
+            FourLaneDrums = FourLaneDrumsColors.Default,
+            FiveLaneDrums = FiveLaneDrumsColors.Default,
+        });
 
-        public static readonly ColorProfile AprilFoolsDefault = new("YARG on Fire")
+        public static readonly PresetContainer<ColorProfile> AprilFoolsDefault = new("YARG on Fire", new ColorProfile()
         {
             FiveFretGuitar = new FiveFretGuitarColors
             {
@@ -179,16 +186,16 @@ namespace YARG.Core.Game
                 OrangeStarpower = CircularStarpower,
                 GreenStarpower  = CircularStarpower,
             }
-        };
+        });
 
-        public static readonly ColorProfile[] Defaults =
+        public static readonly PresetContainer<ColorProfile>[] Defaults =
         {
             Default,
             CircularDefault,
             AprilFoolsDefault
         };
 
-        public static bool IsDefault(in ColorProfile profile)
+        public static bool IsDefault(in PresetContainer<ColorProfile> profile)
         {
             foreach (var def in Defaults)
             {
