@@ -11,49 +11,49 @@ namespace YARG.Core.Game
         {
             public static readonly FourLaneDrumsColors Default = new()
             {
-                KickFret = DefaultOrange,
-                RedFret = DefaultRed,
-                YellowFret = DefaultYellow,
-                BlueFret = DefaultBlue,
-                GreenFret = DefaultGreen,
+                KickFret = IFretColorProvider.DefaultOrange,
+                RedFret = IFretColorProvider.DefaultRed,
+                YellowFret = IFretColorProvider.DefaultYellow,
+                BlueFret = IFretColorProvider.DefaultBlue,
+                GreenFret = IFretColorProvider.DefaultGreen,
 
-                KickFretInner = DefaultOrange,
-                RedFretInner = DefaultRed,
-                YellowFretInner = DefaultYellow,
-                BlueFretInner = DefaultBlue,
-                GreenFretInner = DefaultGreen,
+                KickFretInner = IFretColorProvider.DefaultOrange,
+                RedFretInner = IFretColorProvider.DefaultRed,
+                YellowFretInner = IFretColorProvider.DefaultYellow,
+                BlueFretInner = IFretColorProvider.DefaultBlue,
+                GreenFretInner = IFretColorProvider.DefaultGreen,
 
                 KickParticles = Color.FromArgb(0xFF, 0xFF, 0xB6, 0x00),
-                RedParticles = DefaultRed,
-                YellowParticles = DefaultYellow,
-                BlueParticles = DefaultBlue,
-                GreenParticles = DefaultGreen,
+                RedParticles = IFretColorProvider.DefaultRed,
+                YellowParticles = IFretColorProvider.DefaultYellow,
+                BlueParticles = IFretColorProvider.DefaultBlue,
+                GreenParticles = IFretColorProvider.DefaultGreen,
 
-                KickNote = DefaultOrange,
+                KickNote = IFretColorProvider.DefaultOrange,
 
-                RedDrum = DefaultRed,
-                YellowDrum = DefaultYellow,
-                BlueDrum = DefaultBlue,
-                GreenDrum = DefaultGreen,
+                RedDrum = IFretColorProvider.DefaultRed,
+                YellowDrum = IFretColorProvider.DefaultYellow,
+                BlueDrum = IFretColorProvider.DefaultBlue,
+                GreenDrum = IFretColorProvider.DefaultGreen,
 
-                RedCymbal = DefaultRed,
-                YellowCymbal = DefaultYellow,
-                BlueCymbal = DefaultBlue,
-                GreenCymbal = DefaultGreen,
+                RedCymbal = IFretColorProvider.DefaultRed,
+                YellowCymbal = IFretColorProvider.DefaultYellow,
+                BlueCymbal = IFretColorProvider.DefaultBlue,
+                GreenCymbal = IFretColorProvider.DefaultGreen,
 
-                KickStarpower = DefaultStarpower,
+                KickStarpower = IFretColorProvider.DefaultStarpower,
 
-                RedDrumStarpower = DefaultStarpower,
-                YellowDrumStarpower = DefaultStarpower,
-                BlueDrumStarpower = DefaultStarpower,
-                GreenDrumStarpower = DefaultStarpower,
+                RedDrumStarpower = IFretColorProvider.DefaultStarpower,
+                YellowDrumStarpower = IFretColorProvider.DefaultStarpower,
+                BlueDrumStarpower = IFretColorProvider.DefaultStarpower,
+                GreenDrumStarpower = IFretColorProvider.DefaultStarpower,
 
-                RedCymbalStarpower = DefaultStarpower,
-                YellowCymbalStarpower = DefaultStarpower,
-                BlueCymbalStarpower = DefaultStarpower,
-                GreenCymbalStarpower = DefaultStarpower,
+                RedCymbalStarpower = IFretColorProvider.DefaultStarpower,
+                YellowCymbalStarpower = IFretColorProvider.DefaultStarpower,
+                BlueCymbalStarpower = IFretColorProvider.DefaultStarpower,
+                GreenCymbalStarpower = IFretColorProvider.DefaultStarpower,
 
-                ActivationNote = DefaultPurple,
+                ActivationNote = IFretColorProvider.DefaultPurple,
             };
 
 
