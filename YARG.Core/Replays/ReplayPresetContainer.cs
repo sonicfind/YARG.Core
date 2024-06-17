@@ -25,15 +25,24 @@ namespace YARG.Core.Replays
 
         private const int CONTAINER_VERSION = 0;
 
-        private readonly Dictionary<Guid, ColorProfile> _colorProfiles = new();
-        private readonly Dictionary<Guid, CameraPreset> _cameraPresets = new();
+        private readonly List<PresetContainer<ColorProfile>> _colorProfiles = new();
+        private readonly List<PresetContainer<CameraPreset>> _cameraPresets = new();
 
         /// <returns>
         /// The color profile if it's in this container, otherwise, <c>null</c>.
         /// </returns>
-        public bool TryGetColorProfile(Guid guid, out ColorProfile profile)
+        public bool TryGetColorProfile(Guid guid, out PresetContainer<ColorProfile> profile)
         {
-            return _colorProfiles.TryGetValue(guid, out profile);
+            foreach (var prof in _colorProfiles)
+            {
+                if (prof.Id == guid)
+                {
+                    profile = prof;
+                    return true;
+                }
+            }
+            profile = ColorProfile.Default;
+            return false;
         }
 
         /// <summary>
@@ -47,15 +56,24 @@ namespace YARG.Core.Replays
                 return;
             }
 
-            _colorProfiles[colorProfile.Id] = colorProfile.Config;
+            _colorProfiles.Add(colorProfile);
         }
 
         /// <returns>
         /// The camera preset if it's in this container, otherwise, <c>null</c>.
         /// </returns>
-        public bool TryGetCameraPreset(Guid guid, out CameraPreset preset)
+        public bool TryGetCameraPreset(Guid guid, out PresetContainer<CameraPreset> preset)
         {
-            return _cameraPresets.TryGetValue(guid, out preset);
+            foreach (var camera in _cameraPresets)
+            {
+                if (camera.Id == guid)
+                {
+                    preset = camera;
+                    return true;
+                }
+            }
+            preset = CameraPreset.Default;
+            return false;
         }
 
         /// <summary>
@@ -68,16 +86,15 @@ namespace YARG.Core.Replays
             {
                 return;
             }
-
-            _cameraPresets[cameraPreset.Id] = cameraPreset.Config;
+            _cameraPresets.Add(cameraPreset);
         }
 
         public void Serialize(BinaryWriter writer)
         {
             writer.Write(CONTAINER_VERSION);
 
-            SerializeDict(writer, _colorProfiles);
-            SerializeDict(writer, _cameraPresets);
+            SerializeList(writer, _colorProfiles);
+            SerializeList(writer, _cameraPresets);
         }
 
         public void Deserialize(BinaryReader reader, int version = 0)
@@ -85,27 +102,26 @@ namespace YARG.Core.Replays
             // This container has separate versioning
             version = reader.ReadInt32();
 
-            DeserializeDict(reader, _colorProfiles);
-            DeserializeDict(reader, _cameraPresets);
+            DeserializeList(reader, _colorProfiles);
+            DeserializeList(reader, _cameraPresets);
         }
 
-        private static void SerializeDict<T>(BinaryWriter writer, Dictionary<Guid, T> dict)
+        private static void SerializeList<T>(BinaryWriter writer, List<PresetContainer<T>> presets)
+            where T : struct
         {
-            writer.Write(dict.Count);
-            foreach (var (key, value) in dict)
+            writer.Write(presets.Count);
+            foreach (var preset in presets)
             {
-                // Write key
-                writer.Write(key);
-
                 // Write preset
-                var json = JsonConvert.SerializeObject(value, _jsonSettings);
+                var json = JsonConvert.SerializeObject(preset, _jsonSettings);
                 writer.Write(json);
             }
         }
 
-        private static void DeserializeDict<T>(BinaryReader reader, Dictionary<Guid, T> dict)
+        private static void DeserializeList<T>(BinaryReader reader, List<PresetContainer<T>> presets)
+            where T : struct
         {
-            dict.Clear();
+            presets.Clear();
             int len = reader.ReadInt32();
             for (int i = 0; i < len; i++)
             {
@@ -114,9 +130,9 @@ namespace YARG.Core.Replays
 
                 // Read preset
                 var json = reader.ReadString();
-                var preset = JsonConvert.DeserializeObject<T>(json, _jsonSettings)!;
+                var preset = JsonConvert.DeserializeObject<PresetContainer<T>>(json, _jsonSettings)!;
 
-                dict.Add(guid, preset);
+                presets.Add(preset);
             }
         }
     }
