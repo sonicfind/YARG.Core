@@ -107,7 +107,7 @@ namespace YARG.Core.Replays
         }
 
         private static void SerializeList<T>(BinaryWriter writer, List<PresetContainer<T>> presets)
-            where T : struct
+            where T : unmanaged
         {
             writer.Write(presets.Count);
             foreach (var preset in presets)
@@ -119,7 +119,7 @@ namespace YARG.Core.Replays
         }
 
         private static void DeserializeList<T>(BinaryReader reader, List<PresetContainer<T>> presets)
-            where T : struct
+            where T : unmanaged
         {
             presets.Clear();
             int len = reader.ReadInt32();

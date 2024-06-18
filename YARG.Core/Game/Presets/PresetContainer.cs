@@ -21,7 +21,7 @@ namespace YARG.Core.Game
     }
 
     public struct PresetContainer<TPreset>
-        where TPreset : struct
+        where TPreset : unmanaged
     {
         public Guid Id;
         public string Name;
