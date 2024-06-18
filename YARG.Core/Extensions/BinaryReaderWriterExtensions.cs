@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using YARG.Core.Game;
 using YARG.Core.Utility;
 
 namespace YARG.Core.Extensions
 {
     public static class BinaryReaderExtensions
     {
-        public static Color ReadColor(this BinaryReader reader)
+        public static YARGColor ReadColor(this BinaryReader reader)
         {
             int argb = reader.ReadInt32();
-            return Color.FromArgb(argb);
+            return YARGColor.FromArgb(argb);
         }
 
         public static Guid ReadGuid(this BinaryReader reader)
@@ -55,7 +56,7 @@ namespace YARG.Core.Extensions
 
     public static class BinaryWriterExtensions
     {
-        public static void Write(this BinaryWriter writer, Color color)
+        public static void Write(this BinaryWriter writer, YARGColor color)
         {
             writer.Write(color.ToArgb());
         }

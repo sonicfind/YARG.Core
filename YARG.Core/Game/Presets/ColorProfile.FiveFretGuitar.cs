@@ -49,18 +49,18 @@ namespace YARG.Core.Game
 
             #region Frets
 
-            public Color OpenFret;
-            public Color GreenFret;
-            public Color RedFret;
-            public Color YellowFret;
-            public Color BlueFret;
-            public Color OrangeFret;
+            public YARGColor OpenFret;
+            public YARGColor GreenFret;
+            public YARGColor RedFret;
+            public YARGColor YellowFret;
+            public YARGColor BlueFret;
+            public YARGColor OrangeFret;
 
             /// <summary>
             /// Gets the fret color for a specific note index.
             /// 0 = open note, 1 = green, 5 = orange.
             /// </summary>
-            public readonly Color GetFretColor(int index)
+            public readonly YARGColor GetFretColor(int index)
             {
                 return index switch
                 {
@@ -74,18 +74,18 @@ namespace YARG.Core.Game
                 };
             }
 
-            public Color OpenFretInner;
-            public Color GreenFretInner;
-            public Color RedFretInner;
-            public Color YellowFretInner;
-            public Color BlueFretInner;
-            public Color OrangeFretInner;
+            public YARGColor OpenFretInner;
+            public YARGColor GreenFretInner;
+            public YARGColor RedFretInner;
+            public YARGColor YellowFretInner;
+            public YARGColor BlueFretInner;
+            public YARGColor OrangeFretInner;
 
             /// <summary>
             /// Gets the inner fret color for a specific note index.
             /// 0 = open note, 1 = green, 5 = orange.
             /// </summary>
-            public readonly Color GetFretInnerColor(int index)
+            public readonly YARGColor GetFretInnerColor(int index)
             {
                 return index switch
                 {
@@ -99,18 +99,18 @@ namespace YARG.Core.Game
                 };
             }
 
-            public Color OpenParticles;
-            public Color GreenParticles;
-            public Color RedParticles;
-            public Color YellowParticles;
-            public Color BlueParticles;
-            public Color OrangeParticles;
+            public YARGColor OpenParticles;
+            public YARGColor GreenParticles;
+            public YARGColor RedParticles;
+            public YARGColor YellowParticles;
+            public YARGColor BlueParticles;
+            public YARGColor OrangeParticles;
 
             /// <summary>
             /// Gets the particle color for a specific note index.
             /// 0 = open note, 1 = green, 5 = orange.
             /// </summary>
-            public readonly Color GetParticleColor(int index)
+            public readonly YARGColor GetParticleColor(int index)
             {
                 return index switch
                 {
@@ -128,18 +128,18 @@ namespace YARG.Core.Game
 
             #region Notes
 
-            public Color OpenNote;
-            public Color GreenNote;
-            public Color RedNote;
-            public Color YellowNote;
-            public Color BlueNote;
-            public Color OrangeNote;
+            public YARGColor OpenNote;
+            public YARGColor GreenNote;
+            public YARGColor RedNote;
+            public YARGColor YellowNote;
+            public YARGColor BlueNote;
+            public YARGColor OrangeNote;
 
             /// <summary>
             /// Gets the note color for a specific note index.
             /// 0 = open note, 1 = green, 5 = orange.
             /// </summary>
-            public readonly Color GetNoteColor(int index)
+            public readonly YARGColor GetNoteColor(int index)
             {
                 return index switch
                 {
@@ -153,18 +153,18 @@ namespace YARG.Core.Game
                 };
             }
 
-            public Color OpenNoteStarPower;
-            public Color GreenNoteStarPower;
-            public Color RedNoteStarPower;
-            public Color YellowNoteStarPower;
-            public Color BlueNoteStarPower;
-            public Color OrangeNoteStarPower;
+            public YARGColor OpenNoteStarPower;
+            public YARGColor GreenNoteStarPower;
+            public YARGColor RedNoteStarPower;
+            public YARGColor YellowNoteStarPower;
+            public YARGColor BlueNoteStarPower;
+            public YARGColor OrangeNoteStarPower;
 
             /// <summary>
             /// Gets the Star Power note color for a specific note index.
             /// 0 = open note, 1 = green, 5 = orange.
             /// </summary>
-            public readonly Color GetNoteStarPowerColor(int index)
+            public readonly YARGColor GetNoteStarPowerColor(int index)
             {
                 return index switch
                 {

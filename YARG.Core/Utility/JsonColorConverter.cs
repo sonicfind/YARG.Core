@@ -1,13 +1,14 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Globalization;
 using Newtonsoft.Json;
+using YARG.Core.Game;
 
 namespace YARG.Core.Utility
 {
-    public class JsonColorConverter : JsonConverter<Color>
+    public class JsonColorConverter : JsonConverter<YARGColor>
     {
-        public override void WriteJson(JsonWriter writer, Color value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, YARGColor value, JsonSerializer serializer)
         {
             int argb = value.ToArgb();
 
@@ -20,12 +21,12 @@ namespace YARG.Core.Utility
             writer.WriteValue(argb.ToString("X8"));
         }
 
-        public override Color ReadJson(JsonReader reader, Type objectType, Color existingValue, bool hasExistingValue,
+        public override YARGColor ReadJson(JsonReader reader, Type objectType, YARGColor existingValue, bool hasExistingValue,
             JsonSerializer serializer)
         {
             if (reader.Value == null)
             {
-                return Color.White;
+                return YARGColor.White;
             }
 
             var value = reader.Value.ToString();
@@ -35,7 +36,7 @@ namespace YARG.Core.Utility
                 value += "FF";
             } else if(value.Length != 8)
             {
-                return Color.White;
+                return YARGColor.White;
             }
 
             try
@@ -48,11 +49,11 @@ namespace YARG.Core.Utility
                 rgba >>= 8;
                 rgba |= a << 24;
 
-                return Color.FromArgb(rgba);
+                return YARGColor.FromArgb(rgba);
             }
             catch
             {
-                return Color.White;
+                return YARGColor.White;
             }
 
         }
