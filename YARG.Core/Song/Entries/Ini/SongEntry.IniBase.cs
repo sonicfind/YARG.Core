@@ -119,11 +119,11 @@ namespace YARG.Core.Song
                 case ChartFormat.Midi:
                     {
                         var tracks = ConvertToMidiTracks(activeInstruments);
-                        return DotMidiLoader.LoadSingle(data, in _metadata, in _settings, null, drums, tracks);
+                        return YARGChart.LoadMidi_Single(data, in _metadata, in _settings, null, drums, tracks);
                     }
                 default:
                     {
-                        return YARGDotChartLoader.Load(data, in _metadata, in _settings, null, drums, activeInstruments);
+                        return YARGChart.LoadChart(data, in _metadata, in _settings, null, drums, activeInstruments);
                     }
             }
         }

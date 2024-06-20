@@ -11,9 +11,9 @@ using YARG.Core.Song;
 
 namespace YARG.Core.NewParsing
 {
-    public class DotMidiLoader
+    public partial class YARGChart
     {
-        public static YARGChart LoadSingle(string filename, HashSet<MidiTrackType>? activeInstruments)
+        public static YARGChart LoadMidi_Single(string filename, HashSet<MidiTrackType>? activeInstruments)
         {
             var iniPath = Path.Combine(Path.GetDirectoryName(filename), "song.ini");
 
@@ -60,7 +60,7 @@ namespace YARG.Core.NewParsing
             }
 
             using var data = FixedArray.LoadFile(filename);
-            var chart = LoadSingle(data, in metadata, in settings, modifiers, drumsType, activeInstruments);
+            var chart = LoadMidi_Single(data, in metadata, in settings, modifiers, drumsType, activeInstruments);
             if (!modifiers.Extract("hopo_frequency", out chart.Settings.HopoThreshold) || chart.Settings.HopoThreshold <= 0)
             {
                 if (modifiers.Extract("eighthnote_hopo", out bool eighthNoteHopo))
@@ -94,7 +94,7 @@ namespace YARG.Core.NewParsing
             return chart;
         }
 
-        public static YARGChart LoadSingle(FixedArray<byte> data, in SongMetadata metadata, in LoaderSettings settings, IniModifierCollection? modifiers, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
+        public static YARGChart LoadMidi_Single(FixedArray<byte> data, in SongMetadata metadata, in LoaderSettings settings, IniModifierCollection? modifiers, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
         {
             var midi = YARGMidiFile.Load(data);
             var chart = new YARGChart(midi.Resolution, in metadata, in settings, modifiers);
@@ -102,12 +102,12 @@ namespace YARG.Core.NewParsing
             MidiFiveFretLoader.SetOverdriveMidiNote(chart.Settings.OverdiveMidiNote);
 
             var encoding = YARGTextReader.UTF8Strict;
-            LoadTracks(chart, ref midi, ref encoding, ref drumsInChart, activeInstruments);
+            LoadTracks_Midi(chart, ref midi, ref encoding, ref drumsInChart, activeInstruments);
             YARGChartFinalizer.FinalizeBeats(chart);
             return chart;
         }
 
-        public static YARGChart LoadMulti(FixedArray<byte> mainData, FixedArray<byte>? updateData, FixedArray<byte>? upgradeData, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
+        public static YARGChart LoadMidi_Multi(FixedArray<byte> mainData, FixedArray<byte>? updateData, FixedArray<byte>? upgradeData, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
         {
             var mainMidi = YARGMidiFile.Load(mainData);
             var chart = new YARGChart(mainMidi.Resolution, in metadata, in settings, null);
@@ -118,21 +118,21 @@ namespace YARG.Core.NewParsing
             if (updateData != null)
             {
                 var updateMidi = YARGMidiFile.Load(updateData);
-                LoadTracks(chart, ref updateMidi, ref encoding, ref drumsInChart, activeInstruments);
+                LoadTracks_Midi(chart, ref updateMidi, ref encoding, ref drumsInChart, activeInstruments);
             }
 
             if (upgradeData != null)
             {
                 var upgradeMidi = YARGMidiFile.Load(upgradeData);
-                LoadTracks(chart, ref upgradeMidi, ref encoding, ref drumsInChart, activeInstruments);
+                LoadTracks_Midi(chart, ref upgradeMidi, ref encoding, ref drumsInChart, activeInstruments);
             }
 
-            LoadTracks(chart, ref mainMidi, ref encoding, ref drumsInChart, activeInstruments);
+            LoadTracks_Midi(chart, ref mainMidi, ref encoding, ref drumsInChart, activeInstruments);
             YARGChartFinalizer.FinalizeBeats(chart);
             return chart;
         }
 
-        private static void LoadTracks(YARGChart chart, ref YARGMidiFile midi, ref Encoding encoding, ref DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
+        private static void LoadTracks_Midi(YARGChart chart, ref YARGMidiFile midi, ref Encoding encoding, ref DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
         {
             while (midi.GetNextTrack(out var trackNumber, out var track))
             {
@@ -146,7 +146,7 @@ namespace YARG.Core.NewParsing
                 if (trackNumber == 1)
                 {
                     chart.MidiSequenceName = name;
-                    LoadSyncTrack(track, chart.Sync);
+                    LoadSyncTrack_Midi(track, chart.Sync);
                     continue;
                 }
 
@@ -158,20 +158,20 @@ namespace YARG.Core.NewParsing
 
                 if (type == MidiTrackType.Events)
                 {
-                    LoadEventsTrack(chart.Events, chart.Sync, ref encoding, track);
+                    LoadEventsTrack_Midi(chart.Events, chart.Sync, ref encoding, track);
                 }
                 else if (type == MidiTrackType.Beat)
                 {
-                    LoadBeatsTrack(chart.BeatMap, chart.Sync, track);
+                    LoadBeatsTrack_Midi(chart.BeatMap, chart.Sync, track);
                 }
                 else if (activeInstruments == null || activeInstruments.Contains(type))
                 {
-                    LoadInstrument(chart, type, ref drumsInChart, track, ref encoding);
+                    LoadInstrument_Midi(chart, type, ref drumsInChart, track, ref encoding);
                 }
             }
         }
 
-        private static void LoadSyncTrack(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        private static void LoadSyncTrack_Midi(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
             sync.Reset();
             var stats = default(MidiStats);
@@ -191,7 +191,7 @@ namespace YARG.Core.NewParsing
         }
 
         private static readonly byte[][] PREFIXES = { Encoding.ASCII.GetBytes("[section "), Encoding.ASCII.GetBytes("[prc_") };
-        private static void LoadEventsTrack(TextEvents2 events, SyncTrack2 sync, ref Encoding encoding, YARGMidiTrack midiTrack)
+        private static void LoadEventsTrack_Midi(TextEvents2 events, SyncTrack2 sync, ref Encoding encoding, YARGMidiTrack midiTrack)
         {
             if (!events.IsOccupied())
             {
@@ -226,7 +226,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static void LoadBeatsTrack(YARGNativeSortedList<DualTime, BeatlineType> beats, SyncTrack2 sync, YARGMidiTrack midiTrack)
+        private static void LoadBeatsTrack_Midi(YARGNativeSortedList<DualTime, BeatlineType> beats, SyncTrack2 sync, YARGMidiTrack midiTrack)
         {
             if (!beats.IsEmpty())
             {
@@ -255,7 +255,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static void LoadInstrument(YARGChart chart, MidiTrackType type, ref DrumsType drumsInChart, in YARGMidiTrack midiTrack, ref Encoding encoding)
+        private static void LoadInstrument_Midi(YARGChart chart, MidiTrackType type, ref DrumsType drumsInChart, in YARGMidiTrack midiTrack, ref Encoding encoding)
         {
             switch (type)
             {
