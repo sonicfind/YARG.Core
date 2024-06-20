@@ -6,7 +6,7 @@ using YARG.Core.Song;
 
 namespace YARG.Core.NewParsing
 {
-    public class YARGChart : IDisposable
+    public partial class YARGChart : IDisposable
     {
         private bool disposedValue;
         public readonly SyncTrack2 Sync;

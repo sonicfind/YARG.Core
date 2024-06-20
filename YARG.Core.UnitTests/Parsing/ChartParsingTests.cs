@@ -55,7 +55,7 @@ namespace YARG.Core.UnitTests.Parsing
             Assert.DoesNotThrow(() =>
             {
                 var chartInfo = new FileInfo(Path.Combine(chartsDirectory!, notesFile));
-                using var chart = YARGDotChartLoader.Load(chartInfo, null);
+                using var chart = YARGChart.LoadChart(chartInfo, null);
             });
         }
 
@@ -78,7 +78,7 @@ namespace YARG.Core.UnitTests.Parsing
             Assert.DoesNotThrow(() =>
             {
                 var chartInfo = new FileInfo(Path.Combine(chartsDirectory!, notesFile));
-                using var chart = DotMidiLoader.LoadSingle(chartInfo, null);
+                using var chart = YARGChart.LoadMidi_Single(chartInfo, null);
             });
         }
     }
