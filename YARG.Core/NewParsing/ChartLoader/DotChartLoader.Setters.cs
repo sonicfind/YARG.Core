@@ -2,7 +2,7 @@
 
 namespace YARG.Core.NewParsing
 {
-    public static partial class YARGDotChartLoader
+    public partial class YARGChart
     {
         private static bool Set(ref GuitarNote2<FiveFret> note, int lane, in DualTime length)
         {

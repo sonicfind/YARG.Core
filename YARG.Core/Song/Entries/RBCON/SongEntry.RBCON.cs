@@ -130,7 +130,7 @@ namespace YARG.Core.Song
             }
 
             var tracks = ConvertToMidiTracks(activeInstruments);
-            return DotMidiLoader.LoadMulti(midiStream, updateStream, upgradeStream, _metadata, _parseSettings, tracks);
+            return YARGChart.LoadMidi_Multi(midiStream, updateStream, upgradeStream, _metadata, _parseSettings, tracks);
         }
 
         public override StemMixer? LoadAudio(float speed, double volume, params SongStem[] ignoreStems)
