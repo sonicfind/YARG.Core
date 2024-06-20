@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using YARG.Core.Chart;
 using YARG.Core.IO;
 using YARG.Core.IO.Disposables;
@@ -18,7 +19,35 @@ namespace YARG.Core.NewParsing
         private const string PHRASE_START = "phrase_start";
         private const string PHRASE_END = "phrase_end ";
 
-        public static YARGChart Load(FixedArray<byte> file, in SongMetadata metadata, in ParseSettings settings, HashSet<Instrument> activeTracks)
+        public static YARGChart Load(FileInfo chartInfo, HashSet<Instrument>? activeTracks)
+        {
+            var iniInfo = new FileInfo(Path.Combine(chartInfo.DirectoryName, "song.ini"));
+
+            SongMetadata metadata;
+            ParseSettings settings;
+            if (iniInfo.Exists)
+            {
+                var modifiers = SongIniHandler.ReadSongIniFile(iniInfo);
+                metadata = new SongMetadata(modifiers, string.Empty);
+
+                var drums = DrumsType.Unknown;
+                if (modifiers.TryGet("five_lane_drums", out bool fiveLane))
+                {
+                    drums = fiveLane ? DrumsType.FiveLane : DrumsType.Unknown;
+                }
+                settings = new ParseSettings(modifiers, drums);
+            }
+            else
+            {
+                metadata = SongMetadata.Default;
+                settings = ParseSettings.Default;
+            }
+
+            using var bytes = MemoryMappedArray.Load(chartInfo);
+            return Load(bytes, metadata, settings, activeTracks);
+        }
+
+        public static YARGChart Load(FixedArray<byte> file, in SongMetadata metadata, in ParseSettings settings, HashSet<Instrument>? activeTracks)
         {
             if (YARGTextReader.IsUTF8(file, out var byteContainer))
             {
@@ -35,7 +64,7 @@ namespace YARG.Core.NewParsing
             return Process(ref intContainer, in metadata, in settings, activeTracks);
         }
 
-        private static YARGChart Process<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in ParseSettings settings, HashSet<Instrument> activeTracks)
+        private static YARGChart Process<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in ParseSettings settings, HashSet<Instrument>? activeTracks)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (!YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.HEADERTRACK))
@@ -46,7 +75,7 @@ namespace YARG.Core.NewParsing
             uint tickrate = ParseTickrate(ref container);
             var sync = ReadSynctrack(ref container, tickrate);
             var chart = new YARGChart(sync, metadata, settings);
-            if (activeTracks.Contains(Instrument.Vocals))
+            if (activeTracks == null || activeTracks.Contains(Instrument.Vocals))
             {
                 chart.LeadVocals = new VocalTrack2(1);
             }
@@ -200,7 +229,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool SelectChartTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, HashSet<Instrument> activeTracks)
+        private static bool SelectChartTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, HashSet<Instrument>? activeTracks)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (!YARGChartFileReader.ValidateInstrument(ref container, out var instrument, out var difficulty))
@@ -208,21 +237,38 @@ namespace YARG.Core.NewParsing
                 return false;
             }
 
-            if (instrument == Instrument.FourLaneDrums)
+            if (activeTracks == null)
             {
-                if (activeTracks.Contains(Instrument.ProDrums))
+                if (instrument == Instrument.FourLaneDrums)
                 {
-                    instrument = Instrument.ProDrums;
-                }
-                else if (activeTracks.Contains(Instrument.FiveLaneDrums))
-                {
-                    instrument = Instrument.FiveLaneDrums;
+                    if (chart.Settings.DrumsType == DrumsType.ProDrums)
+                    {
+                        instrument = Instrument.ProDrums;
+                    }
+                    else if (chart.Settings.DrumsType == DrumsType.FiveLane)
+                    {
+                        instrument = Instrument.FiveLaneDrums;
+                    }
                 }
             }
-
-            if (!activeTracks.Contains(instrument))
+            else
             {
-                return false;
+                if (instrument == Instrument.FourLaneDrums)
+                {
+                    if (activeTracks.Contains(Instrument.ProDrums))
+                    {
+                        instrument = Instrument.ProDrums;
+                    }
+                    else if (activeTracks.Contains(Instrument.FiveLaneDrums))
+                    {
+                        instrument = Instrument.FiveLaneDrums;
+                    }
+                }
+
+                if (!activeTracks.Contains(instrument))
+                {
+                    return false;
+                }
             }
 
             unsafe
