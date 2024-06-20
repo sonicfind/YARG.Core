@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using YARG.Core.Chart;
 using YARG.Core.Game;
 using YARG.Core.IO;
@@ -18,7 +19,71 @@ namespace YARG.Core.NewParsing
         private const string PHRASE_START = "phrase_start";
         private const string PHRASE_END = "phrase_end ";
 
-        public static YARGChart Load(in FixedArray<byte> file, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument> activeTracks)
+        public static YARGChart Load(string chartPath, HashSet<Instrument>? activeTracks)
+        {
+            var iniPath = Path.Combine(Path.GetDirectoryName(chartPath), "song.ini");
+
+            IniSection modifiers;
+            var metadata = SongMetadata.Default;
+            var settings = LoaderSettings.Default;
+
+            var drumsType = DrumsType.Unknown;
+            if (File.Exists(iniPath))
+            {
+                modifiers = SongIniHandler.ReadSongIniFile(iniPath);
+                metadata = new SongMetadata(modifiers, string.Empty);
+
+                if (modifiers.TryGet("five_lane_drums", out bool fiveLane))
+                {
+                    drumsType = fiveLane ? DrumsType.FiveLane : DrumsType.Unknown;
+                }
+            }
+            else
+            {
+                modifiers = new IniSection();
+            }
+
+            using var bytes = FixedArray<byte>.Load(chartPath);
+            var chart = Load(bytes, in metadata, in settings, drumsType, activeTracks);
+            if (!modifiers.TryGet("hopo_frequency", out settings.HopoThreshold) || settings.HopoThreshold <= 0)
+            {
+                if (modifiers.TryGet("eighthnote_hopo", out bool eighthNoteHopo))
+                {
+                    chart.Settings.HopoThreshold = chart.Sync.Tickrate / (eighthNoteHopo ? 2 : 3);
+                }
+                else if (modifiers.TryGet("hopofreq", out long hopoFreq))
+                {
+                    int denominator = hopoFreq switch
+                    {
+                        0 => 24,
+                        1 => 16,
+                        2 => 12,
+                        3 => 8,
+                        4 => 6,
+                        5 => 4,
+                        _ => throw new NotImplementedException($"Unhandled hopofreq value {hopoFreq}!")
+                    };
+                    chart.Settings.HopoThreshold = 4 * chart.Sync.Tickrate / denominator;
+                }
+                else
+                {
+                    chart.Settings.HopoThreshold = chart.Sync.Tickrate / 3;
+                }
+
+                // With a 192 resolution, .chart has a HOPO threshold of 65 ticks, not 64,
+                // so we need to scale this factor to different resolutions (480 res = 162.5 threshold).
+                // Why?... idk, but I hate it.
+                const float DEFAULT_RESOLUTION = 192;
+                chart.Settings.HopoThreshold += (long) (chart.Sync.Tickrate / DEFAULT_RESOLUTION);
+            }
+
+            // .chart defaults to no cutting off sustains whatsoever if the ini does not define the value.
+            // Since a failed `TryGet` sets the value to zero, we would need no additional work
+            modifiers.TryGet("sustain_cutoff_threshold", out chart.Settings.SustainCutoffThreshold);
+            return chart;
+        }
+
+        public static YARGChart Load(in FixedArray<byte> file, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument>? activeTracks)
         {
             if (YARGTextReader.IsUTF8(in file, out var byteContainer))
             {
@@ -36,11 +101,11 @@ namespace YARG.Core.NewParsing
         }
 
         private const long DEFAULT_TICKRATE = 192;
-        private static YARGChart Process<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument> activeTracks)
+        private static YARGChart Process<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument>? activeTracks)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             var chart = LoadHeaderAndSync(ref container, in metadata, in settings);
-            if (activeTracks.Contains(Instrument.Vocals))
+            if (activeTracks == null || activeTracks.Contains(Instrument.Vocals))
             {
                 chart.LeadVocals = new VocalTrack2(1);
             }
@@ -183,7 +248,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool SelectChartTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, DrumsType drumsInChart, HashSet<Instrument> activeTracks)
+        private static bool SelectChartTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, DrumsType drumsInChart, HashSet<Instrument>? activeTracks)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (!YARGChartFileReader.ValidateInstrument(ref container, out var instrument, out var difficulty))
@@ -208,7 +273,7 @@ namespace YARG.Core.NewParsing
                 }
             }
 
-            if (!activeTracks.Contains(instrument))
+            if (activeTracks != null && !activeTracks.Contains(instrument))
             {
                 return false;
             }

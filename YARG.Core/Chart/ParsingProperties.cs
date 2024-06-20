@@ -11,6 +11,7 @@ namespace YARG.Core.Chart
         ProDrums,
         FiveLane,
         Unknown,
+        Unknown_Four,
         UnknownPro,
     }
 

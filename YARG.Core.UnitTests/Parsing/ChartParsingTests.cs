@@ -2,7 +2,10 @@
 using MoonscraperChartEditor.Song.IO;
 using NUnit.Framework;
 using YARG.Core.Chart;
+using YARG.Core.IO;
 using YARG.Core.Logging;
+using YARG.Core.NewParsing;
+using YARG.Core.Song;
 
 namespace YARG.Core.UnitTests.Parsing
 {
@@ -34,6 +37,31 @@ namespace YARG.Core.UnitTests.Parsing
             });
         }
 
+        [TestCase("test.chart")]
+        [TestCase("test.mid")]
+        public void ParseChartFile_Full(string notesFile)
+        {
+            YargLogger.AddLogListener(new DebugYargLogListener());
+
+            Assert.DoesNotThrow(() =>
+            {
+                string chartPath = Path.Combine(chartsDirectory!, notesFile);
+                var song = SongChart.FromFile(ParseSettings.Default, chartPath);
+            });
+        }
+
+        [TestCase("test.chart")]
+        public void ParseChartFile_New(string notesFile)
+        {
+            YargLogger.AddLogListener(new DebugYargLogListener());
+            Assert.DoesNotThrow(() =>
+            {
+                string chartPath = Path.Combine(chartsDirectory!, notesFile);
+                using var file = FixedArray<byte>.Load(chartPath);
+                using var chart = YARGDotChartLoader.Load(file, in SongMetadata.Default, in LoaderSettings.Default, DrumsType.Unknown, null);
+            });
+        }
+
         [TestCase("test.mid")]
         public void ParseMidiFile(string notesFile)
         {
@@ -43,6 +71,17 @@ namespace YARG.Core.UnitTests.Parsing
             {
                 string chartPath = Path.Combine(chartsDirectory!, notesFile);
                 var song = MidReader.ReadMidi(chartPath);
+            });
+        }
+
+        [TestCase("test.mid")]
+        public void ParseMidiFile_New(string notesFile)
+        {
+            YargLogger.AddLogListener(new DebugYargLogListener());
+            Assert.DoesNotThrow(() =>
+            {
+                string chartPath = Path.Combine(chartsDirectory!, notesFile);
+                using var chart = DotMidiLoader.LoadSingle(chartPath, in SongMetadata.Default, in LoaderSettings.Default, DrumsType.Unknown, null);
             });
         }
     }
