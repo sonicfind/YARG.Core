@@ -7,7 +7,7 @@ namespace YARG.Core.NewParsing
     public class ProGuitarDifficultyTrack<TProFretConfig> : DifficultyTrack2<ProGuitarNote<TProFretConfig>>
         where TProFretConfig : unmanaged, IProFretConfig<TProFretConfig>
     {
-        public readonly YARGNativeSortedList<DualTime, Arpeggio<TProFretConfig>> Arpeggios = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> Arpeggios = new();
 
         public override bool IsOccupied() { return !Arpeggios.IsEmpty() || base.IsOccupied(); }
 

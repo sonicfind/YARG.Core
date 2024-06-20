@@ -7,6 +7,7 @@ namespace YARG.Core.NewParsing
     public enum StringMode
     {
         Normal,
+        Ghost,
         Bend,
         Muted,
         Tapped,
