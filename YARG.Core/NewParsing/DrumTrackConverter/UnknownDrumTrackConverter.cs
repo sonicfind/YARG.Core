@@ -6,7 +6,7 @@ namespace YARG.Core.NewParsing
 {
     internal static class UnknownDrumTrackConverter
     {
-        public static BasicInstrumentTrack2<TDrumNote> ConvertTo<TDrumNote, TPads>(BasicInstrumentTrack2<ProDrumNote2<FiveLane>> source)
+        public static BasicInstrumentTrack2<TDrumNote> ConvertTo<TDrumNote, TPads>(this BasicInstrumentTrack2<ProDrumNote2<FiveLane>> source)
             where TDrumNote : unmanaged, IDrumNote<TPads>
             where TPads : unmanaged, IDrumPadConfig
         {
@@ -15,10 +15,10 @@ namespace YARG.Core.NewParsing
                 SpecialPhrases = source.SpecialPhrases,
                 Events = source.Events
             };
-            return ConvertTo<TDrumNote, TPads>(newTrack, source);
+            return ConvertTo<TDrumNote, TPads>(source, newTrack);
         }
 
-        public static BasicInstrumentTrack2<TDrumNote> ConvertTo<TDrumNote, TPads>(BasicInstrumentTrack2<TDrumNote> destination, BasicInstrumentTrack2<ProDrumNote2<FiveLane>> source)
+        public static BasicInstrumentTrack2<TDrumNote> ConvertTo<TDrumNote, TPads>(this BasicInstrumentTrack2<ProDrumNote2<FiveLane>> source, BasicInstrumentTrack2<TDrumNote> destination)
             where TDrumNote : unmanaged, IDrumNote<TPads>
             where TPads : unmanaged, IDrumPadConfig
         {
