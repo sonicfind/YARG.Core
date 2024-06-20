@@ -35,13 +35,13 @@ namespace YARG.Core.Benchmarks
         [Benchmark]
         public void SongParsing_New()
         {
-            using var chart = YARGDotChartLoader.Load(chartPath, null);
+            using var chart = YARGChart.LoadChart(chartPath, null);
         }
 
         [Benchmark]
         public void SongParsing_New_GuitarOnly()
         {
-            using var chart = YARGDotChartLoader.Load(chartPath, guitarOnly);
+            using var chart = YARGChart.LoadChart(chartPath, guitarOnly);
         }
 
         [Benchmark]
