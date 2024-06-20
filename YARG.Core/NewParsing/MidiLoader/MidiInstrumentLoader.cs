@@ -56,7 +56,7 @@ namespace YARG.Core.NewParsing.Midi
 
             for (int i = 0; i < _BRENotes.Length - 1; ++i)
             {
-                if (_BRENotes[i].Ticks != _BRENotes[i + 1].Ticks)
+                if (_BRENotes[i].Ticks == -1 || _BRENotes[i].Ticks != _BRENotes[i + 1].Ticks)
                 {
                     return true;
                 }
