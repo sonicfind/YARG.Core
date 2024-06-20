@@ -13,9 +13,9 @@ using YARG.Core.IO.Disposables;
 
 namespace YARG.Core.NewParsing
 {
-    public class DotMidiLoader
+    public partial class YARGChart
     {
-        public static YARGChart LoadSingle(FileInfo chartInfo, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
+        public static YARGChart LoadMidi_Single(FileInfo chartInfo, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
         {
             var iniInfo = new FileInfo(Path.Combine(chartInfo.DirectoryName, "song.ini"));
 
@@ -55,26 +55,26 @@ namespace YARG.Core.NewParsing
             }
 
             using var file = MemoryMappedArray.Load(chartInfo);
-            return LoadSingle(file.ToStream(), metadata, settings, activeInstruments);
+            return LoadMidi_Single(file.ToStream(), metadata, settings, activeInstruments);
         }
 
-        public static YARGChart LoadSingle(Stream stream, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
+        public static YARGChart LoadMidi_Single(Stream stream, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
         {
             var midi = new YARGMidiFile(stream);
-            var (sync, sequencename) = LoadSyncTrack(midi);
+            var (sync, sequencename) = LoadSyncTrack_Midi(midi);
             var chart = new YARGChart(sync, metadata, settings, sequencename);
             DualTime.SetTruncationLimit(chart.Settings, (uint) (midi.TickRate / 3));
             MidiTrackLoader.SetMultiplierNote(chart.Settings.StarPowerNote);
 
-            LoadTracks(chart, sync, midi, activeInstruments);
+            LoadMidiTracks(chart, sync, midi, activeInstruments);
             YARGChartFinalizer.FinalizeBeats(chart);
             return chart;
         }
 
-        public static YARGChart LoadMulti(Stream mainStream, Stream? updateStream, Stream? upgradeStream, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
+        public static YARGChart LoadMidi_Multi(Stream mainStream, Stream? updateStream, Stream? upgradeStream, in SongMetadata metadata, in ParseSettings settings, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
         {
             var midi = new YARGMidiFile(mainStream);
-            var (sync, sequencename) = LoadSyncTrack(midi);
+            var (sync, sequencename) = LoadSyncTrack_Midi(midi);
             var chart = new YARGChart(sync, metadata, settings, sequencename);
             DualTime.SetTruncationLimit(chart.Settings, (uint) (midi.TickRate / 3));
             MidiTrackLoader.SetMultiplierNote(chart.Settings.StarPowerNote);
@@ -82,23 +82,23 @@ namespace YARG.Core.NewParsing
             if (updateStream != null)
             {
                 var updateMidi = new YARGMidiFile(updateStream);
-                var (updateSync, _) = LoadSyncTrack(updateMidi);
-                LoadTracks(chart, updateSync, updateMidi, activeInstruments);
+                var (updateSync, _) = LoadSyncTrack_Midi(updateMidi);
+                LoadMidiTracks(chart, updateSync, updateMidi, activeInstruments);
             }
 
             if (upgradeStream != null)
             {
                 var upgradeMidi = new YARGMidiFile(upgradeStream);
-                var (upgradeSync, _) = LoadSyncTrack(upgradeMidi);
-                LoadTracks(chart, upgradeSync, upgradeMidi, activeInstruments);
+                var (upgradeSync, _) = LoadSyncTrack_Midi(upgradeMidi);
+                LoadMidiTracks(chart, upgradeSync, upgradeMidi, activeInstruments);
             }
 
-            LoadTracks(chart, sync, midi, activeInstruments);
+            LoadMidiTracks(chart, sync, midi, activeInstruments);
             YARGChartFinalizer.FinalizeBeats(chart);
             return chart;
         }
 
-        private static (SyncTrack2 Sync, string SequenceName) LoadSyncTrack(YARGMidiFile midi)
+        private static (SyncTrack2 Sync, string SequenceName) LoadSyncTrack_Midi(YARGMidiFile midi)
         {
             var sync = new SyncTrack2(midi.TickRate);
 
@@ -121,7 +121,7 @@ namespace YARG.Core.NewParsing
             return (sync, sequenceName);
         }
 
-        private static void LoadTracks(YARGChart chart, SyncTrack2 sync, YARGMidiFile midi, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
+        private static void LoadMidiTracks(YARGChart chart, SyncTrack2 sync, YARGMidiFile midi, Dictionary<MidiTrackType, HashSet<Difficulty>?>? activeInstruments)
         {
             foreach (var midiTrack in midi)
             {
@@ -133,22 +133,22 @@ namespace YARG.Core.NewParsing
                 }
 
                 if (type == MidiTrackType.Events)
-                    LoadEventsTrack(chart.Events, sync, midiTrack);
+                    LoadEventsTrack_Midi(chart.Events, sync, midiTrack);
                 else if (type == MidiTrackType.Beat)
-                    LoadBeatsTrack(chart.BeatMap, sync, midiTrack);
+                    LoadBeatsTrack_Midi(chart.BeatMap, sync, midiTrack);
                 else
                 {
                     HashSet<Difficulty>? difficulties = null;
                     if (activeInstruments == null || activeInstruments.TryGetValue(type, out difficulties))
                     {
-                        LoadInstrument(chart, type, sync, midiTrack, difficulties);
+                        LoadInstrument_Midi(chart, type, sync, midiTrack, difficulties);
                     }
                 }
             }
         }
 
         private static readonly byte[][] PREFIXES = { Encoding.ASCII.GetBytes("[section "), Encoding.ASCII.GetBytes("[prc_") };
-        private static void LoadEventsTrack(TextEvents2 events, SyncTrack2 sync, YARGMidiTrack midiTrack)
+        private static void LoadEventsTrack_Midi(TextEvents2 events, SyncTrack2 sync, YARGMidiTrack midiTrack)
         {
             if (!events.IsOccupied())
             {
@@ -183,7 +183,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static void LoadBeatsTrack(YARGNativeSortedList<DualTime, BeatlineType> beats, SyncTrack2 sync, YARGMidiTrack midiTrack)
+        private static void LoadBeatsTrack_Midi(YARGNativeSortedList<DualTime, BeatlineType> beats, SyncTrack2 sync, YARGMidiTrack midiTrack)
         {
             if (!beats.IsEmpty())
             {
@@ -212,7 +212,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static void LoadInstrument(YARGChart chart, MidiTrackType type, SyncTrack2 sync, YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties) 
+        private static void LoadInstrument_Midi(YARGChart chart, MidiTrackType type, SyncTrack2 sync, YARGMidiTrack midiTrack, HashSet<Difficulty>? difficulties) 
         {
             switch (type)
             {

@@ -162,11 +162,11 @@ namespace YARG.Core.Song
             if (Type == ChartType.Mid || Type == ChartType.Midi)
             {
                 var tracks = ConvertToMidiTrackDict(activeInstruments);
-                return DotMidiLoader.LoadSingle(stream, _metadata, _parseSettings, tracks);
+                return YARGChart.LoadMidi_Single(stream, _metadata, _parseSettings, tracks);
             }
 
             using var bytes = AllocatedArray<byte>.Read(stream, stream.Length);
-            return YARGDotChartLoader.Load(bytes, _metadata, _parseSettings, activeInstruments);
+            return YARGChart.LoadChart(bytes, _metadata, _parseSettings, activeInstruments);
         }
 
         public override FixedArray<byte>? LoadMiloData()

@@ -38,13 +38,13 @@ namespace YARG.Core.Benchmarks
         [Benchmark]
         public void SongLoading_New()
         {
-            using var chart = DotMidiLoader.LoadSingle(chartInfo, null);
+            using var chart = YARGChart.LoadMidi_Single(chartInfo, null);
         }
 
         [Benchmark]
         public void SongLoading_New_GuitarOnly()
         {
-            using var chart = DotMidiLoader.LoadSingle(chartInfo, guitarOnly);
+            using var chart = YARGChart.LoadMidi_Single(chartInfo, guitarOnly);
         }
 
         [Benchmark]
