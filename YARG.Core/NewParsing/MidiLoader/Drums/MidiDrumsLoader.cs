@@ -595,7 +595,7 @@ namespace YARG.Core.NewParsing.Midi
             var position = default(DualTime);
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
-            var stats = default(YARGMidiTrack.Stats);
+            var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
             {
                 position.Ticks = stats.Position;
@@ -603,7 +603,7 @@ namespace YARG.Core.NewParsing.Midi
                 if (stats.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
-                    if (stats.Type == MidiEventType.Note_On && note.velocity > 0)
+                    if (stats.Type == MidiEventType.Note_On && note.Velocity > 0)
                     {
                         if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
                         {
@@ -614,9 +614,9 @@ namespace YARG.Core.NewParsing.Midi
                             lastOnNote = position;
                         }
 
-                        if (MidiLoader_Constants.DEFAULT_MIN <= note.value && note.value <= DRUMNOTE_MAX)
+                        if (MidiLoader_Constants.DEFAULT_MIN <= note.Value && note.Value <= DRUMNOTE_MAX)
                         {
-                            int noteValue = note.value - MidiLoader_Constants.DEFAULT_MIN;
+                            int noteValue = note.Value - MidiLoader_Constants.DEFAULT_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
@@ -641,7 +641,7 @@ namespace YARG.Core.NewParsing.Midi
 
                                     if (enableDynamics)
                                     {
-                                        if (note.velocity > 100)
+                                        if (note.Velocity > 100)
                                         {
                                             switch (padIndex)
                                             {
@@ -652,7 +652,7 @@ namespace YARG.Core.NewParsing.Midi
                                                 case 4: drum.Pads.Green.Dynamics = DrumDynamics.Accent; break;
                                             }
                                         }
-                                        else if (note.velocity < 100)
+                                        else if (note.Velocity < 100)
                                         {
                                             switch (padIndex)
                                             {
@@ -686,11 +686,11 @@ namespace YARG.Core.NewParsing.Midi
                                 instrumentTrack[Difficulty.Expert]!.Notes.GetLastOrAppend(position);
                             }
                         }
-                        else if (TOM_MIN_VALUE <= note.value && note.value <= TOM_MAX_VALUE)
+                        else if (TOM_MIN_VALUE <= note.Value && note.Value <= TOM_MAX_VALUE)
                         {
                             if ((drumsType & DrumsType.ProDrums) == DrumsType.ProDrums)
                             {
-                                int index = note.value - TOM_MIN_VALUE;
+                                int index = note.Value - TOM_MIN_VALUE;
                                 tomFlags[index] = true;
                                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                 {
@@ -704,14 +704,14 @@ namespace YARG.Core.NewParsing.Midi
                                 NUM_LANES = 6;
                             }
                         }
-                        else if (MidiLoader_Constants.BRE_MIN <= note.value && note.value <= MidiLoader_Constants.BRE_MAX)
+                        else if (MidiLoader_Constants.BRE_MIN <= note.Value && note.Value <= MidiLoader_Constants.BRE_MAX)
                         {
-                            brePositions[note.value - MidiLoader_Constants.BRE_MIN] = position;
+                            brePositions[note.Value - MidiLoader_Constants.BRE_MIN] = position;
                         }
                         else
                         {
                             // Note: Solo phrase is handled in the sixfret note scope for optimization reasons
-                            switch (note.value)
+                            switch (note.Value)
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     overdrivePosition = position;
@@ -741,9 +741,9 @@ namespace YARG.Core.NewParsing.Midi
                     }
                     else
                     {
-                        if (MidiLoader_Constants.DEFAULT_MIN <= note.value && note.value <= DRUMNOTE_MAX)
+                        if (MidiLoader_Constants.DEFAULT_MIN <= note.Value && note.Value <= DRUMNOTE_MAX)
                         {
-                            int noteValue = note.value - MidiLoader_Constants.DEFAULT_MIN;
+                            int noteValue = note.Value - MidiLoader_Constants.DEFAULT_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
 
                             int lane = LANEVALUES[noteValue];
@@ -772,11 +772,11 @@ namespace YARG.Core.NewParsing.Midi
                                 }
                             }
                         }
-                        else if (TOM_MIN_VALUE <= note.value && note.value <= TOM_MAX_VALUE)
+                        else if (TOM_MIN_VALUE <= note.Value && note.Value <= TOM_MAX_VALUE)
                         {
                             if ((drumsType & DrumsType.ProDrums) == DrumsType.ProDrums)
                             {
-                                int index = note.value - TOM_MIN_VALUE;
+                                int index = note.Value - TOM_MIN_VALUE;
                                 tomFlags[index] = false;
                                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                 {
@@ -788,9 +788,9 @@ namespace YARG.Core.NewParsing.Midi
                                 }
                             }
                         }
-                        else if (MidiLoader_Constants.BRE_MIN <= note.value && note.value <= MidiLoader_Constants.BRE_MAX)
+                        else if (MidiLoader_Constants.BRE_MIN <= note.Value && note.Value <= MidiLoader_Constants.BRE_MAX)
                         {
-                            ref var bre = ref brePositions[note.value - MidiLoader_Constants.BRE_MIN];
+                            ref var bre = ref brePositions[note.Value - MidiLoader_Constants.BRE_MIN];
                             if (bre.Ticks > -1
                                 && brePositions[0] == brePositions[1]
                                 && brePositions[1] == brePositions[2]
@@ -807,7 +807,7 @@ namespace YARG.Core.NewParsing.Midi
                         else
                         {
                             // Note: Solo phrase is handled in the sixfret note scope for optimization reasons
-                            switch (note.value)
+                            switch (note.Value)
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)

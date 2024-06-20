@@ -121,37 +121,22 @@ namespace YARG.Core.NewParsing.Midi
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_STRINGS)
                             {
-                                if (stats.Channel == 1)
+                                if (diffTrack.Notes.Capacity == 0)
                                 {
-                                    diffTrack.Arpeggios.GetLastOrAppend(position)[lane] = note.Velocity - MIN_FRET_VELOCITY;
+                                    diffTrack.Notes.Capacity = 5000;
                                 }
-                                else
+
+                                if (diffTrack.Notes.TryAppend(position, out var guitar))
                                 {
-                                    if (diffTrack.Notes.Capacity == 0)
-                                    {
-                                        diffTrack.Notes.Capacity = 5000;
-                                    }
-
-                                    if (diffTrack.Notes.TryAppend(position, out var guitar))
-                                    {
-                                        guitar->HOPO = midiDiff.Hopo;
-                                        guitar->Slide = midiDiff.Slide;
-                                        guitar->Emphasis = midiDiff.Emphasis;
-                                    }
-
-                                    ref var proString = ref (*guitar)[lane];
-                                    switch (stats.Channel)
-                                    {
-                                        case 2: proString.Mode = StringMode.Bend; break;
-                                        case 3: proString.Mode = StringMode.Muted; break;
-                                        case 4: proString.Mode = StringMode.Tapped; break;
-                                        case 5: proString.Mode = StringMode.Harmonics; break;
-                                        case 6: proString.Mode = StringMode.Pinch_Harmonics; break;
-                                    }
-
-                                    proString.Fret = note.Velocity - MIN_FRET_VELOCITY;
-                                    strings[diffIndex * NUM_STRINGS + lane] = position;
+                                    guitar->HOPO = midiDiff.Hopo;
+                                    guitar->Slide = midiDiff.Slide;
+                                    guitar->Emphasis = midiDiff.Emphasis;
                                 }
+
+                                ref var proString = ref (*guitar)[lane];
+                                proString.Mode = stats.Channel <= 6 ? (StringMode)stats.Channel : StringMode.Normal;
+                                proString.Fret = note.Velocity - MIN_FRET_VELOCITY;
+                                strings[diffIndex * NUM_STRINGS + lane] = position;
                             }
                             else
                             {
@@ -176,7 +161,6 @@ namespace YARG.Core.NewParsing.Midi
                                             break;
                                         }
                                     case ARPEGGIO_VALUE:
-                                        diffTrack.Arpeggios.GetLastOrAppend(position);
                                         midiDiff.Arpeggio = position;
                                         break;
                                     case EMPHASIS_VALUE:
@@ -282,7 +266,7 @@ namespace YARG.Core.NewParsing.Midi
                                     case ARPEGGIO_VALUE:
                                         if (midiDiff.Arpeggio.Ticks != -1)
                                         {
-                                            diffTrack.Arpeggios.Last().Length = DualTime.Normalize(position - midiDiff.Arpeggio);
+                                            diffTrack.Arpeggios.Append(midiDiff.Arpeggio, DualTime.Normalize(position - midiDiff.Arpeggio));
                                             midiDiff.Arpeggio.Ticks = -1;
                                         }
                                         break;
