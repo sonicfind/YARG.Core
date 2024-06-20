@@ -64,7 +64,7 @@ namespace YARG.Core.NewParsing
             MidiSequenceName = midiSequenceName ?? string.Empty;
         }
 
-        public void Dispose()
+        private void _Dispose()
         {
             if (!disposedValue)
             {
@@ -104,7 +104,17 @@ namespace YARG.Core.NewParsing
                 HarmonyVocals?.Dispose();
                 disposedValue = true;
             }
+        }
+
+        public void Dispose()
+        {
+            _Dispose();
             GC.SuppressFinalize(this);
+        }
+
+        ~YARGChart()
+        {
+            _Dispose();
         }
     }
 }
