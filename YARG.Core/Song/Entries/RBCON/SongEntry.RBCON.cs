@@ -174,7 +174,7 @@ namespace YARG.Core.Song
             }
 
             var tracks = ConvertToMidiTracks(activeInstruments);
-            return DotMidiLoader.LoadMulti(in mainMidi, in updateMidi, in upgradeMidi, in _metadata, in _settings, DrumsType.ProDrums, tracks);
+            return YARGChart.LoadMidi_Multi(in mainMidi, in updateMidi, in upgradeMidi, in _metadata, in _settings, DrumsType.ProDrums, tracks);
         }
 
         private FixedArray<byte> LoadUpdateMidi()
