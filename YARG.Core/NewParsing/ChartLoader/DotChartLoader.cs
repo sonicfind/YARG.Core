@@ -237,7 +237,7 @@ namespace YARG.Core.NewParsing
                     {
                         if (chart.LeadVocals != null)
                         {
-                            if (phrase.Ticks >= 0)
+                            if (phrase.Ticks >= 0 && position.Ticks > phrase.Ticks)
                             {
                                 chart.LeadVocals.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, new(position - phrase));
                             }
@@ -246,10 +246,13 @@ namespace YARG.Core.NewParsing
                     }
                     else if (str == PHRASE_END)
                     {
-                        // No need for doVocals check
+                        // No need for LeadVocals null check
                         if (phrase.Ticks >= 0)
                         {
-                            chart.LeadVocals!.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, new(position - phrase));
+                            if (position.Ticks > phrase.Ticks)
+                            {
+                                chart.LeadVocals!.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, new(position - phrase));
+                            }
                             phrase.Ticks = -1;
                         }
                     }
@@ -364,6 +367,10 @@ namespace YARG.Core.NewParsing
 
                             int lane = YARGTextReader.ExtractInt32AndWhitespace(ref container);
                             long tickDuration = YARGTextReader.ExtractInt64AndWhitespace(ref container);
+                            if (tickDuration == 0)
+                            {
+                                tickDuration = 1;
+                            }
 
                             duration.Ticks = tickDuration;
                             duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
@@ -380,28 +387,31 @@ namespace YARG.Core.NewParsing
                         {
                             var type = (SpecialPhraseType) YARGTextReader.ExtractInt32AndWhitespace(ref container);
                             long tickDuration = YARGTextReader.ExtractInt64AndWhitespace(ref container);
-                            switch (type)
+                            if (tickDuration > 0)
                             {
-                                case SpecialPhraseType.FaceOff_Player1:
-                                case SpecialPhraseType.FaceOff_Player2:
-                                case SpecialPhraseType.StarPower:
-                                case SpecialPhraseType.BRE:
-                                case SpecialPhraseType.Tremolo:
-                                case SpecialPhraseType.Trill:
-                                    duration.Ticks = tickDuration;
-                                    duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
-                                    difficultyTrack.SpecialPhrases.GetLastOrAppend(position).TryAdd(type, new SpecialPhraseInfo(in duration));
-                                    break;
+                                switch (type)
+                                {
+                                    case SpecialPhraseType.FaceOff_Player1:
+                                    case SpecialPhraseType.FaceOff_Player2:
+                                    case SpecialPhraseType.StarPower:
+                                    case SpecialPhraseType.BRE:
+                                    case SpecialPhraseType.Tremolo:
+                                    case SpecialPhraseType.Trill:
+                                        duration.Ticks = tickDuration;
+                                        duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
+                                        difficultyTrack.SpecialPhrases.GetLastOrAppend(position).TryAdd(type, new SpecialPhraseInfo(in duration));
+                                        break;
+                                }
                             }
                             break;
                         }
                     case ChartEventType.Text:
                         string str = YARGTextReader.ExtractText(ref container, false);
-                        if (str.StartsWith(SOLOEND))
+                        if (str == SOLOEND)
                         {
                             if (soloQueue[0].Ticks != -1)
                             {
-                                // .chart handles solo phrases with *inclusive ends*, so we have add one tick
+                                // .chart handles solo phrases with *inclusive ends*, so we have to add one tick
                                 var soloEnd = position;
                                 ++soloEnd.Ticks;
                                 soloEnd.Seconds = sync.ConvertToSeconds(soloEnd.Ticks, tempoIndex);
@@ -411,7 +421,7 @@ namespace YARG.Core.NewParsing
                                 soloQueue[1] = DualTime.Inactive;
                             }
                         }
-                        else if (str.StartsWith(SOLO))
+                        else if (str == SOLO)
                         {
                             unsafe
                             {
