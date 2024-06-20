@@ -281,13 +281,13 @@ namespace YARG.Core.NewParsing
                             switch (drumsInChart)
                             {
                                 case DrumsType.FourLane:
-                                    chart.FourLaneDrums = UnknownDrumTrackConverter.ConvertTo<DrumNote2<FourLane>, FourLane>(track);
+                                    chart.FourLaneDrums = track.ConvertTo<DrumNote2<FourLane>, FourLane>();
                                     break;
                                 case DrumsType.ProDrums:
-                                    chart.ProDrums = UnknownDrumTrackConverter.ConvertTo<ProDrumNote2<FourLane>, FourLane>(track);
+                                    chart.ProDrums = track.ConvertTo<ProDrumNote2<FourLane>, FourLane>();
                                     break;
                                 case DrumsType.FiveLane:
-                                    chart.FiveLaneDrums = UnknownDrumTrackConverter.ConvertTo<DrumNote2<FiveLane>, FiveLane>(track);
+                                    chart.FiveLaneDrums = track.ConvertTo<DrumNote2<FiveLane>, FiveLane>();
                                     break;
                             }
                             break;
