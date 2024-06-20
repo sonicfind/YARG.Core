@@ -71,7 +71,7 @@ namespace YARG.Core.Song
     [Serializable]
     public abstract partial class SongEntry
     {
-        public const double MILLISECOND_FACTOR = 1000.0;
+        
         protected static readonly string[] BACKGROUND_FILENAMES =
         {
             "bg", "background", "video"
@@ -147,14 +147,14 @@ namespace YARG.Core.Song
 
         public double SongLengthSeconds
         {
-            get => _metadata.SongLength / MILLISECOND_FACTOR;
-            set => _metadata.SongLength = (ulong) (value * MILLISECOND_FACTOR);
+            get => _metadata.SongLength / SongMetadata.MILLISECOND_FACTOR;
+            set => _metadata.SongLength = (ulong) (value * SongMetadata.MILLISECOND_FACTOR);
         }
 
         public double SongOffsetSeconds
         {
-            get => _metadata.SongOffset / MILLISECOND_FACTOR;
-            set => _metadata.SongOffset = (long) (value * MILLISECOND_FACTOR);
+            get => _metadata.SongOffset / SongMetadata.MILLISECOND_FACTOR;
+            set => _metadata.SongOffset = (long) (value * SongMetadata.MILLISECOND_FACTOR);
         }
 
         public long PreviewStartMilliseconds
@@ -171,14 +171,14 @@ namespace YARG.Core.Song
 
         public double PreviewStartSeconds
         {
-            get => _metadata.PreviewStart / MILLISECOND_FACTOR;
-            set => _metadata.PreviewStart = (long) (value * MILLISECOND_FACTOR);
+            get => _metadata.PreviewStart / SongMetadata.MILLISECOND_FACTOR;
+            set => _metadata.PreviewStart = (long) (value * SongMetadata.MILLISECOND_FACTOR);
         }
 
         public double PreviewEndSeconds
         {
-            get => _metadata.PreviewEnd / MILLISECOND_FACTOR;
-            set => _metadata.PreviewEnd = (long) (value * MILLISECOND_FACTOR);
+            get => _metadata.PreviewEnd / SongMetadata.MILLISECOND_FACTOR;
+            set => _metadata.PreviewEnd = (long) (value * SongMetadata.MILLISECOND_FACTOR);
         }
 
         public long VideoStartTimeMilliseconds
@@ -195,14 +195,14 @@ namespace YARG.Core.Song
 
         public double VideoStartTimeSeconds
         {
-            get => _metadata.VideoStartTime / MILLISECOND_FACTOR;
-            set => _metadata.VideoStartTime = (long) (value * MILLISECOND_FACTOR);
+            get => _metadata.VideoStartTime / SongMetadata.MILLISECOND_FACTOR;
+            set => _metadata.VideoStartTime = (long) (value * SongMetadata.MILLISECOND_FACTOR);
         }
 
         public double VideoEndTimeSeconds
         {
-            get => _metadata.VideoEndTime >= 0 ? _metadata.VideoEndTime / MILLISECOND_FACTOR : -1;
-            set => _metadata.VideoEndTime = value >= 0 ? (long) (value * MILLISECOND_FACTOR) : -1;
+            get => _metadata.VideoEndTime >= 0 ? _metadata.VideoEndTime / SongMetadata.MILLISECOND_FACTOR : -1;
+            set => _metadata.VideoEndTime = value >= 0 ? (long) (value * SongMetadata.MILLISECOND_FACTOR) : -1;
         }
 
         public HashWrapper Hash => _hash;
@@ -317,150 +317,29 @@ namespace YARG.Core.Song
             _intYear = int.MaxValue;
         }
 
-        private static readonly SortString DEFAULT_NAME_SORT = SortString.Convert(SongMetadata.DEFAULT_NAME);
-        private static readonly SortString DEFAULT_ARTIST_SORT = SortString.Convert(SongMetadata.DEFAULT_ARTIST);
-        private static readonly SortString DEFAULT_ALBUM_SORT = SortString.Convert(SongMetadata.DEFAULT_ALBUM);
-        private static readonly SortString DEFAULT_GENRE_SORT = SortString.Convert(SongMetadata.DEFAULT_GENRE);
-        private static readonly SortString DEFAULT_CHARTER_SORT = SortString.Convert(SongMetadata.DEFAULT_CHARTER);
-        private static readonly SortString DEFAULT_SOURCE_SORT = SortString.Convert(SongMetadata.DEFAULT_SOURCE);
-
         protected SongEntry(in AvailableParts parts, in HashWrapper hash, IniSection modifiers, in string defaultPlaylist)
         {
             _parts = parts;
             _hash = hash;
-
-            modifiers.TryGet("name", out _metadata.Name, DEFAULT_NAME_SORT);
-            modifiers.TryGet("artist", out _metadata.Artist, DEFAULT_ARTIST_SORT);
-            modifiers.TryGet("album", out _metadata.Album, DEFAULT_ALBUM_SORT);
-            modifiers.TryGet("genre", out _metadata.Genre, DEFAULT_GENRE_SORT);
-
-            if (!modifiers.TryGet("year", out _metadata.Year))
-            {
-                // Capitalization = from .chart
-                if (modifiers.TryGet("Year", out _metadata.Year))
-                {
-                    if (_metadata.Year.StartsWith(", "))
-                    {
-                        _metadata.Year = _metadata.Year[2..];
-                    }
-                    else if (_metadata.Year.StartsWith(','))
-                    {
-                        _metadata.Year = _metadata.Year[1..];
-                    }
-                }
-                else
-                {
-                    _metadata.Year = SongMetadata.DEFAULT_YEAR;
-                }
-            }
-
+            _metadata = new SongMetadata(modifiers, defaultPlaylist);
             _intYear = ParseYear(in _metadata.Year, out _parsedYear)
                 ? int.Parse(_parsedYear)
                 : int.MaxValue;
 
-            if (!modifiers.TryGet("charter", out _metadata.Charter, DEFAULT_CHARTER_SORT))
+            var drumType = DrumsType.Unknown;
+            if (parts.ProDrums.SubTracks > 0)
             {
-                modifiers.TryGet("frets", out _metadata.Charter, DEFAULT_CHARTER_SORT);
-            }
-
-            modifiers.TryGet("icon", out _metadata.Source, DEFAULT_SOURCE_SORT);
-            modifiers.TryGet("playlist", out _metadata.Playlist, defaultPlaylist);
-
-            modifiers.TryGet("loading_phrase", out _metadata.LoadingPhrase);
-
-            if (!modifiers.TryGet("playlist_track", out _metadata.PlaylistTrack))
-            {
-                _metadata.PlaylistTrack = -1;
-            }
-
-            if (!modifiers.TryGet("album_track", out _metadata.AlbumTrack))
-            {
-                _metadata.AlbumTrack = -1;
-            }
-
-            modifiers.TryGet("song_length", out _metadata.SongLength);
-            modifiers.TryGet("rating", out _metadata.SongRating);
-
-            modifiers.TryGet("video_start_time", out _metadata.VideoStartTime);
-            if (!modifiers.TryGet("video_end_time", out _metadata.VideoEndTime))
-            {
-                _metadata.VideoEndTime = -1;
-            }
-
-            if (!modifiers.TryGet("preview", out _metadata.PreviewStart, out _metadata.PreviewEnd))
-            {
-                if (!modifiers.TryGet("preview_start_time", out _metadata.PreviewStart))
-                {
-                    // Capitlization = from .chart
-                    if (modifiers.TryGet("PreviewStart", out double previewStartSeconds))
-                    {
-                        _metadata.PreviewStart = (long) (previewStartSeconds * MILLISECOND_FACTOR);
-                    }
-                    else
-                    {
-                        _metadata.PreviewStart = -1;
-                    }
-                }
-
-                if (!modifiers.TryGet("preview_end_time", out _metadata.PreviewEnd))
-                {
-                    // Capitlization = from .chart
-                    if (modifiers.TryGet("PreviewEnd", out double previewEndSeconds))
-                    {
-                        _metadata.PreviewEnd = (long) (previewEndSeconds * MILLISECOND_FACTOR);
-                    }
-                    else
-                    {
-                        _metadata.PreviewEnd = -1;
-                    }
-                }
-            }
-
-            if (!modifiers.TryGet("delay", out _metadata.SongOffset) || _metadata.SongOffset == 0)
-            {
-                // Capitlization = from .chart
-                if (modifiers.TryGet("Offset", out double songOffsetSeconds))
-                {
-                    _metadata.SongOffset = (long) (songOffsetSeconds * MILLISECOND_FACTOR);
-                }
-            }
-
-            if (parts.FourLaneDrums.SubTracks > 0)
-            {
-                _parseSettings.DrumsType = DrumsType.FourLane;
+                drumType = DrumsType.ProDrums;
             }
             else if (parts.FiveLaneDrums.SubTracks > 0)
             {
-                _parseSettings.DrumsType = DrumsType.FiveLane;
+                drumType = DrumsType.FiveLane;
             }
-            else
+            else if (parts.FourLaneDrums.SubTracks > 0)
             {
-                _parseSettings.DrumsType = DrumsType.Unknown;
+                drumType = DrumsType.FourLane;
             }
-
-            if (!modifiers.TryGet("hopo_frequency", out _parseSettings.HopoThreshold))
-            {
-                _parseSettings.HopoThreshold = -1;
-            }
-
-            if (!modifiers.TryGet("hopofreq", out _parseSettings.HopoFreq_FoF))
-            {
-                _parseSettings.HopoFreq_FoF = -1;
-            }
-
-            modifiers.TryGet("eighthnote_hopo", out _parseSettings.EighthNoteHopo);
-
-            if (!modifiers.TryGet("sustain_cutoff_threshold", out _parseSettings.SustainCutoffThreshold))
-            {
-                _parseSettings.SustainCutoffThreshold = -1;
-            }
-
-            if (!modifiers.TryGet("multiplier_note", out _parseSettings.StarPowerNote))
-            {
-                _parseSettings.StarPowerNote = -1;
-            }
-
-            _metadata.IsMaster = !modifiers.TryGet("tags", out string tag) || tag.ToLower() != "cover";
+            _parseSettings = new ParseSettings(modifiers, drumType);
         }
 
         protected SongEntry(UnmanagedMemoryStream stream, in CategoryCacheStrings strings)

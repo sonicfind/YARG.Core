@@ -1,4 +1,5 @@
 ﻿using System;
+using YARG.Core.IO.Ini;
 
 namespace YARG.Core.Chart
 {
@@ -11,6 +12,7 @@ namespace YARG.Core.Chart
         ProDrums,
         FiveLane,
         Unknown,
+        Unknown_Four,
         UnknownPro,
     }
 
@@ -105,6 +107,34 @@ namespace YARG.Core.Chart
         /// Defaults to 116.
         /// </remarks>
         public int StarPowerNote;
+
+        public ParseSettings(IniSection modifiers, DrumsType drums)
+        {
+            if (!modifiers.TryGet("hopo_frequency", out HopoThreshold))
+            {
+                HopoThreshold = SETTING_DEFAULT;
+            }
+
+            if (!modifiers.TryGet("hopofreq", out HopoFreq_FoF))
+            {
+                HopoFreq_FoF = SETTING_DEFAULT;
+            }
+
+            modifiers.TryGet("eighthnote_hopo", out EighthNoteHopo);
+
+            if (!modifiers.TryGet("sustain_cutoff_threshold", out SustainCutoffThreshold))
+            {
+                SustainCutoffThreshold = SETTING_DEFAULT;
+            }
+
+            if (!modifiers.TryGet("multiplier_note", out StarPowerNote))
+            {
+                StarPowerNote = SETTING_DEFAULT;
+            }
+            DrumsType = drums;
+            ChordHopoCancellation = false;
+            NoteSnapThreshold = 0;
+        }
 
         /// <summary>
         /// Calculates the HOPO threshold to use from the various HOPO settings.
