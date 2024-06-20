@@ -121,12 +121,12 @@ namespace YARG.Core.Song
                     {
                         using var stream = sngFile[file].CreateStream(sngFile);
                         var tracks = ConvertToMidiTracks(activeInstruments);
-                        return DotMidiLoader.LoadSingle(stream, in Metadata, in Settings, drums, tracks);
+                        return YARGChart.LoadMidi_Single(stream, in Metadata, in Settings, drums, tracks);
                     }
                 default:
                     {
                         using var bytes = sngFile[file].LoadAllBytes(sngFile);
-                        return YARGDotChartLoader.Load(in bytes, in Metadata, in Settings, drums, activeInstruments);
+                        return YARGChart.LoadChart(in bytes, in Metadata, in Settings, drums, activeInstruments);
                     }
             }
         }

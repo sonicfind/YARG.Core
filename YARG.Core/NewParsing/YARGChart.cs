@@ -6,7 +6,7 @@ using YARG.Core.Song;
 
 namespace YARG.Core.NewParsing
 {
-    public class YARGChart : IDisposable
+    public partial class YARGChart : IDisposable
     {
         private bool disposedValue;
         public readonly SyncTrack2 Sync;
@@ -54,22 +54,6 @@ namespace YARG.Core.NewParsing
             Sync = new SyncTrack2(480);
             Metadata = SongMetadata.Default;
             Settings = LoaderSettings.Default;
-        }
-
-        public YARGChart(SyncTrack2 sync, SongMetadata metadata, LoaderSettings settings, string? midiSequenceName)
-        {
-            Sync = sync;
-            Metadata = metadata;
-            Settings = settings;
-            MidiSequenceName = midiSequenceName ?? string.Empty;
-        }
-
-        public YARGChart(SyncTrack2 sync, SongMetadata metadata, LoaderSettings settings, Dictionary<string, IniModifier> miscellaneous)
-        {
-            Sync = sync;
-            Metadata = metadata;
-            Settings = settings;
-            Miscellaneous = miscellaneous;
         }
 
         public void Dispose()

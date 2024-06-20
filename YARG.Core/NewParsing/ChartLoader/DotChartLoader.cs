@@ -10,7 +10,7 @@ using YARG.Core.Song;
 
 namespace YARG.Core.NewParsing
 {
-    public static partial class YARGDotChartLoader
+    public partial class YARGChart
     {
         private const string SOLO = "solo";
         private const string SOLOEND = "soloend";
@@ -19,7 +19,15 @@ namespace YARG.Core.NewParsing
         private const string PHRASE_START = "phrase_start";
         private const string PHRASE_END = "phrase_end ";
 
-        public static YARGChart Load(string chartPath, HashSet<Instrument>? activeTracks)
+        private YARGChart(SyncTrack2 sync, SongMetadata metadata, LoaderSettings settings, Dictionary<string, IniModifier> miscellaneous)
+        {
+            Sync = sync;
+            Metadata = metadata;
+            Settings = settings;
+            Miscellaneous = miscellaneous;
+        }
+
+        public static YARGChart LoadChart(string chartPath, HashSet<Instrument>? activeTracks)
         {
             var iniPath = Path.Combine(Path.GetDirectoryName(chartPath), "song.ini");
 
@@ -44,7 +52,7 @@ namespace YARG.Core.NewParsing
             }
 
             using var bytes = FixedArray<byte>.Load(chartPath);
-            var chart = Load(bytes, in metadata, in settings, drumsType, activeTracks);
+            var chart = LoadChart(bytes, in metadata, in settings, drumsType, activeTracks);
             if (!modifiers.TryGet("hopo_frequency", out settings.HopoThreshold) || settings.HopoThreshold <= 0)
             {
                 if (modifiers.TryGet("eighthnote_hopo", out bool eighthNoteHopo))
@@ -83,28 +91,27 @@ namespace YARG.Core.NewParsing
             return chart;
         }
 
-        public static YARGChart Load(in FixedArray<byte> file, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument>? activeTracks)
+        public static YARGChart LoadChart(in FixedArray<byte> file, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument>? activeTracks)
         {
             if (YARGTextReader.IsUTF8(in file, out var byteContainer))
             {
-                return Process(ref byteContainer, in metadata, in settings, drumsInChart, activeTracks);
+                return Process_Chart(ref byteContainer, in metadata, in settings, drumsInChart, activeTracks);
             }
 
             using var chars = YARGTextReader.ConvertToUTF16(in file, out var charContainer);
             if (chars.IsAllocated)
             {
-                return Process(ref charContainer, in metadata, in settings, drumsInChart, activeTracks);
+                return Process_Chart(ref charContainer, in metadata, in settings, drumsInChart, activeTracks);
             }
 
             using var ints = YARGTextReader.ConvertToUTF32(in file, out var intContainer);
-            return Process(ref intContainer, in metadata, in settings, drumsInChart, activeTracks);
+            return Process_Chart(ref intContainer, in metadata, in settings, drumsInChart, activeTracks);
         }
-
-        private const long DEFAULT_TICKRATE = 192;
-        private static YARGChart Process<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument>? activeTracks)
+        
+        private static YARGChart Process_Chart<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument>? activeTracks)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
-            var chart = LoadHeaderAndSync(ref container, in metadata, in settings);
+            var chart = LoadHeaderAndSync_Chart(ref container, in metadata, in settings);
             if (activeTracks == null || activeTracks.Contains(Instrument.Vocals))
             {
                 chart.LeadVocals = new VocalTrack2(1);
@@ -115,8 +122,8 @@ namespace YARG.Core.NewParsing
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
                 if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK)
-                    ? !LoadEventsTrack(ref container, chart)
-                    : !SelectChartTrack(ref container, chart, ref drumsInChart, activeTracks, ref unknownDrums))
+                    ? !LoadEventsTrack_Chart(ref container, chart)
+                    : !SelectTrack_Chart(ref container, chart, ref drumsInChart, activeTracks, ref unknownDrums))
                 {
                     if (YARGTextReader.SkipLinesUntil(ref container, TextConstants<TChar>.CLOSE_BRACE))
                     {
@@ -148,7 +155,8 @@ namespace YARG.Core.NewParsing
             return chart;
         }
 
-        private static YARGChart LoadHeaderAndSync<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in LoaderSettings settings)
+        private const long DEFAULT_TICKRATE = 192;
+        private static YARGChart LoadHeaderAndSync_Chart<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in LoaderSettings settings)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             long tickrate = DEFAULT_TICKRATE;
@@ -198,7 +206,7 @@ namespace YARG.Core.NewParsing
             return new YARGChart(sync, metadata, settings, miscellaneous);
         }
 
-        private static bool LoadEventsTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
+        private static bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (chart.Events.IsOccupied() || (chart.LeadVocals != null && chart.LeadVocals.IsOccupied()))
@@ -271,7 +279,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool SelectChartTrack<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref BasicInstrumentTrack2<ProDrumNote2<FiveLane>>? unknownDrums)
+        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref BasicInstrumentTrack2<ProDrumNote2<FiveLane>>? unknownDrums)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (!YARGChartFileReader.ValidateInstrument(ref container, out var instrument, out var difficulty))
@@ -299,7 +307,7 @@ namespace YARG.Core.NewParsing
                     unsafe
                     {
                         _unknownDrumType = DrumsType.Unknown;
-                        bool result = LoadChartTrack(ref container, chart.Sync, difficulty, ref unknownDrums, &Set);
+                        bool result = LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref unknownDrums, &Set);
                         drumsInChart = _unknownDrumType;
                         return result;
                     }
@@ -315,24 +323,24 @@ namespace YARG.Core.NewParsing
             {
                 return instrument switch
                 {
-                    Instrument.FiveFretGuitar =>     LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.FiveFretGuitar, &Set),
-                    Instrument.FiveFretBass =>       LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.FiveFretBass, &Set),
-                    Instrument.FiveFretRhythm =>     LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.FiveFretRhythm, &Set),
-                    Instrument.FiveFretCoopGuitar => LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.FiveFretCoopGuitar, &Set),
-                    Instrument.SixFretGuitar =>      LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.SixFretGuitar, &Set),
-                    Instrument.SixFretBass =>        LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.SixFretBass, &Set),
-                    Instrument.SixFretRhythm =>      LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.SixFretRhythm, &Set),
-                    Instrument.SixFretCoopGuitar =>  LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.SixFretCoopGuitar, &Set),
-                    Instrument.FourLaneDrums =>      LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.FourLaneDrums, &Set),
-                    Instrument.ProDrums =>           LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.ProDrums, &Set),
-                    Instrument.FiveLaneDrums =>      LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.FiveLaneDrums, &Set),
-                    Instrument.Keys =>               LoadChartTrack(ref container, chart.Sync, difficulty, ref chart.Keys, &Set),
+                    Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretGuitar, &Set),
+                    Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretBass, &Set),
+                    Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretRhythm, &Set),
+                    Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretCoopGuitar, &Set),
+                    Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretGuitar, &Set),
+                    Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretBass, &Set),
+                    Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretRhythm, &Set),
+                    Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretCoopGuitar, &Set),
+                    Instrument.FourLaneDrums =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FourLaneDrums, &Set),
+                    Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.ProDrums, &Set),
+                    Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveLaneDrums, &Set),
+                    Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.Keys, &Set),
                     _ => false,
                 };
             }
         }
 
-        private static unsafe bool LoadChartTrack<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref BasicInstrumentTrack2<TNote>? track, delegate*<ref TNote, int, in DualTime, bool> loader)
+        private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref BasicInstrumentTrack2<TNote>? track, delegate*<ref TNote, int, in DualTime, bool> loader)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TNote : unmanaged, IInstrumentNote
         {
