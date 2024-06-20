@@ -8,7 +8,6 @@ namespace YARG.Core.NewParsing
 {
     public partial class YARGChart : IDisposable
     {
-        private bool disposedValue;
         public readonly SyncTrack2 Sync;
         public readonly TextEvents2 Events = new();
         public readonly YARGNativeSortedList<DualTime, BeatlineType> BeatMap = new();
@@ -58,45 +57,40 @@ namespace YARG.Core.NewParsing
 
         public void Dispose()
         {
-            if (!disposedValue)
-            {
-                Sync.Dispose();
-                Events.Dispose();
-                BeatMap.Dispose();
-                Miscellaneous.Clear();
+            Sync.Dispose();
+            Events.Dispose();
+            BeatMap.Dispose();
+            Miscellaneous.Clear();
 
-                FiveFretGuitar?.Dispose();
-                FiveFretBass?.Dispose();
-                FiveFretRhythm?.Dispose();
-                FiveFretCoopGuitar?.Dispose();
+            FiveFretGuitar?.Dispose();
+            FiveFretBass?.Dispose();
+            FiveFretRhythm?.Dispose();
+            FiveFretCoopGuitar?.Dispose();
 
-                SixFretGuitar?.Dispose();
-                SixFretBass?.Dispose();
-                SixFretRhythm?.Dispose();
-                SixFretCoopGuitar?.Dispose();
+            SixFretGuitar?.Dispose();
+            SixFretBass?.Dispose();
+            SixFretRhythm?.Dispose();
+            SixFretCoopGuitar?.Dispose();
 
-                Keys?.Dispose();
+            Keys?.Dispose();
 
-                FourLaneDrums?.Dispose();
-                ProDrums?.Dispose();
-                FiveLaneDrums?.Dispose();
+            FourLaneDrums?.Dispose();
+            ProDrums?.Dispose();
+            FiveLaneDrums?.Dispose();
 
-                // TrueDrums?.Dispose();
+            // TrueDrums?.Dispose();
 
-                ProGuitar_17Fret?.Dispose();
-                ProGuitar_22Fret?.Dispose();
-                ProBass_17Fret?.Dispose();
-                ProBass_22Fret?.Dispose();
+            ProGuitar_17Fret?.Dispose();
+            ProGuitar_22Fret?.Dispose();
+            ProBass_17Fret?.Dispose();
+            ProBass_22Fret?.Dispose();
 
-                ProKeys?.Dispose();
+            ProKeys?.Dispose();
 
-                // DJ?.Dispose();
+            // DJ?.Dispose();
 
-                LeadVocals?.Dispose();
-                HarmonyVocals?.Dispose();
-                disposedValue = true;
-            }
-            GC.SuppressFinalize(this);
+            LeadVocals?.Dispose();
+            HarmonyVocals?.Dispose();
         }
     }
 }
