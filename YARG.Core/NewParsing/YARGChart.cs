@@ -69,7 +69,7 @@ namespace YARG.Core.NewParsing
             if (!disposedValue)
             {
                 Sync.Dispose();
-                Events.Dispose();
+                Events.Clear();
                 BeatMap.Dispose();
                 Miscellaneous.Clear();
 
