@@ -159,7 +159,6 @@ namespace YARG.Core.NewParsing
                             chart.Sync.TimeSigs.GetLastOrAppend(ev.Position) = YARGChartFileReader.ExtractTimeSig(ref container);
                             break;
                     }
-                    YARGTextReader.GotoNextLine(ref container);
                 }
                 YARGChartFinalizer.FinalizeAnchors(chart.Sync);
             }
@@ -182,10 +181,7 @@ namespace YARG.Core.NewParsing
                     ? !LoadEventsTrack_Chart(ref container, chart)
                     : !SelectTrack_Chart(ref container, chart, ref drumsInChart, activeTracks, ref unknownDrums))
                 {
-                    if (YARGTextReader.SkipLinesUntil(ref container, TextConstants<TChar>.CLOSE_BRACE))
-                    {
-                        YARGTextReader.GotoNextLine(ref container);
-                    }
+                    YARGChartFileReader.SkipToNextTrack(ref container);
                 }
             }
 
@@ -273,7 +269,6 @@ namespace YARG.Core.NewParsing
                         chart.Events.Globals.GetLastOrAppend(position).Add(str);
                     }
                 }
-                YARGTextReader.GotoNextLine(ref container);
             }
 
             if (chart.LeadVocals != null && !chart.LeadVocals.IsOccupied())
@@ -447,7 +442,6 @@ namespace YARG.Core.NewParsing
                         }
                         break;
                 }
-                YARGTextReader.GotoNextLine(ref container);
             }
 
             difficultyTrack.TrimExcess();
