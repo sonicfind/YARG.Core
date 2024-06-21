@@ -229,7 +229,7 @@ namespace YARG.Core.NewParsing
                     position.Ticks = ev.Position;
                     position.Seconds = chart.Sync.ConvertToSeconds(ev.Position, ref tempoIndex);
 
-                    string str = YARGTextReader.ExtractText(ref container, false);
+                    string str = YARGTextReader.ExtractText(ref container, true);
                     if (str.StartsWith(SECTION))
                     {
                         chart.Events.Sections.GetLastOrAppend(position) = str[SECTION.Length..];
@@ -413,7 +413,7 @@ namespace YARG.Core.NewParsing
                             break;
                         }
                     case ChartEventType.Text:
-                        string str = YARGTextReader.ExtractText(ref container, false);
+                        string str = YARGTextReader.ExtractText(ref container, true);
                         if (str == SOLOEND)
                         {
                             if (soloQueue[0].Ticks != -1)
