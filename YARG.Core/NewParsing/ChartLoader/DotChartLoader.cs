@@ -179,7 +179,6 @@ namespace YARG.Core.NewParsing
                         sync.TimeSigs.GetLastOrAppend(ev.Position) = YARGChartFileReader.ExtractTimeSig(ref container);
                         break;
                 }
-                YARGTextReader.GotoNextLine(ref container);
             }
             YARGChartFinalizer.FinalizeAnchors(sync);
             return sync;
@@ -252,7 +251,6 @@ namespace YARG.Core.NewParsing
                         chart.Events.Globals.GetLastOrAppend(position).Add(str);
                     }
                 }
-                YARGTextReader.GotoNextLine(ref container);
             }
 
             if (chart.LeadVocals != null && !chart.LeadVocals.IsOccupied())
@@ -446,7 +444,6 @@ namespace YARG.Core.NewParsing
                         }
                         break;
                 }
-                YARGTextReader.GotoNextLine(ref container);
             }
 
             difficultyTrack.TrimExcess();
