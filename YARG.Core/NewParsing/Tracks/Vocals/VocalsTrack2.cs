@@ -91,7 +91,7 @@ namespace YARG.Core.NewParsing
                 {
                     foreach (var track in _vocals)
                     {
-                        track.Dispose();
+                        track.Clear();
                     }
                     Percussion.Dispose();
                 }
