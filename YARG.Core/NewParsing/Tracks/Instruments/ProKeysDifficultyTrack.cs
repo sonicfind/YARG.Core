@@ -21,7 +21,6 @@ namespace YARG.Core.NewParsing
         public override bool IsOccupied() { return !Ranges.IsEmpty() || base.IsOccupied(); }
         public override void Clear()
         {
-            
             Ranges.Clear();
             base.Clear();
         }
