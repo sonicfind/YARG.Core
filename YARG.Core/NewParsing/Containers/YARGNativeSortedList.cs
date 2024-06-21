@@ -1,31 +1,34 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public sealed class YARGNativeSortedList<TKey, TValue> : YARGSortedList<TKey, TValue>, IEnumerable<YARGKeyValuePair<TKey, TValue>>
+    public sealed unsafe class YARGNativeSortedList<TKey, TValue> : IDisposable, IEnumerable<YARGKeyValuePair<TKey, TValue>>
         where TKey : unmanaged, IEquatable<TKey>, IComparable<TKey>
         where TValue : unmanaged
     {
-        private static readonly unsafe int SIZEOF_PAIR = sizeof(YARGKeyValuePair<TKey, TValue>);
+        private static readonly int SIZEOF_PAIR = sizeof(YARGKeyValuePair<TKey, TValue>);
+        // This pattern of copying a pre-defined value is faster than default construction
+        // Note: except possibly for types of 16 bytes or less, idk
         private static readonly TValue DEFAULT_VALUE = default;
 
-        private unsafe YARGKeyValuePair<TKey, TValue>* _buffer = null;
+        private YARGKeyValuePair<TKey, TValue>* _buffer = null;
         private int _capacity;
-        private bool _disposed;
+        private int _count;
+        private int _version;
 
-        public override int Capacity
+        public int Count => _count;
+
+        public int Capacity
         {
             get => _capacity;
             set
             {
-                if (_disposed)
+                if (_version == -1)
                 {
-                    throw new ObjectDisposedException(GetType().Name);
+                    throw new ObjectDisposedException(typeof(YARGNativeSortedList<TKey, TValue>).Name);
                 }
 
                 if (_count <= value && value != _capacity)
@@ -33,29 +36,23 @@ namespace YARG.Core.NewParsing
                     if (value > 0)
                     {
                         int size = value * SIZEOF_PAIR;
-                        unsafe
+                        if (_buffer != null)
                         {
-                            if (_buffer != null)
-                            {
-                                _buffer = (YARGKeyValuePair<TKey, TValue>*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) size);
-                            }
-                            else
-                            {
-                                _buffer = (YARGKeyValuePair<TKey, TValue>*) Marshal.AllocHGlobal(size);
-                            }
+                            _buffer = (YARGKeyValuePair<TKey, TValue>*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) size);
+                        }
+                        else
+                        {
+                            _buffer = (YARGKeyValuePair<TKey, TValue>*) Marshal.AllocHGlobal(size);
                         }
                         ++_version;
                     }
                     else
                     {
-                        unsafe
+                        if (_buffer != null)
                         {
-                            if (_buffer != null)
-                            {
-                                Marshal.FreeHGlobal((IntPtr) _buffer);
-                            }
-                            _buffer = null;
+                            Marshal.FreeHGlobal((IntPtr) _buffer);
                         }
+                        _buffer = null;
                         _version = 0;
                     }
                     _capacity = value;
@@ -63,28 +60,31 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        public override Span<YARGKeyValuePair<TKey, TValue>> Span
+        public Span<YARGKeyValuePair<TKey, TValue>> Span => new(_buffer, _count);
+        public YARGKeyValuePair<TKey, TValue>* Data => _buffer;
+        public YARGKeyValuePair<TKey, TValue>* End => _buffer + _count;
+
+        public YARGNativeSortedList()
         {
-            get
-            {
-                unsafe
-                {
-                    return new Span<YARGKeyValuePair<TKey, TValue>>(_buffer, _count);
-                }
-            }
+            _buffer = null;
         }
-
-        public unsafe YARGKeyValuePair<TKey, TValue>* Data => _buffer;
-        public unsafe YARGKeyValuePair<TKey, TValue>* End => _buffer + _count;
-
-        public YARGNativeSortedList() { }
 
         public YARGNativeSortedList(int capacity)
         {
             Capacity = capacity;
         }
 
-        public override void Clear()
+        public bool IsEmpty()
+        {
+            return _count == 0;
+        }
+
+        public void TrimExcess()
+        {
+            Capacity = _count;
+        }
+
+        public void Clear()
         {
             if (_count > 0)
             {
@@ -93,130 +93,150 @@ namespace YARG.Core.NewParsing
             _count = 0;
         }
 
-        protected override void Dispose(bool _)
+        public void Add(TKey key, TValue value)
         {
-            if (!_disposed)
+            if (!Try_Add(key, in value))
             {
-                unsafe
-                {
-                    if (_buffer != null)
-                    {
-                        Marshal.FreeHGlobal((IntPtr) _buffer);
-                    }
-                    _buffer = null!;
-                }
-                _version = 0;
-                _capacity = 0;
-                _count = 0;
-                _disposed = true;
+                throw new ArgumentException($"A value of key of value {key} already exists");
             }
         }
 
-        ~YARGNativeSortedList()
+        public void Add(TKey key, in TValue value)
         {
-            Dispose(false);
+            if (!Try_Add(key, in value))
+            {
+                throw new ArgumentException($"A value of key of value {key} already exists");
+            }
         }
 
-        public override ref TValue Append(TKey key)
+        public bool Try_Add(TKey key, TValue value)
+        {
+            return Try_Add(key, in value);
+        }
+
+        public bool Try_Add(TKey key, in TValue value)
+        {
+            int index = Find(key);
+            if (index >= 0)
+            {
+                return false;
+            }
+
+            index = ~index;
+            Insert_Forced(index, key, in value);
+            return true;
+        }
+
+        
+
+        public ref TValue Append(TKey key)
         {
             CheckAndGrow();
-            int index = _count++;
-
-            unsafe
-            {
-                var node = _buffer + index;
-                node->Key = key;
-                node->Value = DEFAULT_VALUE;
-                return ref node->Value;
-            }
+            var node = _buffer + _count++;
+            node->Key = key;
+            node->Value = DEFAULT_VALUE;
+            return ref node->Value;
         }
 
-        public override ref TValue Append(TKey key, TValue value)
+        public ref TValue Append(TKey key, TValue value)
         {
             CheckAndGrow();
-            int index = _count++;
-
-            unsafe
-            {
-                var node = _buffer + index;
-                node->Key = key;
-                node->Value = value;
-                return ref node->Value;
-            }
+            var node = _buffer + _count++;
+            node->Key = key;
+            node->Value = value;
+            return ref node->Value;
         }
 
-        public override ref TValue Append(TKey key, in TValue value)
+        public ref TValue Append(TKey key, in TValue value)
         {
             CheckAndGrow();
-            int index = _count++;
-
-            unsafe
-            {
-                var node = _buffer + index;
-                node->Key = key;
-                node->Value = value;
-                return ref node->Value;
-            }
+            var node = _buffer + _count++;
+            node->Key = key;
+            node->Value = value;
+            return ref node->Value;
         }
 
-        public override int FindOrEmplaceIndex(int startIndex, TKey key)
+        public ref TValue GetLastOrAppend(TKey key)
         {
-            int index = Find(startIndex, key);
-            if (index < 0)
+            if (_count == 0 || _buffer[_count - 1] < key)
             {
-                index = ~index;
-                Insert_Forced(index, key, new());
+                return ref Append(key);
             }
-            return index;
+            return ref _buffer[_count - 1].Value;
         }
 
-        public override ref TValue FindOrEmplaceValue(int startIndex, TKey key)
+        public bool TryAppend(in TKey key, out TValue* value)
         {
-            int index = FindOrEmplaceIndex(startIndex, key);
-            unsafe
+            bool append = _count == 0 || !_buffer[_count - 1].Key.Equals(key);
+            if (append)
             {
-                return ref _buffer[index].Value;
+                Append(key);
+                value = &_buffer[_count - 1].Value;
             }
+            else
+            {
+                value = default;
+            }
+            return append;
+        }
+
+        public bool TryAppend(in TKey key)
+        {
+            bool append = _count == 0 || !_buffer[_count - 1].Key.Equals(key);
+            if (append)
+            {
+                Append(key);
+            }
+            return append;
         }
 
         /// <remarks>
         /// Does not check for correct key ordering on forced insertion. Unsafe.
         /// </remarks>
-        public override void Insert_Forced(int index, TKey key, in TValue value)
+        public void Insert_Forced(int index, TKey key, TValue value)
+        {
+            Insert_Forced(index, key, in value);
+        }
+
+        /// <remarks>
+        /// Does not check for correct key ordering on forced insertion. Unsafe.
+        /// </remarks>
+        public void Insert_Forced(int index, TKey key, in TValue value)
         {
             CheckAndGrow();
-            unsafe
+            var position = _buffer + index;
+            if (index < _count)
             {
-                var position = _buffer + index;
-                if (index < _count)
-                {
-                    int leftover = (_count - index) * SIZEOF_PAIR;
-                    Buffer.MemoryCopy(position, position + 1, leftover, leftover);
-                }
-
-                position->Key = key;
-                position->Value = value;
+                int leftover = (_count - index) * SIZEOF_PAIR;
+                Buffer.MemoryCopy(position, position + 1, leftover, leftover);
             }
+
+            position->Key = key;
+            position->Value = value;
             ++_count;
         }
 
-        public override bool TryGetValue(TKey key, out TValue value)
+        public bool Remove(in TKey key)
         {
-            int index = Find(0, key);
-            if (index < 0)
+            int index = Find(key);
+            return RemoveAtIndex(index);
+        }
+
+        public bool RemoveAtIndex(int index)
+        {
+            if (index < 0 || _count <= index)
             {
-                value = DEFAULT_VALUE;
                 return false;
             }
 
-            unsafe
-            {
-                value = _buffer[index].Value;
-            }
+            --_count;
+            var position = _buffer + index;
+            int amount = (_count - index) * SIZEOF_PAIR;
+            Buffer.MemoryCopy(position + 1, position, amount, amount);
             return true;
         }
 
-        public override void Pop()
+        public void Pop()
         {
             if (_count == 0)
             {
@@ -227,113 +247,110 @@ namespace YARG.Core.NewParsing
             ++_version;
         }
 
-        public override ref TValue At(TKey key)
+        public ref TValue this[in TKey key] => ref FindOrEmplaceValue(in key);
+
+        public int FindOrEmplaceIndex(in TKey key, int startIndex = 0)
         {
-            int index = Find(0, key);
+            int index = Find(key, startIndex);
+            if (index < 0)
+            {
+                index = ~index;
+                Insert_Forced(index, key, new());
+            }
+            return index;
+        }
+
+        public ref TValue FindOrEmplaceValue(in TKey key, int startIndex = 0)
+        {
+            int index = FindOrEmplaceIndex(key, startIndex);
+            return ref _buffer[index].Value;
+        }
+
+        public bool ContainsKey(in TKey key, int startIndex = 0)
+        {
+            return Find(key, startIndex) >= 0;
+        }
+
+        public bool TryGetValue(in TKey key, out TValue value)
+        {
+            int index = Find(key);
+            if (index < 0)
+            {
+                value = DEFAULT_VALUE;
+                return false;
+            }
+
+            value = _buffer[index].Value;
+            return true;
+        }
+
+        public int Find(in TKey key, int startIndex = 0)
+        {
+            if (startIndex < 0 || _count < startIndex)
+            {
+                throw new IndexOutOfRangeException();
+            }
+
+            var lo = _buffer + startIndex;
+            var hi = _buffer + Count - (startIndex + 1);
+            while (lo <= hi)
+            {
+                var curr = lo + ((hi - lo) >> 1);
+                int order = curr->Key.CompareTo(key);
+                if (order == 0)
+                {
+                    return (int) (curr - _buffer);
+                }
+
+                if (order < 0)
+                {
+                    lo = curr + 1;
+                }
+                else
+                {
+                    hi = curr - 1;
+                }
+            }
+            return ~(int) (lo - _buffer);
+        }
+
+
+
+        public ref TValue At(in TKey key)
+        {
+            int index = Find(key);
             if (index < 0)
             {
                 throw new KeyNotFoundException();
             }
-
-            unsafe
-            {
-                return ref _buffer[index].Value;
-            }
+            return ref _buffer[index].Value;
         }
 
-        public override ref YARGKeyValuePair<TKey, TValue> ElementAtIndex(int index)
+        public ref YARGKeyValuePair<TKey, TValue> ElementAtIndex(int index)
         {
             if (index < 0 || _count <= index)
             {
                 throw new IndexOutOfRangeException();
             }
-
-            unsafe
-            {
-                return ref _buffer[index];
-            }
+            return ref _buffer[index];
         }
 
-        public override bool RemoveAtIndex(int index)
+        public ref TValue Last()
         {
-            if (index < 0 || _count <= index)
-            {
-                return false;
-            }
-
-            --_count;
-            unsafe
-            {
-                var position = _buffer + index;
-                int amount = (_count - index) * SIZEOF_PAIR;
-                Buffer.MemoryCopy(position + 1, position, amount, amount);
-            }
-            return true;
+            return ref _buffer[_count - 1].Value;
         }
 
-        public override ref TValue GetLastOrAppend(TKey key)
+        public ref TValue TraverseBackwardsUntil(in TKey key)
         {
-            unsafe
+            var curr = _buffer + _count - 1;
+            while (curr > _buffer && key.CompareTo(curr->Key) < 0)
             {
-                if (_count == 0 || _buffer[_count - 1] < key)
-                {
-                    return ref Append(key);
-                }
-                return ref _buffer[_count - 1].Value;
+                --curr;
             }
+            return ref curr->Value;
         }
 
-        public override int Find(int startIndex, in TKey key)
-        {
-            unsafe
-            {
-                var lo = _buffer + startIndex;
-                var hi = _buffer + Count - (startIndex + 1);
-                while (lo <= hi)
-                {
-                    var curr = lo + ((hi - lo) >> 1);
-                    int order = curr->Key.CompareTo(key);
-                    if (order == 0)
-                    {
-                        return (int) (curr - _buffer);
-                    }
-
-                    if (order < 0)
-                    {
-                        lo = curr + 1;
-                    }
-                    else
-                    {
-                        hi = curr - 1;
-                    }
-                }
-                return ~(int) (lo - _buffer);
-            }
-        }
-
-        public override ref TValue Last()
-        {
-            unsafe
-            {
-                return ref _buffer[_count - 1].Value;
-            }
-        }
-
-        public override ref TValue TraverseBackwardsUntil(TKey key)
-        {
-            unsafe
-            {
-                var curr = _buffer + _count - 1;
-                while (curr > _buffer && key.CompareTo(curr->Key) < 0)
-                {
-                    --curr;
-                }
-                return ref curr->Value;
-            }
-            
-        }
-
-        public unsafe bool TryGetLastValue(in TKey key, out TValue* valuePtr)
+        public bool TryGetLastValue(in TKey key, out TValue* valuePtr)
         {
             if (_count == 0 || !_buffer[_count - 1].Key.Equals(key))
             {
@@ -342,30 +359,6 @@ namespace YARG.Core.NewParsing
             }
             valuePtr = &_buffer[_count - 1].Value;
             return true;
-        }
-        
-        public unsafe bool TryAppend(in TKey key, out TValue* value)
-        {
-            bool append = _count == 0 || !_buffer[_count - 1].Key.Equals(key);
-            if (append)
-            {
-                Append(key);
-            }
-            value = &_buffer[_count - 1].Value;
-            return append;
-        }
-
-        public bool TryAppend(in TKey key)
-        {
-            unsafe
-            {
-                bool append = _count == 0 || !_buffer[_count - 1].Key.Equals(key);
-                if (append)
-                {
-                    Append(key);
-                }
-                return append;
-            }
         }
 
         private void CheckAndGrow()
@@ -382,6 +375,7 @@ namespace YARG.Core.NewParsing
             ++_version;
         }
 
+        private const int DEFAULT_CAPACITY = 16;
         private void Grow()
         {
             int newcapacity = _capacity == 0 ? DEFAULT_CAPACITY : 2 * _capacity;
@@ -390,6 +384,29 @@ namespace YARG.Core.NewParsing
                 newcapacity = int.MaxValue;
             }
             Capacity = newcapacity;
+        }
+
+        private void _Dispose()
+        {
+            if (_buffer != null)
+            {
+                Marshal.FreeHGlobal((IntPtr) _buffer);
+            }
+            _buffer = null;
+            _version = -1;
+            _capacity = 0;
+            _count = 0;
+        }
+
+        public void Dispose()
+        {
+            _Dispose();
+            GC.SuppressFinalize(this);
+        }
+
+        ~YARGNativeSortedList()
+        {
+            _Dispose();
         }
 
         IEnumerator<YARGKeyValuePair<TKey, TValue>> IEnumerable<YARGKeyValuePair<TKey, TValue>>.GetEnumerator()
@@ -438,11 +455,7 @@ namespace YARG.Core.NewParsing
                     {
                         throw new InvalidOperationException("Enum Operation not possible");
                     }
-
-                    unsafe
-                    {
-                        return _map._buffer[_index];
-                    }
+                    return _map._buffer[_index];
                 }
             }
 
