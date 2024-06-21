@@ -26,8 +26,8 @@ namespace YARG.Core.NewParsing
             {
                 if (disposing)
                 {
-                    SpecialPhrases.Dispose();
-                    Events.Dispose();
+                    SpecialPhrases.Clear();
+                    Events.Clear();
                 }
 
                 disposedValue = true;
