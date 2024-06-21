@@ -213,7 +213,7 @@ namespace YARG.Core.NewParsing
         private static bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
-            if (chart.Events.IsOccupied() || (chart.LeadVocals != null && chart.LeadVocals.IsOccupied()))
+            if (!chart.Events.IsEmpty() || (chart.LeadVocals != null && chart.LeadVocals.IsOccupied()))
             {
                 YargLogger.LogInfo("[Events] track appears multiple times. Not parsing repeats...");
                 return false;
