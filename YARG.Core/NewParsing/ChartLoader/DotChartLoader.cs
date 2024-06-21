@@ -67,11 +67,6 @@ namespace YARG.Core.NewParsing
         private static YARGChart Process_Chart<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in ParseSettings settings, HashSet<Instrument>? activeTracks)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
-            if (!YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.HEADERTRACK))
-            {
-                throw new Exception("[Song] track expected at the start of the file");
-            }
-
             uint tickrate = ParseTickrate_Chart(ref container);
             var sync = ReadSynctrack_Chart(ref container, tickrate);
             var chart = new YARGChart(sync, metadata, settings);
