@@ -40,7 +40,7 @@ namespace YARG.Core.NewParsing
                 {
                     Roots.Dispose();
                     HandPositions.Dispose();
-                    ChordPhrases.Dispose();
+                    ChordPhrases.Clear();
                 }
                 base.Dispose(disposing);
             }
