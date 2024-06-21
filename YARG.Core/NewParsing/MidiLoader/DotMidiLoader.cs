@@ -193,7 +193,7 @@ namespace YARG.Core.NewParsing
         private static readonly byte[][] PREFIXES = { Encoding.ASCII.GetBytes("[section "), Encoding.ASCII.GetBytes("[prc_") };
         private static void LoadEventsTrack_Midi(TextEvents2 events, SyncTrack2 sync, ref Encoding encoding, YARGMidiTrack midiTrack)
         {
-            if (!events.IsOccupied())
+            if (!events.IsEmpty())
             {
                 YargLogger.LogInfo("EVENTS track appears multiple times. Not parsing repeats...");
                 return;
