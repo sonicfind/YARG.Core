@@ -67,7 +67,7 @@ namespace YARG.Core.NewParsing
         public void Dispose()
         {
             Sync.Dispose();
-            Events.Dispose();
+            Events.Clear();
             BeatMap.Dispose();
             Miscellaneous?.Clear();
 
