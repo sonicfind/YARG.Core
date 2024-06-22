@@ -130,9 +130,9 @@ namespace YARG.Core.NewParsing
                 case 42: note.Pads.Blue.Dynamics   = DrumDynamics.Ghost; break;
                 case 43: note.Pads.Green.Dynamics  = DrumDynamics.Ghost; break;
 
-                case 66: note.Cymbals[0] = true; break;
-                case 67: note.Cymbals[1] = true; break;
-                case 68: note.Cymbals[2] = true; break;
+                case 66: note.Cymbals.Yellow = true; break;
+                case 67: note.Cymbals.Blue = true; break;
+                case 68: note.Cymbals.Green = true; break;
                 default:
                     return false;
             }
@@ -174,7 +174,7 @@ namespace YARG.Core.NewParsing
                 case 66:
                 case 67:
                 case 68:
-                    if (_unknownDrumType != DrumsType.FiveLane)
+                    if (_unknownDrumType != DrumsType.FiveLane) unsafe
                     {
                         note.Cymbals[lane - 66] = true;
                         _unknownDrumType = DrumsType.ProDrums;
