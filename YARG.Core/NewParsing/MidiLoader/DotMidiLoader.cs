@@ -283,19 +283,19 @@ namespace YARG.Core.NewParsing
                         // Only possible if pre-type was FourOrFive AND fifth lane was not found
                         if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
                         {
-                            chart.FourLaneDrums = track.ConvertTo<DrumNote2<FourLane>, FourLane>();
+                            chart.FourLaneDrums = track.ConvertToBasic<FourLane>();
                             drumsInChart = DrumsType.FourLane;
                         }
                         // Only possible if pre-type was ProOrFive AND fifth lane was not found
                         else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
                         {
-                            chart.ProDrums = track.ConvertTo<ProDrumNote2<FourLane>, FourLane>();
+                            chart.ProDrums = track.ConvertToPro();
                             drumsInChart = DrumsType.ProDrums;
                         }
                         // Only possible if fifth lane is found
                         else
                         {
-                            chart.FiveLaneDrums = track.ConvertTo<DrumNote2<FiveLane>, FiveLane>();
+                            chart.FiveLaneDrums = track.ConvertToBasic<FiveLane>();
                         }
                         break;
                     }
