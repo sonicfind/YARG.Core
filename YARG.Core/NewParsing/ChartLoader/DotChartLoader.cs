@@ -102,17 +102,17 @@ namespace YARG.Core.NewParsing
                 {
                     case DrumsType.ProDrums:
                         chart.ProDrums ??= new BasicInstrumentTrack2<ProDrumNote2<FourLane>>();
-                        unknownDrums.ConvertTo<ProDrumNote2<FourLane>, FourLane>(chart.ProDrums);
+                        unknownDrums.ConvertToPro(chart.ProDrums);
                         chart.Settings.DrumsType = DrumsType.ProDrums;
                         break;
                     case DrumsType.FiveLane:
                         chart.FiveLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FiveLane>>();
-                        unknownDrums.ConvertTo<DrumNote2<FiveLane>, FiveLane>(chart.FiveLaneDrums);
+                        unknownDrums.ConvertToBasic(chart.FiveLaneDrums);
                         chart.Settings.DrumsType = DrumsType.FiveLane;
                         break;
                     default:
                         chart.FourLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane>>();
-                        unknownDrums.ConvertTo<DrumNote2<FourLane>, FourLane>(chart.FourLaneDrums);
+                        unknownDrums.ConvertToBasic(chart.FourLaneDrums);
                         chart.Settings.DrumsType = DrumsType.FourLane;
                         break;
                 }
