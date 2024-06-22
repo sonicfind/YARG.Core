@@ -4,14 +4,22 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public interface IDrumPadConfig
+    public interface IDrumPadConfig<TPads>
+        where TPads : unmanaged, IDrumPadConfig<TPads>
     {
+        public static readonly int NUM_PADS;
+        static IDrumPadConfig()
+        {
+            TPads d = default;
+            NUM_PADS = d.NumPads;
+        }
+
         public int NumPads { get; }
-        public ref DrumPad this[int lane] { get; }
+        public DualTime this[int lane] { get; set; }
         public void SetDynamics(int index, DrumDynamics dynamics);
     }
 
-    public struct FourLane : IDrumPadConfig
+    public struct FourLane : IDrumPadConfig<FourLane>
     {
         public DrumPad Snare;
         public DrumPad Yellow;
@@ -20,22 +28,29 @@ namespace YARG.Core.NewParsing
 
         public readonly int NumPads => 4;
 
-        public ref DrumPad this[int lane]
+        public DualTime this[int lane]
         {
-            get
+            readonly get
             {
-                unsafe
+                return lane switch
                 {
-#pragma warning disable CS9084 // Struct member returns 'this' or other instance members by reference
-                    switch (lane)
-                    {
-                        case 0: return ref Snare;
-                        case 1: return ref Yellow;
-                        case 2: return ref Blue;
-                        case 3: return ref Green;
-                        default: throw new ArgumentOutOfRangeException(nameof(lane));
-                    }
-#pragma warning restore CS9084 // Struct member returns 'this' or other instance members by reference
+                    0 => Snare.Duration,
+                    1 => Yellow.Duration,
+                    2 => Blue.Duration,
+                    3 => Green.Duration,
+                    _ => throw new ArgumentOutOfRangeException(nameof(lane)),
+                };
+            }
+
+            set
+            {
+                switch (lane)
+                {
+                    case 0: Snare.Duration = value; break;
+                    case 1: Yellow.Duration = value; break;
+                    case 2: Blue.Duration = value; break;
+                    case 3: Green.Duration = value; break;
+                    default: throw new ArgumentOutOfRangeException(nameof(lane));
                 }
             }
         }
@@ -76,7 +91,7 @@ namespace YARG.Core.NewParsing
         }
     }
 
-    public struct FiveLane : IDrumPadConfig
+    public struct FiveLane : IDrumPadConfig<FiveLane>
     {
         public DrumPad Snare;
         public DrumPad Yellow;
@@ -86,23 +101,31 @@ namespace YARG.Core.NewParsing
 
         public readonly int NumPads => 5;
 
-        public ref DrumPad this[int lane]
+        public DualTime this[int lane]
         {
-            get
+            readonly get
             {
-                unsafe
+                return lane switch
                 {
-#pragma warning disable CS9084 // Struct member returns 'this' or other instance members by reference
-                    switch (lane)
-                    {
-                        case 0: return ref Snare;
-                        case 1: return ref Yellow;
-                        case 2: return ref Blue;
-                        case 3: return ref Orange;
-                        case 4: return ref Green;
-                        default: throw new ArgumentOutOfRangeException(nameof(lane));
-                    }
-#pragma warning restore CS9084 // Struct member returns 'this' or other instance members by reference
+                    0 => Snare.Duration,
+                    1 => Yellow.Duration,
+                    2 => Blue.Duration,
+                    3 => Orange.Duration,
+                    4 => Green.Duration,
+                    _ => throw new ArgumentOutOfRangeException(nameof(lane)),
+                };
+            }
+
+            set
+            {
+                switch (lane)
+                {
+                    case 0: Snare.Duration = value; break;
+                    case 1: Yellow.Duration = value; break;
+                    case 2: Blue.Duration = value; break;
+                    case 3: Orange.Duration = value; break;
+                    case 4: Green.Duration = value; break;
+                    default: throw new ArgumentOutOfRangeException(nameof(lane));
                 }
             }
         }

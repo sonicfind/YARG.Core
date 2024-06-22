@@ -5,15 +5,8 @@ using System.Text;
 namespace YARG.Core.NewParsing
 {
     public interface IDrumNote<TPads> : IInstrumentNote
-         where TPads : unmanaged, IDrumPadConfig
+         where TPads : unmanaged, IDrumPadConfig<TPads>
     {
-        public static readonly int NUM_PADS;
-        static IDrumNote()
-        {
-            TPads d = default;
-            NUM_PADS = d.NumPads;
-        }
-
         public DualTime Bass { get; set; }
         public DualTime DoubleBass { get; set; }
         public ref TPads Pads { get; }
@@ -21,21 +14,15 @@ namespace YARG.Core.NewParsing
         public void ToggleDoubleBass();
         public void DisableBass();
         public DualTime this[int lane] { get; set; }
-
-        /// <summary>
-        /// Used for loading the buffer of unknown drum types to a known type
-        /// </summary>
-        /// <param name="unknown">Unknown drum type note</param>
-        public void LoadFrom(in ProDrumNote2<FiveLane> unknown);
     }
 
     public struct DrumNote2<TPads> : IDrumNote<TPads>
-        where TPads : unmanaged, IDrumPadConfig
+        where TPads : unmanaged, IDrumPadConfig<TPads>
     {
         private DualTime _bass;
         private DualTime _doubleBass;
-        private TPads _pads;
         private bool _flammed;
+        private TPads _pads;
 
         public DualTime Bass
         {
@@ -104,7 +91,7 @@ namespace YARG.Core.NewParsing
                 {
                     0 => _bass,
                     1 => _doubleBass,
-                    _ => _pads[lane - 2].Duration,
+                    _ => _pads[lane - 2],
                 };
             }
             set
@@ -120,7 +107,7 @@ namespace YARG.Core.NewParsing
                         _bass = default;
                         break;
                     default:
-                        _pads[lane - 2].Duration = value;
+                        _pads[lane - 2] = value;
                         break;
                 }
             }
@@ -147,9 +134,9 @@ namespace YARG.Core.NewParsing
 
             for (int i = 0; i < _pads.NumPads; ++i)
             {
-                if (_pads[i].Duration > sustain)
+                if (_pads[i] > sustain)
                 {
-                    sustain = _pads[i].Duration;
+                    sustain = _pads[i];
                 }
             }
             return sustain;
@@ -169,26 +156,10 @@ namespace YARG.Core.NewParsing
             stringBuilder.Append(Pads.ToString());
             return stringBuilder.ToString();
         }
-
-        /// <summary>
-        /// Used for loading the buffer of unknown drum types to a known type
-        /// </summary>
-        /// <param name="unknown">Unknown drum type note</param>
-        public void LoadFrom(in ProDrumNote2<FiveLane> unknown)
-        {
-            _bass = unknown.Bass;
-            _doubleBass = unknown.DoubleBass;
-            _flammed = unknown.IsFlammed;
-
-            for (int i = 0; i < _pads.NumPads; ++i)
-            {
-                _pads[i] = unknown.Pads[i];
-            }
-        }
     }
 
-    public struct ProDrumNote2<TPads> : IDrumNote<TPads>
-        where TPads : unmanaged, IDrumPadConfig
+    public unsafe struct ProDrumNote2<TPads> : IDrumNote<TPads>
+        where TPads : unmanaged, IDrumPadConfig<TPads>
     {
         public struct CymbalArray
         {
@@ -200,18 +171,15 @@ namespace YARG.Core.NewParsing
             {
                 get
                 {
-                    unsafe
+                    switch (lane)
                     {
-                        switch (lane)
-                        {
 #pragma warning disable CS9084 // Struct member returns 'this' or other instance members by reference
-                            case 0: return ref Yellow;
-                            case 1: return ref Blue;
-                            case 2: return ref Green;
-                            default:
-                                throw new ArgumentOutOfRangeException(nameof(lane));
+                        case 0: return ref Yellow;
+                        case 1: return ref Blue;
+                        case 2: return ref Green;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(lane));
 #pragma warning restore CS9084 // Struct member returns 'this' or other instance members by reference
-                        }
                     }
                 }
             }
@@ -270,18 +238,6 @@ namespace YARG.Core.NewParsing
                 builder.Append($"G-Cymbal | ");
             }
             return builder.ToString();
-        }
-
-        /// <summary>
-        /// Used for loading the buffer of unknown drum types to a known type
-        /// </summary>
-        /// <param name="unknown">Unknown drum type note</param>
-        public void LoadFrom(in ProDrumNote2<FiveLane> unknown)
-        {
-            _baseDrumNote.LoadFrom(in unknown);
-            Cymbals.Yellow = unknown.Cymbals.Yellow;
-            Cymbals.Blue = unknown.Cymbals.Blue;
-            Cymbals.Green = unknown.Cymbals.Green;
         }
     }
 }
