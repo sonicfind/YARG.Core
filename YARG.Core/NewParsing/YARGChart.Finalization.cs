@@ -199,7 +199,7 @@ namespace YARG.Core.NewParsing
                     // 0 = measure
                     for (int i = 1; i < pattern.Length; ++i)
                     {
-                        if ((i % markersPerClick) > 0)
+                        if (markersPerClick > 1 && (i % markersPerClick) > 0)
                         {
                             pattern[i] = BeatlineType.Weak; 
                         }
