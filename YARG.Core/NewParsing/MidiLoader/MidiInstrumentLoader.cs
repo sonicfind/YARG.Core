@@ -124,6 +124,12 @@ namespace YARG.Core.NewParsing.Midi
                     Difficulties[i] = new();
                 }
             }
+
+            if (Track[3] == null && difficulties!.Contains(Difficulty.ExpertPlus))
+            {
+                Track[3] = new();
+                Difficulties[3] = new();
+            }
         }
 
         internal bool AddPhrase_ON()
