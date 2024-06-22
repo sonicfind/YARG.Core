@@ -5,7 +5,7 @@ using YARG.Core.IO;
 namespace YARG.Core.NewParsing.Midi
 {
     public class MidiProDrumsLoader_Base<TDrumConfig, TDiffTracker> : MidiDrumLoader_Base<ProDrumNote2<TDrumConfig>, TDrumConfig, TDiffTracker>
-        where TDrumConfig : unmanaged, IDrumPadConfig
+        where TDrumConfig : unmanaged, IDrumPadConfig<TDrumConfig>
         where TDiffTracker : DrumsMidiDifficulty, new()
     {
         private const int TOM_MIN_VALUE = 110;
@@ -62,7 +62,7 @@ namespace YARG.Core.NewParsing.Midi
 
                     if (_type != DrumsType.FiveLane)
                     {
-                        if (TOM_MIN_LANE <= lane && lane <= TOM_MAX_LANE)
+                        if (TOM_MIN_LANE <= lane && lane <= TOM_MAX_LANE) unsafe
                         {
                             int cymbalIndex = lane - TOM_MIN_LANE;
                             drum.Cymbals[cymbalIndex] = !_toms[cymbalIndex];

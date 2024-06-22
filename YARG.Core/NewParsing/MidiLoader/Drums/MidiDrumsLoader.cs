@@ -4,7 +4,7 @@ using YARG.Core.IO;
 namespace YARG.Core.NewParsing.Midi
 {
     public class MidiDrumsLoader<TDrumConfig, TDiffTracker> : MidiDrumLoader_Base<DrumNote2<TDrumConfig>, TDrumConfig, FourLaneDifficulty>
-        where TDrumConfig : unmanaged, IDrumPadConfig
+        where TDrumConfig : unmanaged, IDrumPadConfig<TDrumConfig>
         where TDiffTracker : DrumsMidiDifficulty, new()
     {
         public static BasicInstrumentTrack2<DrumNote2<TDrumConfig>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
@@ -17,8 +17,8 @@ namespace YARG.Core.NewParsing.Midi
         private static readonly int NUM_DRUMLANES;
         static MidiDrumsLoader()
         {
-            NUM_BRELANES = IDrumNote<TDrumConfig>.NUM_PADS + 1;
-            NUM_DRUMLANES = IDrumNote<TDrumConfig>.NUM_PADS + 2;
+            NUM_BRELANES = IDrumPadConfig<TDrumConfig>.NUM_PADS + 1;
+            NUM_DRUMLANES = IDrumPadConfig<TDrumConfig>.NUM_PADS + 2;
         }
 
         private MidiDrumsLoader(HashSet<Difficulty>? Difficulties)
