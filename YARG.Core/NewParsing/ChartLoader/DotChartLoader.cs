@@ -190,17 +190,17 @@ namespace YARG.Core.NewParsing
                 if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
                 {
                     chart.FourLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane>>();
-                    unknownDrums.ConvertTo<DrumNote2<FourLane>, FourLane>(chart.FourLaneDrums);
+                    unknownDrums.ConvertToBasic(chart.FourLaneDrums);
                 }
                 else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
                 {
                     chart.ProDrums ??= new BasicInstrumentTrack2<ProDrumNote2<FourLane>>();
-                    unknownDrums.ConvertTo<ProDrumNote2<FourLane>, FourLane>(chart.ProDrums);
+                    unknownDrums.ConvertToPro(chart.ProDrums);
                 }
                 else
                 {
                     chart.FiveLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FiveLane>>();
-                    unknownDrums.ConvertTo<DrumNote2<FiveLane>, FiveLane>(chart.FiveLaneDrums);
+                    unknownDrums.ConvertToBasic(chart.FiveLaneDrums);
                 }
             }
             YARGChartFinalizer.FinalizeBeats(chart);
