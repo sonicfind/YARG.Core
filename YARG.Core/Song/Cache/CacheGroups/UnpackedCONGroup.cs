@@ -7,7 +7,7 @@ using YARG.Core.Logging;
 
 namespace YARG.Core.Song.Cache
 {
-    public sealed class UnpackedCONGroup : CONGroup, IDisposable
+    public sealed class UnpackedCONGroup : CONGroup
     {
         public readonly AbridgedFileInfo_Length DTA;
         private MemoryMappedArray? _fileData;
@@ -56,9 +56,12 @@ namespace YARG.Core.Song.Cache
             return new ReadOnlyMemory<byte>(ms.GetBuffer(), 0, (int)ms.Length);
         }
 
-        public void Dispose()
+        public override void DisposeSongDTA()
         {
-            _fileData?.Dispose();
+            if (--_refCount == 0)
+            {
+                _fileData?.Dispose();
+            }
         }
     }
 }

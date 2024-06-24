@@ -27,7 +27,7 @@ namespace YARG.Core.Song.Cache
                 {
                     ScanCONGroup(group, ref container, ScanPackedCONNode);
                 }
-                group.DisposeStreamAndSongDTA();
+                group.DisposeSongDTA();
             }
 
             foreach (var group in extractedConGroups)
@@ -36,7 +36,7 @@ namespace YARG.Core.Song.Cache
                 {
                     ScanCONGroup(group, ref container, ScanUnpackedCONNode);
                 }
-                group.Dispose();
+                group.DisposeSongDTA();
             }
 
             foreach (var group in conGroups)

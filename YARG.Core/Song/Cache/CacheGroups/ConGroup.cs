@@ -8,6 +8,7 @@ namespace YARG.Core.Song.Cache
     public abstract class CONGroup : ICacheGroup<RBCONEntry>
     {
         protected readonly Dictionary<string, SortedDictionary<int, RBCONEntry>> entries = new();
+        protected int _refCount = 1;
 
         private int _count;
         public int Count { get { lock (entries) return _count; } }
@@ -21,6 +22,12 @@ namespace YARG.Core.Song.Cache
             DefaultPlaylist = defaultPlaylist;
         }
 
+        public void AddRef()
+        {
+            _refCount++;
+        }
+
+        public abstract void DisposeSongDTA();
         public abstract void ReadEntry(string nodeName, int index, Dictionary<string, (YARGTextContainer<byte>, RBProUpgrade)> upgrades, UnmanagedMemoryStream stream, CategoryCacheStrings strings);
         public abstract ReadOnlyMemory<byte> SerializeEntries(Dictionary<SongEntry, CategoryCacheWriteNode> nodes);
 

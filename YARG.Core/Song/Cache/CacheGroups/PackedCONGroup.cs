@@ -116,10 +116,13 @@ namespace YARG.Core.Song.Cache
             return new ReadOnlyMemory<byte>(ms.GetBuffer(), 0, (int)ms.Length);
         }
 
-        public void DisposeStreamAndSongDTA()
+        public override void DisposeSongDTA()
         {
-            Stream?.Dispose();
-            _songDTAData?.Dispose();
+            if (--_refCount == 0)
+            {
+                Stream?.Dispose();
+                _songDTAData?.Dispose();
+            }
         }
 
         public void DisposeUpgradeDTA()
