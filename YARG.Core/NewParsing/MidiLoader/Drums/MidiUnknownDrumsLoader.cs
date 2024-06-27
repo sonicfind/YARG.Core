@@ -6,9 +6,9 @@ using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing.Midi
 {
-    public class MidiUnkownDrumsLoader : MidiProDrumsLoader_Base<FiveLane, FiveLaneDifficulty>
+    public class MidiUnkownDrumsLoader : MidiProDrumsLoader_Base<FiveLane<DrumPad_Pro>, FiveLaneDifficulty>
     {
-        public static BasicInstrumentTrack2<ProDrumNote2<FiveLane>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties, ref DrumsType type)
+        public static BasicInstrumentTrack2<DrumNote2<FiveLane<DrumPad_Pro>, DrumPad_Pro>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties, ref DrumsType type)
         {
             var loader = new MidiUnkownDrumsLoader(difficulties, type);
             var track = loader.Process(midiTrack, sync);

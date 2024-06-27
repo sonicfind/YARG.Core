@@ -4,8 +4,8 @@ using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing.Midi
 {
-    public class MidiProDrumsLoader_Base<TDrumConfig, TDiffTracker> : MidiDrumLoader_Base<ProDrumNote2<TDrumConfig>, TDrumConfig, TDiffTracker>
-        where TDrumConfig : unmanaged, IDrumPadConfig<TDrumConfig>
+    public class MidiProDrumsLoader_Base<TDrumConfig, TDiffTracker> : MidiDrumLoader_Base<TDrumConfig, DrumPad_Pro, TDiffTracker>
+        where TDrumConfig : unmanaged, IDrumPadConfig<DrumPad_Pro>
         where TDiffTracker : DrumsMidiDifficulty, new()
     {
         private const int TOM_MIN_VALUE = 110;
@@ -47,25 +47,24 @@ namespace YARG.Core.NewParsing.Midi
 
                 if (lane >= MidiDrumLoader_Base.DYNAMIC_MIN)
                 {
+                    ref var pad = ref drum.Pads[lane - MidiDrumLoader_Base.DYNAMIC_MIN];
                     if (enableDynamics)
                     {
-                        int padIndex = lane - MidiDrumLoader_Base.DYNAMIC_MIN;
                         if (_note.velocity > 100)
                         {
-                            drum.Pads.SetDynamics(padIndex, DrumDynamics.Accent);
+                            pad.Dynamics = DrumDynamics.Accent;
                         }
                         else if (_note.velocity < 100)
                         {
-                            drum.Pads.SetDynamics(padIndex, DrumDynamics.Ghost);
+                            pad.Dynamics = DrumDynamics.Ghost;
                         }
                     }
 
                     if (_type != DrumsType.FiveLane)
                     {
-                        if (TOM_MIN_LANE <= lane && lane <= TOM_MAX_LANE) unsafe
+                        if (TOM_MIN_LANE <= lane && lane <= TOM_MAX_LANE)
                         {
-                            int cymbalIndex = lane - TOM_MIN_LANE;
-                            drum.Cymbals[cymbalIndex] = !_toms[cymbalIndex];
+                            pad.CymbalFlag = !_toms[lane - TOM_MIN_LANE];
                         }
                         else if (_type == DrumsType.UnknownPro && lane > TOM_MAX_LANE)
                         {

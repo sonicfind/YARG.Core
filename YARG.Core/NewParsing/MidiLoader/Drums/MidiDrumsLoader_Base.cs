@@ -23,9 +23,9 @@ namespace YARG.Core.NewParsing.Midi
         static MidiDrumLoader_Base() { }
     }
 
-    public abstract class MidiDrumLoader_Base<TDrumNote, TDrumConfig, TDiffTracker> : MidiBasicInstrumentLoader<TDrumNote, TDiffTracker>
-        where TDrumNote : unmanaged, IDrumNote<TDrumConfig>
-        where TDrumConfig : unmanaged, IDrumPadConfig<TDrumConfig>
+    public abstract class MidiDrumLoader_Base<TDrumConfig, TPad, TDiffTracker> : MidiBasicInstrumentLoader<DrumNote2<TDrumConfig, TPad>, TDiffTracker>
+        where TDrumConfig : unmanaged, IDrumPadConfig<TPad>
+        where TPad : unmanaged, IDrumPad
         where TDiffTracker : DrumsMidiDifficulty, new()
     {
         protected bool enableDynamics = false;

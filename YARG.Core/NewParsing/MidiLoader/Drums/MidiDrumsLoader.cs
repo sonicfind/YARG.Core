@@ -3,11 +3,11 @@ using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing.Midi
 {
-    public class MidiDrumsLoader<TDrumConfig, TDiffTracker> : MidiDrumLoader_Base<DrumNote2<TDrumConfig>, TDrumConfig, FourLaneDifficulty>
-        where TDrumConfig : unmanaged, IDrumPadConfig<TDrumConfig>
+    public class MidiDrumsLoader<TDrumConfig, TDiffTracker> : MidiDrumLoader_Base<TDrumConfig, DrumPad, FourLaneDifficulty>
+        where TDrumConfig : unmanaged, IDrumPadConfig<DrumPad>
         where TDiffTracker : DrumsMidiDifficulty, new()
     {
-        public static BasicInstrumentTrack2<DrumNote2<TDrumConfig>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
+        public static BasicInstrumentTrack2<DrumNote2<TDrumConfig, DrumPad>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
         {
             var loader = new MidiDrumsLoader<TDrumConfig, TDiffTracker>(difficulties);
             return loader.Process(midiTrack, sync);
@@ -17,8 +17,9 @@ namespace YARG.Core.NewParsing.Midi
         private static readonly int NUM_DRUMLANES;
         static MidiDrumsLoader()
         {
-            NUM_BRELANES = IDrumPadConfig<TDrumConfig>.NUM_PADS + 1;
-            NUM_DRUMLANES = IDrumPadConfig<TDrumConfig>.NUM_PADS + 2;
+            var def = default(TDrumConfig);
+            NUM_BRELANES = def.NumPads + 1;
+            NUM_DRUMLANES = def.NumPads + 2;
         }
 
         private MidiDrumsLoader(HashSet<Difficulty>? Difficulties)
@@ -50,14 +51,14 @@ namespace YARG.Core.NewParsing.Midi
 
                 if (enableDynamics && lane >= MidiDrumLoader_Base.DYNAMIC_MIN)
                 {
-                    int padIndex = lane - MidiDrumLoader_Base.DYNAMIC_MIN;
+                    ref var pad = ref drum.Pads[lane - MidiDrumLoader_Base.DYNAMIC_MIN];
                     if (_note.velocity > 100)
                     {
-                        drum.Pads.SetDynamics(padIndex, DrumDynamics.Accent);
+                        pad.Dynamics = DrumDynamics.Accent;
                     }
                     else if (_note.velocity < 100)
                     {
-                        drum.Pads.SetDynamics(padIndex, DrumDynamics.Ghost);
+                        pad.Dynamics = DrumDynamics.Ghost;
                     }
                 }
             }
@@ -86,17 +87,17 @@ namespace YARG.Core.NewParsing.Midi
 
     public static class MidiFourLaneLoader
     {
-        public static BasicInstrumentTrack2<DrumNote2<FourLane>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
+        public static BasicInstrumentTrack2<DrumNote2<FourLane<DrumPad>, DrumPad>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
         {
-            return MidiDrumsLoader<FourLane, FourLaneDifficulty>.Load(midiTrack, sync, difficulties);
+            return MidiDrumsLoader<FourLane<DrumPad>, FourLaneDifficulty>.Load(midiTrack, sync, difficulties);
         }
     }
 
     public static class MidiFiveLaneLoader
     {
-        public static BasicInstrumentTrack2<DrumNote2<FiveLane>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
+        public static BasicInstrumentTrack2<DrumNote2<FiveLane<DrumPad>, DrumPad>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync, HashSet<Difficulty>? difficulties)
         {
-            return MidiDrumsLoader<FiveLane, FiveLaneDifficulty>.Load(midiTrack, sync, difficulties);
+            return MidiDrumsLoader<FiveLane<DrumPad>, FiveLaneDifficulty>.Load(midiTrack, sync, difficulties);
         }
     }
 }
