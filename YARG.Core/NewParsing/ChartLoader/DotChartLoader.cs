@@ -104,7 +104,7 @@ namespace YARG.Core.NewParsing
                 {
                     case DrumsType.ProDrums:
                         chart.ProDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane<DrumPad_Pro>, DrumPad_Pro>>();
-                        unknownDrums.ConvertToPro(chart.ProDrums);
+                        unknownDrums.ConvertTo(chart.ProDrums);
                         chart.Settings.DrumsType = DrumsType.ProDrums;
                         break;
                     case DrumsType.FiveLane:
