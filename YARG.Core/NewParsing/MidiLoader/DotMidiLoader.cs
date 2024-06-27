@@ -230,13 +230,13 @@ namespace YARG.Core.NewParsing
                     switch (chart.Settings.DrumsType)
                     {
                         case DrumsType.FourLane:
-                            chart.FourLaneDrums ??= MidiDrumsLoader.LoadBasic<FourLane>(midiTrack, sync);
+                            chart.FourLaneDrums ??= MidiDrumsLoader.LoadBasic<FourLane<DrumPad>>(midiTrack, sync);
                             break;
                         case DrumsType.ProDrums:
                             chart.ProDrums ??= MidiDrumsLoader.LoadProDrums(midiTrack, sync);
                             break;
                         case DrumsType.FiveLane:
-                            chart.FiveLaneDrums ??= MidiDrumsLoader.LoadBasic<FiveLane>(midiTrack, sync);
+                            chart.FiveLaneDrums ??= MidiDrumsLoader.LoadBasic<FiveLane<DrumPad>>(midiTrack, sync);
                             break;
                         default:
                             // No `using/dipose` as events & phrases need to persist
@@ -244,13 +244,13 @@ namespace YARG.Core.NewParsing
                             switch (chart.Settings.DrumsType)
                             {
                                 case DrumsType.FourLane:
-                                    chart.FourLaneDrums = track.ConvertToBasic<FourLane>();
+                                    chart.FourLaneDrums = track.ConvertTo<FourLane<DrumPad>>();
                                     break;
                                 case DrumsType.ProDrums:
                                     chart.ProDrums = track.ConvertToPro();
                                     break;
                                 case DrumsType.FiveLane:
-                                    chart.FiveLaneDrums = track.ConvertToBasic<FiveLane>();
+                                    chart.FiveLaneDrums = track.ConvertTo<FiveLane<DrumPad>>();
                                     break;
                             }
                             break;
