@@ -195,7 +195,7 @@ namespace YARG.Core.NewParsing
                 else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
                 {
                     chart.ProDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane<DrumPad_Pro>, DrumPad_Pro>>();
-                    unknownDrums.ConvertToPro(chart.ProDrums);
+                    unknownDrums.ConvertTo(chart.ProDrums);
                 }
                 else
                 {
