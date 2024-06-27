@@ -4,71 +4,44 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public interface IDrumPadConfig<TPads>
-        where TPads : unmanaged, IDrumPadConfig<TPads>
+    public interface IDrumPadConfig<TPad>
+        where TPad : unmanaged, IDrumPad
     {
-        public static readonly int NUM_PADS;
-        static IDrumPadConfig()
-        {
-            TPads d = default;
-            NUM_PADS = d.NumPads;
-        }
-
         public int NumPads { get; }
-        public DualTime this[int lane] { get; set; }
-        public void SetDynamics(int index, DrumDynamics dynamics);
+        public ref TPad this[int lane] { get; }
     }
 
-    public struct FourLane : IDrumPadConfig<FourLane>
+    public struct FourLane<TPad> : IDrumPadConfig<TPad>
+        where TPad : unmanaged, IDrumPad
     {
-        public DrumPad Snare;
-        public DrumPad Yellow;
-        public DrumPad Blue;
-        public DrumPad Green;
+        public TPad Snare;
+        public TPad Yellow;
+        public TPad Blue;
+        public TPad Green;
 
         public readonly int NumPads => 4;
 
-        public DualTime this[int lane]
+        public ref TPad this[int lane]
         {
-            readonly get
+            get
             {
-                return lane switch
+                unsafe
                 {
-                    0 => Snare.Duration,
-                    1 => Yellow.Duration,
-                    2 => Blue.Duration,
-                    3 => Green.Duration,
-                    _ => throw new ArgumentOutOfRangeException(nameof(lane)),
-                };
-            }
-
-            set
-            {
-                switch (lane)
-                {
-                    case 0: Snare.Duration = value; break;
-                    case 1: Yellow.Duration = value; break;
-                    case 2: Blue.Duration = value; break;
-                    case 3: Green.Duration = value; break;
-                    default: throw new ArgumentOutOfRangeException(nameof(lane));
+#pragma warning disable CS9084 // Struct member returns 'this' or other instance members by reference
+                    switch (lane)
+                    {
+                        case 0: return ref Snare;
+                        case 1: return ref Yellow;
+                        case 2: return ref Blue;
+                        case 3: return ref Green;
+                        default: throw new ArgumentOutOfRangeException(nameof(lane));
+                    }
+#pragma warning restore CS9084 // Struct member returns 'this' or other instance members by reference
                 }
             }
         }
 
-        public void SetDynamics(int index, DrumDynamics dynamics)
-        {
-            switch (index)
-            {
-                case 0: Snare.Dynamics  = dynamics; break;
-                case 1: Yellow.Dynamics = dynamics; break;
-                case 2: Blue.Dynamics   = dynamics; break;
-                case 3: Green.Dynamics  = dynamics; break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(index));
-            }
-        }
-
-        public override string ToString()
+        public readonly override string ToString()
         {
             StringBuilder builder = new();
             if (Snare.IsActive())
@@ -91,60 +64,39 @@ namespace YARG.Core.NewParsing
         }
     }
 
-    public struct FiveLane : IDrumPadConfig<FiveLane>
+    public struct FiveLane<TPad> : IDrumPadConfig<TPad>
+        where TPad : unmanaged, IDrumPad
     {
-        public DrumPad Snare;
-        public DrumPad Yellow;
-        public DrumPad Blue;
-        public DrumPad Orange;
-        public DrumPad Green;
+        public TPad Snare;
+        public TPad Yellow;
+        public TPad Blue;
+        public TPad Orange;
+        public TPad Green;
 
         public readonly int NumPads => 5;
 
-        public DualTime this[int lane]
+        public ref TPad this[int lane]
         {
-            readonly get
+            get
             {
-                return lane switch
+                unsafe
                 {
-                    0 => Snare.Duration,
-                    1 => Yellow.Duration,
-                    2 => Blue.Duration,
-                    3 => Orange.Duration,
-                    4 => Green.Duration,
-                    _ => throw new ArgumentOutOfRangeException(nameof(lane)),
-                };
-            }
-
-            set
-            {
-                switch (lane)
-                {
-                    case 0: Snare.Duration = value; break;
-                    case 1: Yellow.Duration = value; break;
-                    case 2: Blue.Duration = value; break;
-                    case 3: Orange.Duration = value; break;
-                    case 4: Green.Duration = value; break;
-                    default: throw new ArgumentOutOfRangeException(nameof(lane));
+#pragma warning disable CS9084 // Struct member returns 'this' or other instance members by reference
+                    switch (lane)
+                    {
+                        case 0: return ref Snare;
+                        case 1: return ref Yellow;
+                        case 2: return ref Blue;
+                        case 3: return ref Orange;
+                        case 4: return ref Green;
+                        default: throw new ArgumentOutOfRangeException(nameof(lane));
+                    }
+#pragma warning restore CS9084 // Struct member returns 'this' or other instance members by reference
                 }
             }
         }
 
-        public void SetDynamics(int index, DrumDynamics dynamics)
-        {
-            switch (index)
-            {
-                case 0: Snare.Dynamics  = dynamics; break;
-                case 1: Yellow.Dynamics = dynamics; break;
-                case 2: Blue.Dynamics   = dynamics; break;
-                case 3: Orange.Dynamics = dynamics; break;
-                case 4: Green.Dynamics  = dynamics; break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(index));
-            }
-        }
-
-        public override string ToString()
+        public readonly override string ToString()
         {
             StringBuilder builder = new();
 

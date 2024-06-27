@@ -269,13 +269,13 @@ namespace YARG.Core.NewParsing
                     switch (drumsInChart)
                     {
                     case DrumsType.FourLane:
-                        chart.FourLaneDrums ??= MidiDrumsLoader.LoadBasic<FourLane>(midiTrack, chart.Sync);
+                        chart.FourLaneDrums ??= MidiDrumsLoader.LoadBasic<FourLane<DrumPad>>(midiTrack, chart.Sync);
                         break;
                     case DrumsType.ProDrums:
                         chart.ProDrums ??= MidiDrumsLoader.LoadProDrums(midiTrack, chart.Sync);
                         break;
                     case DrumsType.FiveLane:
-                        chart.FiveLaneDrums ??= MidiDrumsLoader.LoadBasic<FiveLane>(midiTrack, chart.Sync);
+                        chart.FiveLaneDrums ??= MidiDrumsLoader.LoadBasic<FiveLane<DrumPad>>(midiTrack, chart.Sync);
                         break;
                     default:
                         // No `using/dipose` as events & phrases need to persist
@@ -283,7 +283,7 @@ namespace YARG.Core.NewParsing
                         // Only possible if pre-type was FourOrFive AND fifth lane was not found
                         if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
                         {
-                            chart.FourLaneDrums = track.ConvertToBasic<FourLane>();
+                            chart.FourLaneDrums = track.ConvertTo<FourLane<DrumPad>>();
                             drumsInChart = DrumsType.FourLane;
                         }
                         // Only possible if pre-type was ProOrFive AND fifth lane was not found
@@ -295,7 +295,7 @@ namespace YARG.Core.NewParsing
                         // Only possible if fifth lane is found
                         else
                         {
-                            chart.FiveLaneDrums = track.ConvertToBasic<FiveLane>();
+                            chart.FiveLaneDrums = track.ConvertTo<FiveLane<DrumPad>>();
                         }
                         break;
                     }
