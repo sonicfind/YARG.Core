@@ -174,7 +174,7 @@ namespace YARG.Core.NewParsing
                 chart.LeadVocals = new VocalTrack2(1);
             }
 
-            BasicInstrumentTrack2<ProDrumNote2<FiveLane>>? unknownDrums = null;
+            BasicInstrumentTrack2<DrumNote2<FiveLane<DrumPad_Pro>, DrumPad_Pro>>? unknownDrums = null;
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
                 if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK)
@@ -189,18 +189,18 @@ namespace YARG.Core.NewParsing
             {
                 if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
                 {
-                    chart.FourLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane>>();
-                    unknownDrums.ConvertToBasic(chart.FourLaneDrums);
+                    chart.FourLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane<DrumPad>, DrumPad>>();
+                    unknownDrums.ConvertTo(chart.FourLaneDrums);
                 }
                 else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
                 {
-                    chart.ProDrums ??= new BasicInstrumentTrack2<ProDrumNote2<FourLane>>();
+                    chart.ProDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane<DrumPad_Pro>, DrumPad_Pro>>();
                     unknownDrums.ConvertToPro(chart.ProDrums);
                 }
                 else
                 {
-                    chart.FiveLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FiveLane>>();
-                    unknownDrums.ConvertToBasic(chart.FiveLaneDrums);
+                    chart.FiveLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FiveLane<DrumPad>, DrumPad>>();
+                    unknownDrums.ConvertTo(chart.FiveLaneDrums);
                 }
             }
             YARGChartFinalizer.FinalizeBeats(chart);
@@ -278,7 +278,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref BasicInstrumentTrack2<ProDrumNote2<FiveLane>>? unknownDrums)
+        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref BasicInstrumentTrack2<DrumNote2<FiveLane<DrumPad_Pro>, DrumPad_Pro>>? unknownDrums)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (!YARGChartFileReader.ValidateInstrument(ref container, out var instrument, out var difficulty))

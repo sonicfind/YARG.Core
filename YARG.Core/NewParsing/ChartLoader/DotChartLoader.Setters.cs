@@ -51,7 +51,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool Set(ref DrumNote2<FourLane> note, int lane, in DualTime length)
+        private static bool Set(ref DrumNote2<FourLane<DrumPad>, DrumPad> note, int lane, in DualTime length)
         {
             switch (lane)
             {
@@ -61,7 +61,7 @@ namespace YARG.Core.NewParsing
                 case 3:  note.Pads.Blue.Duration   = DualTime.Truncate(length); break;
                 case 4:  note.Pads.Green.Duration  = DualTime.Truncate(length); break;
 
-                case 32: note.ToggleDoubleBass(); break;
+                case 32: note.IsDoubleBass = true; break;
 
                 case 34: note.Pads.Snare.Dynamics  = DrumDynamics.Accent; break;
                 case 35: note.Pads.Yellow.Dynamics = DrumDynamics.Accent; break;
@@ -78,7 +78,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool Set(ref DrumNote2<FiveLane> note, int lane, in DualTime length)
+        private static bool Set(ref DrumNote2<FiveLane<DrumPad>, DrumPad> note, int lane, in DualTime length)
         {
             switch (lane)
             {
@@ -89,7 +89,7 @@ namespace YARG.Core.NewParsing
                 case 4:  note.Pads.Orange.Duration = DualTime.Truncate(length); break;
                 case 5:  note.Pads.Green.Duration  = DualTime.Truncate(length); break;
 
-                case 32: note.ToggleDoubleBass(); break;
+                case 32: note.IsDoubleBass = true; break;
 
                 case 34: note.Pads.Snare.Dynamics  = DrumDynamics.Accent; break;
                 case 35: note.Pads.Yellow.Dynamics = DrumDynamics.Accent; break;
@@ -108,7 +108,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool Set(ref ProDrumNote2<FourLane> note, int lane, in DualTime length)
+        private static bool Set(ref DrumNote2<FourLane<DrumPad_Pro>, DrumPad_Pro> note, int lane, in DualTime length)
         {
             switch (lane)
             {
@@ -118,7 +118,7 @@ namespace YARG.Core.NewParsing
                 case 3:  note.Pads.Blue.Duration   = DualTime.Truncate(length); break;
                 case 4:  note.Pads.Green.Duration  = DualTime.Truncate(length); break;
 
-                case 32: note.ToggleDoubleBass(); break;
+                case 32: note.IsDoubleBass = true; break;
 
                 case 34: note.Pads.Snare.Dynamics  = DrumDynamics.Accent; break;
                 case 35: note.Pads.Yellow.Dynamics = DrumDynamics.Accent; break;
@@ -130,9 +130,9 @@ namespace YARG.Core.NewParsing
                 case 42: note.Pads.Blue.Dynamics   = DrumDynamics.Ghost; break;
                 case 43: note.Pads.Green.Dynamics  = DrumDynamics.Ghost; break;
 
-                case 66: note.Cymbals.Yellow = true; break;
-                case 67: note.Cymbals.Blue = true; break;
-                case 68: note.Cymbals.Green = true; break;
+                case 66: note.Pads.Yellow.CymbalFlag = true; break;
+                case 67: note.Pads.Blue.CymbalFlag = true; break;
+                case 68: note.Pads.Green.CymbalFlag = true; break;
                 default:
                     return false;
             }
@@ -140,7 +140,7 @@ namespace YARG.Core.NewParsing
         }
 
         private static DrumsType _unknownDrumType;
-        private static bool Set(ref ProDrumNote2<FiveLane> note, int lane, in DualTime length)
+        private static bool Set(ref DrumNote2<FiveLane<DrumPad_Pro>, DrumPad_Pro> note, int lane, in DualTime length)
         {
             switch (lane)
             {
@@ -157,7 +157,7 @@ namespace YARG.Core.NewParsing
                     note.Pads.Green.Duration = DualTime.Truncate(length);
                     _unknownDrumType = DrumsType.FiveLane;
                     break;
-                case 32: note.ToggleDoubleBass(); break;
+                case 32: note.IsDoubleBass = true; break;
 
                 case 34: note.Pads.Snare.Dynamics  = DrumDynamics.Accent; break;
                 case 35: note.Pads.Yellow.Dynamics = DrumDynamics.Accent; break;
@@ -176,7 +176,8 @@ namespace YARG.Core.NewParsing
                 case 68:
                     if ((_unknownDrumType & DrumsType.ProDrums) == DrumsType.ProDrums)
                     {
-                        note.Cymbals[lane - 66] = true;
+                        // 65 to apply offset of 1
+                        note.Pads[lane - 65].CymbalFlag = true;
                         _unknownDrumType = DrumsType.ProDrums;
                     }
                     break;
