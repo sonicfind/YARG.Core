@@ -4,7 +4,7 @@ using System.Diagnostics;
 namespace YARG.Core.NewParsing.Midi
 {
     public abstract class GuitarMidiDifficulty<TDiffTracker, TFretConfig>
-        where TFretConfig : unmanaged, IFretConfig<TFretConfig>
+        where TFretConfig : unmanaged, IFretConfig
         where TDiffTracker : GuitarMidiDifficulty<TDiffTracker, TFretConfig>
     {
         internal bool SliderNotes;

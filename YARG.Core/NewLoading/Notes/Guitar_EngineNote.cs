@@ -23,7 +23,7 @@ namespace YARG.Core.NewLoading
 
         public static long HopoThreshold = 192;
         public static List<Guitar_EngineNote> ConvertNotes<TFretConfig>(YARGNativeSortedList<DualTime, GuitarNote2<TFretConfig>> notes, in Modifier modifiers, int rngSeed)
-            where TFretConfig : unmanaged, IFretConfig<TFretConfig>
+            where TFretConfig : unmanaged, IFretConfig
         {
             var conversion = new List<Guitar_EngineNote>(notes.Count);
             var rng = new Random(rngSeed);
@@ -44,10 +44,10 @@ namespace YARG.Core.NewLoading
         }
 
         private static unsafe Guitar_EngineNote Create<TFretConfig>(in YARGKeyValuePair<DualTime, GuitarNote2<TFretConfig>> currNote,
-                                                                   in YARGKeyValuePair<DualTime, GuitarNote2<TFretConfig>>* prevNote,
-                                                                   in Modifier modifiers,
+                                                                   YARGKeyValuePair<DualTime, GuitarNote2<TFretConfig>>* prevNote,
+                                                                   Modifier modifiers,
                                                                    Random rng)
-            where TFretConfig : unmanaged, IFretConfig<TFretConfig>
+            where TFretConfig : unmanaged, IFretConfig
         {
             var state = currNote.Value.State;
             if ((modifiers & Modifier.AllStrums) > 0)
@@ -97,8 +97,8 @@ namespace YARG.Core.NewLoading
                 int[]? shuffling = null;
                 if ((modifiers & Modifier.NoteShuffle) > 0)
                 {
-                    var buf = new int[IFretConfig<TFretConfig>.NUM_FRETS];
-                    for (int i = 0; i < IFretConfig<TFretConfig>.NUM_FRETS; ++i)
+                    var buf = new int[currNote.Value.Frets.NumColors];
+                    for (int i = 0; i < currNote.Value.Frets.NumColors; ++i)
                     {
                         buf[i] = i + 1;
                     }
@@ -106,7 +106,7 @@ namespace YARG.Core.NewLoading
                     shuffling = buf[..(numActive - index)];
                 }
 
-                for (int i = 1; i < IFretConfig<TFretConfig>.NUM_LANES; ++i)
+                for (int i = 1; i < currNote.Value.Frets.NumColors + 1; ++i)
                 {
                     if (currNote.Value.Frets[i].IsActive())
                     {
@@ -120,7 +120,7 @@ namespace YARG.Core.NewLoading
 
         private static unsafe GuitarState GetNaturalState<TFretConfig>(in YARGKeyValuePair<DualTime, GuitarNote2<TFretConfig>> currNote,
                                                                        in YARGKeyValuePair<DualTime, GuitarNote2<TFretConfig>>* prevNote)
-            where TFretConfig : unmanaged, IFretConfig<TFretConfig>
+            where TFretConfig : unmanaged, IFretConfig
         {
             if (prevNote == null)
             {
@@ -145,9 +145,9 @@ namespace YARG.Core.NewLoading
         }
 
         private static bool Contains<TFretConfig>(in GuitarNote2<TFretConfig> currNote, in GuitarNote2<TFretConfig> prevNote)
-            where TFretConfig : unmanaged, IFretConfig<TFretConfig>
+            where TFretConfig : unmanaged, IFretConfig
         {
-            for (int i = 0; i < IFretConfig<TFretConfig>.NUM_LANES; ++i)
+            for (int i = 0; i < currNote.Frets.NumColors + 1; ++i)
             {
                 if (currNote.Frets[i].IsActive())
                 {

@@ -4,25 +4,13 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public interface IFretConfig<TConfig>
-        where TConfig : unmanaged, IFretConfig<TConfig>
+    public interface IFretConfig
     {
-        public static readonly int NUM_FRETS;
-        public static readonly int NUM_LANES;
-
-        static IFretConfig()
-        {
-            var buf = default(TConfig);
-            NUM_FRETS = buf.NumColors;
-            NUM_LANES = buf.NumColors + 1;
-        }
-
         public int NumColors { get; }
-
         public ref DualTime this[int lane] { get; }
     }
 
-    public struct FiveFret : IFretConfig<FiveFret>
+    public struct FiveFret : IFretConfig
     {
         public DualTime Open;
         public DualTime Green;
@@ -55,7 +43,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        public override string ToString()
+        public readonly override string ToString()
         {
             StringBuilder stringBuilder = new();
             if (Open.IsActive())
@@ -74,7 +62,7 @@ namespace YARG.Core.NewParsing
         }
     }
 
-    public struct SixFret : IFretConfig<SixFret>
+    public struct SixFret : IFretConfig
     {
         public DualTime Open;
         public DualTime Black1;
@@ -109,7 +97,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        public override string ToString()
+        public readonly override string ToString()
         {
             StringBuilder stringBuilder = new();
             if (Open.IsActive())
