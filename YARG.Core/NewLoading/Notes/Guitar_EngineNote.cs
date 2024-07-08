@@ -9,18 +9,6 @@ namespace YARG.Core.NewLoading
 {
     public class Guitar_EngineNote
     {
-        public readonly DualTime StartPosition;
-        private readonly GuitarState _state;
-        private readonly SubNote[] _notes;
-        private List<DualTime>? _overdrivePoints;
-
-        private Guitar_EngineNote(in DualTime start, GuitarState state, SubNote[] notes)
-        {
-            StartPosition = start;
-            _state = state;
-            _notes = notes;
-        }
-
         public static long HopoThreshold = 192;
         public static List<Guitar_EngineNote> ConvertNotes<TFretConfig>(YARGNativeSortedList<DualTime, GuitarNote2<TFretConfig>> notes, in Modifier modifiers, int rngSeed)
             where TFretConfig : unmanaged, IFretConfig
@@ -41,6 +29,18 @@ namespace YARG.Core.NewLoading
                 }
             }
             return conversion;
+        }
+
+        public readonly DualTime StartPosition;
+        private readonly GuitarState _state;
+        private readonly SubNote[] _notes;
+        private List<DualTime>? _overdrivePoints;
+
+        private Guitar_EngineNote(in DualTime start, GuitarState state, SubNote[] notes)
+        {
+            StartPosition = start;
+            _state = state;
+            _notes = notes;
         }
 
         private static unsafe Guitar_EngineNote Create<TFretConfig>(in YARGKeyValuePair<DualTime, GuitarNote2<TFretConfig>> currNote,
