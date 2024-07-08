@@ -48,15 +48,13 @@ namespace YARG.Core.NewParsing
                 var end = source.Notes.End;
                 for (var curr = source.Notes.Data; curr < end; ++curr)
                 {
-                    ref readonly var val = ref curr->Value;
-                    buffer.Bass = val.Bass;
-                    buffer.IsDoubleBass = val.IsDoubleBass;
-                    buffer.IsFlammed = val.IsFlammed;
+                    buffer.Bass = curr->Value.Bass;
+                    buffer.IsDoubleBass = curr->Value.IsDoubleBass;
+                    buffer.IsFlammed = curr->Value.IsFlammed;
+                    var currPads = (DrumPad_Pro*)&curr->Value.Pads;
                     for (int i = 0; i < buffer.Pads.NumPads; ++i)
                     {
-                        ref var pad = ref buffer.Pads[i];
-                        pad.Duration = curr->Value.Pads[i].Duration;
-                        pad.Dynamics = curr->Value.Pads[i].Dynamics;
+                        buffer.Pads[i] = *(DrumPad*)(currPads + i);
                     }
                     newDifficulty.Notes.Append(curr->Key, in buffer);
                 }
