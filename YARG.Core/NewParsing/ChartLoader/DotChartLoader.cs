@@ -339,7 +339,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref BasicInstrumentTrack2<TNote>? track, delegate*<ref TNote, int, in DualTime, bool> loader)
+        private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref BasicInstrumentTrack2<TNote>? track, delegate*<ref TNote, int, in DualTime, bool> setter)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TNote : unmanaged, IInstrumentNote
         {
@@ -381,7 +381,7 @@ namespace YARG.Core.NewParsing
 
                             duration.Ticks = tickDuration;
                             duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
-                            if (!loader(ref note, lane, in duration))
+                            if (!setter(ref note, lane, in duration))
                             {
                                 if (note.GetNumActiveLanes() == 0)
                                 {
