@@ -216,7 +216,7 @@ namespace YARG.Core.NewParsing.Midi
                                 case HIDE_CHORD_MIDI:           instrumentTrack.ChordPhrases.GetLastOrAppend(position).Add(ChordPhrase.Hide); break;
                                 case ACCIDENTAL_SWITCH_MIDI:    instrumentTrack.ChordPhrases.GetLastOrAppend(position).Add(ChordPhrase.Accidental_Switch); break;
                                 case FULL_CHORD_NUMBERING_MIDI: instrumentTrack.ChordPhrases.GetLastOrAppend(position).Add(ChordPhrase.Force_Numbering); break;
-                                case LEFT_HAND_POSITION_MIDI:   instrumentTrack.HandPositions.Append(position).Fret = note.Velocity - MIN_FRET_VELOCITY; break;
+                                case LEFT_HAND_POSITION_MIDI:   instrumentTrack.HandPositions.Append(position)->Fret = note.Velocity - MIN_FRET_VELOCITY; break;
                             }
                         }
                     }
@@ -250,7 +250,7 @@ namespace YARG.Core.NewParsing.Midi
                                             midiDiff.Hopo = false;
                                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
                                             {
-                                                diffTrack.Notes.Last().HOPO = false;
+                                                guitar->HOPO = false;
                                             }
                                             break;
                                         }
@@ -259,7 +259,7 @@ namespace YARG.Core.NewParsing.Midi
                                             midiDiff.Slide = ProSlide.None;
                                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
                                             {
-                                                diffTrack.Notes.Last().Slide = ProSlide.None;
+                                                guitar->Slide = ProSlide.None;
                                             }
                                             break;
                                         }
@@ -275,7 +275,7 @@ namespace YARG.Core.NewParsing.Midi
                                             midiDiff.Emphasis = EmphasisType.None;
                                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
                                             {
-                                                diffTrack.Notes.Last().Emphasis = EmphasisType.None;
+                                                guitar->Emphasis = EmphasisType.None;
                                             }
                                             break;
                                         }

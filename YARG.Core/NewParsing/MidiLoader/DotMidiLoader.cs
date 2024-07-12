@@ -177,14 +177,17 @@ namespace YARG.Core.NewParsing
             var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
             {
-                switch (stats.Type)
+                unsafe
                 {
-                    case MidiEventType.Tempo:
-                        sync.TempoMarkers.GetLastOrAppend(stats.Position).MicrosPerQuarter = midiTrack.ExtractMicrosPerQuarter();
-                        break;
-                    case MidiEventType.Time_Sig:
-                        sync.TimeSigs.GetLastOrAppend(stats.Position) = midiTrack.ExtractTimeSig();
-                        break;
+                    switch (stats.Type)
+                    {
+                        case MidiEventType.Tempo:
+                            sync.TempoMarkers.GetLastOrAppend(stats.Position)->MicrosPerQuarter = midiTrack.ExtractMicrosPerQuarter();
+                            break;
+                        case MidiEventType.Time_Sig:
+                            *sync.TimeSigs.GetLastOrAppend(stats.Position) = midiTrack.ExtractTimeSig();
+                            break;
+                    }
                 }
             }
             YARGChartFinalizer.FinalizeAnchors(sync);
@@ -226,7 +229,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static void LoadBeatsTrack_Midi(YARGNativeSortedList<DualTime, BeatlineType> beats, SyncTrack2 sync, YARGMidiTrack midiTrack)
+        private static unsafe void LoadBeatsTrack_Midi(YARGNativeSortedList<DualTime, BeatlineType> beats, SyncTrack2 sync, YARGMidiTrack midiTrack)
         {
             if (!beats.IsEmpty())
             {
@@ -249,7 +252,7 @@ namespace YARG.Core.NewParsing
                     {
                         position.Ticks = stats.Position;
                         position.Seconds = sync.ConvertToSeconds(stats.Position, ref tempoIndex);
-                        beats.GetLastOrAppend(position) = note.Value == 12 ? BeatlineType.Measure : BeatlineType.Strong;
+                        *beats.GetLastOrAppend(position) = note.Value == 12 ? BeatlineType.Measure : BeatlineType.Strong;
                     }
                 }
             }
