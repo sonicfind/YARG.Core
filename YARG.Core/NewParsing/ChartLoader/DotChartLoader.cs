@@ -153,7 +153,7 @@ namespace YARG.Core.NewParsing
             return tickrate;
         }
 
-        private static SyncTrack2 ReadSynctrack_Chart<TChar>(ref YARGTextContainer<TChar> container, uint tickrate)
+        private static unsafe SyncTrack2 ReadSynctrack_Chart<TChar>(ref YARGTextContainer<TChar> container, uint tickrate)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             var sync = new SyncTrack2(tickrate);
@@ -168,13 +168,13 @@ namespace YARG.Core.NewParsing
                 switch (ev.Type)
                 {
                     case ChartEventType.Bpm:
-                        sync.TempoMarkers.GetLastOrAppend(ev.Position).MicrosPerQuarter = YARGChartFileReader.ExtractMicrosPerQuarter(ref container);
+                        sync.TempoMarkers.GetLastOrAppend(ev.Position)->MicrosPerQuarter = YARGChartFileReader.ExtractMicrosPerQuarter(ref container);
                         break;
                     case ChartEventType.Anchor:
-                        sync.TempoMarkers.GetLastOrAppend(ev.Position).Anchor = ev.Position > 0 ? YARGTextReader.ExtractInt64AndWhitespace(ref container) : 0;
+                        sync.TempoMarkers.GetLastOrAppend(ev.Position)->Anchor = ev.Position > 0 ? YARGTextReader.ExtractInt64AndWhitespace(ref container) : 0;
                         break;
                     case ChartEventType.Time_Sig:
-                        sync.TimeSigs.GetLastOrAppend(ev.Position) = YARGChartFileReader.ExtractTimeSig(ref container);
+                        *sync.TimeSigs.GetLastOrAppend(ev.Position) = YARGChartFileReader.ExtractTimeSig(ref container);
                         break;
                 }
             }
@@ -367,7 +367,7 @@ namespace YARG.Core.NewParsing
                 {
                     case ChartEventType.Note:
                         {
-                            ref var note = ref difficultyTrack.Notes.GetLastOrAppend(position);
+                            var note = difficultyTrack.Notes.GetLastOrAppend(position);
 
                             int lane = YARGTextReader.ExtractInt32AndWhitespace(ref container);
                             long tickDuration = YARGTextReader.ExtractInt64AndWhitespace(ref container);
@@ -378,9 +378,9 @@ namespace YARG.Core.NewParsing
 
                             duration.Ticks = tickDuration;
                             duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
-                            if (!setter(ref note, lane, in duration))
+                            if (!setter(ref *note, lane, in duration))
                             {
-                                if (note.GetNumActiveLanes() == 0)
+                                if (note->GetNumActiveLanes() == 0)
                                 {
                                     difficultyTrack.Notes.Pop();
                                 }

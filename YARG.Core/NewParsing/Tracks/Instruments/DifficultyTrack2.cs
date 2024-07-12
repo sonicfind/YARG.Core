@@ -25,7 +25,7 @@ namespace YARG.Core.NewParsing
 
         public override void TrimExcess() => Notes.TrimExcess();
 
-        public override DualTime GetLastNoteTime()
+        public override unsafe DualTime GetLastNoteTime()
         {
             if (Notes.IsEmpty())
             {
@@ -33,7 +33,7 @@ namespace YARG.Core.NewParsing
             }
 
             var note = Notes.ElementAtIndex(Notes.Count - 1);
-            return note.Key + note.Value.GetLongestSustain();
+            return note->Key + note->Value.GetLongestSustain();
         }
 
         protected override void Dispose(bool disposing)
