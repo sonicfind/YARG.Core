@@ -56,7 +56,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        public override DualTime GetLastNoteTime()
+        public override unsafe DualTime GetLastNoteTime()
         {
             DualTime endTime = default;
             foreach (var track in _vocals)
@@ -74,10 +74,10 @@ namespace YARG.Core.NewParsing
 
             if (!Percussion.IsEmpty())
             {
-                ref var perc = ref Percussion.ElementAtIndex(Percussion.Count - 1);
-                if (perc.Key > endTime)
+                var perc = Percussion.ElementAtIndex(Percussion.Count - 1);
+                if (perc->Key > endTime)
                 {
-                    endTime = perc.Key;
+                    endTime = perc->Key;
                 }
             }
             return endTime;
