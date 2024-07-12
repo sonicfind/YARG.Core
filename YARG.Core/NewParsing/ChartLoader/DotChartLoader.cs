@@ -156,7 +156,7 @@ namespace YARG.Core.NewParsing
         }
 
         private const long DEFAULT_TICKRATE = 192;
-        private static YARGChart LoadHeaderAndSync_Chart<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in LoaderSettings settings)
+        private static unsafe YARGChart LoadHeaderAndSync_Chart<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in LoaderSettings settings)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             long tickrate = DEFAULT_TICKRATE;
@@ -170,13 +170,10 @@ namespace YARG.Core.NewParsing
                         miscellaneous.Add(node.Key, node.Value[0]);
                     }
 
-                    unsafe
+                    var mod = node.Value[0];
+                    if (mod.Buffer[0] != 0)
                     {
-                        var mod = node.Value[0];
-                        if (mod.Buffer[0] != 0)
-                        {
-                            tickrate = mod.Buffer[0];
-                        }
+                        tickrate = mod.Buffer[0];
                     }
                 }
             }
@@ -190,13 +187,16 @@ namespace YARG.Core.NewParsing
                     switch (ev.Type)
                     {
                         case ChartEventType.Bpm:
-                            sync.TempoMarkers.GetLastOrAppend(ev.Position).MicrosPerQuarter = YARGChartFileReader.ExtractMicrosPerQuarter(ref container);
+                            sync.TempoMarkers.GetLastOrAppend(ev.Position)->MicrosPerQuarter = YARGChartFileReader.ExtractMicrosPerQuarter(ref container);
                             break;
                         case ChartEventType.Anchor:
-                            sync.TempoMarkers.GetLastOrAppend(ev.Position).Anchor = ev.Position > 0 ? YARGTextReader.ExtractInt64AndWhitespace(ref container) : 0;
+                            if (ev.Position > 0)
+                            {
+                                sync.TempoMarkers.GetLastOrAppend(ev.Position)->Anchor = YARGTextReader.ExtractInt64AndWhitespace(ref container);
+                            }
                             break;
                         case ChartEventType.Time_Sig:
-                            sync.TimeSigs.GetLastOrAppend(ev.Position) = YARGChartFileReader.ExtractTimeSig(ref container);
+                            *sync.TimeSigs.GetLastOrAppend(ev.Position) = YARGChartFileReader.ExtractTimeSig(ref container);
                             break;
                     }
                 }
@@ -369,7 +369,7 @@ namespace YARG.Core.NewParsing
                 {
                     case ChartEventType.Note:
                         {
-                            ref var note = ref difficultyTrack.Notes.GetLastOrAppend(position);
+                            var note = difficultyTrack.Notes.GetLastOrAppend(position);
 
                             int lane = YARGTextReader.ExtractInt32AndWhitespace(ref container);
                             long tickDuration = YARGTextReader.ExtractInt64AndWhitespace(ref container);
@@ -380,9 +380,9 @@ namespace YARG.Core.NewParsing
 
                             duration.Ticks = tickDuration;
                             duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
-                            if (!setter(ref note, lane, in duration))
+                            if (!setter(ref *note, lane, in duration))
                             {
-                                if (note.GetNumActiveLanes() == 0)
+                                if (note->GetNumActiveLanes() == 0)
                                 {
                                     difficultyTrack.Notes.Pop();
                                 }

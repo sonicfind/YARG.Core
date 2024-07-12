@@ -93,25 +93,12 @@ namespace YARG.Core.NewParsing
             _count = 0;
         }
 
-        public void Add(TKey key, TValue value)
-        {
-            if (!Try_Add(key, in value))
-            {
-                throw new ArgumentException($"A value of key of value {key} already exists");
-            }
-        }
-
         public void Add(TKey key, in TValue value)
         {
             if (!Try_Add(key, in value))
             {
                 throw new ArgumentException($"A value of key of value {key} already exists");
             }
-        }
-
-        public bool Try_Add(TKey key, TValue value)
-        {
-            return Try_Add(key, in value);
         }
 
         public bool Try_Add(TKey key, in TValue value)
@@ -127,42 +114,51 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        
-
-        public ref TValue Append(TKey key)
+        public TValue* Append(TKey key)
         {
             CheckAndGrow();
             var node = _buffer + _count++;
             node->Key = key;
             node->Value = DEFAULT_VALUE;
-            return ref node->Value;
+            return &node->Value;
         }
 
-        public ref TValue Append(TKey key, TValue value)
+        public TValue* Append(TKey key, in TValue value)
         {
             CheckAndGrow();
             var node = _buffer + _count++;
             node->Key = key;
             node->Value = value;
-            return ref node->Value;
+            return &node->Value;
         }
 
-        public ref TValue Append(TKey key, in TValue value)
+        public void Append_NoReturn(TKey key, in TValue value)
         {
             CheckAndGrow();
             var node = _buffer + _count++;
             node->Key = key;
             node->Value = value;
-            return ref node->Value;
         }
 
-        public ref TValue GetLastOrAppend(TKey key)
+        public TValue* GetLastOrAppend(TKey key)
         {
             if (_count == 0 || _buffer[_count - 1] < key)
             {
-                return ref Append(key);
+                return Append(key);
             }
-            return ref _buffer[_count - 1].Value;
+            return &_buffer[_count - 1].Value;
+        }
+
+        public void AppendOrUpdate(in TKey key, in TValue value)
+        {
+            if (_count == 0 || _buffer[_count - 1] < key)
+            {
+                CheckAndGrow();
+                ++_count;
+            }
+            var node = _buffer + _count - 1;
+            node->Key = key;
+            node->Value = value;
         }
 
         public bool TryAppend(in TKey key, out TValue* value)
@@ -247,7 +243,7 @@ namespace YARG.Core.NewParsing
             ++_version;
         }
 
-        public ref TValue this[in TKey key] => ref FindOrEmplaceValue(in key);
+        public TValue* this[in TKey key] => FindOrEmplaceValue(in key);
 
         public int FindOrEmplaceIndex(in TKey key, int startIndex = 0)
         {
@@ -260,10 +256,10 @@ namespace YARG.Core.NewParsing
             return index;
         }
 
-        public ref TValue FindOrEmplaceValue(in TKey key, int startIndex = 0)
+        public TValue* FindOrEmplaceValue(in TKey key, int startIndex = 0)
         {
             int index = FindOrEmplaceIndex(key, startIndex);
-            return ref _buffer[index].Value;
+            return &_buffer[index].Value;
         }
 
         public bool ContainsKey(in TKey key, int startIndex = 0)
@@ -316,28 +312,28 @@ namespace YARG.Core.NewParsing
 
 
 
-        public ref TValue At(in TKey key)
+        public TValue* At(in TKey key)
         {
             int index = Find(key);
             if (index < 0)
             {
                 throw new KeyNotFoundException();
             }
-            return ref _buffer[index].Value;
+            return &_buffer[index].Value;
         }
 
-        public ref YARGKeyValuePair<TKey, TValue> ElementAtIndex(int index)
+        public YARGKeyValuePair<TKey, TValue>* ElementAtIndex(int index)
         {
             if (index < 0 || _count <= index)
             {
                 throw new IndexOutOfRangeException();
             }
-            return ref _buffer[index];
+            return &_buffer[index];
         }
 
-        public ref TValue Last()
+        public TValue* Last()
         {
-            return ref _buffer[_count - 1].Value;
+            return &_buffer[_count - 1].Value;
         }
 
         public ref TValue TraverseBackwardsUntil(in TKey key)

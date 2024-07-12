@@ -90,12 +90,12 @@ namespace YARG.Core.NewParsing.Midi
                                     trillPosition = position;
                                     instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
                                     break;
-                                case 0: diffTrack.Ranges.GetLastOrAppend(position) = ProKey_Ranges.C1_E2; break;
-                                case 2: diffTrack.Ranges.GetLastOrAppend(position) = ProKey_Ranges.D1_F2; break;
-                                case 4: diffTrack.Ranges.GetLastOrAppend(position) = ProKey_Ranges.E1_G2; break;
-                                case 5: diffTrack.Ranges.GetLastOrAppend(position) = ProKey_Ranges.F1_A2; break;
-                                case 7: diffTrack.Ranges.GetLastOrAppend(position) = ProKey_Ranges.G1_B2; break;
-                                case 9: diffTrack.Ranges.GetLastOrAppend(position) = ProKey_Ranges.A1_C3; break;
+                                case 0: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.C1_E2); break;
+                                case 2: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.D1_F2); break;
+                                case 4: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.E1_G2); break;
+                                case 5: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.F1_A2); break;
+                                case 7: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.G1_B2); break;
+                                case 9: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.A1_C3); break;
                             };
                         }
                     }

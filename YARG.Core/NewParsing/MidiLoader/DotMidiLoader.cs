@@ -145,7 +145,7 @@ namespace YARG.Core.NewParsing
             return chart;
         }
 
-        private static (SyncTrack2 Sync, string SequenceName) LoadSyncTrack_Midi(YARGMidiFile midi)
+        private static unsafe (SyncTrack2 Sync, string SequenceName) LoadSyncTrack_Midi(YARGMidiFile midi)
         {
             var sync = new SyncTrack2(midi.Resolution);
 
@@ -156,10 +156,10 @@ namespace YARG.Core.NewParsing
                 switch (midiTrack.Type)
                 {
                     case MidiEventType.Tempo:
-                        sync.TempoMarkers.GetLastOrAppend(midiTrack.Position).MicrosPerQuarter = midiTrack.ExtractMicrosPerQuarter();
+                        sync.TempoMarkers.GetLastOrAppend(midiTrack.Position)->MicrosPerQuarter = midiTrack.ExtractMicrosPerQuarter();
                         break;
                     case MidiEventType.Time_Sig:
-                        sync.TimeSigs.GetLastOrAppend(midiTrack.Position) = midiTrack.ExtractTimeSig();
+                        *sync.TimeSigs.GetLastOrAppend(midiTrack.Position) = midiTrack.ExtractTimeSig();
                         break;
                 }
             }
@@ -228,7 +228,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static void LoadBeatsTrack_Midi(YARGNativeSortedList<DualTime, BeatlineType> beats, SyncTrack2 sync, YARGMidiTrack midiTrack)
+        private static unsafe void LoadBeatsTrack_Midi(YARGNativeSortedList<DualTime, BeatlineType> beats, SyncTrack2 sync, YARGMidiTrack midiTrack)
         {
             if (!beats.IsEmpty())
             {
@@ -250,7 +250,7 @@ namespace YARG.Core.NewParsing
                     {
                         position.Ticks = midiTrack.Position;
                         position.Seconds = sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex);
-                        beats.GetLastOrAppend(position) = note.value == 12 ? BeatlineType.Measure : BeatlineType.Strong;
+                        *beats.GetLastOrAppend(position) = note.value == 12 ? BeatlineType.Measure : BeatlineType.Strong;
                     }
                 }
             }

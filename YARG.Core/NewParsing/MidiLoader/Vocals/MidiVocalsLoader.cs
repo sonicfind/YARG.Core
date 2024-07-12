@@ -178,9 +178,9 @@ namespace YARG.Core.NewParsing.Midi
                         }
                         else if (note.value == PERCUSSION_NOTE || note.value == PERCUSSION_NOISE)
                         {
-                            if (percussionPosition.Ticks > -1)
+                            if (percussionPosition.Ticks > -1) unsafe
                             {
-                                vocalTrack.Percussion.Append(percussionPosition).IsPlayable = note.value == PERCUSSION_NOTE;
+                                vocalTrack.Percussion.Append(percussionPosition)->IsPlayable = note.value == PERCUSSION_NOTE;
                             }
                             percussionPosition.Ticks = -1;
                         }

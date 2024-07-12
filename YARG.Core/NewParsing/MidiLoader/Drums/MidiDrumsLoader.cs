@@ -86,22 +86,19 @@ namespace YARG.Core.NewParsing.Midi
                                     diffTrack.Notes.Capacity = 5000;
                                 }
 
-                                ref var drum = ref diffTrack.Notes.GetLastOrAppend(position);
-                                drum.IsFlammed = flamFlag;
+                                var drum = diffTrack.Notes.GetLastOrAppend(position);
+                                drum->IsFlammed = flamFlag;
 
                                 if (enableDynamics && lane >= DYNAMIC_MIN)
                                 {
                                     int padIndex = lane - DYNAMIC_MIN;
-                                    fixed (void* ptr = &drum.Pads)
+                                    if (note.velocity == 127)
                                     {
-                                        if (note.velocity == 127)
-                                        {
-                                            ((DrumPad*) ptr)[padIndex].Dynamics = DrumDynamics.Accent;
-                                        }
-                                        else if (note.velocity == 1)
-                                        {
-                                            ((DrumPad*) ptr)[padIndex].Dynamics = DrumDynamics.Ghost;
-                                        }
+                                        ((DrumPad*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Accent;
+                                    }
+                                    else if (note.velocity == 1)
+                                    {
+                                        ((DrumPad*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Ghost;
                                     }
                                 }
                             }
@@ -336,41 +333,27 @@ namespace YARG.Core.NewParsing.Midi
                                     diffTrack.Notes.Capacity = 5000;
                                 }
 
-                                ref var drum = ref diffTrack.Notes.GetLastOrAppend(position);
-                                drum.IsFlammed = flamFlag;
+                                var drum = diffTrack.Notes.GetLastOrAppend(position);
+                                drum->IsFlammed = flamFlag;
 
                                 if (lane >= DYNAMIC_MIN)
                                 {
                                     int padIndex = lane - DYNAMIC_MIN;
                                     if (enableDynamics)
                                     {
-                                        if (note.velocity > 100)
+                                        if (note.velocity == 127)
                                         {
-                                            switch (padIndex)
-                                            {
-                                                case 0: drum.Pads.Snare.Dynamics = DrumDynamics.Accent; break;
-                                                case 1: drum.Pads.Yellow.Dynamics = DrumDynamics.Accent; break;
-                                                case 2: drum.Pads.Blue.Dynamics = DrumDynamics.Accent; break;
-                                                case 3: drum.Pads.Green.Dynamics = DrumDynamics.Accent; break;
-                                            }
+                                            ((DrumPad_Pro*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Accent;
                                         }
-                                        else if (note.velocity < 100)
+                                        else if (note.velocity == 1)
                                         {
-                                            switch (padIndex)
-                                            {
-                                                case 0: drum.Pads.Snare.Dynamics = DrumDynamics.Ghost; break;
-                                                case 1: drum.Pads.Yellow.Dynamics = DrumDynamics.Ghost; break;
-                                                case 2: drum.Pads.Blue.Dynamics = DrumDynamics.Ghost; break;
-                                                case 3: drum.Pads.Green.Dynamics = DrumDynamics.Ghost; break;
-                                            }
+                                            ((DrumPad_Pro*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Ghost;
                                         }
                                     }
 
-                                    switch (padIndex)
+                                    if (padIndex >= 1)
                                     {
-                                        case 1: drum.Pads.Yellow.CymbalFlag = !tomFlags[0]; break;
-                                        case 2: drum.Pads.Blue.CymbalFlag = !tomFlags[1]; break;
-                                        case 3: drum.Pads.Green.CymbalFlag = !tomFlags[2]; break;
+                                        ((DrumPad_Pro*) &drum->Pads)[padIndex].CymbalFlag = !tomFlags[padIndex - 1];
                                     }
                                 }
                             }
@@ -630,8 +613,8 @@ namespace YARG.Core.NewParsing.Midi
                                     diffTrack.Notes.Capacity = 5000;
                                 }
 
-                                ref var drum = ref diffTrack.Notes.GetLastOrAppend(position);
-                                drum.IsFlammed = flamFlag;
+                                var drum = diffTrack.Notes.GetLastOrAppend(position);
+                                drum->IsFlammed = flamFlag;
 
                                 if (lane >= DYNAMIC_MIN)
                                 {
@@ -643,35 +626,19 @@ namespace YARG.Core.NewParsing.Midi
 
                                     if (enableDynamics)
                                     {
-                                        if (note.velocity > 100)
+                                        if (note.velocity == 127)
                                         {
-                                            switch (padIndex)
-                                            {
-                                                case 0: drum.Pads.Snare.Dynamics = DrumDynamics.Accent; break;
-                                                case 1: drum.Pads.Yellow.Dynamics = DrumDynamics.Accent; break;
-                                                case 2: drum.Pads.Blue.Dynamics = DrumDynamics.Accent; break;
-                                                case 3: drum.Pads.Orange.Dynamics = DrumDynamics.Accent; break;
-                                                case 4: drum.Pads.Green.Dynamics = DrumDynamics.Accent; break;
-                                            }
+                                            ((DrumPad_Pro*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Accent;
                                         }
-                                        else if (note.velocity < 100)
+                                        else if (note.velocity == 1)
                                         {
-                                            switch (padIndex)
-                                            {
-                                                case 0: drum.Pads.Snare.Dynamics = DrumDynamics.Ghost; break;
-                                                case 1: drum.Pads.Yellow.Dynamics = DrumDynamics.Ghost; break;
-                                                case 2: drum.Pads.Blue.Dynamics = DrumDynamics.Ghost; break;
-                                                case 3: drum.Pads.Orange.Dynamics = DrumDynamics.Ghost; break;
-                                                case 4: drum.Pads.Green.Dynamics = DrumDynamics.Ghost; break;
-                                            }
+                                            ((DrumPad_Pro*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Ghost;
                                         }
                                     }
 
-                                    switch (padIndex)
+                                    if (1 <= padIndex && padIndex <= 3)
                                     {
-                                        case 1: drum.Pads.Yellow.CymbalFlag = !tomFlags[0]; break;
-                                        case 2: drum.Pads.Blue.CymbalFlag = !tomFlags[1]; break;
-                                        case 3: drum.Pads.Green.CymbalFlag = !tomFlags[2]; break;
+                                        ((DrumPad_Pro*) &drum->Pads)[padIndex].CymbalFlag = !tomFlags[padIndex - 1];
                                     }
                                 }
                             }
