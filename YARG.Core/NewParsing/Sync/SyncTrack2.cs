@@ -16,8 +16,8 @@ namespace YARG.Core.NewParsing
         public SyncTrack2(long tickrate)
         {
             _tickrate = tickrate;
-            TempoMarkers.Append(0, Tempo2.DEFAULT);
-            TimeSigs.Append(0, TimeSig2.DEFAULT);
+            TempoMarkers.Append_NoReturn(0, Tempo2.DEFAULT);
+            TimeSigs.Append_NoReturn(0, TimeSig2.DEFAULT);
         }
 
         public double ConvertToSeconds(long ticks, int startIndex = 0)
