@@ -29,9 +29,9 @@ namespace YARG.Core.Extensions
         /// <remarks>
         /// https://stackoverflow.com/questions/273313/randomize-a-listt
         /// </remarks>
-        public static void Shuffle<T>(this IList<T> list, Random random)
+        public static void Shuffle<T>(this Span<T> list, Random random)
         {
-            int n = list.Count;
+            int n = list.Length;
             while (n > 1)
             {
                 n--;

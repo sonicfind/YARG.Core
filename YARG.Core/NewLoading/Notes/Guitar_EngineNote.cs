@@ -18,11 +18,24 @@ namespace YARG.Core.NewLoading
             unsafe
             {
                 YARGKeyValuePair<DualTime, GuitarNote2<TFretConfig>>* prev = null;
+                var endPoints = stackalloc long[6];
+                var mapping = stackalloc int[7];
+                for (int i = 0; i < 7; i++)
+                {
+                    mapping[i] = i;
+                }
+
                 var curr = notes.Data;
                 var end = notes.End;
                 while (curr < end)
                 {
-                    var engineNote = Create(in *curr, prev, modifiers, rng);
+                    if ((modifiers & Modifier.NoteShuffle) > 0)
+                    {
+                        var span = new Span<int>(mapping + 1, curr->Value.Frets.NumColors - 1);
+                        span.Shuffle(rng);
+                    }
+
+                    var engineNote = Create(in *curr, prev, modifiers, endPoints, mapping);
                     conversion.Add(engineNote);
                     prev = curr;
                     ++curr;
@@ -46,7 +59,8 @@ namespace YARG.Core.NewLoading
         private static unsafe Guitar_EngineNote Create<TFretConfig>(in YARGKeyValuePair<DualTime, GuitarNote2<TFretConfig>> currNote,
                                                                    YARGKeyValuePair<DualTime, GuitarNote2<TFretConfig>>* prevNote,
                                                                    Modifier modifiers,
-                                                                   Random rng)
+                                                                   long* endPoints,
+                                                                   int* mapping)
             where TFretConfig : unmanaged, IFretConfig
         {
             var state = currNote.Value.State;
@@ -82,8 +96,15 @@ namespace YARG.Core.NewLoading
                 }
             }
 
-            int numActive = currNote.Value.GetNumActiveLanes();
-            var subNotes = new SubNote[numActive];
+            var subNotes = new List<SubNote>(currNote.Value.Frets.NumColors);
+            for (int i = 0; i < currNote.Value.Frets.NumColors; ++i)
+            {
+                if (currNote.Value.Frets[i].IsActive())
+                {
+                    int subNote = shuffling != null ? shuffling[index - 1] : i;
+                    subNotes[index++] = new SubNote(subNote, currNote.Value.Frets[i] + currNote.Key);
+                }
+            }
 
             int index = 0;
             if (currNote.Value.Frets[0].IsActive())
@@ -106,14 +127,7 @@ namespace YARG.Core.NewLoading
                     shuffling = buf[..(numActive - index)];
                 }
 
-                for (int i = 1; i < currNote.Value.Frets.NumColors + 1; ++i)
-                {
-                    if (currNote.Value.Frets[i].IsActive())
-                    {
-                        int subNote = shuffling != null ? shuffling[index - 1] : i;
-                        subNotes[index++] = new SubNote(subNote, currNote.Value.Frets[i] + currNote.Key);
-                    }
-                }
+                
             }
             return new Guitar_EngineNote(currNote.Key, state, subNotes);
         }
@@ -147,7 +161,7 @@ namespace YARG.Core.NewLoading
         private static bool Contains<TFretConfig>(in GuitarNote2<TFretConfig> currNote, in GuitarNote2<TFretConfig> prevNote)
             where TFretConfig : unmanaged, IFretConfig
         {
-            for (int i = 0; i < currNote.Frets.NumColors + 1; ++i)
+            for (int i = 0; i < currNote.Frets.NumColors; ++i)
             {
                 if (currNote.Frets[i].IsActive())
                 {

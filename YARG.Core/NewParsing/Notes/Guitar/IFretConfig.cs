@@ -19,7 +19,7 @@ namespace YARG.Core.NewParsing
         public DualTime Blue;
         public DualTime Orange;
 
-        public readonly int NumColors => 5;
+        public readonly int NumColors => 6;
 
         public ref DualTime this[int lane]
         {
@@ -72,7 +72,7 @@ namespace YARG.Core.NewParsing
         public DualTime White2;
         public DualTime White3;
 
-        public readonly int NumColors => 6;
+        public readonly int NumColors => 7;
 
         public ref DualTime this[int lane]
         {

@@ -26,7 +26,7 @@ namespace YARG.Core.NewParsing
                 {
                     var lanes = (DualTime*) ptr;
                     int numActive = 0;
-                    for (int i = 0; i <= Frets.NumColors; ++i)
+                    for (int i = 0; i < Frets.NumColors; ++i)
                     {
                         bool active = lanes[i].IsActive();
                         numActive += Unsafe.As<bool, byte>(ref active);
@@ -44,7 +44,7 @@ namespace YARG.Core.NewParsing
                 {
                     var lanes = (DualTime*) ptr;
                     var sustain = lanes[0];
-                    for (int i = 0; i <= Frets.NumColors; ++i)
+                    for (int i = 0; i < Frets.NumColors; ++i)
                     {
                         if (lanes[i] > sustain)
                         {
