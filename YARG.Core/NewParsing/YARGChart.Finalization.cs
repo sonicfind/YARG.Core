@@ -54,7 +54,6 @@ namespace YARG.Core.NewParsing
                 chart.Keys,
 
                 chart.FourLaneDrums,
-                chart.ProDrums,
                 chart.FiveLaneDrums,
 
                 //chart.TrueDrums,
