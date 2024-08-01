@@ -48,19 +48,19 @@ namespace YARG.Core.NewParsing
         public readonly override string ToString()
         {
             StringBuilder builder = new();
-            if (Snare.IsActive())
+            if (Snare.Duration.IsActive())
             {
                 builder.Append($"Snare: {Snare}|");
             }
-            if (Yellow.IsActive())
+            if (Yellow.Duration.IsActive())
             {
                 builder.Append($"Yellow: {Yellow}|");
             }
-            if (Blue.IsActive())
+            if (Blue.Duration.IsActive())
             {
                 builder.Append($"Blue: {Blue}|");
             }
-            if (Green.IsActive())
+            if (Green.Duration.IsActive())
             {
                 builder.Append($"Green: {Green}|");
             }
@@ -110,23 +110,23 @@ namespace YARG.Core.NewParsing
         {
             StringBuilder builder = new();
 
-            if (Snare.IsActive())
+            if (Snare.Duration.IsActive())
             {
                 builder.Append($"Snare: {Snare}|");
             }
-            if (Yellow.IsActive())
+            if (Yellow.Duration.IsActive())
             {
                 builder.Append($"Yellow: {Yellow}|");
             }
-            if (Blue.IsActive())
+            if (Blue.Duration.IsActive())
             {
                 builder.Append($"Blue: {Blue}|");
             }
-            if (Orange.IsActive())
+            if (Orange.Duration.IsActive())
             {
                 builder.Append($"Orange: {Orange}|");
             }
-            if (Green.IsActive())
+            if (Green.Duration.IsActive())
             {
                 builder.Append($"Green: {Green}|");
             }
@@ -176,23 +176,23 @@ namespace YARG.Core.NewParsing
         {
             StringBuilder builder = new();
 
-            if (Snare.IsActive())
+            if (Snare.Duration.IsActive())
             {
                 builder.Append($"Snare: {Snare}|");
             }
-            if (Yellow.IsActive())
+            if (Yellow.Duration.IsActive())
             {
                 builder.Append($"Yellow: {Yellow}|");
             }
-            if (Blue.IsActive())
+            if (Blue.Duration.IsActive())
             {
                 builder.Append($"Blue: {Blue}|");
             }
-            if (Orange.IsActive())
+            if (Orange.Duration.IsActive())
             {
                 builder.Append($"Orange: {Orange}|");
             }
-            if (Green.IsActive())
+            if (Green.Duration.IsActive())
             {
                 builder.Append($"Green: {Green}|");
             }
