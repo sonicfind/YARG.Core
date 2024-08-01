@@ -4,9 +4,8 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public struct DrumNote2<TConfig, TPad> : IInstrumentNote
-        where TConfig : unmanaged, IDrumPadConfig<TPad>
-        where TPad : unmanaged, IDrumPad
+    public struct DrumNote2<TConfig> : IInstrumentNote
+        where TConfig : unmanaged, IDrumPadConfig
     {
         public DualTime Bass;
         public bool IsDoubleBass;
@@ -21,7 +20,7 @@ namespace YARG.Core.NewParsing
                 {
                     0 or
                     1 => Bass,
-                    _ => Pads[lane - 2].Duration,
+                    _ => Pads[lane - 2],
                 };
             }
             set
@@ -37,7 +36,7 @@ namespace YARG.Core.NewParsing
                         IsDoubleBass = true;
                         break;
                     default:
-                        Pads[lane - 2].Duration = value;
+                        Pads[lane - 2] = value;
                         break;
                 }
             }
@@ -59,10 +58,10 @@ namespace YARG.Core.NewParsing
             var sustain = Bass;
             for (int i = 0; i < Pads.NumPads; ++i)
             {
-                ref readonly var pad = ref Pads[i];
-                if (pad.Duration > sustain)
+                var padDuration = Pads[i];
+                if (padDuration > sustain)
                 {
-                    sustain = pad.Duration;
+                    sustain = padDuration;
                 }
             }
             return sustain;

@@ -28,9 +28,8 @@ namespace YARG.Core.NewParsing
         public BasicInstrumentTrack2<GuitarNote2<SixFret>>? SixFretRhythm;
         public BasicInstrumentTrack2<GuitarNote2<SixFret>>? SixFretCoopGuitar;
 
-        public BasicInstrumentTrack2<DrumNote2<FourLane<DrumPad>,     DrumPad>>?     FourLaneDrums;
-        public BasicInstrumentTrack2<DrumNote2<FourLane<DrumPad_Pro>, DrumPad_Pro>>? ProDrums;
-        public BasicInstrumentTrack2<DrumNote2<FiveLane<DrumPad>,     DrumPad>>?     FiveLaneDrums;
+        public BasicInstrumentTrack2<DrumNote2<FourLane>>? FourLaneDrums;
+        public BasicInstrumentTrack2<DrumNote2<FiveLane>>? FiveLaneDrums;
 
         // public InstrumentTrack2<TrueDrums>? TrueDrums;
 
@@ -75,7 +74,6 @@ namespace YARG.Core.NewParsing
             Keys?.Dispose();
 
             FourLaneDrums?.Dispose();
-            ProDrums?.Dispose();
             FiveLaneDrums?.Dispose();
 
             // TrueDrums?.Dispose();
