@@ -45,14 +45,19 @@ namespace YARG.Core.IO
 
         private struct MidiEvent
         {
+            public static readonly MidiEvent Default = new()
+            {
+                Type = MidiEventType.Reset_Or_Meta
+            };
+
             public MidiEventType Type;
             public int Channel;
             public int Length;
         }
 
         private long _tickPosition;
-        private MidiEvent _event;
-        private MidiEvent _running;
+        private MidiEvent _event = MidiEvent.Default;
+        private MidiEvent _running = MidiEvent.Default;
 
         private readonly AllocatedArray<byte>? _buffer;
         private readonly byte* _end;
@@ -76,7 +81,6 @@ namespace YARG.Core.IO
                 _position = _buffer.Ptr;
             }
             _end = _position + length;
-            _event.Type = _running.Type = MidiEventType.Reset_Or_Meta;
         }
 
         public string? FindTrackName(Encoding encoding)
