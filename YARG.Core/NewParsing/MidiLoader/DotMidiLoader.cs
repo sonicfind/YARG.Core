@@ -272,13 +272,11 @@ namespace YARG.Core.NewParsing
                     switch (drumsInChart)
                     {
                     case DrumsType.FourLane:
-                        chart.FourLaneDrums ??= MidiDrumsLoader.LoadBasic<FourLane<DrumPad>>(midiTrack, chart.Sync);
-                        break;
                     case DrumsType.ProDrums:
-                        chart.ProDrums ??= MidiDrumsLoader.LoadProDrums(midiTrack, chart.Sync);
-                        break;
+                        chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, chart.Sync);
+                            break;
                     case DrumsType.FiveLane:
-                        chart.FiveLaneDrums ??= MidiDrumsLoader.LoadBasic<FiveLane<DrumPad>>(midiTrack, chart.Sync);
+                        chart.FiveLaneDrums ??= MidiDrumsLoader.LoadFiveLane(midiTrack, chart.Sync);
                         break;
                     default:
                         // No `using/dipose` as events & phrases need to persist
@@ -286,19 +284,19 @@ namespace YARG.Core.NewParsing
                         // Only possible if pre-type was FourOrFive AND fifth lane was not found
                         if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
                         {
-                            chart.FourLaneDrums = track.Convert<FourLane<DrumPad>>();
+                            chart.FourLaneDrums = track.ConvertToFourLane(false);
                             drumsInChart = DrumsType.FourLane;
                         }
                         // Only possible if pre-type was ProOrFive AND fifth lane was not found
                         else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
                         {
-                            chart.ProDrums = track.Convert();
+                            chart.FourLaneDrums = track.ConvertToFourLane(true);
                             drumsInChart = DrumsType.ProDrums;
                         }
                         // Only possible if fifth lane is found
                         else
                         {
-                            chart.FiveLaneDrums = track.Convert<FiveLane<DrumPad>>();
+                            chart.FiveLaneDrums = track.ConvertToFiveLane();
                         }
                         break;
                     }
