@@ -75,10 +75,10 @@ namespace YARG.Core.NewParsing
                 chart.LeadVocals = new VocalTrack2(1);
             }
 
-            BasicInstrumentTrack2<DrumNote2<FiveLane<DrumPad_Pro>, DrumPad_Pro>>? unknownDrums = null;
+            BasicInstrumentTrack2<DrumNote2<UnknownLane>>? unknownDrums = null;
             if (activeTracks == null && settings.DrumsType is DrumsType.Unknown)
             {
-                unknownDrums = new BasicInstrumentTrack2<DrumNote2<FiveLane<DrumPad_Pro>, DrumPad_Pro>>();
+                unknownDrums = new BasicInstrumentTrack2<DrumNote2<UnknownLane>>();
                 _unknownDrumType = settings.DrumsType;
             }
 
@@ -101,18 +101,18 @@ namespace YARG.Core.NewParsing
                 switch (_unknownDrumType)
                 {
                     case DrumsType.ProDrums:
-                        chart.ProDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane<DrumPad_Pro>, DrumPad_Pro>>();
-                        unknownDrums.ConvertTo(chart.ProDrums);
+                        chart.FourLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane>>();
+                        unknownDrums.ConvertToFourLane(chart.FourLaneDrums, true);
                         chart.Settings.DrumsType = DrumsType.ProDrums;
                         break;
                     case DrumsType.FiveLane:
-                        chart.FiveLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FiveLane<DrumPad>, DrumPad>>();
-                        unknownDrums.ConvertTo(chart.FiveLaneDrums);
+                        chart.FiveLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FiveLane>>();
+                        unknownDrums.ConvertToFiveLane(chart.FiveLaneDrums);
                         chart.Settings.DrumsType = DrumsType.FiveLane;
                         break;
                     default:
-                        chart.FourLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane<DrumPad>, DrumPad>>();
-                        unknownDrums.ConvertTo(chart.FourLaneDrums);
+                        chart.FourLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane>>();
+                        unknownDrums.ConvertToFourLane(chart.FourLaneDrums, false);
                         chart.Settings.DrumsType = DrumsType.FourLane;
                         break;
                 }
@@ -254,7 +254,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, HashSet<Instrument>? activeTracks, BasicInstrumentTrack2<DrumNote2<FiveLane<DrumPad_Pro>, DrumPad_Pro>>? unknownDrums)
+        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, HashSet<Instrument>? activeTracks, BasicInstrumentTrack2<DrumNote2<UnknownLane>>? unknownDrums)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (!YARGChartFileReader.ValidateInstrument(ref container, out var instrument, out var difficulty))
@@ -274,12 +274,9 @@ namespace YARG.Core.NewParsing
                             return false;
                         }
 
-                        if (_unknownDrumType is DrumsType.Unknown)
+                        if (_unknownDrumType is DrumsType.Unknown) unsafe
                         {
-                            unsafe
-                            {
-                                return LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref unknownDrums, &Set);
-                            }
+                            return LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref unknownDrums, &Set);
                         }
 
                         drumType = _unknownDrumType;
@@ -327,8 +324,8 @@ namespace YARG.Core.NewParsing
                     Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretBass, &Set),
                     Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretRhythm, &Set),
                     Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretCoopGuitar, &Set),
-                    Instrument.FourLaneDrums =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FourLaneDrums, &Set),
-                    Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.ProDrums, &Set),
+                    Instrument.FourLaneDrums or
+                    Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FourLaneDrums, &Set),
                     Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveLaneDrums, &Set),
                     Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.Keys, &Set),
                     _ => false,
@@ -336,7 +333,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref BasicInstrumentTrack2<TNote>? track, delegate*<ref TNote, int, in DualTime, bool> setter)
+        private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref BasicInstrumentTrack2<TNote>? track, delegate*<TNote*, int, in DualTime, bool> setter)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TNote : unmanaged, IInstrumentNote
         {
@@ -378,7 +375,7 @@ namespace YARG.Core.NewParsing
 
                             duration.Ticks = tickDuration;
                             duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
-                            if (!setter(ref *note, lane, in duration))
+                            if (!setter(note, lane, in duration))
                             {
                                 if (note->GetNumActiveLanes() == 0)
                                 {
