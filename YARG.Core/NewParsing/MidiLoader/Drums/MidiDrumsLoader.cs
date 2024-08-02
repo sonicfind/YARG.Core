@@ -24,9 +24,9 @@ namespace YARG.Core.NewParsing.Midi
 
         private const int TOM_MIN_VALUE = 110;
         private const int TOM_MAX_VALUE = 112;
-        public static unsafe BasicInstrumentTrack2<DrumNote2<FourLane>> LoadFourLane(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>> LoadFourLane(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
-            var instrumentTrack = new BasicInstrumentTrack2<DrumNote2<FourLane>>();
+            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
                 instrumentTrack[i] = new DifficultyTrack2<DrumNote2<FourLane>>();
@@ -303,9 +303,9 @@ namespace YARG.Core.NewParsing.Midi
             return instrumentTrack;
         }
 
-        public static unsafe BasicInstrumentTrack2<DrumNote2<FiveLane>> LoadFiveLane(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<DrumNote2<FiveLane>>> LoadFiveLane(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
-            var instrumentTrack = new BasicInstrumentTrack2<DrumNote2<FiveLane>>();
+            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<DrumNote2<FiveLane>>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
                 instrumentTrack[i] = new DifficultyTrack2<DrumNote2<FiveLane>>();
@@ -545,9 +545,9 @@ namespace YARG.Core.NewParsing.Midi
             return instrumentTrack;
         }
 
-        public static unsafe BasicInstrumentTrack2<DrumNote2<UnknownLane>> LoadUnknownDrums(YARGMidiTrack midiTrack, SyncTrack2 sync, ref DrumsType drumsType)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<DrumNote2<UnknownLane>>> LoadUnknownDrums(YARGMidiTrack midiTrack, SyncTrack2 sync, ref DrumsType drumsType)
         {
-            var instrumentTrack = new BasicInstrumentTrack2<DrumNote2<UnknownLane>>();
+            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<DrumNote2<UnknownLane>>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
                 instrumentTrack[i] = new DifficultyTrack2<DrumNote2<UnknownLane>>();
