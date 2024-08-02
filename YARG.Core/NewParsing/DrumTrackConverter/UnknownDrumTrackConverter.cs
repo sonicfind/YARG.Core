@@ -6,9 +6,9 @@ namespace YARG.Core.NewParsing
 {
     internal static class UnknownDrumTrackConverter
     {
-        public static BasicInstrumentTrack2<DrumNote2<FourLane>> ConvertToFourLane(this BasicInstrumentTrack2<DrumNote2<UnknownLane>> source, bool isPro)
+        public static InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>> ConvertToFourLane(this InstrumentTrack2<DifficultyTrack2<DrumNote2<UnknownLane>>> source, bool isPro)
         {
-            var newTrack = new BasicInstrumentTrack2<DrumNote2<FourLane>>
+            var newTrack = new InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>>
             {
                 SpecialPhrases = source.SpecialPhrases,
                 Events = source.Events
@@ -16,9 +16,9 @@ namespace YARG.Core.NewParsing
             return ConvertToFourLane(source, newTrack, isPro);
         }
 
-        public static BasicInstrumentTrack2<DrumNote2<FiveLane>> ConvertToFiveLane(this BasicInstrumentTrack2<DrumNote2<UnknownLane>> source)
+        public static InstrumentTrack2<DifficultyTrack2<DrumNote2<FiveLane>>> ConvertToFiveLane(this InstrumentTrack2<DifficultyTrack2<DrumNote2<UnknownLane>>> source)
         {
-            var newTrack = new BasicInstrumentTrack2<DrumNote2<FiveLane>>
+            var newTrack = new InstrumentTrack2<DifficultyTrack2<DrumNote2<FiveLane>>>
             {
                 SpecialPhrases = source.SpecialPhrases,
                 Events = source.Events
@@ -26,7 +26,7 @@ namespace YARG.Core.NewParsing
             return ConvertToFiveLane(source, newTrack);
         }
 
-        public static BasicInstrumentTrack2<DrumNote2<FourLane>> ConvertToFourLane(this BasicInstrumentTrack2<DrumNote2<UnknownLane>> source, BasicInstrumentTrack2<DrumNote2<FourLane>> destination, bool isPro)
+        public static InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>> ConvertToFourLane(this InstrumentTrack2<DifficultyTrack2<DrumNote2<UnknownLane>>> source, InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>> destination, bool isPro)
         {
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
@@ -40,7 +40,7 @@ namespace YARG.Core.NewParsing
             return destination;
         }
 
-        public static BasicInstrumentTrack2<DrumNote2<FiveLane>> ConvertToFiveLane(this BasicInstrumentTrack2<DrumNote2<UnknownLane>> source, BasicInstrumentTrack2<DrumNote2<FiveLane>> destination)
+        public static InstrumentTrack2<DifficultyTrack2<DrumNote2<FiveLane>>> ConvertToFiveLane(this InstrumentTrack2<DifficultyTrack2<DrumNote2<UnknownLane>>> source, InstrumentTrack2<DifficultyTrack2<DrumNote2<FiveLane>>> destination)
         {
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {

@@ -24,9 +24,9 @@ namespace YARG.Core.NewParsing.Midi
         };
 
 
-        public static unsafe BasicInstrumentTrack2<GuitarNote2<SixFret>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
-            var instrumentTrack = new BasicInstrumentTrack2<GuitarNote2<SixFret>>();
+            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
                 instrumentTrack[i] = new DifficultyTrack2<GuitarNote2<SixFret>>();
