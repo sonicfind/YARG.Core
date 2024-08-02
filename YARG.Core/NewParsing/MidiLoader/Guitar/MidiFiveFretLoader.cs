@@ -33,9 +33,9 @@ namespace YARG.Core.NewParsing.Midi
             public GuitarMidiDifficulty BaseDiff;
         }
 
-        public static unsafe BasicInstrumentTrack2<GuitarNote2<FiveFret>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
-            var instrumentTrack = new BasicInstrumentTrack2<GuitarNote2<FiveFret>>();
+            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
                 instrumentTrack[i] = new DifficultyTrack2<GuitarNote2<FiveFret>>();

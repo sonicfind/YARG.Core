@@ -17,19 +17,19 @@ namespace YARG.Core.NewParsing
         public LoaderSettings Settings;
         public string MidiSequenceName = string.Empty;
 
-        public BasicInstrumentTrack2<GuitarNote2<FiveFret>>? FiveFretGuitar;
-        public BasicInstrumentTrack2<GuitarNote2<FiveFret>>? FiveFretBass;
-        public BasicInstrumentTrack2<GuitarNote2<FiveFret>>? FiveFretRhythm;
-        public BasicInstrumentTrack2<GuitarNote2<FiveFret>>? FiveFretCoopGuitar;
-        public BasicInstrumentTrack2<GuitarNote2<FiveFret>>? Keys;
+        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>>? FiveFretGuitar;
+        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>>? FiveFretBass;
+        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>>? FiveFretRhythm;
+        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>>? FiveFretCoopGuitar;
+        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>>? Keys;
 
-        public BasicInstrumentTrack2<GuitarNote2<SixFret>>? SixFretGuitar;
-        public BasicInstrumentTrack2<GuitarNote2<SixFret>>? SixFretBass;
-        public BasicInstrumentTrack2<GuitarNote2<SixFret>>? SixFretRhythm;
-        public BasicInstrumentTrack2<GuitarNote2<SixFret>>? SixFretCoopGuitar;
+        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>>? SixFretGuitar;
+        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>>? SixFretBass;
+        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>>? SixFretRhythm;
+        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>>? SixFretCoopGuitar;
 
-        public BasicInstrumentTrack2<DrumNote2<FourLane>>? FourLaneDrums;
-        public BasicInstrumentTrack2<DrumNote2<FiveLane>>? FiveLaneDrums;
+        public InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>>? FourLaneDrums;
+        public InstrumentTrack2<DifficultyTrack2<DrumNote2<FiveLane>>>? FiveLaneDrums;
 
         // public InstrumentTrack2<TrueDrums>? TrueDrums;
 
