@@ -121,9 +121,7 @@ namespace YARG.Core.NewParsing
             DualTime.SetTruncationLimit(settings, 1);
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
-                if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK)
-                    ? !LoadEventsTrack_Chart(ref container, chart)
-                    : !SelectTrack_Chart(ref container, chart, ref drumsInChart, activeTracks, ref unknownDrums))
+                if (!SelectTrack_Chart(ref container, chart, ref drumsInChart, activeTracks, ref unknownDrums))
                 {
                     if (YARGTextReader.SkipLinesUntil(ref container, TextConstants<TChar>.CLOSE_BRACE))
                     {
@@ -205,6 +203,72 @@ namespace YARG.Core.NewParsing
             return new YARGChart(sync, metadata, settings, miscellaneous);
         }
 
+        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref BasicInstrumentTrack2<DrumNote2<UnknownLane>>? unknownDrums)
+            where TChar : unmanaged, IEquatable<TChar>, IConvertible
+        {
+            if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK))
+            {
+                return LoadEventsTrack_Chart(ref container, chart);
+            }
+
+            if (!YARGChartFileReader.ValidateInstrument(ref container, out var instrument, out var difficulty))
+            {
+                return false;
+            }
+
+            // The note track label for drums will only return the
+            // four lanes enum value
+            //
+            // We expect to the `activeTracks` parameter to hold the matching
+            // drums instrument value to `drumsInChart` if drums are active
+            if (instrument == Instrument.FourLaneDrums)
+            {
+                if (drumsInChart == DrumsType.ProDrums)
+                {
+                    instrument = Instrument.ProDrums;
+                }
+                else if (drumsInChart == DrumsType.FiveLane)
+                {
+                    instrument = Instrument.FiveLaneDrums;
+                }
+                else if (drumsInChart == DrumsType.Unknown && activeTracks == null)
+                {
+                    unsafe
+                    {
+                        _unknownDrumType = DrumsType.Unknown;
+                        bool result = LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref unknownDrums, &Set);
+                        drumsInChart = _unknownDrumType;
+                        return result;
+                    }
+                }
+            }
+
+            if (activeTracks != null && !activeTracks.Contains(instrument))
+            {
+                return false;
+            }
+
+            unsafe
+            {
+                return instrument switch
+                {
+                    Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretGuitar, &Set),
+                    Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretBass, &Set),
+                    Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretRhythm, &Set),
+                    Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretCoopGuitar, &Set),
+                    Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretGuitar, &Set),
+                    Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretBass, &Set),
+                    Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretRhythm, &Set),
+                    Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretCoopGuitar, &Set),
+                    Instrument.FourLaneDrums or
+                    Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FourLaneDrums, &Set),
+                    Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveLaneDrums, &Set),
+                    Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.Keys, &Set),
+                    _ => false,
+                };
+            }
+        }
+
         private static bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
@@ -275,67 +339,6 @@ namespace YARG.Core.NewParsing
                 chart.LeadVocals = null;
             }
             return true;
-        }
-
-        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref BasicInstrumentTrack2<DrumNote2<UnknownLane>>? unknownDrums)
-            where TChar : unmanaged, IEquatable<TChar>, IConvertible
-        {
-            if (!YARGChartFileReader.ValidateInstrument(ref container, out var instrument, out var difficulty))
-            {
-                return false;
-            }
-
-            // The note track label for drums will only return the
-            // four lanes enum value
-            //
-            // We expect to the `activeTracks` parameter to hold the matching
-            // drums instrument value to `drumsInChart` if drums are active
-            if (instrument == Instrument.FourLaneDrums)
-            {
-                if (drumsInChart == DrumsType.ProDrums)
-                {
-                    instrument = Instrument.ProDrums;
-                }
-                else if (drumsInChart == DrumsType.FiveLane)
-                {
-                    instrument = Instrument.FiveLaneDrums;
-                }
-                else if (drumsInChart == DrumsType.Unknown && activeTracks == null)
-                {
-                    unsafe
-                    {
-                        _unknownDrumType = DrumsType.Unknown;
-                        bool result = LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref unknownDrums, &Set);
-                        drumsInChart = _unknownDrumType;
-                        return result;
-                    }
-                }
-            }
-
-            if (activeTracks != null && !activeTracks.Contains(instrument))
-            {
-                return false;
-            }
-
-            unsafe
-            {
-                return instrument switch
-                {
-                    Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretGuitar, &Set),
-                    Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretBass, &Set),
-                    Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretRhythm, &Set),
-                    Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretCoopGuitar, &Set),
-                    Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretGuitar, &Set),
-                    Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretBass, &Set),
-                    Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretRhythm, &Set),
-                    Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretCoopGuitar, &Set),
-                    Instrument.FourLaneDrums or
-                    Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FourLaneDrums, &Set),
-                    Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveLaneDrums, &Set),
-                    Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.Keys, &Set),
-                    _ => false,
-                };
-            }
         }
 
         private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref BasicInstrumentTrack2<TNote>? track, delegate*<TNote*, int, in DualTime, bool> setter)
