@@ -43,9 +43,6 @@ namespace YARG.Core.NewParsing.Midi
             var percussionPosition = DualTime.Inactive;
 
             var phrasePosition = DualTime.Inactive;
-            var phraseInfo = default(SpecialPhraseInfo);
-            phraseInfo.Velocity = 100;
-
             var overdrivePosition = DualTime.Inactive;
             var rangeShiftPosition = DualTime.Inactive;
             var lyricShiftPosition = DualTime.Inactive;
@@ -158,11 +155,11 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             if (phrasePosition.Ticks > -1)
                             {
-                                phraseInfo.Duration = position - phrasePosition;
+                                var duration = position - phrasePosition;
                                 var type = trackIndex == 0 ? SpecialPhraseType.LyricLine : SpecialPhraseType.HarmonyLine;
                                 vocalTrack.SpecialPhrases
                                         .TraverseBackwardsUntil(phrasePosition)
-                                        .Add(type, phraseInfo);
+                                        .Add(type, (duration, 100));
                                 phrasePosition.Ticks = -1;
                             }
                         }
@@ -170,10 +167,10 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             if (overdrivePosition.Ticks > -1)
                             {
-                                phraseInfo.Duration = position - overdrivePosition;
+                                var duration = position - overdrivePosition;
                                 vocalTrack.SpecialPhrases
                                         .TraverseBackwardsUntil(overdrivePosition)
-                                        .Add(SpecialPhraseType.StarPower, phraseInfo);
+                                        .Add(SpecialPhraseType.StarPower, (duration, 100));
                                 overdrivePosition.Ticks = -1;
                             }
                         }
@@ -192,7 +189,7 @@ namespace YARG.Core.NewParsing.Midi
                                 // Range shifts are instant, so manipulation of the duration is pointless
                                 vocalTrack.SpecialPhrases
                                     .TraverseBackwardsUntil(rangeShiftPosition)
-                                    .TryAdd(SpecialPhraseType.RangeShift, phraseInfo);
+                                    .TryAdd(SpecialPhraseType.RangeShift, (default(DualTime), 100));
                                 rangeShiftPosition.Ticks = -1;
                             }
                         }
@@ -202,7 +199,7 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 vocalTrack.SpecialPhrases
                                     .TraverseBackwardsUntil(lyricShiftPosition)
-                                    .Add(SpecialPhraseType.LyricShift, phraseInfo);
+                                    .Add(SpecialPhraseType.LyricShift, (default(DualTime), 100));
                                 lyricShiftPosition.Ticks = -1;
                             }
                         }
@@ -256,7 +253,7 @@ namespace YARG.Core.NewParsing.Midi
                             // Range shifts are instant, so manipulation of the duration is pointless
                             vocalTrack.SpecialPhrases
                                 .GetLastOrAppend(position)
-                                .TryAdd(SpecialPhraseType.RangeShift, phraseInfo);
+                                .TryAdd(SpecialPhraseType.RangeShift, (default(DualTime), 100));
                         }
                         else
                         {
