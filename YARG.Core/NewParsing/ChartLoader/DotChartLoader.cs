@@ -17,7 +17,7 @@ namespace YARG.Core.NewParsing
         private const string SECTION = "section ";
         private const string LYRIC = "lyric ";
         private const string PHRASE_START = "phrase_start";
-        private const string PHRASE_END = "phrase_end ";
+        private const string PHRASE_END = "phrase_end";
 
         private YARGChart(SyncTrack2 sync, SongMetadata metadata, LoaderSettings settings, Dictionary<string, IniModifier> miscellaneous)
         {
