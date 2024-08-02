@@ -159,7 +159,7 @@ namespace YARG.Core.NewParsing
                         sync.TempoMarkers.GetLastOrAppend(midiTrack.Position)->MicrosPerQuarter = midiTrack.ExtractMicrosPerQuarter();
                         break;
                     case MidiEventType.Time_Sig:
-                        *sync.TimeSigs.GetLastOrAppend(midiTrack.Position) = midiTrack.ExtractTimeSig();
+                        sync.TimeSigs.AppendOrUpdate(midiTrack.Position, midiTrack.ExtractTimeSig());
                         break;
                 }
             }
