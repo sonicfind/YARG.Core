@@ -161,7 +161,7 @@ namespace YARG.Core.NewParsing
                                 }
                                 break;
                             case ChartEventType.Time_Sig:
-                                *chart.Sync.TimeSigs.GetLastOrAppend(ev.Position) = YARGChartFileReader.ExtractTimeSig(ref container);
+                                chart.Sync.TimeSigs.AppendOrUpdate(ev.Position, YARGChartFileReader.ExtractTimeSig(ref container));
                                 break;
                         }
                     }
