@@ -172,7 +172,7 @@ namespace YARG.Core.NewParsing
                         sync.TempoMarkers.GetLastOrAppend(ev.Position)->Anchor = ev.Position > 0 ? YARGTextReader.ExtractInt64AndWhitespace(ref container) : 0;
                         break;
                     case ChartEventType.Time_Sig:
-                        *sync.TimeSigs.GetLastOrAppend(ev.Position) = YARGChartFileReader.ExtractTimeSig(ref container);
+                        sync.TimeSigs.AppendOrUpdate(ev.Position, YARGChartFileReader.ExtractTimeSig(ref container));
                         break;
                 }
             }
