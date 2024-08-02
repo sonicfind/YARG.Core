@@ -49,8 +49,6 @@ namespace YARG.Core.NewParsing.Midi
             var soloPosition = DualTime.Inactive;
             var tremoloPostion = DualTime.Inactive;
             var trillPosition = DualTime.Inactive;
-            var phraseInfo = default(SpecialPhraseInfo);
-            phraseInfo.Velocity = 100;
 
             int tempoIndex = 0;
             var position = default(DualTime);
@@ -228,10 +226,10 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                phraseInfo.Duration = position - bre;
+                                var duration = position - bre;
                                 instrumentTrack.SpecialPhrases
                                         .TraverseBackwardsUntil(bre)
-                                        .Add(SpecialPhraseType.BRE, phraseInfo);
+                                        .Add(SpecialPhraseType.BRE, (duration, 100));
                             }
                             bre.Ticks = -1;
                         }
@@ -243,30 +241,30 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - overdrivePosition;
+                                        var duration = position - overdrivePosition;
                                         instrumentTrack.SpecialPhrases
                                                 .TraverseBackwardsUntil(overdrivePosition)
-                                                .Add(SpecialPhraseType.StarPower, phraseInfo);
+                                                .Add(SpecialPhraseType.StarPower, (duration, 100));
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - tremoloPostion;
+                                        var duration = position - tremoloPostion;
                                         instrumentTrack.SpecialPhrases
                                                 .TraverseBackwardsUntil(tremoloPostion)
-                                                .Add(SpecialPhraseType.Tremolo, phraseInfo);
+                                                .Add(SpecialPhraseType.Tremolo, (duration, 100));
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - trillPosition;
+                                        var duration = position - trillPosition;
                                         instrumentTrack.SpecialPhrases
                                                 .TraverseBackwardsUntil(trillPosition)
-                                                .Add(SpecialPhraseType.Trill, phraseInfo);
+                                                .Add(SpecialPhraseType.Trill, (duration, 100));
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
@@ -328,8 +326,6 @@ namespace YARG.Core.NewParsing.Midi
             var soloPosition = DualTime.Inactive;
             var tremoloPostion = DualTime.Inactive;
             var trillPosition = DualTime.Inactive;
-            var phraseInfo = default(SpecialPhraseInfo);
-            phraseInfo.Velocity = 100;
 
             int tempoIndex = 0;
             var position = default(DualTime);
@@ -473,8 +469,8 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                phraseInfo.Duration = position - bre;
-                                instrumentTrack.SpecialPhrases[bre].Add(SpecialPhraseType.BRE, phraseInfo);
+                                var duration = position - bre;
+                                instrumentTrack.SpecialPhrases[bre].Add(SpecialPhraseType.BRE, (duration, 100));
                             }
                             bre.Ticks = -1;
                         }
@@ -486,30 +482,30 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - overdrivePosition;
+                                        var duration = position - overdrivePosition;
                                         instrumentTrack.SpecialPhrases
                                                 .TraverseBackwardsUntil(overdrivePosition)
-                                                .Add(SpecialPhraseType.StarPower, phraseInfo);
+                                                .Add(SpecialPhraseType.StarPower, (duration, 100));
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - tremoloPostion;
+                                        var duration = position - tremoloPostion;
                                         instrumentTrack.SpecialPhrases
                                                 .TraverseBackwardsUntil(tremoloPostion)
-                                                .Add(SpecialPhraseType.Tremolo, phraseInfo);
+                                                .Add(SpecialPhraseType.Tremolo, (duration, 100));
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - trillPosition;
+                                        var duration = position - trillPosition;
                                         instrumentTrack.SpecialPhrases
                                                 .TraverseBackwardsUntil(trillPosition)
-                                                .Add(SpecialPhraseType.Trill, phraseInfo);
+                                                .Add(SpecialPhraseType.Trill, (duration, 100));
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
@@ -572,8 +568,6 @@ namespace YARG.Core.NewParsing.Midi
             var soloPosition = DualTime.Inactive;
             var tremoloPostion = DualTime.Inactive;
             var trillPosition = DualTime.Inactive;
-            var phraseInfo = default(SpecialPhraseInfo);
-            phraseInfo.Velocity = 100;
 
             int tempoIndex = 0;
             var position = default(DualTime);
@@ -764,10 +758,10 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                phraseInfo.Duration = position - bre;
+                                var duration = position - bre;
                                 instrumentTrack.SpecialPhrases
                                         .TraverseBackwardsUntil(bre)
-                                        .Add(SpecialPhraseType.BRE, phraseInfo);
+                                        .Add(SpecialPhraseType.BRE, (duration, 100));
                             }
                             bre.Ticks = -1;
                         }
@@ -779,30 +773,30 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - overdrivePosition;
+                                        var duration = position - overdrivePosition;
                                         instrumentTrack.SpecialPhrases
                                                 .TraverseBackwardsUntil(overdrivePosition)
-                                                .Add(SpecialPhraseType.StarPower, phraseInfo);
+                                                .Add(SpecialPhraseType.StarPower, (duration, 100));
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - tremoloPostion;
+                                        var duration = position - tremoloPostion;
                                         instrumentTrack.SpecialPhrases
                                                 .TraverseBackwardsUntil(tremoloPostion)
-                                                .Add(SpecialPhraseType.Tremolo, phraseInfo);
+                                                .Add(SpecialPhraseType.Tremolo, (duration, 100));
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - trillPosition;
+                                        var duration = position - trillPosition;
                                         instrumentTrack.SpecialPhrases
                                                 .TraverseBackwardsUntil(trillPosition)
-                                                .Add(SpecialPhraseType.Trill, phraseInfo);
+                                                .Add(SpecialPhraseType.Trill, (duration, 100));
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
