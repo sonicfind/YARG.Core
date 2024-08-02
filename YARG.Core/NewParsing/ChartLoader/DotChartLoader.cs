@@ -183,9 +183,7 @@ namespace YARG.Core.NewParsing
             BasicInstrumentTrack2<DrumNote2<UnknownLane>>? unknownDrums = null;
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
-                if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK)
-                    ? !LoadEventsTrack_Chart(ref container, chart)
-                    : !SelectTrack_Chart(ref container, chart, ref drumsInChart, activeTracks, ref unknownDrums))
+                if (!SelectTrack_Chart(ref container, chart, ref drumsInChart, activeTracks, ref unknownDrums))
                 {
                     YARGChartFileReader.SkipToNextTrack(ref container);
                 }
@@ -287,6 +285,11 @@ namespace YARG.Core.NewParsing
         private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref BasicInstrumentTrack2<DrumNote2<UnknownLane>>? unknownDrums)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
+            if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK))
+            {
+                return LoadEventsTrack_Chart(ref container, chart);
+            }
+
             if (!YARGChartFileReader.ValidateInstrument(ref container, out var instrument, out var difficulty))
             {
                 return false;
