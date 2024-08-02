@@ -75,10 +75,10 @@ namespace YARG.Core.NewParsing
                 chart.LeadVocals = new VocalTrack2(1);
             }
 
-            BasicInstrumentTrack2<DrumNote2<UnknownLane>>? unknownDrums = null;
+            InstrumentTrack2<DifficultyTrack2<DrumNote2<UnknownLane>>>? unknownDrums = null;
             if (activeTracks == null && settings.DrumsType is DrumsType.Unknown)
             {
-                unknownDrums = new BasicInstrumentTrack2<DrumNote2<UnknownLane>>();
+                unknownDrums = new InstrumentTrack2<DifficultyTrack2<DrumNote2<UnknownLane>>>();
                 _unknownDrumType = settings.DrumsType;
             }
 
@@ -99,17 +99,17 @@ namespace YARG.Core.NewParsing
                 switch (_unknownDrumType)
                 {
                     case DrumsType.ProDrums:
-                        chart.FourLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane>>();
+                        chart.FourLaneDrums ??= new InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>>();
                         unknownDrums.ConvertToFourLane(chart.FourLaneDrums, true);
                         chart.Settings.DrumsType = DrumsType.ProDrums;
                         break;
                     case DrumsType.FiveLane:
-                        chart.FiveLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FiveLane>>();
+                        chart.FiveLaneDrums ??= new InstrumentTrack2<DifficultyTrack2<DrumNote2<FiveLane>>>();
                         unknownDrums.ConvertToFiveLane(chart.FiveLaneDrums);
                         chart.Settings.DrumsType = DrumsType.FiveLane;
                         break;
                     default:
-                        chart.FourLaneDrums ??= new BasicInstrumentTrack2<DrumNote2<FourLane>>();
+                        chart.FourLaneDrums ??= new InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>>();
                         unknownDrums.ConvertToFourLane(chart.FourLaneDrums, false);
                         chart.Settings.DrumsType = DrumsType.FourLane;
                         break;
@@ -252,7 +252,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, HashSet<Instrument>? activeTracks, BasicInstrumentTrack2<DrumNote2<UnknownLane>>? unknownDrums)
+        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, HashSet<Instrument>? activeTracks, InstrumentTrack2<DifficultyTrack2<DrumNote2<UnknownLane>>>? unknownDrums)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK))
@@ -336,11 +336,11 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref BasicInstrumentTrack2<TNote>? track, delegate*<TNote*, int, in DualTime, bool> setter)
+        private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref InstrumentTrack2<DifficultyTrack2<TNote>>? track, delegate*<TNote*, int, in DualTime, bool> setter)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TNote : unmanaged, IInstrumentNote
         {
-            track ??= new BasicInstrumentTrack2<TNote>();
+            track ??= new InstrumentTrack2<DifficultyTrack2<TNote>>();
 
             ref var difficultyTrack = ref track[difficulty];
             if (difficultyTrack != null)
