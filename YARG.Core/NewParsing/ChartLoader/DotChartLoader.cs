@@ -85,9 +85,7 @@ namespace YARG.Core.NewParsing
             DualTime.SetTruncationLimit(settings, 1);
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
-                if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK)
-                    ? !LoadEventsTrack_Chart(ref container, chart)
-                    : !SelectTrack_Chart(ref container, chart, activeTracks, unknownDrums))
+                if (!SelectTrack_Chart(ref container, chart, activeTracks, unknownDrums))
                 {
                     if (YARGTextReader.SkipLinesUntil(ref container, TextConstants<TChar>.CLOSE_BRACE))
                     {
@@ -257,6 +255,11 @@ namespace YARG.Core.NewParsing
         private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, HashSet<Instrument>? activeTracks, BasicInstrumentTrack2<DrumNote2<UnknownLane>>? unknownDrums)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
+            if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK))
+            {
+                return LoadEventsTrack_Chart(ref container, chart);
+            }
+
             if (!YARGChartFileReader.ValidateInstrument(ref container, out var instrument, out var difficulty))
             {
                 return false;
