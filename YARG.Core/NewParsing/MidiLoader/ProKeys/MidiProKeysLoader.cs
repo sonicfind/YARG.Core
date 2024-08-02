@@ -35,8 +35,6 @@ namespace YARG.Core.NewParsing.Midi
             var brePosition = DualTime.Inactive;
             var glissPostion = DualTime.Inactive;
             var trillPosition = DualTime.Inactive;
-            var phraseInfo = default(SpecialPhraseInfo);
-            phraseInfo.Velocity = 100;
 
             int tempoIndex = 0;
             var position = default(DualTime);
@@ -122,50 +120,50 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - overdrivePosition;
+                                        var duration = position - overdrivePosition;
                                         instrumentTrack.SpecialPhrases
                                             .TraverseBackwardsUntil(overdrivePosition)
-                                            .Add(SpecialPhraseType.StarPower, phraseInfo);
+                                            .Add(SpecialPhraseType.StarPower, (duration, 100));
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case SOLO_MIDI:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - soloPosition;
+                                        var duration = position - soloPosition;
                                         instrumentTrack.SpecialPhrases
                                             .TraverseBackwardsUntil(soloPosition)
-                                            .Add(SpecialPhraseType.Solo, phraseInfo);
+                                            .Add(SpecialPhraseType.Solo, (duration, 100));
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
                                 case BRE_MIDI:
                                     if (brePosition.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - brePosition;
+                                        var duration = position - brePosition;
                                         instrumentTrack.SpecialPhrases
                                             .TraverseBackwardsUntil(brePosition)
-                                            .Add(SpecialPhraseType.BRE, phraseInfo);
+                                            .Add(SpecialPhraseType.BRE, (duration, 100));
                                         brePosition.Ticks = -1;
                                     }
                                     break;
                                 case GLISSANDO_MIDI:
                                     if (glissPostion.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - glissPostion;
+                                        var duration = position - glissPostion;
                                         instrumentTrack.SpecialPhrases
                                             .TraverseBackwardsUntil(glissPostion)
-                                            .Add(SpecialPhraseType.Glissando, phraseInfo);
+                                            .Add(SpecialPhraseType.Glissando, (duration, 100));
                                         glissPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        phraseInfo.Duration = position - trillPosition;
+                                        var duration = position - trillPosition;
                                         instrumentTrack.SpecialPhrases
                                             .TraverseBackwardsUntil(trillPosition)
-                                            .Add(SpecialPhraseType.Trill, phraseInfo);
+                                            .Add(SpecialPhraseType.Trill, (duration, 100));
                                         trillPosition.Ticks = -1;
                                     }
                                     break;

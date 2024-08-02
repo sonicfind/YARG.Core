@@ -251,7 +251,7 @@ namespace YARG.Core.NewParsing
                         {
                             if (phrase.Ticks >= 0 && position.Ticks > phrase.Ticks)
                             {
-                                chart.LeadVocals.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, new(position - phrase));
+                                chart.LeadVocals.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, (position - phrase, 100));
                             }
                             phrase = position;
                         }
@@ -263,7 +263,7 @@ namespace YARG.Core.NewParsing
                         {
                             if (position.Ticks > phrase.Ticks)
                             {
-                                chart.LeadVocals!.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, new(position - phrase));
+                                chart.LeadVocals!.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, (position - phrase, 100));
                             }
                             phrase.Ticks = -1;
                         }
@@ -415,7 +415,7 @@ namespace YARG.Core.NewParsing
                                     case SpecialPhraseType.Trill:
                                         duration.Ticks = tickDuration;
                                         duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
-                                        difficultyTrack.SpecialPhrases.GetLastOrAppend(position).TryAdd(type, new SpecialPhraseInfo(in duration));
+                                        difficultyTrack.SpecialPhrases.GetLastOrAppend(position).TryAdd(type, (duration, 100));
                                         break;
                                 }
                             }
@@ -432,7 +432,7 @@ namespace YARG.Core.NewParsing
                                 ++soloEnd.Ticks;
                                 soloEnd.Seconds = sync.ConvertToSeconds(soloEnd.Ticks, tempoIndex);
 
-                                difficultyTrack.SpecialPhrases[soloQueue[0]].TryAdd(SpecialPhraseType.Solo, new SpecialPhraseInfo(soloEnd - soloQueue[0]));
+                                difficultyTrack.SpecialPhrases[soloQueue[0]].TryAdd(SpecialPhraseType.Solo, (soloEnd - soloQueue[0], 100));
                                 soloQueue[0] = soloQueue[1] == position ? soloQueue[1] : DualTime.Inactive;
                                 soloQueue[1] = DualTime.Inactive;
                             }
