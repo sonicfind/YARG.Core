@@ -628,7 +628,7 @@ namespace YARG.Core.NewParsing.Midi
                                         }
                                     }
 
-                                    if (1 <= padIndex && padIndex <= 3)
+                                    if (type != DrumsType.FiveLane && 1 <= padIndex && padIndex <= 3)
                                     {
                                         ((DrumPad_Pro*) &drum->Pads)[padIndex].CymbalFlag = !tomFlags[padIndex - 1];
                                     }
