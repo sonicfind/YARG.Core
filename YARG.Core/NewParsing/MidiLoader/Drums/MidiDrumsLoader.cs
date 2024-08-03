@@ -12,6 +12,7 @@ namespace YARG.Core.NewParsing.Midi
         private const int DOUBLEBASS_INDEX = 1;
         private const int EXPERT_INDEX = 3;
         private const int DYNAMIC_MIN = 2;
+        private const int CYMBAL_MIN = 3;
         private const int FLAM_VALUE = 109;
         private const int MAX_LANES = 7;
         private const int DRUMNOTE_MAX = 101;
@@ -92,22 +93,22 @@ namespace YARG.Core.NewParsing.Midi
 
                                 if (lane >= DYNAMIC_MIN)
                                 {
-                                    int padIndex = lane - DYNAMIC_MIN;
+                                    var pad = (DrumPad_Pro*) &drum->Pads + (lane - DYNAMIC_MIN);
                                     if (enableDynamics)
                                     {
                                         if (note.Velocity == 127)
                                         {
-                                            ((DrumPad_Pro*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Accent;
+                                            pad->Dynamics = DrumDynamics.Accent;
                                         }
                                         else if (note.Velocity == 1)
                                         {
-                                            ((DrumPad_Pro*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Ghost;
+                                            pad->Dynamics = DrumDynamics.Ghost;
                                         }
                                     }
 
-                                    if (padIndex >= 1)
+                                    if (lane >= CYMBAL_MIN)
                                     {
-                                        ((DrumPad_Pro*) &drum->Pads)[padIndex].CymbalFlag = !tomFlags[padIndex - 1];
+                                        pad->CymbalFlag = !tomFlags[lane - CYMBAL_MIN];
                                     }
                                 }
                             }
@@ -553,7 +554,7 @@ namespace YARG.Core.NewParsing.Midi
                 instrumentTrack[i] = new DifficultyTrack2<DrumNote2<UnknownLane>>();
             }
 
-            int NUM_LANES = (drumsType & DrumsType.FiveLane) == DrumsType.FiveLane ? 7 : 6;
+            int numLanes = 7;
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * MAX_LANES]
             {
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
@@ -599,7 +600,8 @@ namespace YARG.Core.NewParsing.Midi
                             int noteValue = note.Value - MidiLoader_Constants.DEFAULT_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
                             int lane = LANEVALUES[noteValue];
-                            if (lane < NUM_LANES)
+                            // if we detect prodrums flags, this value changes to disallow the fifth pad lane
+                            if (lane < numLanes)
                             {
                                 var diffTrack = instrumentTrack[diffIndex]!;
                                 lanes[diffIndex * MAX_LANES + lane] = position;
@@ -614,20 +616,22 @@ namespace YARG.Core.NewParsing.Midi
                                 if (lane >= DYNAMIC_MIN)
                                 {
                                     int padIndex = lane - DYNAMIC_MIN;
+                                    // Can't be hit if it already detected ProDrums
                                     if (padIndex == 4)
                                     {
                                         drumsType = DrumsType.FiveLane;
                                     }
 
+                                    var pad = (DrumPad_Pro*) &drum->Pads + (lane - DYNAMIC_MIN);
                                     if (enableDynamics)
                                     {
                                         if (note.Velocity == 127)
                                         {
-                                            ((DrumPad_Pro*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Accent;
+                                            pad->Dynamics = DrumDynamics.Accent;
                                         }
                                         else if (note.Velocity == 1)
                                         {
-                                            ((DrumPad_Pro*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Ghost;
+                                            pad->Dynamics = DrumDynamics.Ghost;
                                         }
                                     }
 
@@ -635,7 +639,7 @@ namespace YARG.Core.NewParsing.Midi
                                     {
                                         if (1 <= padIndex && padIndex <= 3)
                                         {
-                                            ((DrumPad_Pro*)&drum->Pads)[padIndex].CymbalFlag = !tomFlags[padIndex - 1];
+                                            pad->CymbalFlag = !tomFlags[lane - CYMBAL_MIN];
                                         }
                                     }
                                 }
@@ -666,7 +670,7 @@ namespace YARG.Core.NewParsing.Midi
                                     }
                                 }
                                 drumsType = DrumsType.ProDrums;
-                                NUM_LANES = 6;
+                                numLanes = 6;
                             }
                         }
                         else if (MidiLoader_Constants.BRE_MIN <= note.Value && note.Value <= MidiLoader_Constants.BRE_MAX)
@@ -712,7 +716,7 @@ namespace YARG.Core.NewParsing.Midi
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
 
                             int lane = LANEVALUES[noteValue];
-                            if (lane < NUM_LANES)
+                            if (lane < numLanes)
                             {
                                 var diffTrack = instrumentTrack[diffIndex]!;
                                 ref var colorPosition = ref lanes[diffIndex * MAX_LANES + lane];
