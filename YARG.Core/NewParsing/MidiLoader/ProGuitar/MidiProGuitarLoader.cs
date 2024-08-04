@@ -56,13 +56,13 @@ namespace YARG.Core.NewParsing.Midi
             public bool Hopo;
         }
 
-        public static unsafe ProGuitarInstrumentTrack<TProConfig> Load<TProConfig>(YARGMidiTrack midiTrack, SyncTrack2 sync)
-            where TProConfig : unmanaged, IProFretConfig<TProConfig>
+        public static unsafe ProGuitarInstrumentTrack<TProFret> Load<TProFret>(YARGMidiTrack midiTrack, SyncTrack2 sync)
+            where TProFret : unmanaged, IProFret
         {
-            var instrumentTrack = new ProGuitarInstrumentTrack<TProConfig>();
+            var instrumentTrack = new ProGuitarInstrumentTrack<TProFret>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                instrumentTrack.Difficulties[i] = new ProGuitarDifficultyTrack<TProConfig>();
+                instrumentTrack.Difficulties[i] = new ProGuitarDifficultyTrack<TProFret>();
             }
             var expertTrack = instrumentTrack[Difficulty.Expert]!;
             var hardTrack = instrumentTrack[Difficulty.Hard]!;
@@ -136,9 +136,9 @@ namespace YARG.Core.NewParsing.Midi
                                     guitar->Emphasis = midiDiff.Emphasis;
                                 }
 
-                                var proString = (ProGuitarString<TProConfig>*) guitar + lane;
+                                var proString = (ProGuitarString<TProFret>*) guitar + lane;
                                 proString->Mode = midiTrack.Channel <= 6 ? (StringMode) midiTrack.Channel : StringMode.Normal;
-                                proString->Fret = note.velocity - MIN_FRET_VELOCITY;
+                                proString->Fret.Value = note.velocity - MIN_FRET_VELOCITY;
                                 strings[diffIndex * NUM_STRINGS + lane] = position;
                             }
                             else
@@ -211,11 +211,11 @@ namespace YARG.Core.NewParsing.Midi
                                     trillPosition = position;
                                     trillOnHard = 41 <= note.velocity && note.velocity <= 50;
                                     break;
-                                case LEFT_HAND_POSITION_MIDI:   instrumentTrack.HandPositions.Append(position)->Fret = note.velocity - MIN_FRET_VELOCITY; break;
                                 case SLASH_CHORD_MIDI:          slashPosition = position; break;
                                 case HIDE_CHORD_MIDI:           hideChordPosition = position; break;
                                 case ACCIDENTAL_SWITCH_MIDI:    accidentalPosition = position; break;
                                 case FULL_CHORD_NUMBERING_MIDI: fullChordPosition = position; break;
+                                case LEFT_HAND_POSITION_MIDI:   instrumentTrack.HandPositions.Append(position)->Value = note.velocity - MIN_FRET_VELOCITY; break;
                             }
                         }
                     }
@@ -235,7 +235,7 @@ namespace YARG.Core.NewParsing.Midi
                                     ref var stringPosition = ref strings[diffIndex * NUM_STRINGS + lane];
                                     if (stringPosition.Ticks != -1)
                                     {
-                                        ((ProGuitarString<TProConfig>*) diffTrack.Notes.TraverseBackwardsUntil(stringPosition))[lane].Duration = DualTime.Truncate(position - stringPosition);
+                                        ((ProGuitarString<TProFret>*) diffTrack.Notes.TraverseBackwardsUntil(stringPosition))[lane].Duration = DualTime.Truncate(position - stringPosition);
                                         stringPosition.Ticks = -1;
                                     }
                                 }

@@ -15,37 +15,27 @@ namespace YARG.Core.NewParsing
         Pinch_Harmonics
     };
 
-    public struct ProGuitarString<TProFretConfig>
-        where TProFretConfig : unmanaged, IProFretConfig<TProFretConfig>
+    public struct ProGuitarString<TProFret>
+        where TProFret : unmanaged, IProFret
     {
-        private int _fret;
+        public TProFret Fret;
         public StringMode Mode;
         public DualTime Duration;
 
-        public int Fret
-        {
-            readonly get => _fret;
-            set
-            {
-                _fret = IProFretConfig<TProFretConfig>.ValidateFret(value);
-            }
-        }
-
         public readonly bool IsActive()
         {
-            return Duration.IsActive() && _fret >= 0;
+            return Duration.IsActive();
         }
 
         public void Disable()
         {
-            _fret = -1;
             Mode = StringMode.Normal;
             Duration = default;
         }
 
         public override readonly string ToString()
         {
-            var builder = new StringBuilder($"{_fret} - {Duration.Ticks}");
+            var builder = new StringBuilder($"{Fret.Value} - {Duration.Ticks}");
             if (Mode != StringMode.Normal)
             {
                 builder.Append($"({Mode})");
