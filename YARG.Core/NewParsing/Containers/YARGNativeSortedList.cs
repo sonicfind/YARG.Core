@@ -164,26 +164,22 @@ namespace YARG.Core.NewParsing
         public bool TryAppend(in TKey key, out TValue* value)
         {
             bool append = _count == 0 || !_buffer[_count - 1].Key.Equals(key);
-            if (append)
-            {
-                Append(key);
-                value = &_buffer[_count - 1].Value;
-            }
-            else
-            {
-                value = default;
-            }
+            value = append ? Append(key) : &_buffer[_count - 1].Value;
             return append;
         }
 
         public bool TryAppend(in TKey key)
         {
-            bool append = _count == 0 || !_buffer[_count - 1].Key.Equals(key);
-            if (append)
+            if (_count > 0 && _buffer[_count - 1].Key.Equals(key))
             {
-                Append(key);
+                return false;
             }
-            return append;
+
+            CheckAndGrow();
+            var node = _buffer + _count++;
+            node->Key = key;
+            node->Value = DEFAULT_VALUE;
+            return true;
         }
 
         /// <remarks>
