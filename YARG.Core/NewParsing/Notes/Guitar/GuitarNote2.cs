@@ -58,7 +58,12 @@ namespace YARG.Core.NewParsing
 
         public readonly override string ToString()
         {
-            return $"{State} | {Frets}";
+            string str = Frets.ToString();
+            if (State != GuitarState.Natural)
+            {
+                str += State.ToString();
+            }
+            return str;
         }
     }
 }
