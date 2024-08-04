@@ -41,7 +41,16 @@ namespace YARG.Core.NewParsing
             _fret = -1;
             Mode = StringMode.Normal;
             Duration = default;
-            
+        }
+
+        public override readonly string ToString()
+        {
+            var builder = new StringBuilder($"{_fret} - {Duration.Ticks}");
+            if (Mode != StringMode.Normal)
+            {
+                builder.Append($"({Mode})");
+            }
+            return builder.ToString();
         }
     }
 }
