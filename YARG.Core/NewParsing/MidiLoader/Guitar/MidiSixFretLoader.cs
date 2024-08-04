@@ -9,6 +9,10 @@ namespace YARG.Core.NewParsing.Midi
         private const int SIXFRET_MIN = 58;
         private const int SIXFRET_MAX = 105;
         private const int NUM_LANES = 7;
+        private const int HOPO_ON_INDEX = 7;
+        private const int HOPO_OFF_INDEX = 8;
+        private const int SP_SOLO_INDEX = 9;
+        private const int TAP_INDEX = 10;
 
         private const int BRE_MIN = 120;
         private const int BRE_MAX = 124;
@@ -16,13 +20,19 @@ namespace YARG.Core.NewParsing.Midi
         private const int STARPOWER_DIFF_OFFSET = 8;
         private const int STARPOWER_DIFF_VALUE = 12;
 
+        private const int SYSEX_LENGTH = 8;
+        private const int SYSEX_DIFF_INDEX = 4;
+        private const int SYSEX_TYPE_INDEX = 5;
+        private const int SYSEX_STATUS_INDEX = 6;
+        private const int SYSEX_TAP_TYPE = 4;
+        private const int SYSEX_ALLDIFF = 0xFF;
+
         private static readonly int[] LANEVALUES = new int[] {
             0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 11,
             0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 11,
             0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 11,
             0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 11,
         };
-
 
         public static unsafe InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
@@ -100,7 +110,7 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 switch (lane)
                                 {
-                                    case 7:
+                                    case HOPO_ON_INDEX:
                                         {
                                             diffModifier.HopoOn = true;
                                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
@@ -110,7 +120,7 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                             break;
                                         }
-                                    case 8:
+                                    case HOPO_OFF_INDEX:
                                         {
                                             diffModifier.HopoOff = true;
                                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
@@ -120,7 +130,7 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                             break;
                                         }
-                                    case 9:
+                                    case SP_SOLO_INDEX:
                                         // FIVEFRET_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
                                         //      58      +     3     *   12                                         +   9
                                         // = 103 = Solo
@@ -132,7 +142,7 @@ namespace YARG.Core.NewParsing.Midi
                                             instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
                                         }
                                         break;
-                                    case 10:
+                                    case TAP_INDEX:
                                         // FIVEFRET_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
                                         //      58      +     3     *   12                                         +  10
                                         // = 104 = CH-founded Tap
@@ -195,7 +205,7 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 switch (lane)
                                 {
-                                    case 7:
+                                    case HOPO_ON_INDEX:
                                         {
                                             diffModifier.HopoOn = false;
                                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
@@ -207,7 +217,7 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                             break;
                                         }
-                                    case 8:
+                                    case HOPO_OFF_INDEX:
                                         {
                                             diffModifier.HopoOff = false;
                                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
@@ -217,7 +227,7 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                             break;
                                         }
-                                    case 9:
+                                    case SP_SOLO_INDEX:
                                         // FIVEFRET_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
                                         //      58      +     3     *   12                                         +   9
                                         // = 103 = Solo
@@ -235,7 +245,7 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                         }
                                         break;
-                                    case 10:
+                                    case TAP_INDEX:
                                         // FIVEFRET_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
                                         //      58      +     3     *   12                                         +   10
                                         // = 104 = CH-founded Tap
@@ -310,12 +320,12 @@ namespace YARG.Core.NewParsing.Midi
                 else if (midiTrack.Type is MidiEventType.SysEx or MidiEventType.SysEx_End)
                 {
                     var sysex = midiTrack.ExtractTextOrSysEx();
-                    if (sysex.Length != 8 || !sysex.SequenceEqual(SYSEXTAG) || sysex[5] != 4)
+                    if (sysex.Length != SYSEX_LENGTH || !sysex.SequenceEqual(SYSEXTAG) || sysex[SYSEX_TYPE_INDEX] != 4)
                     {
                         continue;
                     }
 
-                    bool enable = sysex[6] == 1;
+                    bool enable = sysex[SYSEX_STATUS_INDEX] == 1;
                     if (enable)
                     {
                         if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
@@ -328,9 +338,10 @@ namespace YARG.Core.NewParsing.Midi
                         }
                     }
 
-                    if (sysex[4] == (char) 0xFF)
+                    byte diffValue = sysex[SYSEX_DIFF_INDEX];
+                    if (diffValue == SYSEX_ALLDIFF)
                     {
-                        for (int diffIndex = 0; diffIndex < 4; ++diffIndex)
+                        for (int diffIndex = 0; diffIndex < InstrumentTrack2.NUM_DIFFICULTIES; ++diffIndex)
                         {
                             var diffTrack = instrumentTrack[diffIndex]!;
                             diffModifiers[diffIndex].SliderNotes = enable;
@@ -342,12 +353,11 @@ namespace YARG.Core.NewParsing.Midi
                     }
                     else
                     {
-                        byte diffIndex = sysex[4];
-                        var diffTrack = instrumentTrack[diffIndex]!;
-                        diffModifiers[diffIndex].SliderNotes = enable;
+                        var diffTrack = instrumentTrack[diffValue]!;
+                        diffModifiers[diffValue].SliderNotes = enable;
                         if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
                         {
-                            diffModifiers[diffIndex].ModifyNote(ref *guitar);
+                            diffModifiers[diffValue].ModifyNote(ref *guitar);
                         }
                     }
                 }
