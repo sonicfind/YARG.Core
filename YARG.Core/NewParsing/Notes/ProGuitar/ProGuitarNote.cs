@@ -79,41 +79,50 @@ namespace YARG.Core.NewParsing
             return Emphasis;
         }
 
-        public int GetNumActiveLanes()
+        public readonly unsafe int GetNumActiveLanes()
         {
             int numActive = 0;
-            unsafe
-            {
-                fixed (ProGuitarString<TProFretConfig>* strings = &String_1)
-                {
-                    for (int i = 0; i < NUMSTRINGS; ++i)
-                    {
-                        bool active = strings[i].IsActive();
-                        numActive += Unsafe.As<bool, byte>(ref active);
-                    }
-                }
-            }
+            bool state = String_1.IsActive();
+            numActive += Unsafe.As<bool, byte>(ref state);
+            state = String_2.IsActive();
+            numActive += Unsafe.As<bool, byte>(ref state);
+            state = String_3.IsActive();
+            numActive += Unsafe.As<bool, byte>(ref state);
+            state = String_4.IsActive();
+            numActive += Unsafe.As<bool, byte>(ref state);
+            state = String_5.IsActive();
+            numActive += Unsafe.As<bool, byte>(ref state);
+            state = String_6.IsActive();
+            numActive += Unsafe.As<bool, byte>(ref state);
             return numActive;
         }
 
-        public DualTime GetLongestSustain()
+        public readonly DualTime GetLongestSustain()
         {
             DualTime sustain = default;
-            unsafe
+            if (String_1.Fret >= 0 && String_1.Duration > sustain)
             {
-                fixed (ProGuitarString<TProFretConfig>* strings = &String_2)
-                {
-                    for (int i = 0; i < NUMSTRINGS; ++i)
-                    {
-                        ref var str = ref strings[i];
-                        if (str.Fret >= 0)
-                        {
-                            var dur = strings[i].Duration;
-                            if (dur > sustain)
-                                sustain = dur;
-                        }
-                    }
-                }
+                sustain = String_1.Duration;
+            }
+            if (String_2.Fret >= 0 && String_2.Duration > sustain)
+            {
+                sustain = String_2.Duration;
+            }
+            if (String_3.Fret >= 0 && String_3.Duration > sustain)
+            {
+                sustain = String_3.Duration;
+            }
+            if (String_4.Fret >= 0 && String_4.Duration > sustain)
+            {
+                sustain = String_4.Duration;
+            }
+            if (String_5.Fret >= 0 && String_5.Duration > sustain)
+            {
+                sustain = String_5.Duration;
+            }
+            if (String_6.Fret >= 0 && String_6.Duration > sustain)
+            {
+                sustain = String_6.Duration;
             }
             return sustain;
         }
