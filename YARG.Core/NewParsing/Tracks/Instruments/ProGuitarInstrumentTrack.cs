@@ -4,12 +4,11 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-
-    public class ProGuitarInstrumentTrack<TProFretConfig> : InstrumentTrack2<ProGuitarDifficultyTrack<TProFretConfig>>, IDisposable
-        where TProFretConfig : unmanaged, IProFretConfig<TProFretConfig>
+    public class ProGuitarInstrumentTrack<TProFret> : InstrumentTrack2<ProGuitarDifficultyTrack<TProFret>>, IDisposable
+        where TProFret : unmanaged, IProFret
     {
         public readonly YARGNativeSortedList<DualTime, PitchName> Roots = new();
-        public readonly YARGNativeSortedList<DualTime, HandPosition<TProFretConfig>> HandPositions = new();
+        public readonly YARGNativeSortedList<DualTime, TProFret> HandPositions = new();
         public readonly YARGNativeSortedList<DualTime, DualTime> Force_ChordNumbering = new();
         public readonly YARGNativeSortedList<DualTime, DualTime> SlashChords = new();
         public readonly YARGNativeSortedList<DualTime, DualTime> HideChords = new();
