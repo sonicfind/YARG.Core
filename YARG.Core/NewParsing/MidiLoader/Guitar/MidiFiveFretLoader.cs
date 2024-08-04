@@ -8,15 +8,30 @@ namespace YARG.Core.NewParsing.Midi
 {
     public static class MidiFiveFretLoader
     {
+        private const int ALTERNATE_SP_NOTE = 103;
         private static bool _useAlternateOverdrive = false;
         public static void SetOverdriveMidiNote(int note)
         {
-            _useAlternateOverdrive = note == 103;
+            _useAlternateOverdrive = note == ALTERNATE_SP_NOTE;
         }
 
         private const int FIVEFRET_MIN = 59;
         private const int FIVEFRET_MAX = 106;
         private const int NUM_LANES = 6;
+        private const int HOPO_ON_INDEX = 6;
+        private const int HOPO_OFF_INDEX = 7;
+        private const int SP_SOLO_INDEX = 8;
+        private const int TAP_INDEX = 9;
+        private const int FACEOFF_1_INDEX = 10;
+        private const int FACEOFF_2_INDEX = 11;
+
+        private const int SYSEX_LENGTH = 8;
+        private const int SYSEX_DIFF_INDEX = 4;
+        private const int SYSEX_TYPE_INDEX = 5;
+        private const int SYSEX_STATUS_INDEX = 6;
+        private const int SYSEX_OPEN_TYPE = 1;
+        private const int SYSEX_TAP_TYPE = 4;
+        private const int SYSEX_ALLDIFF = 0xFF;
 
         private static readonly byte[][] ENHANCED_STRINGS = new byte[][] { Encoding.ASCII.GetBytes("[ENHANCED_OPENS]"), Encoding.ASCII.GetBytes("ENHANCED_OPENS") };
 
@@ -126,7 +141,7 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 switch (lane)
                                 {
-                                    case 6:
+                                    case HOPO_ON_INDEX:
                                         {
                                             diffModifier.BaseDiff.HopoOn = true;
                                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
@@ -136,7 +151,7 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                             break;
                                         }
-                                    case 7:
+                                    case HOPO_OFF_INDEX:
                                         {
                                             diffModifier.BaseDiff.HopoOff = true;
                                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
@@ -146,7 +161,7 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                             break;
                                         }
-                                    case 8:
+                                    case SP_SOLO_INDEX:
                                         // FIVEFRET_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
                                         //      59      +     3     *   12                                         +   8
                                         // = 103 = Solo
@@ -165,7 +180,7 @@ namespace YARG.Core.NewParsing.Midi
                                             instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
                                         }
                                         break;
-                                    case 9:
+                                    case TAP_INDEX:
                                         // FIVEFRET_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
                                         //      59      +     3     *   12                                         +   9
                                         // = 104 = CH-founded Tap
@@ -179,11 +194,11 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                         }
                                         break;
-                                    case 10:
+                                    case FACEOFF_1_INDEX:
                                         diffModifier.FaceOff_Player1 = position;
                                         diffTrack.SpecialPhrases.GetLastOrAppend(position);
                                         break;
-                                    case 11:
+                                    case FACEOFF_2_INDEX:
                                         diffModifier.FaceOff_Player2 = position;
                                         diffTrack.SpecialPhrases.GetLastOrAppend(position);
                                         break;
@@ -238,7 +253,7 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 switch (lane)
                                 {
-                                    case 6:
+                                    case HOPO_ON_INDEX:
                                         {
                                             diffModifier.BaseDiff.HopoOn = false;
                                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
@@ -250,7 +265,7 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                             break;
                                         }
-                                    case 7:
+                                    case HOPO_OFF_INDEX:
                                         {
                                             diffModifier.BaseDiff.HopoOff = false;
                                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
@@ -260,7 +275,7 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                             break;
                                         }
-                                    case 8:
+                                    case SP_SOLO_INDEX:
                                         // FIVEFRET_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
                                         //      59      +     3     *   12                                         +   8
                                         // = 103 = Solo
@@ -292,7 +307,7 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                         }
                                         break;
-                                    case 9:
+                                    case TAP_INDEX:
                                         // FIVEFRET_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
                                         //      59      +     3     *   12                                         +   9
                                         // = 104 = CH-founded Tap
@@ -306,7 +321,7 @@ namespace YARG.Core.NewParsing.Midi
                                             }
                                         }
                                         break;
-                                    case 10:
+                                    case FACEOFF_1_INDEX:
                                         if (diffModifier.FaceOff_Player1.Ticks > -1)
                                         {
                                             var duration = position - diffModifier.FaceOff_Player1;
@@ -316,7 +331,7 @@ namespace YARG.Core.NewParsing.Midi
                                             diffModifier.FaceOff_Player1.Ticks = -1;
                                         }
                                         break;
-                                    case 11:
+                                    case FACEOFF_2_INDEX:
                                         if (diffModifier.FaceOff_Player2.Ticks > -1)
                                         {
                                             var duration = position - diffModifier.FaceOff_Player2;
@@ -392,7 +407,7 @@ namespace YARG.Core.NewParsing.Midi
                         continue;
                     }
 
-                    bool enable = sysex[6] == 1;
+                    bool enable = sysex[SYSEX_STATUS_INDEX] == 1;
                     if (enable)
                     {
                         if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
@@ -405,20 +420,20 @@ namespace YARG.Core.NewParsing.Midi
                         }
                     }
 
-                    if (sysex[4] == (char) 0xFF)
+                    if (sysex[SYSEX_DIFF_INDEX] == SYSEX_ALLDIFF)
                     {
-                        switch (sysex[5])
+                        switch (sysex[SYSEX_TYPE_INDEX])
                         {
-                            case 1:
+                            case SYSEX_TAP_TYPE:
                                 // 1 - Green; 0 - Open
                                 int status = !enable ? 1 : 0;
-                                for (int diffIndex = 0; diffIndex < 4; ++diffIndex)
+                                for (int diffIndex = 0; diffIndex < InstrumentTrack2.NUM_DIFFICULTIES; ++diffIndex)
                                 {
-                                    laneIndices[12 * diffIndex + 1] = status;
+                                    laneIndices[MidiLoader_Constants.NOTES_PER_DIFFICULTY * diffIndex + 1] = status;
                                 }
                                 break;
-                            case 4:
-                                for (int diffIndex = 0; diffIndex < 4; ++diffIndex)
+                            case SYSEX_OPEN_TYPE:
+                                for (int diffIndex = 0; diffIndex < InstrumentTrack2.NUM_DIFFICULTIES; ++diffIndex)
                                 {
                                     var diffTrack = instrumentTrack[diffIndex]!;
                                     diffModifiers[diffIndex].BaseDiff.SliderNotes = enable;
@@ -432,14 +447,14 @@ namespace YARG.Core.NewParsing.Midi
                     }
                     else
                     {
-                        byte diffIndex = sysex[4];
-                        switch (sysex[5])
+                        byte diffIndex = sysex[SYSEX_DIFF_INDEX];
+                        switch (sysex[SYSEX_TYPE_INDEX])
                         {
-                            case 1:
+                            case SYSEX_TAP_TYPE:
                                 // 1 - Green; 0 - Open
-                                laneIndices[12 * diffIndex + 1] = !enable ? 1 : 0;
+                                laneIndices[MidiLoader_Constants.NOTES_PER_DIFFICULTY * diffIndex + 1] = !enable ? 1 : 0;
                                 break;
-                            case 4:
+                            case SYSEX_OPEN_TYPE:
                                 {
                                     var diffTrack = instrumentTrack[diffIndex]!;
                                     diffModifiers[diffIndex].BaseDiff.SliderNotes = enable;
@@ -457,9 +472,9 @@ namespace YARG.Core.NewParsing.Midi
                     var str = midiTrack.ExtractTextOrSysEx();
                     if (laneIndices[0] == 13 && (str.SequenceEqual(ENHANCED_STRINGS[0]) || str.SequenceEqual(ENHANCED_STRINGS[1])))
                     {
-                        for (int diff = 0; diff < 4; ++diff)
+                        for (int diff = 0; diff < InstrumentTrack2.NUM_DIFFICULTIES; ++diff)
                         {
-                            laneIndices[12 * diff] = 0;
+                            laneIndices[MidiLoader_Constants.NOTES_PER_DIFFICULTY * diff] = 0;
                         }
                     }
                     else
