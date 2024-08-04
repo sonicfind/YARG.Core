@@ -229,9 +229,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[3] == brePositions[4])
                             {
                                 var duration = position - bre;
-                                instrumentTrack.SpecialPhrases
-                                        .TraverseBackwardsUntil(bre)
-                                        .Add(SpecialPhraseType.BRE, (duration, 100));
+                                instrumentTrack.SpecialPhrases[bre].Add(SpecialPhraseType.BRE, (duration, 100));
                             }
                             bre.Ticks = -1;
                         }
@@ -769,9 +767,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[3] == brePositions[4])
                             {
                                 var duration = position - bre;
-                                instrumentTrack.SpecialPhrases
-                                        .TraverseBackwardsUntil(bre)
-                                        .Add(SpecialPhraseType.BRE, (duration, 100));
+                                instrumentTrack.SpecialPhrases[bre].Add(SpecialPhraseType.BRE, (duration, 100));
                             }
                             bre.Ticks = -1;
                         }
