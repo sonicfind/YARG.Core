@@ -9,7 +9,6 @@ namespace YARG.Core.NewParsing
         where TKey : unmanaged, IEquatable<TKey>, IComparable<TKey>
         where TValue : unmanaged
     {
-        private static readonly int SIZEOF_PAIR = sizeof(YARGKeyValuePair<TKey, TValue>);
         // This pattern of copying a pre-defined value is faster than default construction
         // Note: except possibly for types of 16 bytes or less, idk
         private static readonly TValue DEFAULT_VALUE = default;
@@ -35,7 +34,7 @@ namespace YARG.Core.NewParsing
                 {
                     if (value > 0)
                     {
-                        int size = value * SIZEOF_PAIR;
+                        int size = value * sizeof(YARGKeyValuePair<TKey, TValue>);
                         if (_buffer != null)
                         {
                             _buffer = (YARGKeyValuePair<TKey, TValue>*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) size);
@@ -97,7 +96,7 @@ namespace YARG.Core.NewParsing
         {
             if (!Try_Add(key, in value))
             {
-                throw new ArgumentException($"A value of key of value {key} already exists");
+                throw new ArgumentException($"A key of value {key} already exists");
             }
         }
 
@@ -199,7 +198,7 @@ namespace YARG.Core.NewParsing
             var position = _buffer + index;
             if (index < _count)
             {
-                int leftover = (_count - index) * SIZEOF_PAIR;
+                int leftover = (_count - index) * sizeof(YARGKeyValuePair<TKey, TValue>);
                 Buffer.MemoryCopy(position, position + 1, leftover, leftover);
             }
 
@@ -223,7 +222,7 @@ namespace YARG.Core.NewParsing
 
             --_count;
             var position = _buffer + index;
-            int amount = (_count - index) * SIZEOF_PAIR;
+            int amount = (_count - index) * sizeof(YARGKeyValuePair<TKey, TValue>);
             Buffer.MemoryCopy(position + 1, position, amount, amount);
             return true;
         }
@@ -310,8 +309,6 @@ namespace YARG.Core.NewParsing
             }
             return ~(int) (lo - _buffer);
         }
-
-
 
         public TValue* At(in TKey key)
         {
