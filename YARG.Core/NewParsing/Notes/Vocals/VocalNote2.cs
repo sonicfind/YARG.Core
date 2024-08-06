@@ -13,17 +13,45 @@ namespace YARG.Core.NewParsing
 
     public struct VocalNote2
     {
-        public struct VocalConfig : IPitchConfig
-        {
-            public readonly int OCTAVE_MIN => 2;
-            public readonly int OCTAVE_MAX => 6;
-        }
+        public static readonly PitchValidator VALIDATOR = new(2, 6);
+        private int _pitch;
 
         public string Lyric;
-        public Pitch<VocalConfig> Pitch;
         public DualTime Duration;
         public TalkieState TalkieState;
 
-        public readonly bool IsPlayable() { return Duration.Ticks > 0 && (Pitch.Octave >= 0 || TalkieState != TalkieState.None); }
+        public int Pitch
+        {
+            readonly get => _pitch;
+            set
+            {
+                if (!SetPitch(value))
+                {
+                    throw new ArgumentException("pitch");
+                }
+            }
+        }
+
+        public bool SetPitch(int note)
+        {
+            if (!VALIDATOR.ValidateBinary(note))
+            {
+                return false;
+            }
+            _pitch = note;
+            return true;
+        }
+
+        public bool SetPitch(int octave, PitchName key)
+        {
+            if (!VALIDATOR.ValidateOctaveAndPitch(octave, key, out int pitch))
+            {
+                return false;
+            }
+            _pitch = pitch;
+            return true;
+        }
+
+        public readonly bool IsPlayable() { return Duration.Ticks > 0 && (_pitch >= 0 || TalkieState != TalkieState.None); }
     }
 }
