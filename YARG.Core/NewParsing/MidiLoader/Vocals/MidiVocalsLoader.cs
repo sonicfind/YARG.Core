@@ -83,11 +83,11 @@ namespace YARG.Core.NewParsing.Midi
                                 vocalNote.Duration = DualTime.Normalize(position - vocalPosition);
                                 if (note.value != GH_TALKIE)
                                 {
-                                    vocalNote.Pitch.Binary = vocalPitch;
+                                    vocalNote.Pitch = vocalPitch;
                                 }
                                 else if (vocalNote.TalkieState == TalkieState.None)
                                 {
-                                    vocalNote.Pitch.Reset();
+                                    vocalNote.Pitch = 0;
                                     vocalNote.TalkieState = TalkieState.Talkie;
                                 }
                             }
@@ -101,7 +101,7 @@ namespace YARG.Core.NewParsing.Midi
                             if (trackIndex < 2)
                             {
                                 phrasePosition = position;
-                                vocalTrack.SpecialPhrases.GetLastOrAppend(position);
+                                vocalTrack.SpecialPhrases.TryAppend(position);
                             }
                         }
                         // Only lead vocals (PART VOCALS & HARM_1) should handle the below values
@@ -110,7 +110,7 @@ namespace YARG.Core.NewParsing.Midi
                             if (note.value == MidiLoader_Constants.OVERDRIVE)
                             {
                                 overdrivePosition = position;
-                                vocalTrack.SpecialPhrases.GetLastOrAppend(position);
+                                vocalTrack.SpecialPhrases.TryAppend(position);
                             }
                             else if (note.value == PERCUSSION_NOTE || note.value == PERCUSSION_NOISE)
                             {
@@ -119,12 +119,12 @@ namespace YARG.Core.NewParsing.Midi
                             else if (note.value == RANGESHIFT)
                             {
                                 rangeShiftPosition = position;
-                                vocalTrack.SpecialPhrases.GetLastOrAppend(position);
+                                vocalTrack.SpecialPhrases.TryAppend(position);
                             }
                             else if (note.value == LYRICSHIFT)
                             {
                                 lyricShiftPosition = position;
-                                vocalTrack.SpecialPhrases.GetLastOrAppend(position);
+                                vocalTrack.SpecialPhrases.TryAppend(position);
                             }
                         }
                     }
@@ -139,11 +139,11 @@ namespace YARG.Core.NewParsing.Midi
                                 vocalNote.Duration = DualTime.Normalize(position - vocalPosition);
                                 if (note.value != GH_TALKIE)
                                 {
-                                    vocalNote.Pitch.Binary = note.value;
+                                    vocalNote.Pitch = note.value;
                                 }
                                 else if (vocalNote.TalkieState == TalkieState.None)
                                 {
-                                    vocalNote.Pitch.Reset();
+                                    vocalNote.Pitch = 0;
                                     vocalNote.TalkieState = TalkieState.Talkie;
                                 }
                             }
