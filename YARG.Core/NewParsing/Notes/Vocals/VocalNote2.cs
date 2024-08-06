@@ -16,7 +16,6 @@ namespace YARG.Core.NewParsing
         public static readonly PitchValidator VALIDATOR = new(2, 6);
         private int _pitch;
 
-        public string Lyric;
         public DualTime Duration;
         public TalkieState TalkieState;
 

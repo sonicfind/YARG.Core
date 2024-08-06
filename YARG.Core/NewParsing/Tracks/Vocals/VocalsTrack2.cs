@@ -4,25 +4,45 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
+    public struct VocalPart2
+    {
+        public YARGNativeSortedList<DualTime, VocalNote2> Notes;
+        public YARGManagedSortedList<DualTime, NonNullString> Lyrics;
+
+        public readonly void Clear()
+        {
+            Notes.Clear();
+            Lyrics.Clear();
+        }
+
+        public readonly bool IsEmpty()
+        {
+            return Notes.IsEmpty() && Lyrics.IsEmpty();
+        }
+    }
+
     public class VocalTrack2 : Track
     {
-        private readonly YARGManagedSortedList<DualTime, VocalNote2>[] _vocals;
+        private readonly VocalPart2[] _parts;
         public readonly YARGNativeSortedList<DualTime, VocalPercussion2> Percussion = new();
 
-        public YARGManagedSortedList<DualTime, VocalNote2> this[int trackIndex] => _vocals[trackIndex];
+        public VocalPart2 this[int index] => _parts[index];
 
-        public VocalTrack2(int numTracks)
+        public VocalTrack2(int numParts)
         {
-            _vocals = new YARGManagedSortedList<DualTime, VocalNote2>[numTracks];
-            for (int i = 0; i < numTracks; i++)
-                _vocals[i] = new();
+            _parts = new VocalPart2[numParts];
+            for (int i = 0; i < numParts; ++i)
+            {
+                _parts[i].Notes = new YARGNativeSortedList<DualTime, VocalNote2>();
+                _parts[i].Lyrics = new YARGManagedSortedList<DualTime, NonNullString>();
+            }
         }
 
         public override bool IsEmpty()
         {
-            foreach (var track in _vocals)
+            for (int i = 0; i < _parts.Length; ++i)
             {
-                if (!track.IsEmpty())
+                if (!_parts[i].IsEmpty())
                 {
                     return false;
                 }
@@ -32,9 +52,9 @@ namespace YARG.Core.NewParsing
 
         public override void Clear()
         {
-            foreach (var track in _vocals)
+            for (int i = 0; i < _parts.Length; i++)
             {
-                track.Clear();
+                _parts[i].Clear();
             }
             Percussion.Clear();
             base.Clear();
@@ -42,11 +62,12 @@ namespace YARG.Core.NewParsing
 
         public override void TrimExcess()
         {
-            foreach (var track in _vocals)
+            for (int i = 0; i < _parts.Length; i++)
             {
-                if ((track.Count < 100 || 2000 <= track.Count) && track.Count < track.Capacity)
+                var notes = _parts[i].Notes;
+                if ((notes.Count < 100 || 2000 <= notes.Count) && notes.Count < notes.Capacity)
                 {
-                    track.TrimExcess();
+                    notes.TrimExcess();
                 }
             }
 
@@ -59,13 +80,14 @@ namespace YARG.Core.NewParsing
         public override unsafe DualTime GetLastNoteTime()
         {
             DualTime endTime = default;
-            foreach (var track in _vocals)
+            for (int i = 0; i < _parts.Length; i++)
             {
-                if (track.IsEmpty())
+                var notes = _parts[i].Notes;
+                if (notes.IsEmpty())
                     continue;
 
-                ref var vocal = ref track.ElementAtIndex(track.Count - 1);
-                var end = vocal.Key + vocal.Value.Duration;
+                var vocal = notes.ElementAtIndex(notes.Count - 1);
+                var end = vocal->Key + vocal->Value.Duration;
                 if (end > endTime)
                 {
                     endTime = end;
@@ -89,9 +111,10 @@ namespace YARG.Core.NewParsing
             {
                 if (disposing)
                 {
-                    foreach (var track in _vocals)
+                    for (int i = 0; i < _parts.Length; i++)
                     {
-                        track.Clear();
+                        _parts[i].Notes.Dispose();
+                        _parts[i].Lyrics.Clear();
                     }
                     Percussion.Dispose();
                 }
