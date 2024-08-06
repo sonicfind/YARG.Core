@@ -130,7 +130,7 @@ namespace YARG.Core.NewParsing
                 }
             }
 
-            if (unknownDrums != null && unknownDrums.IsOccupied())
+            if (unknownDrums != null && !unknownDrums.IsEmpty())
             {
                 switch (drumsInChart)
                 {
@@ -272,7 +272,7 @@ namespace YARG.Core.NewParsing
         private static bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
-            if (!chart.Events.IsEmpty() || (chart.LeadVocals != null && chart.LeadVocals.IsOccupied()))
+            if (!chart.Events.IsEmpty() || (chart.LeadVocals != null && !chart.LeadVocals.IsEmpty()))
             {
                 YargLogger.LogInfo("[Events] track appears multiple times. Not parsing repeats...");
                 return false;
@@ -334,7 +334,7 @@ namespace YARG.Core.NewParsing
                 }
             }
 
-            if (chart.LeadVocals != null && !chart.LeadVocals.IsOccupied())
+            if (chart.LeadVocals != null && chart.LeadVocals.IsEmpty())
             {
                 chart.LeadVocals = null;
             }

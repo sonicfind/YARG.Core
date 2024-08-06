@@ -19,9 +19,9 @@ namespace YARG.Core.NewParsing
         public readonly YARGNativeSortedList<DualTime, HandPosition<TProFretConfig>> HandPositions = new();
         public readonly YARGManagedSortedList<DualTime, List<ChordPhrase>> ChordPhrases = new();
 
-        public override bool IsOccupied()
+        public override bool IsEmpty()
         {
-            return !Roots.IsEmpty() || !HandPositions.IsEmpty() || !ChordPhrases.IsEmpty() || base.IsOccupied();
+            return Roots.IsEmpty() && HandPositions.IsEmpty() && ChordPhrases.IsEmpty() && base.IsEmpty();
         }
 
         public override void Clear()
