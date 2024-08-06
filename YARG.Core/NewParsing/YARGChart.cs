@@ -10,7 +10,8 @@ namespace YARG.Core.NewParsing
     {
         private bool disposedValue;
         public readonly SyncTrack2 Sync;
-        public readonly TextEvents2 Events = new();
+        public readonly YARGManagedSortedList<DualTime, NonNullString> Sections = new();
+        public readonly YARGManagedSortedList<DualTime, List<string>> Globals = new();
         public readonly YARGNativeSortedList<DualTime, BeatlineType> BeatMap = new();
         public readonly Dictionary<string, IniModifier> Miscellaneous = new();
 
@@ -68,7 +69,8 @@ namespace YARG.Core.NewParsing
             if (!disposedValue)
             {
                 Sync.Dispose();
-                Events.Clear();
+                Sections.Clear();
+                Globals.Clear();
                 BeatMap.Dispose();
                 Miscellaneous.Clear();
 
