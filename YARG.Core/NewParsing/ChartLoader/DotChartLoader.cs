@@ -272,7 +272,7 @@ namespace YARG.Core.NewParsing
         private static bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
-            if (!chart.Events.IsEmpty() || (chart.LeadVocals != null && !chart.LeadVocals.IsEmpty()))
+            if (!chart.Globals.IsEmpty() || !chart.Sections.IsEmpty() || (chart.LeadVocals != null && !chart.LeadVocals.IsEmpty()))
             {
                 YargLogger.LogInfo("[Events] track appears multiple times. Not parsing repeats...");
                 return false;
@@ -295,7 +295,7 @@ namespace YARG.Core.NewParsing
                     string str = YARGTextReader.ExtractText(ref container, true);
                     if (str.StartsWith(SECTION))
                     {
-                        chart.Events.Sections.GetLastOrAppend(position) = str[SECTION.Length..];
+                        chart.Sections.AppendOrUpdate(position, str[SECTION.Length..]);
                     }
                     else if (str.StartsWith(LYRIC))
                     {
@@ -329,7 +329,7 @@ namespace YARG.Core.NewParsing
                     }
                     else
                     {
-                        chart.Events.Globals.GetLastOrAppend(position).Add(str);
+                        chart.Globals.GetLastOrAppend(position).Add(str);
                     }
                 }
             }

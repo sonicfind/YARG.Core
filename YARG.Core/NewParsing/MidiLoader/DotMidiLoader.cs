@@ -180,7 +180,7 @@ namespace YARG.Core.NewParsing
 
                 if (type == MidiTrackType.Events)
                 {
-                    LoadEventsTrack_Midi(chart.Events, sync, midiTrack);
+                    LoadEventsTrack_Midi(chart, sync, midiTrack);
                 }
                 else if (type == MidiTrackType.Beat)
                 {
@@ -194,9 +194,9 @@ namespace YARG.Core.NewParsing
         }
 
         private static readonly byte[][] PREFIXES = { Encoding.ASCII.GetBytes("[section "), Encoding.ASCII.GetBytes("[prc_") };
-        private static void LoadEventsTrack_Midi(TextEvents2 events, SyncTrack2 sync, YARGMidiTrack midiTrack)
+        private static void LoadEventsTrack_Midi(YARGChart chart, SyncTrack2 sync, YARGMidiTrack midiTrack)
         {
-            if (!events.IsEmpty())
+            if (!chart.Globals.IsEmpty() || !chart.Sections.IsEmpty())
             {
                 YargLogger.LogInfo("EVENTS track appears multiple times. Not parsing repeats...");
                 return;
@@ -214,15 +214,15 @@ namespace YARG.Core.NewParsing
                     var bytes = midiTrack.ExtractTextOrSysEx();
                     if (bytes.StartsWith(PREFIXES[0]))
                     {
-                        events.Sections.GetLastOrAppend(position) = Encoding.UTF8.GetString(bytes[PREFIXES[0].Length..(bytes.Length - 1)]);
+                        chart.Sections.AppendOrUpdate(position, Encoding.UTF8.GetString(bytes[PREFIXES[0].Length..(bytes.Length - 1)]));
                     }
                     else if (bytes.StartsWith(PREFIXES[1]))
                     {
-                        events.Sections.GetLastOrAppend(position) = Encoding.UTF8.GetString(bytes[PREFIXES[1].Length..(bytes.Length - 1)]);
+                        chart.Sections.AppendOrUpdate(position, Encoding.UTF8.GetString(bytes[PREFIXES[1].Length..(bytes.Length - 1)]));
                     }
                     else
                     {
-                        events.Globals.GetLastOrAppend(position).Add(Encoding.UTF8.GetString(bytes));
+                        chart.Globals.GetLastOrAppend(position).Add(Encoding.UTF8.GetString(bytes));
                     }
                 }
             }
