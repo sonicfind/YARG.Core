@@ -18,7 +18,7 @@ namespace YARG.Core.NewParsing
     {
         public readonly YARGNativeSortedList<DualTime, ProKey_Ranges> Ranges = new();
 
-        public override bool IsOccupied() { return !Ranges.IsEmpty() || base.IsOccupied(); }
+        public override bool IsEmpty() { return Ranges.IsEmpty() && base.IsEmpty(); }
         public override void Clear()
         {
             Ranges.Clear();
