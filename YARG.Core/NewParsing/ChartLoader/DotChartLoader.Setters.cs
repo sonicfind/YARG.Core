@@ -4,15 +4,15 @@ namespace YARG.Core.NewParsing
 {
     public unsafe partial class YARGChart
     {
-        private static bool Set(GuitarNote2<FiveFret>* note, int lane, in DualTime length)
+        private static bool Set(FiveFretGuitar* note, int lane, in DualTime length)
         {
             switch (lane)
             {
-                case 0: note->Frets.Green =  DualTime.Truncate(length); break;
-                case 1: note->Frets.Red =    DualTime.Truncate(length); break;
-                case 2: note->Frets.Yellow = DualTime.Truncate(length); break;
-                case 3: note->Frets.Blue =   DualTime.Truncate(length); break;
-                case 4: note->Frets.Orange = DualTime.Truncate(length); break;
+                case 0: note->Green  = DualTime.Truncate(length); break;
+                case 1: note->Red    = DualTime.Truncate(length); break;
+                case 2: note->Yellow = DualTime.Truncate(length); break;
+                case 3: note->Blue   = DualTime.Truncate(length); break;
+                case 4: note->Orange = DualTime.Truncate(length); break;
                 case 5:
                     if (note->State == GuitarState.Natural)
                     {
@@ -20,22 +20,22 @@ namespace YARG.Core.NewParsing
                     }
                     break;
                 case 6: note->State = GuitarState.Tap; break;
-                case 7: note->Frets.Open = DualTime.Truncate(length); break;
+                case 7: note->Open = DualTime.Truncate(length); break;
                 default:
                     return false;
             }
             return true;
         }
 
-        private static bool Set(GuitarNote2<SixFret>* note, int lane, in DualTime length)
+        private static bool Set(SixFretGuitar* note, int lane, in DualTime length)
         {
             switch (lane)
             {
-                case 0: note->Frets.White1 = DualTime.Truncate(length); break;
-                case 1: note->Frets.White2 = DualTime.Truncate(length); break;
-                case 2: note->Frets.White3 = DualTime.Truncate(length); break;
-                case 3: note->Frets.Black1 = DualTime.Truncate(length); break;
-                case 4: note->Frets.Black2 = DualTime.Truncate(length); break;
+                case 0: note->White1 = DualTime.Truncate(length); break;
+                case 1: note->White2 = DualTime.Truncate(length); break;
+                case 2: note->White3 = DualTime.Truncate(length); break;
+                case 3: note->Black1 = DualTime.Truncate(length); break;
+                case 4: note->Black2 = DualTime.Truncate(length); break;
                 case 5:
                     if (note->State == GuitarState.Natural)
                     {
@@ -43,69 +43,69 @@ namespace YARG.Core.NewParsing
                     }
                     break;
                 case 6: note->State = GuitarState.Tap; break;
-                case 7: note->Frets.Open =   DualTime.Truncate(length); break;
-                case 8: note->Frets.Black3 = DualTime.Truncate(length); break;
+                case 7: note->Open   = DualTime.Truncate(length); break;
+                case 8: note->Black3 = DualTime.Truncate(length); break;
                 default:
                     return false;
             }
             return true;
         }
 
-        private static bool Set(DrumNote2<FourLane>* note, int lane, in DualTime length)
+        private static bool Set(FourLaneDrums* note, int lane, in DualTime length)
         {
             switch (lane)
             {
-                case 0: note->Bass = DualTime.Truncate(length); break;
-                case 1: note->Pads.Snare.Duration = DualTime.Truncate(length); break;
-                case 2: note->Pads.Yellow.Duration = DualTime.Truncate(length); break;
-                case 3: note->Pads.Blue.Duration = DualTime.Truncate(length); break;
-                case 4: note->Pads.Green.Duration = DualTime.Truncate(length); break;
+                case 0: note->Bass   = DualTime.Truncate(length); break;
+                case 1: note->Snare  = DualTime.Truncate(length); break;
+                case 2: note->Yellow = DualTime.Truncate(length); break;
+                case 3: note->Blue   = DualTime.Truncate(length); break;
+                case 4: note->Green  = DualTime.Truncate(length); break;
 
                 case 32: note->IsDoubleBass = true; break;
 
-                case 34: note->Pads.Snare.Dynamics = DrumDynamics.Accent; break;
-                case 35: note->Pads.Yellow.Dynamics = DrumDynamics.Accent; break;
-                case 36: note->Pads.Blue.Dynamics = DrumDynamics.Accent; break;
-                case 37: note->Pads.Green.Dynamics = DrumDynamics.Accent; break;
+                case 34: note->Dynamics_Snare  = DrumDynamics.Accent; break;
+                case 35: note->Dynamics_Yellow = DrumDynamics.Accent; break;
+                case 36: note->Dynamics_Blue   = DrumDynamics.Accent; break;
+                case 37: note->Dynamics_Green  = DrumDynamics.Accent; break;
 
-                case 40: note->Pads.Snare.Dynamics = DrumDynamics.Ghost; break;
-                case 41: note->Pads.Yellow.Dynamics = DrumDynamics.Ghost; break;
-                case 42: note->Pads.Blue.Dynamics = DrumDynamics.Ghost; break;
-                case 43: note->Pads.Green.Dynamics = DrumDynamics.Ghost; break;
+                case 40: note->Dynamics_Snare  = DrumDynamics.Ghost; break;
+                case 41: note->Dynamics_Yellow = DrumDynamics.Ghost; break;
+                case 42: note->Dynamics_Blue   = DrumDynamics.Ghost; break;
+                case 43: note->Dynamics_Green  = DrumDynamics.Ghost; break;
 
-                case 66: note->Pads.Yellow.CymbalFlag = true; break;
-                case 67: note->Pads.Blue.CymbalFlag = true; break;
-                case 68: note->Pads.Green.CymbalFlag = true; break;
+                case 66: note->Cymbal_Yellow = true; break;
+                case 67: note->Cymbal_Blue = true; break;
+                case 68: note->Cymbal_Green = true; break;
                 default:
                     return false;
             }
             return true;
         }
 
-        private static bool Set(DrumNote2<FiveLane>* note, int lane, in DualTime length)
+        private static bool Set(FiveLaneDrums* note, int lane, in DualTime length)
         {
             switch (lane)
             {
-                case 0:  note->Bass = DualTime.Truncate(length); break;
-                case 1:  note->Pads.Snare.Duration  = DualTime.Truncate(length); break;
-                case 2:  note->Pads.Yellow.Duration = DualTime.Truncate(length); break;
-                case 3:  note->Pads.Blue.Duration   = DualTime.Truncate(length); break;
-                case 4:  note->Pads.Orange.Duration = DualTime.Truncate(length); break;
-                case 5:  note->Pads.Green.Duration  = DualTime.Truncate(length); break;
+                case 0:  note->Bass   = DualTime.Truncate(length); break;
+                case 1:  note->Snare  = DualTime.Truncate(length); break;
+                case 2:  note->Yellow = DualTime.Truncate(length); break;
+                case 3:  note->Blue   = DualTime.Truncate(length); break;
+                case 4:  note->Orange = DualTime.Truncate(length); break;
+                case 5:  note->Green  = DualTime.Truncate(length); break;
 
                 case 32: note->IsDoubleBass = true; break;
 
-                case 34: note->Pads.Snare.Dynamics  = DrumDynamics.Accent; break;
-                case 35: note->Pads.Yellow.Dynamics = DrumDynamics.Accent; break;
-                case 36: note->Pads.Blue.Dynamics   = DrumDynamics.Accent; break;
-                case 37: note->Pads.Orange.Dynamics = DrumDynamics.Accent; break;
-                case 38: note->Pads.Green.Dynamics  = DrumDynamics.Accent; break;
+                case 34: note->Dynamics_Snare  = DrumDynamics.Accent; break;
+                case 35: note->Dynamics_Yellow = DrumDynamics.Accent; break;
+                case 36: note->Dynamics_Blue   = DrumDynamics.Accent; break;
+                case 37: note->Dynamics_Orange = DrumDynamics.Accent; break;
+                case 38: note->Dynamics_Green  = DrumDynamics.Accent; break;
 
-                case 40: note->Pads.Snare.Dynamics  = DrumDynamics.Ghost; break;
-                case 41: note->Pads.Yellow.Dynamics = DrumDynamics.Ghost; break;
-                case 42: note->Pads.Blue.Dynamics   = DrumDynamics.Ghost; break;
-                case 43: note->Pads.Orange.Dynamics = DrumDynamics.Ghost; break;
-                case 44: note->Pads.Green.Dynamics  = DrumDynamics.Ghost; break;
+                case 40: note->Dynamics_Snare  = DrumDynamics.Ghost; break;
+                case 41: note->Dynamics_Yellow = DrumDynamics.Ghost; break;
+                case 42: note->Dynamics_Blue   = DrumDynamics.Ghost; break;
+                case 43: note->Dynamics_Orange = DrumDynamics.Ghost; break;
+                case 44: note->Dynamics_Green  = DrumDynamics.Ghost; break;
                 default:
                     return false;
             }
@@ -113,55 +113,55 @@ namespace YARG.Core.NewParsing
         }
 
         private static DrumsType _unknownDrumType;
-        private static bool Set(DrumNote2<UnknownLane>* note, int lane, in DualTime length)
+        private static bool Set(UnknownLaneDrums* note, int lane, in DualTime length)
         {
             switch (lane)
             {
-                case 0: note->Bass = DualTime.Truncate(length); break;
-                case 1: note->Pads.Snare.Duration  = DualTime.Truncate(length); break;
-                case 2: note->Pads.Yellow.Duration = DualTime.Truncate(length); break;
-                case 3: note->Pads.Blue.Duration   = DualTime.Truncate(length); break;
-                case 4: note->Pads.Orange.Duration = DualTime.Truncate(length); break;
+                case 0: note->Bass   = DualTime.Truncate(length); break;
+                case 1: note->Snare  = DualTime.Truncate(length); break;
+                case 2: note->Yellow = DualTime.Truncate(length); break;
+                case 3: note->Blue   = DualTime.Truncate(length); break;
+                case 4: note->Orange = DualTime.Truncate(length); break;
                 case 5:
                     if ((_unknownDrumType & DrumsType.FiveLane) != DrumsType.FiveLane)
                     {
                         return false;
                     }
-                    note->Pads.Green.Duration = DualTime.Truncate(length);
+                    note->Green = DualTime.Truncate(length);
                     _unknownDrumType = DrumsType.FiveLane;
                     break;
                 case 32: note->IsDoubleBass = true; break;
 
-                case 34: note->Pads.Snare.Dynamics  = DrumDynamics.Accent; break;
-                case 35: note->Pads.Yellow.Dynamics = DrumDynamics.Accent; break;
-                case 36: note->Pads.Blue.Dynamics   = DrumDynamics.Accent; break;
-                case 37: note->Pads.Orange.Dynamics = DrumDynamics.Accent; break;
-                case 38: note->Pads.Green.Dynamics  = DrumDynamics.Accent; break;
+                case 34: note->Dynamics_Snare  = DrumDynamics.Accent; break;
+                case 35: note->Dynamics_Yellow = DrumDynamics.Accent; break;
+                case 36: note->Dynamics_Blue   = DrumDynamics.Accent; break;
+                case 37: note->Dynamics_Orange = DrumDynamics.Accent; break;
+                case 38: note->Dynamics_Green  = DrumDynamics.Accent; break;
 
-                case 40: note->Pads.Snare.Dynamics  = DrumDynamics.Ghost; break;
-                case 41: note->Pads.Yellow.Dynamics = DrumDynamics.Ghost; break;
-                case 42: note->Pads.Blue.Dynamics   = DrumDynamics.Ghost; break;
-                case 43: note->Pads.Orange.Dynamics = DrumDynamics.Ghost; break;
-                case 44: note->Pads.Green.Dynamics  = DrumDynamics.Ghost; break;
+                case 40: note->Dynamics_Snare  = DrumDynamics.Ghost; break;
+                case 41: note->Dynamics_Yellow = DrumDynamics.Ghost; break;
+                case 42: note->Dynamics_Blue   = DrumDynamics.Ghost; break;
+                case 43: note->Dynamics_Orange = DrumDynamics.Ghost; break;
+                case 44: note->Dynamics_Green  = DrumDynamics.Ghost; break;
 
                 case 66:
                     if (_unknownDrumType != DrumsType.FiveLane) unsafe
                     {
-                        note->Pads.Yellow.CymbalFlag = true;
+                        note->Cymbal_Yellow = true;
                         _unknownDrumType = DrumsType.ProDrums;
                     }
                     break;
                 case 67:
                     if (_unknownDrumType != DrumsType.FiveLane) unsafe
                     {
-                        note->Pads.Blue.CymbalFlag = true;
+                        note->Cymbal_Blue = true;
                         _unknownDrumType = DrumsType.ProDrums;
                     }
                     break;
                 case 68:
                     if ((_unknownDrumType & DrumsType.ProDrums) == DrumsType.ProDrums)
                     {
-                        note->Pads.Orange.CymbalFlag = true;
+                        note->Cymbal_Orange = true;
                         _unknownDrumType = DrumsType.ProDrums;
                     }
                     break;
