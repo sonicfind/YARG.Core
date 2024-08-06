@@ -6,7 +6,7 @@ namespace YARG.Core.NewParsing
 {
     public class TextEvents2
     {
-        public readonly YARGManagedSortedList<DualTime, SongSection2> Sections = new();
+        public readonly YARGManagedSortedList<DualTime, NonNullString> Sections = new();
         public readonly YARGManagedSortedList<DualTime, List<string>> Globals = new();
 
         public bool IsEmpty()
