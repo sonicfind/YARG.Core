@@ -158,7 +158,7 @@ namespace YARG.Core.NewParsing
 
                 if (type == MidiTrackType.Events)
                 {
-                    LoadEventsTrack_Midi(chart.Events, chart.Sync, ref encoding, track);
+                    LoadEventsTrack_Midi(chart, ref encoding, track);
                 }
                 else if (type == MidiTrackType.Beat)
                 {
@@ -194,9 +194,9 @@ namespace YARG.Core.NewParsing
         }
 
         private static readonly byte[][] PREFIXES = { Encoding.ASCII.GetBytes("[section "), Encoding.ASCII.GetBytes("[prc_") };
-        private static void LoadEventsTrack_Midi(TextEvents2 events, SyncTrack2 sync, ref Encoding encoding, YARGMidiTrack midiTrack)
+        private static void LoadEventsTrack_Midi(YARGChart chart, ref Encoding encoding, YARGMidiTrack midiTrack)
         {
-            if (!events.IsEmpty())
+            if (!chart.Globals.IsEmpty() || !chart.Sections.IsEmpty())
             {
                 YargLogger.LogInfo("EVENTS track appears multiple times. Not parsing repeats...");
                 return;
@@ -210,20 +210,20 @@ namespace YARG.Core.NewParsing
                 if (stats.Type <= MidiEventType.Text_EnumLimit)
                 {
                     position.Ticks = stats.Position;
-                    position.Seconds = sync.ConvertToSeconds(stats.Position, ref tempoIndex);
+                    position.Seconds = chart.Sync.ConvertToSeconds(stats.Position, ref tempoIndex);
 
                     var text = midiTrack.ExtractTextOrSysEx();
                     if (text.StartsWith(PREFIXES[0]))
                     {
-                        events.Sections.GetLastOrAppend(position) = text.GetValidatedString(ref encoding, PREFIXES[0].Length, text.length - PREFIXES[0].Length - 1);
+                        chart.Sections.GetLastOrAppend(position) = text.GetValidatedString(ref encoding, PREFIXES[0].Length, text.length - PREFIXES[0].Length - 1);
                     }
                     else if (text.StartsWith(PREFIXES[1]))
                     {
-                        events.Sections.GetLastOrAppend(position) = text.GetValidatedString(ref encoding, PREFIXES[1].Length, text.length - PREFIXES[1].Length - 1);
+                        chart.Sections.GetLastOrAppend(position) = text.GetValidatedString(ref encoding, PREFIXES[1].Length, text.length - PREFIXES[1].Length - 1);
                     }
                     else
                     {
-                        events.Globals.GetLastOrAppend(position).Add(text.GetString(Encoding.ASCII));
+                        chart.Globals.GetLastOrAppend(position).Add(text.GetString(Encoding.ASCII));
                     }
                 }
             }
