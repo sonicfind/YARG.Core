@@ -140,6 +140,18 @@ namespace YARG.Core.NewParsing
             return ref _buffer[_count - 1].Value;
         }
 
+        public void AppendOrUpdate(in TKey key, in TValue value)
+        {
+            if (_count == 0 || _buffer[_count - 1] < key)
+            {
+                CheckAndGrow();
+                ++_count;
+            }
+            ref var node = ref _buffer [_count - 1];
+            node.Key = key;
+            node.Value = value;
+        }
+
         public bool TryAppend(in TKey key, out TValue? value)
         {
             if (_count != 0 && _buffer[_count - 1].Key.Equals(key))
