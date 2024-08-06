@@ -28,7 +28,7 @@ namespace YARG.Core.NewParsing
 
         public static DualTime GetEndTime(YARGChart chart)
         {
-            var globals = chart.Events.Globals.Span;
+            var globals = chart.Globals.Span;
             for (int i = globals.Length - 1; i >= 0; --i)
             {
                 foreach (string ev in globals[i].Value)
