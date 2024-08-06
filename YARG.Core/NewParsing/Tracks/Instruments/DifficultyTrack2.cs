@@ -15,7 +15,7 @@ namespace YARG.Core.NewParsing
             Notes.Capacity = capcacity;
         }
 
-        public override bool IsOccupied() { return !Notes.IsEmpty() || base.IsOccupied(); }
+        public override bool IsEmpty() { return Notes.IsEmpty() && base.IsEmpty(); }
 
         public override void Clear()
         {

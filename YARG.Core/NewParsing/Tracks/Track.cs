@@ -27,7 +27,7 @@ namespace YARG.Core.NewParsing
         public YARGManagedSortedList<DualTime, HashSet<string>> Events = new();
         protected bool disposedValue;
 
-        public virtual bool IsOccupied() { return !SpecialPhrases.IsEmpty() || !Events.IsEmpty(); }
+        public virtual bool IsEmpty() { return SpecialPhrases.IsEmpty() && Events.IsEmpty(); }
         public virtual void Clear()
         {
             SpecialPhrases.Clear();
