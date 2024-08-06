@@ -34,15 +34,22 @@ namespace YARG.Core.NewParsing.Midi
             0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 11,
         };
 
-        public static unsafe InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        private struct SixFretDiff
         {
-            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>>();
+            public bool SliderNotes;
+            public bool HopoOn;
+            public bool HopoOff;
+        }
+
+        public static unsafe InstrumentTrack2<DifficultyTrack2<SixFretGuitar>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        {
+            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                instrumentTrack[i] = new DifficultyTrack2<GuitarNote2<SixFret>>();
+                instrumentTrack[i] = new DifficultyTrack2<SixFretGuitar>();
             }
 
-            var diffModifiers = stackalloc GuitarMidiDifficulty[InstrumentTrack2.NUM_DIFFICULTIES];
+            var diffModifiers = stackalloc SixFretDiff[InstrumentTrack2.NUM_DIFFICULTIES];
 
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_LANES]
             {
@@ -140,7 +147,7 @@ namespace YARG.Core.NewParsing.Midi
                                         if (diffIndex == 3)
                                         {
                                             soloPosition = position;
-                                            instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                            instrumentTrack.SpecialPhrases.TryAppend(position);
                                         }
                                         break;
                                     case TAP_INDEX:
@@ -171,15 +178,15 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     overdrivePosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     tremoloPostion = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     trillPosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                             }
                         }
@@ -198,7 +205,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    diffTrack.Notes.TraverseBackwardsUntil(colorPosition).Frets[lane] = DualTime.Truncate(position - colorPosition);
+                                    ((DualTime*) diffTrack.Notes.TraverseBackwardsUntil(colorPosition))[lane] = DualTime.Truncate(position - colorPosition);
                                     colorPosition.Ticks = -1;
                                 }
                             }
@@ -321,7 +328,7 @@ namespace YARG.Core.NewParsing.Midi
                 else if (stats.Type is MidiEventType.SysEx or MidiEventType.SysEx_End)
                 {
                     var sysex = midiTrack.ExtractTextOrSysEx();
-                    if (sysex.length != SYSEX_LENGTH || !sysex.SequenceEqual(SYSEXTAG) || sysex[SYSEX_TYPE_INDEX] != 4)
+                    if (sysex.length != SYSEX_LENGTH || !sysex.SequenceEqual(SYSEXTAG) || sysex[SYSEX_TYPE_INDEX] != SYSEX_TAP_TYPE)
                     {
                         continue;
                     }
@@ -348,17 +355,39 @@ namespace YARG.Core.NewParsing.Midi
                             diffModifiers[diffIndex].SliderNotes = enable;
                             if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
                             {
-                                diffModifiers[diffIndex].ModifyNote(ref *guitar);
+                                if (enable)
+                                {
+                                    guitar->State = GuitarState.Tap;
+                                }
+                                else if (guitar->State == GuitarState.Tap)
+                                {
+                                    if (diffModifiers[diffIndex].HopoOn)
+                                        guitar->State = GuitarState.Hopo;
+                                    else if (diffModifiers[diffIndex].HopoOff)
+                                        guitar->State = GuitarState.Strum;
+                                    else
+                                        guitar->State = GuitarState.Natural;
+                                }
                             }
                         }
                     }
                     else
                     {
-                        var diffTrack = instrumentTrack[diffValue]!;
-                        diffModifiers[diffValue].SliderNotes = enable;
-                        if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
+                        if (instrumentTrack[diffValue]!.Notes.TryGetLastValue(position, out var guitar))
                         {
-                            diffModifiers[diffValue].ModifyNote(ref *guitar);
+                            if (enable)
+                            {
+                                guitar->State = GuitarState.Tap;
+                            }
+                            else if (guitar->State == GuitarState.Tap)
+                            {
+                                if (diffModifiers[diffValue].HopoOn)
+                                    guitar->State = GuitarState.Hopo;
+                                else if (diffModifiers[diffValue].HopoOff)
+                                    guitar->State = GuitarState.Strum;
+                                else
+                                    guitar->State = GuitarState.Natural;
+                            }
                         }
                     }
                 }

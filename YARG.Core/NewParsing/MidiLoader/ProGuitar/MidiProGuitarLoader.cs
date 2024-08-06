@@ -130,9 +130,9 @@ namespace YARG.Core.NewParsing.Midi
                                     guitar->Emphasis = midiDiff.Emphasis;
                                 }
 
-                                ref var proString = ref (*guitar)[lane];
-                                proString.Mode = stats.Channel <= 6 ? (StringMode)stats.Channel : StringMode.Normal;
-                                proString.Fret = note.Velocity - MIN_FRET_VELOCITY;
+                                var proString = (ProGuitarString<TProConfig>*) guitar + lane;
+                                proString->Mode = stats.Channel <= 6 ? (StringMode)stats.Channel : StringMode.Normal;
+                                proString->Fret = note.Velocity - MIN_FRET_VELOCITY;
                                 strings[diffIndex * NUM_STRINGS + lane] = position;
                             }
                             else
@@ -181,7 +181,7 @@ namespace YARG.Core.NewParsing.Midi
                         }
                         else if (ROOT_MIN <= note.Value && note.Value <= ROOT_MAX)
                         {
-                            instrumentTrack.Roots.Add(position, ROOTS[note.Value - ROOT_MIN]);
+                            instrumentTrack.Roots.AppendOrUpdate(position, ROOTS[note.Value - ROOT_MIN]);
                         }
                         else if (BRE_NOTE_MIN <= note.Value && note.Value <= BRE_NOTE_MAX)
                         {
@@ -193,21 +193,21 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     overdrivePosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case SOLO_MIDI:
                                     soloPosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     tremoloPostion = position;
                                     tremoloVelocity = note.Velocity;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     trillPosition = position;
                                     trillVelocity = note.Velocity;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case SLASH_CHORD_MIDI:          instrumentTrack.ChordPhrases.GetLastOrAppend(position).Add(ChordPhrase.Slash); break;
                                 case HIDE_CHORD_MIDI:           instrumentTrack.ChordPhrases.GetLastOrAppend(position).Add(ChordPhrase.Hide); break;
@@ -233,7 +233,7 @@ namespace YARG.Core.NewParsing.Midi
                                     ref var stringPosition = ref strings[diffIndex * NUM_STRINGS + lane];
                                     if (stringPosition.Ticks != -1)
                                     {
-                                        diffTrack.Notes.TraverseBackwardsUntil(stringPosition)[lane].Duration = DualTime.Truncate(position - stringPosition);
+                                        ((ProGuitarString<TProConfig>*) diffTrack.Notes.TraverseBackwardsUntil(stringPosition))[lane].Duration = DualTime.Truncate(position - stringPosition);
                                         stringPosition.Ticks = -1;
                                     }
                                 }

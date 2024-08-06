@@ -283,6 +283,11 @@ namespace YARG.Core.NewParsing
                 throw new IndexOutOfRangeException();
             }
 
+            if (_buffer == null)
+            {
+                return ~0;
+            }
+
             var lo = _buffer + startIndex;
             var hi = _buffer + Count - (startIndex + 1);
             while (lo <= hi)
@@ -332,14 +337,14 @@ namespace YARG.Core.NewParsing
             return &_buffer[_count - 1].Value;
         }
 
-        public ref TValue TraverseBackwardsUntil(in TKey key)
+        public TValue* TraverseBackwardsUntil(in TKey key)
         {
             var curr = _buffer + _count - 1;
             while (curr > _buffer && key.CompareTo(curr->Key) < 0)
             {
                 --curr;
             }
-            return ref curr->Value;
+            return &curr->Value;
         }
 
         public bool TryGetLastValue(in TKey key, out TValue* valuePtr)
