@@ -31,7 +31,7 @@ namespace YARG.Core.NewParsing
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
                 var diff = source[i];
-                if (diff != null && diff.IsOccupied())
+                if (diff != null && !diff.IsEmpty())
                 {
                     destination[i] = diff.ConvertToFourLane(isPro);
                     source[i] = null;
@@ -45,7 +45,7 @@ namespace YARG.Core.NewParsing
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
                 var diff = source[i];
-                if (diff != null && diff.IsOccupied())
+                if (diff != null && !diff.IsEmpty())
                 {
                     destination[i] = diff.ConvertToFiveLane();
                     source[i] = null;

@@ -9,7 +9,7 @@ namespace YARG.Core.NewParsing
     {
         public readonly YARGNativeSortedList<DualTime, DualTime> Arpeggios = new();
 
-        public override bool IsOccupied() { return !Arpeggios.IsEmpty() || base.IsOccupied(); }
+        public override bool IsEmpty() { return Arpeggios.IsEmpty() && base.IsEmpty(); }
 
         public override void Clear()
         {
