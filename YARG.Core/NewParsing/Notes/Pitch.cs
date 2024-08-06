@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing
 {
-    public interface IPitchConfig
-    {
-        public int OCTAVE_MIN { get; }
-        public int OCTAVE_MAX { get; }
-    }
-
     public enum PitchName
     {
         C,
@@ -26,66 +21,28 @@ namespace YARG.Core.NewParsing
         B,
     };
 
-    public struct Pitch<TConfig>
-        where TConfig : unmanaged, IPitchConfig
+    public readonly struct PitchValidator
     {
-        public static readonly TConfig CONFIG = default;
+        public const int OCTAVE_LENGTH = 12;
+        public readonly int OCTAVE_MIN;
+        public readonly int OCTAVE_MAX;
 
-        public const byte OCTAVE_LENGTH = 12;
-
-        private PitchName _note;
-        private int _octave;
-        private int _binary;
-
-        public PitchName Note
+        public PitchValidator(int min, int max)
         {
-            readonly get => _note;
-            set
-            {
-                if (_octave == CONFIG.OCTAVE_MAX && value != PitchName.C)
-                    throw new Exception("Pitch out of range");
-
-                int binaryNote = (int) value;
-                _note = value;
-                _binary = (_octave + 1) * OCTAVE_LENGTH + binaryNote;
-            }
+            OCTAVE_MIN = min;
+            OCTAVE_MAX = max;
         }
 
-        public int Octave
+        public bool ValidateBinary(int binary)
         {
-            readonly get => _octave;
-            set
-            {
-                if (value < CONFIG.OCTAVE_MIN || CONFIG.OCTAVE_MAX < value || (value == CONFIG.OCTAVE_MAX && _note != PitchName.C))
-                    throw new Exception("Octave out of range");
-
-                int binaryOctave = (value + 1) * OCTAVE_LENGTH;
-                _octave = value;
-                _binary = (int) _note + binaryOctave;
-            }
+            int octave = binary / OCTAVE_LENGTH - 1;
+            return binary == 0 || (OCTAVE_MIN <= octave && octave <= OCTAVE_MAX && (octave != OCTAVE_MAX || binary % OCTAVE_LENGTH == (int)PitchName.C));
         }
 
-        public int Binary
+        public bool ValidateOctaveAndPitch(int octave, PitchName pitch, out int binary)
         {
-            readonly get => _binary;
-            set
-            {
-                int octave = value / OCTAVE_LENGTH - 1;
-                var note = (PitchName) (value % OCTAVE_LENGTH);
-                if (octave < CONFIG.OCTAVE_MIN || CONFIG.OCTAVE_MAX < octave || (octave == CONFIG.OCTAVE_MAX && note != PitchName.C))
-                    throw new Exception("Binary pitch value out of range");
-
-                _binary = value;
-                _octave = octave;
-                _note = note;
-            }
-        }
-
-        public void Reset()
-        {
-            _note = PitchName.C;
-            _octave = 0;
-            _binary = 0;
+            binary = (octave + 1) * OCTAVE_LENGTH + (int) pitch;
+            return binary == 0 || (OCTAVE_MIN <= octave && octave <= OCTAVE_MAX && (octave != OCTAVE_MAX || pitch == PitchName.C));
         }
     }
 }
