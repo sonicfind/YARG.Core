@@ -301,7 +301,7 @@ namespace YARG.Core.NewParsing
                     {
                         if (chart.LeadVocals != null)
                         {
-                            chart.LeadVocals[0].GetLastOrAppend(position).Lyric = str[LYRIC.Length..];
+                            chart.LeadVocals[0].Lyrics.AppendOrUpdate(position, str[LYRIC.Length..]);
                         }
                     }
                     else if (str == PHRASE_START)

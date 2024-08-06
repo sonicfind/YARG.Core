@@ -28,17 +28,18 @@ namespace YARG.Core.NewParsing.Midi
 
         public static bool Load(YARGMidiTrack midiTrack, SyncTrack2 sync, VocalTrack2 vocalTrack, int trackIndex, ref Encoding encoding)
         {
-            var vocals = vocalTrack[trackIndex];
-            if (vocals.Count > 0 || (trackIndex == 0 && vocalTrack.SpecialPhrases.Count + vocalTrack.Percussion.Count > 0))
+            var part = vocalTrack[trackIndex];
+            if (!part.IsEmpty() || (trackIndex == 0 && vocalTrack.SpecialPhrases.Count + vocalTrack.Percussion.Count > 0))
             {
                 return false;
             }
 
+            
             // In the case of bad rips with overlaps, we need this to apply the correct pitch
             // instead of using `note.value`
             int vocalPitch = 0;
             var vocalPosition = DualTime.Inactive;
-            bool lyricApplied = false;
+            var vocalNote = default(VocalNote2);
 
             var percussionPosition = DualTime.Inactive;
 
@@ -63,7 +64,7 @@ namespace YARG.Core.NewParsing.Midi
                         if ((VOCAL_MIN <= note.value && note.value <= VOCAL_MAX) || note.value == GH_TALKIE)
                         {
                             // Accounts for bad midis where a new vocal note is started before clearing the previous note
-                            if (vocalPosition.Ticks > -1 && lyricApplied)
+                            if (vocalPosition.Ticks > -1)
                             {
                                 var duration = position - vocalPosition;
                                 // Obviously, can't have them overlap
@@ -79,17 +80,7 @@ namespace YARG.Core.NewParsing.Midi
                                     duration.Seconds /= 2;
                                 }
 
-                                ref var vocalNote = ref vocals.Last();
-                                vocalNote.Duration = DualTime.Normalize(position - vocalPosition);
-                                if (note.value != GH_TALKIE)
-                                {
-                                    vocalNote.Pitch = vocalPitch;
-                                }
-                                else if (vocalNote.TalkieState == TalkieState.None)
-                                {
-                                    vocalNote.Pitch = 0;
-                                    vocalNote.TalkieState = TalkieState.Talkie;
-                                }
+                                AddNote(in duration);
                             }
 
                             vocalPosition = position;
@@ -133,22 +124,11 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         if ((VOCAL_MIN <= note.value && note.value <= VOCAL_MAX) || note.value == GH_TALKIE)
                         {
-                            if (vocalPosition.Ticks > -1 && lyricApplied)
+                            if (vocalPosition.Ticks > -1)
                             {
-                                ref var vocalNote = ref vocals.Last();
-                                vocalNote.Duration = DualTime.Normalize(position - vocalPosition);
-                                if (note.value != GH_TALKIE)
-                                {
-                                    vocalNote.Pitch = note.value;
-                                }
-                                else if (vocalNote.TalkieState == TalkieState.None)
-                                {
-                                    vocalNote.Pitch = 0;
-                                    vocalNote.TalkieState = TalkieState.Talkie;
-                                }
+                                AddNote(position - vocalPosition);
                             }
                             vocalPosition.Ticks = -1;
-                            lyricApplied = false;
                         }
                         else if (note.value == VOCAL_PHRASE_1 || note.value == VOCAL_PHRASE_2)
                         {
@@ -224,15 +204,10 @@ namespace YARG.Core.NewParsing.Midi
                             lyric = encoding.GetString(str);
                         }
 
-                        if (vocals.Capacity == 0)
-                        {
-                            vocals.Capacity = 500;
-                        }
-
-                        var state = TalkieState.None;
+                        vocalNote.TalkieState = TalkieState.None;
                         if (lyric.Length > 0)
                         {
-                            state = lyric[^1] switch
+                            vocalNote.TalkieState = lyric[^1] switch
                             {
                                 '#' or '*' => TalkieState.Talkie,
                                 '^'        => TalkieState.Lenient,
@@ -240,10 +215,7 @@ namespace YARG.Core.NewParsing.Midi
                             };
                         }
 
-                        ref var vocalNote = ref vocals.Append(position);
-                        vocalNote.Lyric = lyric;
-                        vocalNote.TalkieState = state;
-                        lyricApplied = true;
+                        part.Lyrics.AppendOrUpdate(position, lyric);
                     }
                     else if (trackIndex == 0)
                     {
@@ -265,6 +237,27 @@ namespace YARG.Core.NewParsing.Midi
                 }
             }
             return true;
+
+            void AddNote(in DualTime duration)
+            {
+                vocalNote.Duration = duration;
+                if (note.value != GH_TALKIE)
+                {
+                    vocalNote.Pitch = note.value;
+                }
+                else if (vocalNote.TalkieState == TalkieState.None)
+                {
+                    vocalNote.Pitch = 0;
+                    vocalNote.TalkieState = TalkieState.Talkie;
+                }
+
+                if (part.Notes.Capacity == 0)
+                {
+                    part.Notes.Capacity = 500;
+                }
+                part.Notes.Append_NoReturn(vocalPosition, in vocalNote);
+                vocalNote.TalkieState = TalkieState.None;
+            }
         }
     }
 }
