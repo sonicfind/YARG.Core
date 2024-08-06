@@ -12,16 +12,16 @@ namespace YARG.Core.NewParsing
         where TDifficultyTrack : Track
     {
         protected readonly TDifficultyTrack?[] difficulties = new TDifficultyTrack[InstrumentTrack2.NUM_DIFFICULTIES];
-        public override bool IsOccupied()
+        public override bool IsEmpty()
         {
             foreach (var diff in difficulties)
             {
-                if (diff != null && diff.IsOccupied())
+                if (diff != null && !diff.IsEmpty())
                 {
-                    return true;
+                    return false;
                 }
             }
-            return base.IsOccupied();
+            return base.IsEmpty();
         }
 
         public override void Clear()

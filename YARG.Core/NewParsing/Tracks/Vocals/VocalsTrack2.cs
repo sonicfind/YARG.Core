@@ -18,16 +18,16 @@ namespace YARG.Core.NewParsing
                 _vocals[i] = new();
         }
 
-        public override bool IsOccupied()
+        public override bool IsEmpty()
         {
             foreach (var track in _vocals)
             {
                 if (!track.IsEmpty())
                 {
-                    return true;
+                    return false;
                 }
             }
-            return !Percussion.IsEmpty() || base.IsOccupied();
+            return Percussion.IsEmpty() && base.IsEmpty();
         }
 
         public override void Clear()
