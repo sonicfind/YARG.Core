@@ -9,42 +9,42 @@ namespace YARG.Core.NewParsing.Midi
     {
         private static readonly byte[] DYNAMICS_STRING = Encoding.ASCII.GetBytes("[ENABLE_CHART_DYNAMICS]");
         private const int DOUBLEBASS_VALUE = 95;
-        private const int DOUBLEBASS_INDEX = 1;
+        private const int BASS_INDEX = 0;
         private const int EXPERT_INDEX = 3;
-        private const int DYNAMIC_MIN = 2;
-        private const int CYMBAL_MIN = 3;
+        private const int SNARE_LANE = 1;
+        private const int YELLOW_LANE = 2;
+        private const int FIFTH_LANE = 5;
         private const int FLAM_VALUE = 109;
-        private const int MAX_LANES = 7;
         private const int DRUMNOTE_MAX = 101;
         private static readonly int[] LANEVALUES = new int[] {
-            0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-            0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-            0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-            0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
         };
 
         private const int TOM_MIN_VALUE = 110;
         private const int TOM_MAX_VALUE = 112;
-        public static unsafe InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>> LoadFourLane(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> LoadFourLane(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
-            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>>();
+            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                instrumentTrack[i] = new DifficultyTrack2<DrumNote2<FourLane>>();
+                instrumentTrack[i] = new DifficultyTrack2<FourLaneDrums>();
             }
 
-            const int NUM_LANES = 6;
+            const int NUM_LANES = 5;
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_LANES]
             {
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
             };
 
             bool enableDynamics = false;
             bool flamFlag = false;
-            var tomFlags = stackalloc bool[3];
+            var cymbalFlags = stackalloc bool[3] { true, true, true };
             var brePositions = stackalloc DualTime[5];
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
@@ -81,57 +81,56 @@ namespace YARG.Core.NewParsing.Midi
                             if (lane < NUM_LANES)
                             {
                                 var diffTrack = instrumentTrack[diffIndex]!;
-                                lanes[diffIndex * MAX_LANES + lane] = position;
+                                lanes[diffIndex * NUM_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
                                     diffTrack.Notes.Capacity = 5000;
                                 }
 
-                                var drum = diffTrack.Notes.GetLastOrAppend(position);
-                                drum->IsFlammed = flamFlag;
-
-                                if (lane >= DYNAMIC_MIN)
+                                if (diffTrack.Notes.TryAppend(position, out var drum))
                                 {
-                                    var pad = (DrumPad_Pro*) &drum->Pads + (lane - DYNAMIC_MIN);
+                                    drum->IsFlammed = flamFlag;
+                                }
+
+                                if (lane >= SNARE_LANE)
+                                {
                                     if (enableDynamics)
                                     {
-                                        if (note.velocity == 127)
+                                        (&drum->Dynamics_Snare)[lane - SNARE_LANE] = note.velocity switch
                                         {
-                                            pad->Dynamics = DrumDynamics.Accent;
-                                        }
-                                        else if (note.velocity == 1)
-                                        {
-                                            pad->Dynamics = DrumDynamics.Ghost;
-                                        }
+                                            127 => DrumDynamics.Accent,
+                                            1 => DrumDynamics.Ghost,
+                                            _ => DrumDynamics.None,
+                                        };
                                     }
 
-                                    if (lane >= CYMBAL_MIN)
+                                    if (lane >= YELLOW_LANE)
                                     {
-                                        pad->CymbalFlag = !tomFlags[lane - CYMBAL_MIN];
+                                        int index = lane - YELLOW_LANE;
+                                        (&drum->Cymbal_Yellow)[index] = cymbalFlags[index];
                                     }
                                 }
                             }
-                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane - Kick Index Offset
-                            //      60     +     2     *   12                                         +  12    (- 1)
+                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
+                            //      60     +     2     *   12                                         +  11
                             // = 95 = Double Kick
                             //
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
-                            else if (lane == 12 && diffIndex == 2)
+                            else if (lane == 11 && diffIndex == 2)
                             {
-                                lanes[diffIndex * MAX_LANES + DOUBLEBASS_INDEX] = position;
-                                instrumentTrack[Difficulty.Expert]!.Notes.GetLastOrAppend(position);
+                                lanes[diffIndex * NUM_LANES + BASS_INDEX] = position;
+                                instrumentTrack[Difficulty.Expert]!.Notes.TryAppend(position);
                             }
                         }
                         else if (TOM_MIN_VALUE <= note.value && note.value <= TOM_MAX_VALUE)
                         {
                             int index = note.value - TOM_MIN_VALUE;
-                            tomFlags[index] = true;
+                            cymbalFlags[index] = false;
                             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                             {
-                                var diffTrack = instrumentTrack[i]!;
-                                if (diffTrack.Notes.TryGetLastValue(position, out var drum))
+                                if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
                                 {
-                                    ((DrumPad_Pro*) &drum->Pads)[index + 1].CymbalFlag = true;
+                                    (&drum->Cymbal_Yellow)[index] = false;
                                 }
                             }
                         }
@@ -160,8 +159,7 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = true;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
-                                        var diffTrack = instrumentTrack[i]!;
-                                        if (diffTrack.Notes.TryGetLastValue(position, out var drum))
+                                        if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -180,27 +178,26 @@ namespace YARG.Core.NewParsing.Midi
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
-                                var diffTrack = instrumentTrack[diffIndex]!;
-                                ref var colorPosition = ref lanes[diffIndex * MAX_LANES + lane];
+                                ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    diffTrack.Notes.TraverseBackwardsUntil(colorPosition)[lane] = DualTime.Truncate(position - colorPosition);
+                                    (&instrumentTrack[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)->Bass)[lane] = DualTime.Truncate(position - colorPosition);
                                     colorPosition.Ticks = -1;
                                 }
                             }
-                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane (- Kick Index Offset)
-                            //      60     +     2     *   12                                         +  12    (- 1)
+                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
+                            //      60     +     2     *   12                                         +  11
                             // = 95 = Double Kick
                             //
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
-                            else if (lane == 12 && diffIndex == 2)
+                            else if (lane == 11 && diffIndex == 2)
                             {
-                                ref var colorPosition = ref lanes[diffIndex * MAX_LANES + DOUBLEBASS_INDEX];
+                                ref var colorPosition = ref lanes[diffIndex * NUM_LANES + BASS_INDEX];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    ref var drum = ref instrumentTrack[Difficulty.Expert]!.Notes.TraverseBackwardsUntil(colorPosition);
-                                    drum.Bass = DualTime.Truncate(position - colorPosition);
-                                    drum.IsDoubleBass = true;
+                                    var drum = instrumentTrack[Difficulty.Expert]!.Notes.TraverseBackwardsUntil(colorPosition);
+                                    drum->Bass = DualTime.Truncate(position - colorPosition);
+                                    drum->IsDoubleBass = true;
                                     colorPosition.Ticks = -1;
                                 }
                             }
@@ -208,13 +205,12 @@ namespace YARG.Core.NewParsing.Midi
                         else if (TOM_MIN_VALUE <= note.value && note.value <= TOM_MAX_VALUE)
                         {
                             int index = note.value - TOM_MIN_VALUE;
-                            tomFlags[index] = false;
+                            cymbalFlags[index] = true;
                             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                             {
-                                var diffTrack = instrumentTrack[i]!;
-                                if (diffTrack.Notes.TryGetLastValue(position, out var drum))
+                                if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
                                 {
-                                    ((DrumPad_Pro*) &drum->Pads)[index + 1].CymbalFlag = false;
+                                    (&drum->Cymbal_Yellow)[index] = true;
                                 }
                             }
                         }
@@ -271,8 +267,7 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = false;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
-                                        var diffTrack = instrumentTrack[i]!;
-                                        if (diffTrack.Notes.TryGetLastValue(position, out var drum))
+                                        if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
                                         {
                                             drum->IsFlammed = false;
                                         }
@@ -301,21 +296,21 @@ namespace YARG.Core.NewParsing.Midi
             return instrumentTrack;
         }
 
-        public static unsafe InstrumentTrack2<DifficultyTrack2<DrumNote2<FiveLane>>> LoadFiveLane(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> LoadFiveLane(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
-            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<DrumNote2<FiveLane>>>();
+            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                instrumentTrack[i] = new DifficultyTrack2<DrumNote2<FiveLane>>();
+                instrumentTrack[i] = new DifficultyTrack2<FiveLaneDrums>();
             }
 
-            const int NUM_LANES = 7;
+            const int NUM_LANES = 6;
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_LANES]
             {
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
             };
 
             bool enableDynamics = false;
@@ -356,37 +351,36 @@ namespace YARG.Core.NewParsing.Midi
                             if (lane < NUM_LANES)
                             {
                                 var diffTrack = instrumentTrack[diffIndex]!;
-                                lanes[diffIndex * MAX_LANES + lane] = position;
+                                lanes[diffIndex * NUM_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
                                     diffTrack.Notes.Capacity = 5000;
                                 }
 
-                                var drum = diffTrack.Notes.GetLastOrAppend(position);
-                                drum->IsFlammed = flamFlag;
-
-                                if (enableDynamics && lane >= DYNAMIC_MIN)
+                                if (diffTrack.Notes.TryAppend(position, out var drum))
                                 {
-                                    int padIndex = lane - DYNAMIC_MIN;
-                                    if (note.velocity == 127)
+                                    drum->IsFlammed = flamFlag;
+                                }
+
+                                if (enableDynamics && lane >= SNARE_LANE)
+                                {
+                                    (&drum->Dynamics_Snare)[lane - SNARE_LANE] = note.velocity switch
                                     {
-                                        ((DrumPad*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Accent;
-                                    }
-                                    else if (note.velocity == 1)
-                                    {
-                                        ((DrumPad*) &drum->Pads)[padIndex].Dynamics = DrumDynamics.Ghost;
-                                    }
+                                        127 => DrumDynamics.Accent,
+                                        1 => DrumDynamics.Ghost,
+                                        _ => DrumDynamics.None,
+                                    };
                                 }
                             }
-                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane - Kick Index Offset
-                            //      60     +     2     *   12                                         +  12    (- 1)
+                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
+                            //      60     +     2     *   12                                         +  11
                             // = 95 = Double Kick
                             //
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
-                            else if (lane == 12 && diffIndex == 2)
+                            else if (lane == 11 && diffIndex == 2)
                             {
-                                lanes[diffIndex * MAX_LANES + DOUBLEBASS_INDEX] = position;
-                                instrumentTrack[Difficulty.Expert]!.Notes.GetLastOrAppend(position);
+                                lanes[diffIndex * NUM_LANES + BASS_INDEX] = position;
+                                instrumentTrack[Difficulty.Expert]!.Notes.TryAppend(position);
                             }
                         }
                         else if (MidiLoader_Constants.BRE_MIN <= note.value && note.value <= MidiLoader_Constants.BRE_MAX)
@@ -414,8 +408,7 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = true;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
-                                        var diffTrack = instrumentTrack[i]!;
-                                        if (diffTrack.Notes.TryGetLastValue(position, out var drum))
+                                        if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -434,27 +427,26 @@ namespace YARG.Core.NewParsing.Midi
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
-                                var diffTrack = instrumentTrack[diffIndex]!;
-                                ref var colorPosition = ref lanes[diffIndex * MAX_LANES + lane];
+                                ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    diffTrack.Notes.TraverseBackwardsUntil(colorPosition)[lane] = DualTime.Truncate(position - colorPosition);
+                                    (&instrumentTrack[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)->Bass)[lane] = DualTime.Truncate(position - colorPosition);
                                     colorPosition.Ticks = -1;
                                 }
                             }
-                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane - Kick Index Offset
-                            //      60     +     2     *   12                                         +  12    (- 1)
+                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
+                            //      60     +     2     *   12                                         +  11
                             // = 95 = Double Kick
                             //
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
-                            else if (lane == 12 && diffIndex == 2)
+                            else if (lane == 11 && diffIndex == 2)
                             {
-                                ref var colorPosition = ref lanes[diffIndex * MAX_LANES + DOUBLEBASS_INDEX];
+                                ref var colorPosition = ref lanes[diffIndex * NUM_LANES + BASS_INDEX];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    ref var drum = ref instrumentTrack[Difficulty.Expert]!.Notes.TraverseBackwardsUntil(colorPosition);
-                                    drum.Bass = DualTime.Truncate(position - colorPosition);
-                                    drum.IsDoubleBass = true;
+                                    var drum = instrumentTrack[Difficulty.Expert]!.Notes.TraverseBackwardsUntil(colorPosition);
+                                    drum->Bass = DualTime.Truncate(position - colorPosition);
+                                    drum->IsDoubleBass = true;
                                     colorPosition.Ticks = -1;
                                 }
                             }
@@ -512,8 +504,7 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = false;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
-                                        var diffTrack = instrumentTrack[i]!;
-                                        if (diffTrack.Notes.TryGetLastValue(position, out var drum))
+                                        if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
                                         {
                                             drum->IsFlammed = false;
                                         }
@@ -542,26 +533,27 @@ namespace YARG.Core.NewParsing.Midi
             return instrumentTrack;
         }
 
-        public static unsafe InstrumentTrack2<DifficultyTrack2<DrumNote2<UnknownLane>>> LoadUnknownDrums(YARGMidiTrack midiTrack, SyncTrack2 sync, ref DrumsType type)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> LoadUnknownDrums(YARGMidiTrack midiTrack, SyncTrack2 sync, ref DrumsType type)
         {
-            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<DrumNote2<UnknownLane>>>();
+            var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                instrumentTrack[i] = new DifficultyTrack2<DrumNote2<UnknownLane>>();
+                instrumentTrack[i] = new DifficultyTrack2<UnknownLaneDrums>();
             }
 
-            int numLanes = 7;
+            const int MAX_LANES = 6;
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * MAX_LANES]
             {
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
             };
 
+            int numLanes = 6;
             bool enableDynamics = false;
             bool flamFlag = false;
-            var tomFlags = stackalloc bool[3];
+            var cymbalFlags = stackalloc bool[3] { true, true, true };
             var brePositions = stackalloc DualTime[5];
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
@@ -605,47 +597,55 @@ namespace YARG.Core.NewParsing.Midi
                                     diffTrack.Notes.Capacity = 5000;
                                 }
 
-                                var drum = diffTrack.Notes.GetLastOrAppend(position);
-                                drum->IsFlammed = flamFlag;
-
-                                if (lane >= DYNAMIC_MIN)
+                                if (diffTrack.Notes.TryAppend(position, out var drum))
                                 {
-                                    int padIndex = lane - DYNAMIC_MIN;
-                                    // Can't be hit if it already detected ProDrums
-                                    if (padIndex == 4)
-                                    {
-                                        type = DrumsType.FiveLane;
-                                    }
+                                    drum->IsFlammed = flamFlag;
+                                }
 
-                                    var pad = (DrumPad_Pro*) &drum->Pads + (lane - DYNAMIC_MIN);
+                                if (lane < FIFTH_LANE)
+                                {
+                                    if (lane >= SNARE_LANE)
+                                    {
+                                        if (enableDynamics)
+                                        {
+                                            (&drum->Dynamics_Snare)[lane - SNARE_LANE] = note.velocity switch
+                                            {
+                                                127 => DrumDynamics.Accent,
+                                                1 => DrumDynamics.Ghost,
+                                                _ => DrumDynamics.None,
+                                            };
+                                        }
+
+                                        if (lane >= YELLOW_LANE)
+                                        {
+                                            int cymbalIndex = lane - YELLOW_LANE;
+                                            (&drum->Cymbal_Yellow)[cymbalIndex] = cymbalFlags[cymbalIndex];
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    type = DrumsType.FiveLane;
                                     if (enableDynamics)
                                     {
-                                        if (note.velocity == 127)
+                                        drum->Dynamics_Green = note.velocity switch
                                         {
-                                            pad->Dynamics = DrumDynamics.Accent;
-                                        }
-                                        else if (note.velocity == 1)
-                                        {
-                                            pad->Dynamics = DrumDynamics.Ghost;
-                                        }
-                                    }
-
-                                    // Does not need a top bound check thanks to the FiveLane test
-                                    if (type != DrumsType.FiveLane && CYMBAL_MIN <= lane)
-                                    {
-                                        pad->CymbalFlag = !tomFlags[lane - CYMBAL_MIN];
+                                            127 => DrumDynamics.Accent,
+                                            1 => DrumDynamics.Ghost,
+                                            _ => DrumDynamics.None,
+                                        };
                                     }
                                 }
                             }
-                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane - Kick Index Offset
-                            //      60     +     2     *   12                                         +  12    (- 1)
+                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
+                            //      60     +     2     *   12                                         +  11
                             // = 95 = Double Kick
                             //
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
-                            else if (lane == 12 && diffIndex == 2)
+                            else if (lane == 11 && diffIndex == 2)
                             {
-                                lanes[diffIndex * MAX_LANES + DOUBLEBASS_INDEX] = position;
-                                instrumentTrack[Difficulty.Expert]!.Notes.GetLastOrAppend(position);
+                                lanes[diffIndex * MAX_LANES + BASS_INDEX] = position;
+                                instrumentTrack[Difficulty.Expert]!.Notes.TryAppend(position);
                             }
                         }
                         else if (TOM_MIN_VALUE <= note.value && note.value <= TOM_MAX_VALUE)
@@ -653,17 +653,16 @@ namespace YARG.Core.NewParsing.Midi
                             if (type != DrumsType.FiveLane)
                             {
                                 int index = note.value - TOM_MIN_VALUE;
-                                tomFlags[index] = true;
+                                cymbalFlags[index] = false;
                                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                 {
-                                    var diffTrack = instrumentTrack[i]!;
-                                    if (diffTrack.Notes.TryGetLastValue(position, out var drum))
+                                    if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
                                     {
-                                        ((DrumPad_Pro*)&drum->Pads)[index + 1].CymbalFlag = true;
+                                        (&drum->Cymbal_Yellow)[index] = false;
                                     }
                                 }
                                 type = DrumsType.ProDrums;
-                                numLanes = 6;
+                                numLanes = 5;
                             }
                         }
                         else if (MidiLoader_Constants.BRE_MIN <= note.value && note.value <= MidiLoader_Constants.BRE_MAX)
@@ -691,8 +690,7 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = true;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
-                                        var diffTrack = instrumentTrack[i]!;
-                                        if (diffTrack.Notes.TryGetLastValue(position, out var drum))
+                                        if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -711,27 +709,35 @@ namespace YARG.Core.NewParsing.Midi
                             int lane = LANEVALUES[noteValue];
                             if (lane < numLanes)
                             {
-                                var diffTrack = instrumentTrack[diffIndex]!;
                                 ref var colorPosition = ref lanes[diffIndex * MAX_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    diffTrack.Notes.TraverseBackwardsUntil(colorPosition)[lane] = DualTime.Truncate(position - colorPosition);
+                                    var drum = instrumentTrack[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition);
+                                    var duration = DualTime.Truncate(position - colorPosition);
+                                    if (lane < FIFTH_LANE)
+                                    {
+                                        (&drum->Bass)[lane] = duration;
+                                    }
+                                    else
+                                    {
+                                        drum->Green = duration;
+                                    }
                                     colorPosition.Ticks = -1;
                                 }
                             }
-                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane (- Kick Index Offset)
-                            //      60     +     2     *   12                                         +  12    (- 1)
+                            // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
+                            //      60     +     2     *   12                                         +  11
                             // = 95 = Double Kick
                             //
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
-                            else if (lane == 12 && diffIndex == 2)
+                            else if (lane == 11 && diffIndex == 2)
                             {
-                                ref var colorPosition = ref lanes[diffIndex * MAX_LANES + DOUBLEBASS_INDEX];
+                                ref var colorPosition = ref lanes[diffIndex * MAX_LANES + BASS_INDEX];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    ref var drum = ref instrumentTrack[Difficulty.Expert]!.Notes.TraverseBackwardsUntil(colorPosition);
-                                    drum.Bass = DualTime.Truncate(position - colorPosition);
-                                    drum.IsDoubleBass = true;
+                                    var drum = instrumentTrack[Difficulty.Expert]!.Notes.TraverseBackwardsUntil(colorPosition);
+                                    drum->Bass = DualTime.Truncate(position - colorPosition);
+                                    drum->IsDoubleBass = true;
                                     colorPosition.Ticks = -1;
                                 }
                             }
@@ -741,13 +747,12 @@ namespace YARG.Core.NewParsing.Midi
                             if (type != DrumsType.FiveLane)
                             {
                                 int index = note.value - TOM_MIN_VALUE;
-                                tomFlags[index] = false;
+                                cymbalFlags[index] = true;
                                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                 {
-                                    var diffTrack = instrumentTrack[i]!;
-                                    if (diffTrack.Notes.TryGetLastValue(position, out var drum))
+                                    if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
                                     {
-                                        ((DrumPad_Pro*)&drum->Pads)[index + 1].CymbalFlag = false;
+                                        (&drum->Cymbal_Yellow)[index] = true;
                                     }
                                 }
                             }

@@ -62,7 +62,7 @@ namespace YARG.Core.NewParsing.Midi
                         if (PROKEY_MIN <= note.value && note.value <= PROKEY_MAX)
                         {
                             lanes[note.value - PROKEY_MIN] = position;
-                            diffTrack.Notes.GetLastOrAppend(position);
+                            diffTrack.Notes.TryAppend(position);
                         }
                         else
                         {
@@ -70,23 +70,23 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     overdrivePosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case SOLO_MIDI:
                                     soloPosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case BRE_MIDI:
                                     brePosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case GLISSANDO_MIDI:
                                     glissPostion = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     trillPosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case 0: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.C1_E2); break;
                                 case 2: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.D1_F2); break;
@@ -105,10 +105,7 @@ namespace YARG.Core.NewParsing.Midi
                             ref var lane = ref lanes[note.value - PROKEY_MIN];
                             if (lane.Ticks > -1)
                             {
-                                var duration = position - lane;
-                                diffTrack.Notes
-                                    .TraverseBackwardsUntil(lane)
-                                    .Add(note.value, duration);
+                                ProKeyNote.Add(diffTrack.Notes.TraverseBackwardsUntil(lane), note.value, position - lane);
                                 lane.Ticks = -1;
                             }
                         }
