@@ -23,8 +23,6 @@ namespace YARG.Core.NewParsing
     public struct ProGuitarNote<TProFretConfig> : IInstrumentNote
         where TProFretConfig : unmanaged, IProFretConfig<TProFretConfig>
     {
-        public const int NUMSTRINGS = 6;
-
         public ProGuitarString<TProFretConfig> String_1;
         public ProGuitarString<TProFretConfig> String_2;
         public ProGuitarString<TProFretConfig> String_3;
@@ -37,24 +35,7 @@ namespace YARG.Core.NewParsing
         public ProSlide Slide;
         public EmphasisType Emphasis;
 
-        public ref ProGuitarString<TProFretConfig> this[int lane]
-        {
-            get
-            {
-                if (lane < 0 || 6 <= lane)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(lane));
-                }
-
-                unsafe
-                {
-                    fixed (ProGuitarString<TProFretConfig>* strings = &String_1)
-                    {
-                        return ref strings[lane];
-                    }
-                }
-            }
-        }
+        public readonly int NUMLANES => 6;
 
         public ProSlide WheelSlide()
         {
