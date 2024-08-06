@@ -17,19 +17,19 @@ namespace YARG.Core.NewParsing
         public LoaderSettings Settings;
         public string MidiSequenceName = string.Empty;
 
-        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>>? FiveFretGuitar;
-        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>>? FiveFretBass;
-        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>>? FiveFretRhythm;
-        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>>? FiveFretCoopGuitar;
-        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<FiveFret>>>? Keys;
+        public InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>? FiveFretGuitar;
+        public InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>? FiveFretBass;
+        public InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>? FiveFretRhythm;
+        public InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>? FiveFretCoopGuitar;
+        public InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>? Keys;
 
-        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>>? SixFretGuitar;
-        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>>? SixFretBass;
-        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>>? SixFretRhythm;
-        public InstrumentTrack2<DifficultyTrack2<GuitarNote2<SixFret>>>? SixFretCoopGuitar;
+        public InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>? SixFretGuitar;
+        public InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>? SixFretBass;
+        public InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>? SixFretRhythm;
+        public InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>? SixFretCoopGuitar;
 
-        public InstrumentTrack2<DifficultyTrack2<DrumNote2<FourLane>>>? FourLaneDrums;
-        public InstrumentTrack2<DifficultyTrack2<DrumNote2<FiveLane>>>? FiveLaneDrums;
+        public InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>? FourLaneDrums;
+        public InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>? FiveLaneDrums;
 
         // public InstrumentTrack2<TrueDrums>? TrueDrums;
 
