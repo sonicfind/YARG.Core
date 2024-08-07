@@ -63,16 +63,6 @@ namespace YARG.Core.NewParsing
         public YARGKeyValuePair<TKey, TValue>* Data => _buffer;
         public YARGKeyValuePair<TKey, TValue>* End => _buffer + _count;
 
-        public YARGNativeSortedList()
-        {
-            _buffer = null;
-        }
-
-        public YARGNativeSortedList(int capacity)
-        {
-            Capacity = capacity;
-        }
-
         public bool IsEmpty()
         {
             return _count == 0;
