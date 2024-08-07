@@ -60,16 +60,6 @@ namespace YARG.Core.NewParsing
         public TValue* Data => _buffer;
         public TValue* End => _buffer + _count;
 
-        public YARGNativeSortedSet()
-        {
-            _buffer = null;
-        }
-
-        public YARGNativeSortedSet(int capacity)
-        {
-            Capacity = capacity;
-        }
-
         public bool IsEmpty()
         {
             return _count == 0;
