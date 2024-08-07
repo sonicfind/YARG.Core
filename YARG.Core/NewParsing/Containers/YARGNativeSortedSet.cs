@@ -7,7 +7,7 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public unsafe class YARGNativeSortedSet<TValue> : IEnumerable<TValue>
+    public unsafe class YARGNativeSortedSet<TValue> : IEnumerable<TValue>, IDisposable
         where TValue : unmanaged, IEquatable<TValue>, IComparable<TValue>
     {
         private TValue* _buffer = null;
@@ -268,6 +268,12 @@ namespace YARG.Core.NewParsing
         ~YARGNativeSortedSet()
         {
             _Dispose();
+        }
+
+        public void Dispose()
+        {
+            _Dispose();
+            GC.SuppressFinalize(this);
         }
 
         IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
