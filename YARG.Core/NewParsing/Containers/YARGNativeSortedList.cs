@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace YARG.Core.NewParsing
 {
+    [DebuggerDisplay("Count: {_count}")]
     public sealed unsafe class YARGNativeSortedList<TKey, TValue> : IDisposable, IEnumerable<YARGKeyValuePair<TKey, TValue>>
         where TKey : unmanaged, IEquatable<TKey>, IComparable<TKey>
         where TValue : unmanaged
