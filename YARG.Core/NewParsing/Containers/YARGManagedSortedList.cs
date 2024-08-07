@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace YARG.Core.NewParsing
 {
+    [DebuggerDisplay("Count: {_count}")]
     public sealed class YARGManagedSortedList<TKey, TValue> : IEnumerable<YARGKeyValuePair<TKey, TValue>>
         where TKey : IEquatable<TKey>, IComparable<TKey>
         where TValue : new()
