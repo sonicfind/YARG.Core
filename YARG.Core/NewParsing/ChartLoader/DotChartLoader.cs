@@ -360,7 +360,8 @@ namespace YARG.Core.NewParsing
                 return false;
             }
 
-            difficultyTrack = new DifficultyTrack2<TNote>(5000);
+            difficultyTrack = new DifficultyTrack2<TNote>();
+            difficultyTrack.Notes.Capacity = 5000;
 
             // Used to lesson the impact of the ticks-seconds search algorithm as the the position
             // gets larger by tracking the previous position.

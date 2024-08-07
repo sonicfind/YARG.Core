@@ -8,7 +8,7 @@ namespace YARG.Core.NewParsing
         where TKey : IEquatable<TKey>, IComparable<TKey>
         where TValue : new()
     {
-        private YARGKeyValuePair<TKey, TValue>[] _buffer;
+        private YARGKeyValuePair<TKey, TValue>[] _buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
         private int _count;
         private int _version;
 
@@ -35,16 +35,6 @@ namespace YARG.Core.NewParsing
         }
 
         public Span<YARGKeyValuePair<TKey, TValue>> Span => new(_buffer, 0, _count);
-
-        public YARGManagedSortedList()
-        {
-            _buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
-        }
-
-        public YARGManagedSortedList(int capacity)
-        {
-            _buffer = new YARGKeyValuePair<TKey, TValue>[capacity];
-        }
 
         public bool IsEmpty()
         {
