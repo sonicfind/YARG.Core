@@ -372,7 +372,7 @@ namespace YARG.Core.NewParsing.Midi
                         }
                     }
                 }
-                else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit)
+                else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit && midiTrack.Type != MidiEventType.Text_TrackName)
                 {
                     var str = midiTrack.ExtractTextOrSysEx();
                     var ev = Encoding.ASCII.GetString(str);
