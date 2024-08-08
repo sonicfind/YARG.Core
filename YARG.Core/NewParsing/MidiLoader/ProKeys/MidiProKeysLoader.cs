@@ -14,7 +14,7 @@ namespace YARG.Core.NewParsing.Midi
 
         public static unsafe bool Load(YARGMidiTrack midiTrack, SyncTrack2 sync, InstrumentTrack2<ProKeysDifficultyTrack> instrumentTrack, int diffIndex)
         {
-            ref var diffTrack = ref instrumentTrack[diffIndex];
+            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
             if (diffTrack != null)
             {
                 return false;
@@ -70,23 +70,18 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     overdrivePosition = position;
-                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case SOLO_MIDI:
                                     soloPosition = position;
-                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case BRE_MIDI:
                                     brePosition = position;
-                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case GLISSANDO_MIDI:
                                     glissPostion = position;
-                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     trillPosition = position;
-                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case 0: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.C1_E2); break;
                                 case 2: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.D1_F2); break;
@@ -116,50 +111,35 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        var duration = position - overdrivePosition;
-                                        instrumentTrack.SpecialPhrases
-                                            .TraverseBackwardsUntil(overdrivePosition)
-                                            .Add(SpecialPhraseType.StarPower, (duration, 100));
+                                        instrumentTrack.Overdrives.Append_NoReturn(overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case SOLO_MIDI:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        var duration = position - soloPosition;
-                                        instrumentTrack.SpecialPhrases
-                                            .TraverseBackwardsUntil(soloPosition)
-                                            .Add(SpecialPhraseType.Solo, (duration, 100));
+                                        instrumentTrack.Soloes.Append_NoReturn(soloPosition, position - soloPosition);
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
                                 case BRE_MIDI:
                                     if (brePosition.Ticks > -1)
                                     {
-                                        var duration = position - brePosition;
-                                        instrumentTrack.SpecialPhrases
-                                            .TraverseBackwardsUntil(brePosition)
-                                            .Add(SpecialPhraseType.BRE, (duration, 100));
+                                        instrumentTrack.BREs.Append_NoReturn(brePosition, position - brePosition);
                                         brePosition.Ticks = -1;
                                     }
                                     break;
                                 case GLISSANDO_MIDI:
                                     if (glissPostion.Ticks > -1)
                                     {
-                                        var duration = position - glissPostion;
-                                        instrumentTrack.SpecialPhrases
-                                            .TraverseBackwardsUntil(glissPostion)
-                                            .Add(SpecialPhraseType.Glissando, (duration, 100));
+                                        diffTrack.Glissandos.Append_NoReturn(glissPostion, position - glissPostion);
                                         glissPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        var duration = position - trillPosition;
-                                        instrumentTrack.SpecialPhrases
-                                            .TraverseBackwardsUntil(trillPosition)
-                                            .Add(SpecialPhraseType.Trill, (duration, 100));
+                                        instrumentTrack.Trills.Append_NoReturn(trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
