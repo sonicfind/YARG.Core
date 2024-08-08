@@ -137,21 +137,21 @@ namespace YARG.Core.NewParsing.Midi
                                 case VOCAL_PHRASE_1:
                                     if (phrasePosition_1.Ticks > -1)
                                     {
-                                        vocalTrack.VocalPhrases_1.Append_NoReturn(phrasePosition_1, position - phrasePosition_1);
+                                        vocalTrack.VocalPhrases_1.Append(in phrasePosition_1, position - phrasePosition_1);
                                         phrasePosition_1.Ticks = -1;
                                     }
                                     break;
                                 case VOCAL_PHRASE_2:
                                     if (phrasePosition_2.Ticks > -1)
                                     {
-                                        vocalTrack.VocalPhrases_2.Append_NoReturn(phrasePosition_2, position - phrasePosition_2);
+                                        vocalTrack.VocalPhrases_2.Append(in phrasePosition_2, position - phrasePosition_2);
                                         phrasePosition_2.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        vocalTrack.Overdrives.Append_NoReturn(overdrivePosition, position - overdrivePosition);
+                                        vocalTrack.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
@@ -159,14 +159,14 @@ namespace YARG.Core.NewParsing.Midi
                                 case PERCUSSION_NOISE:
                                     if (percussionPosition.Ticks > -1)
                                     {
-                                        vocalTrack.Percussion.Append_NoReturn(percussionPosition, note.Value == PERCUSSION_NOTE);
+                                        vocalTrack.Percussion.Append(in percussionPosition, note.Value == PERCUSSION_NOTE);
                                         percussionPosition.Ticks = -1;
                                     }
                                     break;
                                 case RANGESHIFT:
                                     if (rangeShiftPosition.Ticks > -1)
                                     {
-                                        vocalTrack.RangeShifts.Append_NoReturn(rangeShiftPosition, position - rangeShiftPosition);
+                                        vocalTrack.RangeShifts.Append(in rangeShiftPosition, position - rangeShiftPosition);
                                         rangeShiftPosition.Ticks = -1;
                                     }
                                     break;
@@ -176,7 +176,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             if (phrasePosition_1.Ticks > -1)
                             {
-                                vocalTrack.HarmonyLines.Append_NoReturn(phrasePosition_1, position - phrasePosition_1);
+                                vocalTrack.HarmonyLines.Append(in phrasePosition_1, position - phrasePosition_1);
                                 phrasePosition_1.Ticks = -1;
                             }
                         }
@@ -222,7 +222,7 @@ namespace YARG.Core.NewParsing.Midi
                             var endPoint = position;
                             endPoint.Ticks += sync.Tickrate;
                             endPoint.Seconds = sync.ConvertToSeconds(endPoint.Ticks, ref tempoIndex);
-                            vocalTrack.RangeShifts.AppendOrUpdate(position, endPoint - position);
+                            vocalTrack.RangeShifts.AppendOrUpdate(in position, endPoint - position);
                         }
                         else
                         {
@@ -256,7 +256,7 @@ namespace YARG.Core.NewParsing.Midi
                 {
                     part.Notes.Capacity = 500;
                 }
-                part.Notes.Append_NoReturn(vocalPosition, in vocalNote);
+                part.Notes.Append(in vocalPosition, in vocalNote);
                 vocalNote.TalkieState = TalkieState.None;
             }
         }

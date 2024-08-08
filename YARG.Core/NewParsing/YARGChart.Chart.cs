@@ -236,13 +236,13 @@ namespace YARG.Core.NewParsing
                     string str = YARGTextReader.ExtractText(ref container, true);
                     if (str.StartsWith(SECTION))
                     {
-                        chart.Sections.AppendOrUpdate(position, str[SECTION.Length..]);
+                        chart.Sections.AppendOrUpdate(in position, str[SECTION.Length..]);
                     }
                     else if (str.StartsWith(LYRIC))
                     {
                         if (chart.LeadVocals != null)
                         {
-                            chart.LeadVocals[0].Lyrics.AppendOrUpdate(position, str[LYRIC.Length..]);
+                            chart.LeadVocals[0].Lyrics.AppendOrUpdate(in position, str[LYRIC.Length..]);
                         }
                     }
                     else if (str == PHRASE_START)
@@ -251,7 +251,7 @@ namespace YARG.Core.NewParsing
                         {
                             if (phrase.Ticks >= 0 && position.Ticks > phrase.Ticks)
                             {
-                                chart.LeadVocals.VocalPhrases_1.Append_NoReturn(phrase, position - phrase);
+                                chart.LeadVocals.VocalPhrases_1.Append(in phrase, position - phrase);
                             }
                             phrase = position;
                         }
@@ -263,14 +263,14 @@ namespace YARG.Core.NewParsing
                         {
                             if (position.Ticks > phrase.Ticks)
                             {
-                                chart.LeadVocals!.VocalPhrases_1.Append_NoReturn(phrase, position - phrase);
+                                chart.LeadVocals!.VocalPhrases_1.Append(in phrase, position - phrase);
                             }
                             phrase.Ticks = -1;
                         }
                     }
                     else
                     {
-                        chart.Globals.GetLastOrAppend(position).Add(str);
+                        chart.Globals.GetLastOrAppend(in position).Add(str);
                     }
                 }
             }
@@ -386,13 +386,13 @@ namespace YARG.Core.NewParsing
             {
                 if (phrases.Count > 0)
                 {
-                    var last = phrases.Last();
-                    if (last->Key + last->Value > position)
+                    ref var last = ref phrases.Data[phrases.Count - 1];
+                    if (last.Key + last.Value > position)
                     {
-                        last->Value = position - last->Key;
+                        last.Value = position - last.Key;
                     }
                 }
-                phrases.Append_NoReturn(position, duration);
+                phrases.Append(in position, duration);
             }
 
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
@@ -403,7 +403,7 @@ namespace YARG.Core.NewParsing
                 {
                     case ChartEventType.Note:
                         {
-                            var note = difficultyTrack.Notes.GetLastOrAppend(position);
+                            var note = difficultyTrack.Notes.GetLastOrAppend(in position);
 
                             int lane = YARGChartFileReader.ExtractWithWhitespace<TChar, int>(ref container);
                             long tickDuration = YARGChartFileReader.ExtractWithWhitespace<TChar, long>(ref container);
@@ -453,7 +453,7 @@ namespace YARG.Core.NewParsing
                                 // The only exception will be if another solo starts on the same exact tick.
                                 if (soloQueue[1] == position)
                                 {
-                                    difficultyTrack.Soloes.Append_NoReturn(soloQueue[0], soloQueue[1] - soloQueue[0]);
+                                    difficultyTrack.Soloes.Append(in soloQueue[0], soloQueue[1] - soloQueue[0]);
                                     soloQueue[0] = soloQueue[1];
                                     soloQueue[1] = DualTime.Inactive;
                                 }
@@ -461,7 +461,7 @@ namespace YARG.Core.NewParsing
                                 {
                                     ++position.Ticks;
                                     position.Seconds = sync.ConvertToSeconds(position.Ticks, tempoIndex);
-                                    difficultyTrack.Soloes.Append_NoReturn(soloQueue[0], position - soloQueue[0]);
+                                    difficultyTrack.Soloes.Append(in soloQueue[0], position - soloQueue[0]);
                                 }
                             }
                         }
@@ -475,7 +475,7 @@ namespace YARG.Core.NewParsing
                         }
                         else
                         {
-                            difficultyTrack.Events.GetLastOrAppend(position).Add(str);
+                            difficultyTrack.Events.GetLastOrAppend(in position).Add(str);
                         }
                         break;
                 }

@@ -60,7 +60,7 @@ namespace YARG.Core.NewParsing
                     curr->Value.Cymbal_Blue = false;
                     curr->Value.Cymbal_Orange = false;
                 }
-                newDifficulty.Notes.Append(curr->Key, in *(FourLaneDrums*) &curr->Value);
+                newDifficulty.Notes.Append(in curr->Key, in *(FourLaneDrums*) &curr->Value);
             }
             source.Notes.Dispose();
             return newDifficulty;
@@ -73,7 +73,7 @@ namespace YARG.Core.NewParsing
             var end = source.Notes.End;
             for (var curr = source.Notes.Data; curr < end; ++curr)
             {
-                var note = newDifficulty.Notes.Append(curr->Key);
+                var note = newDifficulty.Notes.Append(in curr->Key);
                 note->Bass = curr->Value.Bass;
                 note->IsDoubleBass = curr->Value.IsDoubleBass;
                 note->IsFlammed = curr->Value.IsFlammed;

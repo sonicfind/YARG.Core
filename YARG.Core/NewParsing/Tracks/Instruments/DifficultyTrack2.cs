@@ -48,8 +48,8 @@ namespace YARG.Core.NewParsing
                 return default;
             }
 
-            var note = Notes.ElementAtIndex(Notes.Count - 1);
-            return note->Key + note->Value.GetLongestSustain();
+            ref var note = ref Notes.Data[Notes.Count - 1];
+            return note.Key + note.Value.GetLongestSustain();
         }
 
         public new void Dispose()

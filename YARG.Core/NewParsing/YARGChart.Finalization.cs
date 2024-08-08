@@ -125,16 +125,16 @@ namespace YARG.Core.NewParsing
                     long position = currSig->Key;
                     for (uint n = 0; n < currSig->Value.Numerator && position < endTime; ++n)
                     {
-                        while (beatIndex < beats.Count && beats.ElementAtIndex(beatIndex)->Key.Ticks < position)
+                        while (beatIndex < beats.Count && beats.Data[beatIndex].Key.Ticks < position)
                         {
                             ++beatIndex;
                         }
 
-                        if (beatIndex == beats.Count || position < beats.ElementAtIndex(beatIndex)->Key.Ticks)
+                        if (beatIndex == beats.Count || position < beats.Data[beatIndex].Key.Ticks)
                         {
                             buffer.Ticks = position;
                             buffer.Seconds = sync.ConvertToSeconds(position, ref tempoIndex);
-                            beats.Insert_Forced(beatIndex, buffer, BeatlineType.Weak);
+                            beats.Insert_Forced(beatIndex, in buffer, BeatlineType.Weak);
                         }
                         ++beatIndex;
                         position += ticksPerMarker;
