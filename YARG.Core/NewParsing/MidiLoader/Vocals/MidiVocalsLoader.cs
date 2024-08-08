@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using YARG.Core.Chart;
 using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing.Midi
@@ -29,11 +30,10 @@ namespace YARG.Core.NewParsing.Midi
         public static bool Load(YARGMidiTrack midiTrack, SyncTrack2 sync, VocalTrack2 vocalTrack, int trackIndex, ref Encoding encoding)
         {
             var part = vocalTrack[trackIndex];
-            if (!part.IsEmpty() || (trackIndex == 0 && vocalTrack.SpecialPhrases.Count + vocalTrack.Percussion.Count > 0))
+            if (!part.IsEmpty())
             {
                 return false;
             }
-
             
             // In the case of bad rips with overlaps, we need this to apply the correct pitch
             // instead of using `note.value`
@@ -43,10 +43,10 @@ namespace YARG.Core.NewParsing.Midi
 
             var percussionPosition = DualTime.Inactive;
 
-            var phrasePosition = DualTime.Inactive;
+            var phrasePosition_1 = DualTime.Inactive;
+            var phrasePosition_2 = DualTime.Inactive;
             var overdrivePosition = DualTime.Inactive;
             var rangeShiftPosition = DualTime.Inactive;
-            var lyricShiftPosition = DualTime.Inactive;
 
             int tempoIndex = 0;
             var note = default(MidiNote);
@@ -86,22 +86,19 @@ namespace YARG.Core.NewParsing.Midi
                             vocalPosition = position;
                             vocalPitch = note.value;
                         }
-                        else if (note.value == VOCAL_PHRASE_1 || note.value == VOCAL_PHRASE_2)
-                        {
-                            // So not HARM_3, obviously
-                            if (trackIndex < 2)
-                            {
-                                phrasePosition = position;
-                                vocalTrack.SpecialPhrases.TryAppend(position);
-                            }
-                        }
-                        // Only lead vocals (PART VOCALS & HARM_1) should handle the below values
                         else if (trackIndex == 0)
                         {
-                            if (note.value == MidiLoader_Constants.OVERDRIVE)
+                            if (note.value == VOCAL_PHRASE_1)
+                            {
+                                phrasePosition_1 = position;
+                            }
+                            else if (note.value == VOCAL_PHRASE_2)
+                            {
+                                phrasePosition_2 = position;
+                            }
+                            else if (note.value == MidiLoader_Constants.OVERDRIVE)
                             {
                                 overdrivePosition = position;
-                                vocalTrack.SpecialPhrases.TryAppend(position);
                             }
                             else if (note.value == PERCUSSION_NOTE || note.value == PERCUSSION_NOISE)
                             {
@@ -110,13 +107,15 @@ namespace YARG.Core.NewParsing.Midi
                             else if (note.value == RANGESHIFT)
                             {
                                 rangeShiftPosition = position;
-                                vocalTrack.SpecialPhrases.TryAppend(position);
                             }
                             else if (note.value == LYRICSHIFT)
                             {
-                                lyricShiftPosition = position;
-                                vocalTrack.SpecialPhrases.TryAppend(position);
+                                vocalTrack.LyricShifts.Append(position);
                             }
+                        }
+                        else if (trackIndex == 1 && (note.value == VOCAL_PHRASE_1 || note.value == VOCAL_PHRASE_2))
+                        {
+                            phrasePosition_1 = position;
                         }
                     }
                     // NoteOff from this point
@@ -130,56 +129,54 @@ namespace YARG.Core.NewParsing.Midi
                             }
                             vocalPosition.Ticks = -1;
                         }
-                        else if (note.value == VOCAL_PHRASE_1 || note.value == VOCAL_PHRASE_2)
+                        else if (trackIndex == 0)
                         {
-                            if (phrasePosition.Ticks > -1)
+                            switch (note.value)
                             {
-                                var duration = position - phrasePosition;
-                                var type = trackIndex == 0 ? SpecialPhraseType.LyricLine : SpecialPhraseType.HarmonyLine;
-                                vocalTrack.SpecialPhrases
-                                        .TraverseBackwardsUntil(phrasePosition)
-                                        .Add(type, (duration, 100));
-                                phrasePosition.Ticks = -1;
+                                case VOCAL_PHRASE_1:
+                                    if (phrasePosition_1.Ticks > -1)
+                                    {
+                                        vocalTrack.VocalPhrases_1.Append_NoReturn(phrasePosition_1, position - phrasePosition_1);
+                                        phrasePosition_1.Ticks = -1;
+                                    }
+                                    break;
+                                case VOCAL_PHRASE_2:
+                                    if (phrasePosition_2.Ticks > -1)
+                                    {
+                                        vocalTrack.VocalPhrases_2.Append_NoReturn(phrasePosition_2, position - phrasePosition_2);
+                                        phrasePosition_2.Ticks = -1;
+                                    }
+                                    break;
+                                case MidiLoader_Constants.OVERDRIVE:
+                                    if (overdrivePosition.Ticks > -1)
+                                    {
+                                        vocalTrack.Overdrives.Append_NoReturn(overdrivePosition, position - overdrivePosition);
+                                        overdrivePosition.Ticks = -1;
+                                    }
+                                    break;
+                                case PERCUSSION_NOTE:
+                                case PERCUSSION_NOISE:
+                                    if (percussionPosition.Ticks > -1)
+                                    {
+                                        vocalTrack.Percussion.Append_NoReturn(percussionPosition, note.value == PERCUSSION_NOTE);
+                                        percussionPosition.Ticks = -1;
+                                    }
+                                    break;
+                                case RANGESHIFT:
+                                    if (rangeShiftPosition.Ticks > -1)
+                                    {
+                                        vocalTrack.RangeShifts.Append_NoReturn(rangeShiftPosition, position - rangeShiftPosition);
+                                        rangeShiftPosition.Ticks = -1;
+                                    }
+                                    break;
                             }
                         }
-                        else if (note.value == MidiLoader_Constants.OVERDRIVE)
+                        else if (trackIndex == 1 && (note.value == VOCAL_PHRASE_1 || note.value == VOCAL_PHRASE_2))
                         {
-                            if (overdrivePosition.Ticks > -1)
+                            if (phrasePosition_1.Ticks > -1)
                             {
-                                var duration = position - overdrivePosition;
-                                vocalTrack.SpecialPhrases
-                                        .TraverseBackwardsUntil(overdrivePosition)
-                                        .Add(SpecialPhraseType.StarPower, (duration, 100));
-                                overdrivePosition.Ticks = -1;
-                            }
-                        }
-                        else if (note.value == PERCUSSION_NOTE || note.value == PERCUSSION_NOISE)
-                        {
-                            if (percussionPosition.Ticks > -1) unsafe
-                            {
-                                vocalTrack.Percussion.Append(percussionPosition)->IsPlayable = note.value == PERCUSSION_NOTE;
-                            }
-                            percussionPosition.Ticks = -1;
-                        }
-                        else if (note.value == RANGESHIFT)
-                        {
-                            if (rangeShiftPosition.Ticks > -1)
-                            {
-                                // Range shifts are instant, so manipulation of the duration is pointless
-                                vocalTrack.SpecialPhrases
-                                    .TraverseBackwardsUntil(rangeShiftPosition)
-                                    .TryAdd(SpecialPhraseType.RangeShift, (default(DualTime), 100));
-                                rangeShiftPosition.Ticks = -1;
-                            }
-                        }
-                        else if (note.value == LYRICSHIFT)
-                        {
-                            if (lyricShiftPosition.Ticks > -1)
-                            {
-                                vocalTrack.SpecialPhrases
-                                    .TraverseBackwardsUntil(lyricShiftPosition)
-                                    .Add(SpecialPhraseType.LyricShift, (default(DualTime), 100));
-                                lyricShiftPosition.Ticks = -1;
+                                vocalTrack.HarmonyLines.Append_NoReturn(phrasePosition_1, position - phrasePosition_1);
+                                phrasePosition_1.Ticks = -1;
                             }
                         }
                     }
@@ -221,10 +218,10 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         if (str.SequenceEqual(RANGESHIFT_TEXT))
                         {
-                            // Range shifts are instant, so manipulation of the duration is pointless
-                            vocalTrack.SpecialPhrases
-                                .GetLastOrAppend(position)
-                                .TryAdd(SpecialPhraseType.RangeShift, (default(DualTime), 100));
+                            var endPoint = position;
+                            endPoint.Ticks += sync.Tickrate;
+                            endPoint.Seconds = sync.ConvertToSeconds(endPoint.Ticks, ref tempoIndex);
+                            vocalTrack.RangeShifts.AppendOrUpdate(position, endPoint - position);
                         }
                         else
                         {
