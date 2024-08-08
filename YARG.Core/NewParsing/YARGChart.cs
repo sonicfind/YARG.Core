@@ -64,6 +64,40 @@ namespace YARG.Core.NewParsing
             Miscellaneous = modifiers;
         }
 
+        private void TrimExcessData()
+        {
+            Sync.TrimExcessData();
+            BeatMap.TrimExcess();
+            FiveFretGuitar?.TrimExcess();
+            FiveFretBass?.TrimExcess();
+            FiveFretRhythm?.TrimExcess();
+            FiveFretCoopGuitar?.TrimExcess();
+
+            SixFretGuitar?.TrimExcess();
+            SixFretBass?.TrimExcess();
+            SixFretRhythm?.TrimExcess();
+            SixFretCoopGuitar?.TrimExcess();
+
+            Keys?.TrimExcess();
+
+            FourLaneDrums?.TrimExcess();
+            FiveLaneDrums?.TrimExcess();
+
+            // TrueDrums?.TrimExcess();
+
+            ProGuitar_17Fret?.TrimExcess();
+            ProGuitar_22Fret?.TrimExcess();
+            ProBass_17Fret?.TrimExcess();
+            ProBass_22Fret?.TrimExcess();
+
+            ProKeys?.TrimExcess();
+
+            // DJ?.Dispose();
+
+            LeadVocals?.TrimExcess();
+            HarmonyVocals?.TrimExcess();
+        }
+
         public void Dispose()
         {
             Sync.Dispose();
