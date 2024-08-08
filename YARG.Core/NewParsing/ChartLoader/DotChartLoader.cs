@@ -221,7 +221,7 @@ namespace YARG.Core.NewParsing
                         {
                             if (phrase.Ticks >= 0 && position.Ticks > phrase.Ticks)
                             {
-                                chart.LeadVocals.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, (position - phrase, 100));
+                                chart.LeadVocals.VocalPhrases_1.Append_NoReturn(phrase, position - phrase);
                             }
                             phrase = position;
                         }
@@ -233,7 +233,7 @@ namespace YARG.Core.NewParsing
                         {
                             if (position.Ticks > phrase.Ticks)
                             {
-                                chart.LeadVocals!.SpecialPhrases[phrase].TryAdd(SpecialPhraseType.LyricLine, (position - phrase, 100));
+                                chart.LeadVocals!.VocalPhrases_1.Append_NoReturn(phrase, position - phrase);
                             }
                             phrase.Ticks = -1;
                         }
@@ -336,6 +336,16 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        private enum SpecialPhraseType
+        {
+            FaceOff_Player1 = 0,
+            FaceOff_Player2 = 1,
+            StarPower = 2,
+            BRE = 64,
+            Tremolo = 65,
+            Trill = 66,
+        }
+
         private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref InstrumentTrack2<DifficultyTrack2<TNote>>? track, delegate*<TNote*, int, in DualTime, bool> setter)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TNote : unmanaged, IInstrumentNote
@@ -360,6 +370,19 @@ namespace YARG.Core.NewParsing
             DotChartEvent ev = default;
             DualTime position = default;
             DualTime duration = default;
+            void AddSpecialPhrase(YARGNativeSortedList<DualTime, DualTime> phrases)
+            {
+                if (phrases.Count > 0)
+                {
+                    var last = phrases.Last();
+                    if (last->Key + last->Value > position)
+                    {
+                        last->Value = position - last->Key;
+                    }
+                }
+                phrases.Append_NoReturn(position, duration);
+            }
+
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
             {
                 position.Ticks = ev.Position;
@@ -394,18 +417,16 @@ namespace YARG.Core.NewParsing
                             long tickDuration = YARGTextReader.ExtractInt64AndWhitespace(ref container);
                             if (tickDuration > 0)
                             {
+                                duration.Ticks = tickDuration;
+                                duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
                                 switch (type)
                                 {
-                                    case SpecialPhraseType.FaceOff_Player1:
-                                    case SpecialPhraseType.FaceOff_Player2:
-                                    case SpecialPhraseType.StarPower:
-                                    case SpecialPhraseType.BRE:
-                                    case SpecialPhraseType.Tremolo:
-                                    case SpecialPhraseType.Trill:
-                                        duration.Ticks = tickDuration;
-                                        duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
-                                        difficultyTrack.SpecialPhrases.GetLastOrAppend(position).TryAdd(type, (duration, 100));
-                                        break;
+                                    case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(difficultyTrack.Faceoff_Player1); break;
+                                    case SpecialPhraseType.FaceOff_Player2: AddSpecialPhrase(difficultyTrack.Faceoff_Player2); break;
+                                    case SpecialPhraseType.StarPower:       AddSpecialPhrase(difficultyTrack.Overdrives); break;
+                                    case SpecialPhraseType.BRE:             AddSpecialPhrase(difficultyTrack.BREs); break;
+                                    case SpecialPhraseType.Tremolo:         AddSpecialPhrase(difficultyTrack.Tremolos); break;
+                                    case SpecialPhraseType.Trill:           AddSpecialPhrase(difficultyTrack.Trills); break;
                                 }
                             }
                             break;
@@ -416,14 +437,20 @@ namespace YARG.Core.NewParsing
                         {
                             if (soloQueue[0].Ticks != -1)
                             {
-                                // .chart handles solo phrases with *inclusive ends*, so we have to add one tick
-                                var soloEnd = position;
-                                ++soloEnd.Ticks;
-                                soloEnd.Seconds = sync.ConvertToSeconds(soloEnd.Ticks, tempoIndex);
-
-                                difficultyTrack.SpecialPhrases[soloQueue[0]].TryAdd(SpecialPhraseType.Solo, (soloEnd - soloQueue[0], 100));
-                                soloQueue[0] = soloQueue[1] == position ? soloQueue[1] : DualTime.Inactive;
-                                soloQueue[1] = DualTime.Inactive;
+                                // .chart handles solo phrases with *inclusive ends*, so we have to add one tick.
+                                // The only exception will be if another solo starts on the same exact tick.
+                                if (soloQueue[1] == position)
+                                {
+                                    difficultyTrack.Soloes.Append_NoReturn(soloQueue[0], soloQueue[1] - soloQueue[0]);
+                                    soloQueue[0] = soloQueue[1];
+                                    soloQueue[1] = DualTime.Inactive;
+                                }
+                                else
+                                {
+                                    ++position.Ticks;
+                                    position.Seconds = sync.ConvertToSeconds(position.Ticks, tempoIndex);
+                                    difficultyTrack.Soloes.Append_NoReturn(soloQueue[0], position - soloQueue[0]);
+                                }
                             }
                         }
                         else if (str == SOLO)

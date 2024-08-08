@@ -4,46 +4,59 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public enum ChordPhrase
-    {
-        Force_Numbering,
-        Slash,
-        Hide,
-        Accidental_Switch
-    };
 
     public class ProGuitarInstrumentTrack<TProFretConfig> : InstrumentTrack2<ProGuitarDifficultyTrack<TProFretConfig>>, IDisposable
         where TProFretConfig : unmanaged, IProFretConfig<TProFretConfig>
     {
         public readonly YARGNativeSortedList<DualTime, PitchName> Roots = new();
         public readonly YARGNativeSortedList<DualTime, HandPosition<TProFretConfig>> HandPositions = new();
-        public readonly YARGManagedSortedList<DualTime, List<ChordPhrase>> ChordPhrases = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> Force_ChordNumbering = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> SlashChords = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> HideChords = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> AccidentalSwitches = new();
 
-        public override bool IsEmpty()
+        public new bool IsEmpty()
         {
-            return Roots.IsEmpty() && HandPositions.IsEmpty() && ChordPhrases.IsEmpty() && base.IsEmpty();
+            return Roots.IsEmpty()
+                && HandPositions.IsEmpty()
+                && Force_ChordNumbering.IsEmpty()
+                && SlashChords.IsEmpty()
+                && HideChords.IsEmpty()
+                && AccidentalSwitches.IsEmpty()
+                && base.IsEmpty();
         }
 
-        public override void Clear()
+        public new void TrimExcess()
+        {
+            Roots.TrimExcess();
+            HandPositions.TrimExcess();
+            Force_ChordNumbering.TrimExcess();
+            SlashChords.TrimExcess();
+            HideChords.TrimExcess();
+            AccidentalSwitches.TrimExcess();
+            base.TrimExcess();
+        }
+
+        public new void Clear()
         {
             Roots.Clear();
             HandPositions.Clear();
-            ChordPhrases.Clear();
+            Force_ChordNumbering.Clear();
+            SlashChords.Clear();
+            HideChords.Clear();
+            AccidentalSwitches.Clear();
             base.Clear();
         }
 
-        protected override void Dispose(bool disposing)
+        public new void Dispose()
         {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    Roots.Dispose();
-                    HandPositions.Dispose();
-                    ChordPhrases.Clear();
-                }
-                base.Dispose(disposing);
-            }
+            Roots.Dispose();
+            HandPositions.Dispose();
+            Force_ChordNumbering.Dispose();
+            SlashChords.Dispose();
+            HideChords.Dispose();
+            AccidentalSwitches.Dispose();
+            base.Dispose();
         }
     }
 }
