@@ -12,7 +12,7 @@ namespace YARG.Core.NewParsing
         Ghost
     }
 
-    public struct FourLaneDrums : IInstrumentNote
+    public struct FourLaneDrums : IInstrumentNote, IDotChartLoadable
     {
         public bool IsDoubleBass;
         public bool IsFlammed;
@@ -30,6 +30,37 @@ namespace YARG.Core.NewParsing
         public bool Cymbal_Green;
 
         public readonly int NUMLANES => 5;
+
+        public bool SetFromDotChart(int lane, in DualTime length)
+        {
+            switch (lane)
+            {
+                case 0: Bass = DualTime.Truncate(length); break;
+                case 1: Snare = DualTime.Truncate(length); break;
+                case 2: Yellow = DualTime.Truncate(length); break;
+                case 3: Blue = DualTime.Truncate(length); break;
+                case 4: Green = DualTime.Truncate(length); break;
+
+                case 32: IsDoubleBass = true; break;
+
+                case 34: Dynamics_Snare = DrumDynamics.Accent; break;
+                case 35: Dynamics_Yellow = DrumDynamics.Accent; break;
+                case 36: Dynamics_Blue = DrumDynamics.Accent; break;
+                case 37: Dynamics_Green = DrumDynamics.Accent; break;
+
+                case 40: Dynamics_Snare = DrumDynamics.Ghost; break;
+                case 41: Dynamics_Yellow = DrumDynamics.Ghost; break;
+                case 42: Dynamics_Blue = DrumDynamics.Ghost; break;
+                case 43: Dynamics_Green = DrumDynamics.Ghost; break;
+
+                case 66: Cymbal_Yellow = true; break;
+                case 67: Cymbal_Blue = true; break;
+                case 68: Cymbal_Green = true; break;
+                default:
+                    return false;
+            }
+            return true;
+        }
 
         public readonly int GetNumActiveLanes()
         {
@@ -135,7 +166,7 @@ namespace YARG.Core.NewParsing
         }
     }
 
-    public struct FiveLaneDrums : IInstrumentNote
+    public struct FiveLaneDrums : IInstrumentNote, IDotChartLoadable
     {
         public bool IsDoubleBass;
         public bool IsFlammed;
@@ -152,6 +183,36 @@ namespace YARG.Core.NewParsing
         public DrumDynamics Dynamics_Green;
 
         public readonly int NUMLANES => 6;
+
+        public bool SetFromDotChart(int lane, in DualTime length)
+        {
+            switch (lane)
+            {
+                case 0: Bass = DualTime.Truncate(length); break;
+                case 1: Snare = DualTime.Truncate(length); break;
+                case 2: Yellow = DualTime.Truncate(length); break;
+                case 3: Blue = DualTime.Truncate(length); break;
+                case 4: Orange = DualTime.Truncate(length); break;
+                case 5: Green = DualTime.Truncate(length); break;
+
+                case 32: IsDoubleBass = true; break;
+
+                case 34: Dynamics_Snare = DrumDynamics.Accent; break;
+                case 35: Dynamics_Yellow = DrumDynamics.Accent; break;
+                case 36: Dynamics_Blue = DrumDynamics.Accent; break;
+                case 37: Dynamics_Orange = DrumDynamics.Accent; break;
+                case 38: Dynamics_Green = DrumDynamics.Accent; break;
+
+                case 40: Dynamics_Snare = DrumDynamics.Ghost; break;
+                case 41: Dynamics_Yellow = DrumDynamics.Ghost; break;
+                case 42: Dynamics_Blue = DrumDynamics.Ghost; break;
+                case 43: Dynamics_Orange = DrumDynamics.Ghost; break;
+                case 44: Dynamics_Green = DrumDynamics.Ghost; break;
+                default:
+                    return false;
+            }
+            return true;
+        }
 
         public readonly int GetNumActiveLanes()
         {
@@ -260,8 +321,10 @@ namespace YARG.Core.NewParsing
         }
     }
 
-    public struct UnknownLaneDrums : IInstrumentNote
+    public struct UnknownLaneDrums : IInstrumentNote, IDotChartLoadable
     {
+        public static DrumsType DrumType;
+
         public bool IsDoubleBass;
         public bool IsFlammed;
         public DualTime Bass;
@@ -282,6 +345,64 @@ namespace YARG.Core.NewParsing
         public DrumDynamics Dynamics_Green;
 
         public readonly int NUMLANES => 6;
+
+        public bool SetFromDotChart(int lane, in DualTime length)
+        {
+            switch (lane)
+            {
+                case 0: Bass = DualTime.Truncate(length); break;
+                case 1: Snare = DualTime.Truncate(length); break;
+                case 2: Yellow = DualTime.Truncate(length); break;
+                case 3: Blue = DualTime.Truncate(length); break;
+                case 4: Orange = DualTime.Truncate(length); break;
+                case 5:
+                    if (DrumType != DrumsType.Unknown && DrumType != DrumsType.FiveLane)
+                    {
+                        return false;
+                    }
+                    Green = DualTime.Truncate(length);
+                    DrumType = DrumsType.FiveLane;
+                    break;
+                case 32: IsDoubleBass = true; break;
+
+                case 34: Dynamics_Snare = DrumDynamics.Accent; break;
+                case 35: Dynamics_Yellow = DrumDynamics.Accent; break;
+                case 36: Dynamics_Blue = DrumDynamics.Accent; break;
+                case 37: Dynamics_Orange = DrumDynamics.Accent; break;
+                case 38: Dynamics_Green = DrumDynamics.Accent; break;
+
+                case 40: Dynamics_Snare = DrumDynamics.Ghost; break;
+                case 41: Dynamics_Yellow = DrumDynamics.Ghost; break;
+                case 42: Dynamics_Blue = DrumDynamics.Ghost; break;
+                case 43: Dynamics_Orange = DrumDynamics.Ghost; break;
+                case 44: Dynamics_Green = DrumDynamics.Ghost; break;
+
+                case 66:
+                    if (DrumType != DrumsType.FiveLane) unsafe
+                        {
+                            Cymbal_Yellow = true;
+                            DrumType = DrumsType.ProDrums;
+                        }
+                    break;
+                case 67:
+                    if (DrumType != DrumsType.FiveLane) unsafe
+                        {
+                            Cymbal_Blue = true;
+                            DrumType = DrumsType.ProDrums;
+                        }
+                    break;
+                case 68:
+                    if (DrumType != DrumsType.FiveLane) unsafe
+                        {
+                            Cymbal_Orange = true;
+                            DrumType = DrumsType.ProDrums;
+                        }
+                    break;
+                default:
+                    return false;
+            }
+            return true;
+        }
 
         public readonly int GetNumActiveLanes()
         {
