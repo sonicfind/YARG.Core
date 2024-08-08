@@ -4,12 +4,6 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public struct PitchedKey
-    {
-        public int Pitch;
-        public DualTime Duration;
-    }
-
     public unsafe struct ProKeyNote : IInstrumentNote
     {
         private static readonly PitchValidator VALIDATOR = new(3, 5);
