@@ -20,6 +20,12 @@ namespace YARG.Core.NewParsing
             TimeSigs.Append(0, TimeSig2.DEFAULT);
         }
 
+        public void TrimExcessData()
+        {
+            TempoMarkers.TrimExcess();
+            TimeSigs.TrimExcess();
+        }
+
         public double ConvertToSeconds(long ticks, int startIndex = 0)
         {
             return ConvertToSeconds(ticks, ref startIndex);

@@ -150,6 +150,7 @@ namespace YARG.Core.NewParsing
             }
 
             YARGChartFinalizer.FinalizeBeats(chart);
+            chart.TrimExcessData();
             return chart;
         }
 
@@ -473,8 +474,6 @@ namespace YARG.Core.NewParsing
                         break;
                 }
             }
-
-            difficultyTrack.TrimExcess();
             return true;
         }
     }
