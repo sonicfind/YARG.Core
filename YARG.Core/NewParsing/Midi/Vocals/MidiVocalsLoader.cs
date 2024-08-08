@@ -238,14 +238,17 @@ namespace YARG.Core.NewParsing.Midi
             void AddNote(in DualTime duration)
             {
                 vocalNote.Duration = duration;
-                if (note.value != GH_TALKIE)
+                if (vocalPitch != GH_TALKIE)
                 {
-                    vocalNote.Pitch = note.value;
+                    vocalNote.Pitch = vocalPitch;
                 }
-                else if (vocalNote.TalkieState == TalkieState.None)
+                else
                 {
                     vocalNote.Pitch = 0;
-                    vocalNote.TalkieState = TalkieState.Talkie;
+                    if (vocalNote.TalkieState == TalkieState.None)
+                    {
+                        vocalNote.TalkieState = TalkieState.Talkie;
+                    }
                 }
 
                 if (part.Notes.Capacity == 0)
