@@ -62,7 +62,7 @@ namespace YARG.Core.NewParsing.Midi
                         if (PROKEY_MIN <= note.value && note.value <= PROKEY_MAX)
                         {
                             lanes[note.value - PROKEY_MIN] = position;
-                            diffTrack.Notes.TryAppend(position);
+                            diffTrack.Notes.TryAppend(in position);
                         }
                         else
                         {
@@ -83,12 +83,12 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.TRILL:
                                     trillPosition = position;
                                     break;
-                                case 0: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.C1_E2); break;
-                                case 2: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.D1_F2); break;
-                                case 4: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.E1_G2); break;
-                                case 5: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.F1_A2); break;
-                                case 7: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.G1_B2); break;
-                                case 9: diffTrack.Ranges.AppendOrUpdate(position, ProKey_Ranges.A1_C3); break;
+                                case 0: diffTrack.Ranges.AppendOrUpdate(in position, ProKey_Ranges.C1_E2); break;
+                                case 2: diffTrack.Ranges.AppendOrUpdate(in position, ProKey_Ranges.D1_F2); break;
+                                case 4: diffTrack.Ranges.AppendOrUpdate(in position, ProKey_Ranges.E1_G2); break;
+                                case 5: diffTrack.Ranges.AppendOrUpdate(in position, ProKey_Ranges.F1_A2); break;
+                                case 7: diffTrack.Ranges.AppendOrUpdate(in position, ProKey_Ranges.G1_B2); break;
+                                case 9: diffTrack.Ranges.AppendOrUpdate(in position, ProKey_Ranges.A1_C3); break;
                             };
                         }
                     }
@@ -100,7 +100,7 @@ namespace YARG.Core.NewParsing.Midi
                             ref var lane = ref lanes[note.value - PROKEY_MIN];
                             if (lane.Ticks > -1)
                             {
-                                ProKeyNote.Add(diffTrack.Notes.TraverseBackwardsUntil(lane), note.value, position - lane);
+                                ProKeyNote.Add(diffTrack.Notes.TraverseBackwardsUntil(in lane), note.value, position - lane);
                                 lane.Ticks = -1;
                             }
                         }
@@ -111,35 +111,35 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Overdrives.Append_NoReturn(overdrivePosition, position - overdrivePosition);
+                                        instrumentTrack.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case SOLO_MIDI:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Soloes.Append_NoReturn(soloPosition, position - soloPosition);
+                                        instrumentTrack.Soloes.Append(in soloPosition, position - soloPosition);
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
                                 case BRE_MIDI:
                                     if (brePosition.Ticks > -1)
                                     {
-                                        instrumentTrack.BREs.Append_NoReturn(brePosition, position - brePosition);
+                                        instrumentTrack.BREs.Append(in brePosition, position - brePosition);
                                         brePosition.Ticks = -1;
                                     }
                                     break;
                                 case GLISSANDO_MIDI:
                                     if (glissPostion.Ticks > -1)
                                     {
-                                        diffTrack.Glissandos.Append_NoReturn(glissPostion, position - glissPostion);
+                                        diffTrack.Glissandos.Append(in glissPostion, position - glissPostion);
                                         glissPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Trills.Append_NoReturn(trillPosition, position - trillPosition);
+                                        instrumentTrack.Trills.Append(in trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;

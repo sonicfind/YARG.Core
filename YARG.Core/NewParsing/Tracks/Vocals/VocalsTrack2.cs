@@ -89,8 +89,8 @@ namespace YARG.Core.NewParsing
                 if (notes.IsEmpty())
                     continue;
 
-                var vocal = notes.ElementAtIndex(notes.Count - 1);
-                var end = vocal->Key + vocal->Value.Duration;
+                ref var vocal = ref notes.Data[notes.Count - 1];
+                var end = vocal.Key + vocal.Value.Duration;
                 if (end > endTime)
                 {
                     endTime = end;
@@ -99,10 +99,10 @@ namespace YARG.Core.NewParsing
 
             if (!Percussion.IsEmpty())
             {
-                var perc = Percussion.ElementAtIndex(Percussion.Count - 1);
-                if (perc->Key > endTime)
+                ref var perc = ref Percussion.Data[Percussion.Count - 1];
+                if (perc.Key > endTime)
                 {
-                    endTime = perc->Key;
+                    endTime = perc.Key;
                 }
             }
             return endTime;

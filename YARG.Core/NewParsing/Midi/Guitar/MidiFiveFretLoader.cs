@@ -119,7 +119,7 @@ namespace YARG.Core.NewParsing.Midi
                                     diffTrack.Notes.Capacity = 5000;
                                 }
 
-                                if (diffTrack.Notes.TryAppend(position, out var guitar))
+                                if (diffTrack.Notes.GetLastOrAppend(in position, out var guitar))
                                 {
                                     if (diffModifier.SliderNotes)
                                         guitar->State = GuitarState.Tap;
@@ -136,7 +136,7 @@ namespace YARG.Core.NewParsing.Midi
                                     case HOPO_ON_INDEX:
                                         {
                                             diffModifier.HopoOn = true;
-                                            if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
+                                            if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                             {
                                                 if (guitar->State != GuitarState.Tap)
                                                     guitar->State = GuitarState.Hopo;
@@ -146,7 +146,7 @@ namespace YARG.Core.NewParsing.Midi
                                     case HOPO_OFF_INDEX:
                                         {
                                             diffModifier.HopoOff = true;
-                                            if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
+                                            if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                             {
                                                 if (guitar->State == GuitarState.Natural)
                                                     guitar->State = GuitarState.Strum;
@@ -231,7 +231,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    ((DualTime*)diffTrack.Notes.TraverseBackwardsUntil(colorPosition))[lane] = DualTime.Truncate(position - colorPosition);
+                                    ((DualTime*)diffTrack.Notes.TraverseBackwardsUntil(in colorPosition))[lane] = DualTime.Truncate(position - colorPosition);
                                     colorPosition.Ticks = -1;
                                 }
                             }
@@ -242,7 +242,7 @@ namespace YARG.Core.NewParsing.Midi
                                     case HOPO_ON_INDEX:
                                         {
                                             diffModifier.HopoOn = false;
-                                            if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
+                                            if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                             {
                                                 if (guitar->State != GuitarState.Tap)
                                                 {
@@ -254,7 +254,7 @@ namespace YARG.Core.NewParsing.Midi
                                     case HOPO_OFF_INDEX:
                                         {
                                             diffModifier.HopoOff = false;
-                                            if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
+                                            if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                             {
                                                 if (guitar->State == GuitarState.Strum)
                                                     guitar->State = GuitarState.Natural;
@@ -273,7 +273,7 @@ namespace YARG.Core.NewParsing.Midi
                                             {
                                                 if (overdrivePosition.Ticks > -1)
                                                 {
-                                                    instrumentTrack.Overdrives.Append_NoReturn(overdrivePosition, position - overdrivePosition);
+                                                    instrumentTrack.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
                                                     overdrivePosition.Ticks = -1;
                                                 }
                                             }
@@ -281,7 +281,7 @@ namespace YARG.Core.NewParsing.Midi
                                             {
                                                 if (soloPosition.Ticks > -1)
                                                 {
-                                                    instrumentTrack.Soloes.Append_NoReturn(soloPosition, position - soloPosition);
+                                                    instrumentTrack.Soloes.Append(in soloPosition, position - soloPosition);
                                                     soloPosition.Ticks = -1;
                                                 }
                                             }
@@ -304,14 +304,14 @@ namespace YARG.Core.NewParsing.Midi
                                     case FACEOFF_1_INDEX:
                                         if (FaceOffPosition_1.Ticks > -1)
                                         {
-                                            instrumentTrack.Faceoff_Player1.Append_NoReturn(FaceOffPosition_1, position - FaceOffPosition_1);
+                                            instrumentTrack.Faceoff_Player1.Append(in FaceOffPosition_1, position - FaceOffPosition_1);
                                             FaceOffPosition_1.Ticks = -1;
                                         }
                                         break;
                                     case FACEOFF_2_INDEX:
                                         if (FaceOffPosition_2.Ticks > -1)
                                         {
-                                            instrumentTrack.Faceoff_Player2.Append_NoReturn(FaceOffPosition_2, position - FaceOffPosition_2);
+                                            instrumentTrack.Faceoff_Player2.Append(in FaceOffPosition_2, position - FaceOffPosition_2);
                                             FaceOffPosition_2.Ticks = -1;
                                         }
                                         break;
@@ -328,7 +328,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                instrumentTrack.BREs.Append_NoReturn(bre, position - bre);
+                                instrumentTrack.BREs.Append(in bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
@@ -340,21 +340,21 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Overdrives.Append_NoReturn(overdrivePosition, position - overdrivePosition);
+                                        instrumentTrack.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        instrumentTrack.Tremolos.Append_NoReturn(tremoloPostion, position - tremoloPostion);
+                                        instrumentTrack.Tremolos.Append(in tremoloPostion, position - tremoloPostion);
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Trills.Append_NoReturn(trillPosition, position - trillPosition);
+                                        instrumentTrack.Trills.Append(in trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
@@ -401,7 +401,7 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                                     diffModifiers[diffIndex].SliderNotes = enable;
-                                    if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
+                                    if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                     {
                                         if (enable)
                                         {
@@ -434,7 +434,7 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                                     diffModifiers[diffIndex].SliderNotes = enable;
-                                    if (diffTrack.Notes.TryGetLastValue(position, out var guitar))
+                                    if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                     {
                                         if (enable)
                                         {
