@@ -41,7 +41,7 @@ namespace YARG.Core.NewParsing
                 case 3: Blue = DualTime.Truncate(length); break;
                 case 4: Orange = DualTime.Truncate(length); break;
                 case 5:
-                    if (DrumType != DrumsType.Unknown && DrumType != DrumsType.FiveLane)
+                    if ((DrumType & DrumsType.FiveLane) != DrumsType.FiveLane)
                     {
                         return false;
                     }
@@ -63,25 +63,25 @@ namespace YARG.Core.NewParsing
                 case 44: Dynamics_Green = DrumDynamics.Ghost; break;
 
                 case 66:
-                    if (DrumType != DrumsType.FiveLane) unsafe
-                        {
-                            Cymbal_Yellow = true;
-                            DrumType = DrumsType.ProDrums;
-                        }
+                    if ((DrumType & DrumsType.ProDrums) == DrumsType.ProDrums) unsafe
+                    {
+                        Cymbal_Yellow = true;
+                        DrumType = DrumsType.ProDrums;
+                    }
                     break;
                 case 67:
-                    if (DrumType != DrumsType.FiveLane) unsafe
-                        {
-                            Cymbal_Blue = true;
-                            DrumType = DrumsType.ProDrums;
-                        }
+                    if ((DrumType & DrumsType.ProDrums) == DrumsType.ProDrums) unsafe
+                    {
+                        Cymbal_Blue = true;
+                        DrumType = DrumsType.ProDrums;
+                    }
                     break;
                 case 68:
-                    if (DrumType != DrumsType.FiveLane) unsafe
-                        {
-                            Cymbal_Orange = true;
-                            DrumType = DrumsType.ProDrums;
-                        }
+                    if ((DrumType & DrumsType.ProDrums) == DrumsType.ProDrums) unsafe
+                    {
+                        Cymbal_Orange = true;
+                        DrumType = DrumsType.ProDrums;
+                    }
                     break;
                 default:
                     return false;
