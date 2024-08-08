@@ -38,6 +38,21 @@ namespace YARG.Core.NewParsing
 
         public Span<YARGKeyValuePair<TKey, TValue>> Span => new(_buffer, 0, _count);
 
+        public YARGManagedSortedList<TKey, TValue> MoveToNewList()
+        {
+            var newList = new YARGManagedSortedList<TKey, TValue>()
+            {
+                _buffer = _buffer,
+                _count = _count,
+                _version = _version,
+            };
+            
+            _buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
+            _count = 0;
+            _version = 0;
+            return newList;
+        }
+
         public bool IsEmpty()
         {
             return _count == 0;
