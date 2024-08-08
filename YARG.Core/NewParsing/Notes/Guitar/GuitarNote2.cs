@@ -13,7 +13,7 @@ namespace YARG.Core.NewParsing
         Tap
     }
 
-    public struct FiveFretGuitar : IInstrumentNote
+    public struct FiveFretGuitar : IInstrumentNote, IDotChartLoadable
     {
         public DualTime Open;
         public DualTime Green;
@@ -24,6 +24,29 @@ namespace YARG.Core.NewParsing
         public GuitarState State;
 
         public readonly int NUMLANES => 6;
+
+        public bool SetFromDotChart(int lane, in DualTime length)
+        {
+            switch (lane)
+            {
+                case 0: Green = DualTime.Truncate(length); break;
+                case 1: Red = DualTime.Truncate(length); break;
+                case 2: Yellow = DualTime.Truncate(length); break;
+                case 3: Blue = DualTime.Truncate(length); break;
+                case 4: Orange = DualTime.Truncate(length); break;
+                case 5:
+                    if (State == GuitarState.Natural)
+                    {
+                        State = GuitarState.Forced;
+                    }
+                    break;
+                case 6: State = GuitarState.Tap; break;
+                case 7: Open = DualTime.Truncate(length); break;
+                default:
+                    return false;
+            }
+            return true;
+        }
 
         public readonly int GetNumActiveLanes()
         {
@@ -104,7 +127,7 @@ namespace YARG.Core.NewParsing
         }
     }
 
-    public struct SixFretGuitar : IInstrumentNote
+    public struct SixFretGuitar : IInstrumentNote, IDotChartLoadable
     {
         public DualTime Open;
         public DualTime Black1;
@@ -116,6 +139,30 @@ namespace YARG.Core.NewParsing
         public GuitarState State;
 
         public readonly int NUMLANES => 7;
+
+        public bool SetFromDotChart(int lane, in DualTime length)
+        {
+            switch (lane)
+            {
+                case 0: White1 = DualTime.Truncate(length); break;
+                case 1: White2 = DualTime.Truncate(length); break;
+                case 2: White3 = DualTime.Truncate(length); break;
+                case 3: Black1 = DualTime.Truncate(length); break;
+                case 4: Black2 = DualTime.Truncate(length); break;
+                case 5:
+                    if (State == GuitarState.Natural)
+                    {
+                        State = GuitarState.Forced;
+                    }
+                    break;
+                case 6: State = GuitarState.Tap; break;
+                case 7: Open = DualTime.Truncate(length); break;
+                case 8: Black3 = DualTime.Truncate(length); break;
+                default:
+                    return false;
+            }
+            return true;
+        }
 
         public readonly int GetNumActiveLanes()
         {
