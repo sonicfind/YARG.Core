@@ -146,7 +146,7 @@ namespace YARG.Core.NewParsing
                 {
                     throw new Exception("Duplicate pitches are not allowed");
                 }
-                if (index == -1 && keys[i].Pitch > 0)
+                if (index == -1 && keys[i].Pitch == 0)
                 {
                     index = i;
                 }
