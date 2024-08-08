@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
-using YARG.Core.Chart;
-using YARG.Core.Song;
+﻿using YARG.Core.Chart;
 
 namespace YARG.Core.NewParsing
 {
