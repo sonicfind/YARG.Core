@@ -62,8 +62,11 @@ namespace YARG.Core.NewParsing.Midi
             var instrumentTrack = new ProGuitarInstrumentTrack<TProConfig>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                instrumentTrack[i] = new ProGuitarDifficultyTrack<TProConfig>();
+                instrumentTrack.Difficulties[i] = new ProGuitarDifficultyTrack<TProConfig>();
             }
+            var expertTrack = instrumentTrack[Difficulty.Expert]!;
+            var hardTrack = instrumentTrack[Difficulty.Hard]!;
+
             var difficulties = stackalloc ProGuitarDiff[InstrumentTrack2.NUM_DIFFICULTIES];
             var strings = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_STRINGS]
             {
@@ -77,14 +80,18 @@ namespace YARG.Core.NewParsing.Midi
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
 
-            // Gliss & trill both utilize the velocity value to determine
-            // what difficulties to apply to
+            // Tremolo & trill both utilize the velocity value to determine what difficulties to apply to
             //
             // Velocities of 50-41 apply to hard alongside the default of only Expert
             var tremoloPostion = DualTime.Inactive;
-            int tremoloVelocity = 0;
             var trillPosition = DualTime.Inactive;
-            int trillVelocity = 0;
+            bool tremoloOnHard = false;
+            bool trillOnHard = false;
+
+            var slashPosition = DualTime.Inactive;
+            var hideChordPosition = DualTime.Inactive;
+            var accidentalPosition = DualTime.Inactive;
+            var fullChordPosition = DualTime.Inactive;
 
             int tempoIndex = 0;
             var position = default(DualTime);
@@ -113,7 +120,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - PROGUITAR_MIN;
                             int diffIndex = DIFFVALUES[noteValue];
-                            var diffTrack = instrumentTrack[diffIndex]!;
+                            var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                             ref var midiDiff = ref difficulties[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_STRINGS)
@@ -193,27 +200,23 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     overdrivePosition = position;
-                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case SOLO_MIDI:
                                     soloPosition = position;
-                                    instrumentTrack.SpecialPhrases.TryAppend(position);
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     tremoloPostion = position;
-                                    tremoloVelocity = note.Velocity;
-                                    instrumentTrack.SpecialPhrases.TryAppend(position);
+                                    tremoloOnHard = 41 <= note.Velocity && note.Velocity <= 50;
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     trillPosition = position;
-                                    trillVelocity = note.Velocity;
-                                    instrumentTrack.SpecialPhrases.TryAppend(position);
+                                    trillOnHard = 41 <= note.Velocity && note.Velocity <= 50;
                                     break;
-                                case SLASH_CHORD_MIDI:          instrumentTrack.ChordPhrases.GetLastOrAppend(position).Add(ChordPhrase.Slash); break;
-                                case HIDE_CHORD_MIDI:           instrumentTrack.ChordPhrases.GetLastOrAppend(position).Add(ChordPhrase.Hide); break;
-                                case ACCIDENTAL_SWITCH_MIDI:    instrumentTrack.ChordPhrases.GetLastOrAppend(position).Add(ChordPhrase.Accidental_Switch); break;
-                                case FULL_CHORD_NUMBERING_MIDI: instrumentTrack.ChordPhrases.GetLastOrAppend(position).Add(ChordPhrase.Force_Numbering); break;
                                 case LEFT_HAND_POSITION_MIDI:   instrumentTrack.HandPositions.Append(position)->Fret = note.Velocity - MIN_FRET_VELOCITY; break;
+                                case SLASH_CHORD_MIDI:          slashPosition = position; break;
+                                case HIDE_CHORD_MIDI:           hideChordPosition = position; break;
+                                case ACCIDENTAL_SWITCH_MIDI:    accidentalPosition = position; break;
+                                case FULL_CHORD_NUMBERING_MIDI: fullChordPosition = position; break;
                             }
                         }
                     }
@@ -223,7 +226,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - PROGUITAR_MIN;
                             int diffIndex = DIFFVALUES[noteValue];
-                            var diffTrack = instrumentTrack[diffIndex]!;
+                            var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                             ref var midiDiff = ref difficulties[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_STRINGS)
@@ -263,7 +266,7 @@ namespace YARG.Core.NewParsing.Midi
                                     case ARPEGGIO_VALUE:
                                         if (midiDiff.Arpeggio.Ticks != -1)
                                         {
-                                            diffTrack.Arpeggios.Append(midiDiff.Arpeggio, DualTime.Normalize(position - midiDiff.Arpeggio));
+                                            diffTrack.Arpeggios.Append_NoReturn(midiDiff.Arpeggio, DualTime.Normalize(position - midiDiff.Arpeggio));
                                             midiDiff.Arpeggio.Ticks = -1;
                                         }
                                         break;
@@ -289,8 +292,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[3] == brePositions[4]
                                 && brePositions[4] == brePositions[5])
                             {
-                                var duration = position - bre;
-                                instrumentTrack.SpecialPhrases[bre].Add(SpecialPhraseType.BRE, (duration, 100));
+                                instrumentTrack.BREs.Append_NoReturn(bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
@@ -301,20 +303,14 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        var duration = position - overdrivePosition;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(overdrivePosition)
-                                                .Add(SpecialPhraseType.StarPower, (duration, 100));
+                                        instrumentTrack.Overdrives.Append_NoReturn(overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case SOLO_MIDI:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        var duration = position - soloPosition;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(soloPosition)
-                                                .Add(SpecialPhraseType.Solo, (duration, 100));
+                                        instrumentTrack.Soloes.Append_NoReturn(soloPosition, position - soloPosition);
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
@@ -322,9 +318,12 @@ namespace YARG.Core.NewParsing.Midi
                                     if (tremoloPostion.Ticks > -1)
                                     {
                                         var duration = position - tremoloPostion;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(tremoloPostion)
-                                                .Add(SpecialPhraseType.Tremolo, (duration, tremoloVelocity));
+                                        expertTrack.Tremolos.Append_NoReturn(tremoloPostion, duration);
+                                        if (tremoloOnHard)
+                                        {
+                                            hardTrack.Tremolos.Append_NoReturn(tremoloPostion, duration);
+                                            tremoloOnHard = false;
+                                        }
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
@@ -332,10 +331,41 @@ namespace YARG.Core.NewParsing.Midi
                                     if (trillPosition.Ticks > -1)
                                     {
                                         var duration = position - trillPosition;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(trillPosition)
-                                                .Add(SpecialPhraseType.Trill, (duration, trillVelocity));
+                                        expertTrack.Trills.Append_NoReturn(trillPosition, duration);
+                                        if (trillOnHard)
+                                        {
+                                            hardTrack.Trills.Append_NoReturn(trillPosition, duration);
+                                            trillOnHard = false;
+                                        }
                                         trillPosition.Ticks = -1;
+                                    }
+                                    break;
+                                case SLASH_CHORD_MIDI:
+                                    if (slashPosition.Ticks > -1)
+                                    {
+                                        instrumentTrack.SlashChords.Append_NoReturn(slashPosition, position - slashPosition);
+                                        slashPosition.Ticks = -1;
+                                    }
+                                    break;
+                                case HIDE_CHORD_MIDI:
+                                    if (hideChordPosition.Ticks > -1)
+                                    {
+                                        instrumentTrack.HideChords.Append_NoReturn(hideChordPosition, position - hideChordPosition);
+                                        hideChordPosition.Ticks = -1;
+                                    }
+                                    break;
+                                case ACCIDENTAL_SWITCH_MIDI:
+                                    if (accidentalPosition.Ticks > -1)
+                                    {
+                                        instrumentTrack.AccidentalSwitches.Append_NoReturn(accidentalPosition, position - accidentalPosition);
+                                        accidentalPosition.Ticks = -1;
+                                    }
+                                    break;
+                                case FULL_CHORD_NUMBERING_MIDI:
+                                    if (fullChordPosition.Ticks > -1)
+                                    {
+                                        instrumentTrack.Force_ChordNumbering.Append_NoReturn(fullChordPosition, position - fullChordPosition);
+                                        fullChordPosition.Ticks = -1;
                                     }
                                     break;
 

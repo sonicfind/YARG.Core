@@ -338,9 +338,9 @@ namespace YARG.Core.NewParsing
             return &_buffer[index];
         }
 
-        public TValue* Last()
+        public YARGKeyValuePair<TKey, TValue>* Last()
         {
-            return &_buffer[_count - 1].Value;
+            return _buffer + _count - 1;
         }
 
         public TValue* TraverseBackwardsUntil(in TKey key)

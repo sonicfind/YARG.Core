@@ -1,29 +1,45 @@
-﻿using System;
+﻿using Melanchall.DryWetMidi.MusicTheory;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public class DifficultyTrack2<TNote> : Track
+    public class DifficultyTrack2<TNote> : PhraseTrack
         where TNote : unmanaged, IInstrumentNote
     {
         public readonly YARGNativeSortedList<DualTime, TNote> Notes = new();
 
-        public DifficultyTrack2() { }
-        public DifficultyTrack2(int capcacity)
+        public DifficultyTrack2() {}
+
+        /// <summary>
+        /// Move constructor that siphons all phrases and special events from the source,
+        /// leaving it in a default state.
+        /// </summary>
+        /// <remarks>Does not effect <see cref="Notes"/>. That remains unchanged</remarks>
+        /// <param name="source"></param>
+        public DifficultyTrack2(PhraseTrack source)
+            : base(source) {}
+
+        public new bool IsEmpty()
         {
-            Notes.Capacity = capcacity;
+            return Notes.IsEmpty() && base.IsEmpty();
         }
 
-        public override bool IsEmpty() { return Notes.IsEmpty() && base.IsEmpty(); }
-
-        public override void Clear()
+        public new void Clear()
         {
-            base.Clear();
             Notes.Clear();
+            base.Clear();
         }
 
-        public override void TrimExcess() => Notes.TrimExcess();
+        public new void TrimExcess()
+        {
+            if ((Notes.Count < 500 || 10000 <= Notes.Count) && Notes.Count < Notes.Capacity)
+            {
+                Notes.TrimExcess();
+            }
+            base.TrimExcess();
+        }
 
         public override unsafe DualTime GetLastNoteTime()
         {
@@ -36,16 +52,10 @@ namespace YARG.Core.NewParsing
             return note->Key + note->Value.GetLongestSustain();
         }
 
-        protected override void Dispose(bool disposing)
+        public new void Dispose()
         {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    Notes.Dispose();
-                }
-                base.Dispose(disposing);
-            }
+            Notes.Dispose();
+            base.Dispose();
         }
     }
 }

@@ -30,7 +30,7 @@ namespace YARG.Core.NewParsing.Midi
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                instrumentTrack[i] = new DifficultyTrack2<FourLaneDrums>();
+                instrumentTrack.Difficulties[i] = new DifficultyTrack2<FourLaneDrums>();
             }
 
             const int NUM_LANES = 5;
@@ -81,7 +81,7 @@ namespace YARG.Core.NewParsing.Midi
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
-                                var diffTrack = instrumentTrack[diffIndex]!;
+                                var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                                 lanes[diffIndex * NUM_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
@@ -129,7 +129,7 @@ namespace YARG.Core.NewParsing.Midi
                             cymbalFlags[index] = false;
                             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                             {
-                                if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
+                                if (instrumentTrack.Difficulties[i]!.Notes.TryGetLastValue(position, out var drum))
                                 {
                                     (&drum->Cymbal_Yellow)[index] = false;
                                 }
@@ -141,26 +141,25 @@ namespace YARG.Core.NewParsing.Midi
                         }
                         else
                         {
-                            // Note: Solo phrase is handled in the sixfret note scope for optimization reasons
                             switch (note.Value)
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     overdrivePosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    break;
+                                case MidiLoader_Constants.SOLO:
+                                    soloPosition = position;
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     tremoloPostion = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     trillPosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
                                     break;
                                 case FLAM_VALUE:
                                     flamFlag = true;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
-                                        if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
+                                        if (instrumentTrack.Difficulties[i]!.Notes.TryGetLastValue(position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -182,7 +181,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    (&instrumentTrack[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)->Bass)[lane] = DualTime.Truncate(position - colorPosition);
+                                    (&instrumentTrack.Difficulties[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)->Bass)[lane] = DualTime.Truncate(position - colorPosition);
                                     colorPosition.Ticks = -1;
                                 }
                             }
@@ -209,7 +208,7 @@ namespace YARG.Core.NewParsing.Midi
                             cymbalFlags[index] = true;
                             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                             {
-                                if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
+                                if (instrumentTrack.Difficulties[i]!.Notes.TryGetLastValue(position, out var drum))
                                 {
                                     (&drum->Cymbal_Yellow)[index] = true;
                                 }
@@ -224,43 +223,39 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                var duration = position - bre;
-                                instrumentTrack.SpecialPhrases[bre].Add(SpecialPhraseType.BRE, (duration, 100));
+                                instrumentTrack.BREs.Append_NoReturn(bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
                         else
                         {
-                            // Note: Solo phrase is handled in the sixfret note scope for optimization reasons
                             switch (note.Value)
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        var duration = position - overdrivePosition;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(overdrivePosition)
-                                                .Add(SpecialPhraseType.StarPower, (duration, 100));
+                                        instrumentTrack.Overdrives.Append_NoReturn(overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
+                                    }
+                                    break;
+                                case MidiLoader_Constants.SOLO:
+                                    if (soloPosition.Ticks > -1)
+                                    {
+                                        instrumentTrack.Soloes.Append_NoReturn(soloPosition, position - soloPosition);
+                                        soloPosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        var duration = position - tremoloPostion;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(tremoloPostion)
-                                                .Add(SpecialPhraseType.Tremolo, (duration, 100));
+                                        instrumentTrack.Tremolos.Append_NoReturn(tremoloPostion, position - tremoloPostion);
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        var duration = position - trillPosition;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(trillPosition)
-                                                .Add(SpecialPhraseType.Trill, (duration, 100));
+                                        instrumentTrack.Trills.Append_NoReturn(trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
@@ -268,7 +263,7 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = false;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
-                                        if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
+                                        if (instrumentTrack.Difficulties[i]!.Notes.TryGetLastValue(position, out var drum))
                                         {
                                             drum->IsFlammed = false;
                                         }
@@ -302,7 +297,7 @@ namespace YARG.Core.NewParsing.Midi
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                instrumentTrack[i] = new DifficultyTrack2<FiveLaneDrums>();
+                instrumentTrack.Difficulties[i] = new DifficultyTrack2<FiveLaneDrums>();
             }
 
             const int NUM_LANES = 6;
@@ -352,7 +347,7 @@ namespace YARG.Core.NewParsing.Midi
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
-                                var diffTrack = instrumentTrack[diffIndex]!;
+                                var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                                 lanes[diffIndex * NUM_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
@@ -391,26 +386,25 @@ namespace YARG.Core.NewParsing.Midi
                         }
                         else
                         {
-                            // Note: Solo phrase is handled in the sixfret note scope for optimization reasons
                             switch (note.Value)
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     overdrivePosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    break;
+                                case MidiLoader_Constants.SOLO:
+                                    soloPosition = position;
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     tremoloPostion = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     trillPosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
                                     break;
                                 case FLAM_VALUE:
                                     flamFlag = true;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
-                                        if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
+                                        if (instrumentTrack.Difficulties[i]!.Notes.TryGetLastValue(position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -432,7 +426,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    (&instrumentTrack[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)->Bass)[lane] = DualTime.Truncate(position - colorPosition);
+                                    (&instrumentTrack.Difficulties[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition)->Bass)[lane] = DualTime.Truncate(position - colorPosition);
                                     colorPosition.Ticks = -1;
                                 }
                             }
@@ -462,43 +456,39 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                var duration = position - bre;
-                                instrumentTrack.SpecialPhrases[bre].Add(SpecialPhraseType.BRE, (duration, 100));
+                                instrumentTrack.BREs.Append_NoReturn(bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
                         else
                         {
-                            // Note: Solo phrase is handled in the sixfret note scope for optimization reasons
                             switch (note.Value)
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        var duration = position - overdrivePosition;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(overdrivePosition)
-                                                .Add(SpecialPhraseType.StarPower, (duration, 100));
+                                        instrumentTrack.Overdrives.Append_NoReturn(overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
+                                    }
+                                    break;
+                                case MidiLoader_Constants.SOLO:
+                                    if (soloPosition.Ticks > -1)
+                                    {
+                                        instrumentTrack.Soloes.Append_NoReturn(soloPosition, position - soloPosition);
+                                        soloPosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        var duration = position - tremoloPostion;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(tremoloPostion)
-                                                .Add(SpecialPhraseType.Tremolo, (duration, 100));
+                                        instrumentTrack.Tremolos.Append_NoReturn(tremoloPostion, position - tremoloPostion);
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        var duration = position - trillPosition;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(trillPosition)
-                                                .Add(SpecialPhraseType.Trill, (duration, 100));
+                                        instrumentTrack.Trills.Append_NoReturn(trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
@@ -506,7 +496,7 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = false;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
-                                        if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
+                                        if (instrumentTrack.Difficulties[i]!.Notes.TryGetLastValue(position, out var drum))
                                         {
                                             drum->IsFlammed = false;
                                         }
@@ -540,7 +530,7 @@ namespace YARG.Core.NewParsing.Midi
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                instrumentTrack[i] = new DifficultyTrack2<UnknownLaneDrums>();
+                instrumentTrack.Difficulties[i] = new DifficultyTrack2<UnknownLaneDrums>();
             }
 
             const int MAX_LANES = 6;
@@ -593,7 +583,7 @@ namespace YARG.Core.NewParsing.Midi
                             // if we detect prodrums flags, this value changes to disallow the fifth pad lane
                             if (lane < numLanes)
                             {
-                                var diffTrack = instrumentTrack[diffIndex]!;
+                                var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                                 lanes[diffIndex * MAX_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
@@ -659,7 +649,7 @@ namespace YARG.Core.NewParsing.Midi
                                 cymbalFlags[index] = false;
                                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                 {
-                                    if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
+                                    if (instrumentTrack.Difficulties[i]!.Notes.TryGetLastValue(position, out var drum))
                                     {
                                         (&drum->Cymbal_Yellow)[index] = false;
                                     }
@@ -674,26 +664,25 @@ namespace YARG.Core.NewParsing.Midi
                         }
                         else
                         {
-                            // Note: Solo phrase is handled in the sixfret note scope for optimization reasons
                             switch (note.Value)
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     overdrivePosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
+                                    break;
+                                case MidiLoader_Constants.SOLO:
+                                    soloPosition = position;
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     tremoloPostion = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     trillPosition = position;
-                                    instrumentTrack.SpecialPhrases.GetLastOrAppend(position);
                                     break;
                                 case FLAM_VALUE:
                                     flamFlag = true;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
-                                        if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
+                                        if (instrumentTrack.Difficulties[i]!.Notes.TryGetLastValue(position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -715,7 +704,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * MAX_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    var drum = instrumentTrack[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition);
+                                    var drum = instrumentTrack.Difficulties[diffIndex]!.Notes.TraverseBackwardsUntil(colorPosition);
                                     var duration = DualTime.Truncate(position - colorPosition);
                                     if (lane < FIFTH_LANE)
                                     {
@@ -753,7 +742,7 @@ namespace YARG.Core.NewParsing.Midi
                                 cymbalFlags[index] = true;
                                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                 {
-                                    if (instrumentTrack[i]!.Notes.TryGetLastValue(position, out var drum))
+                                    if (instrumentTrack.Difficulties[i]!.Notes.TryGetLastValue(position, out var drum))
                                     {
                                         (&drum->Cymbal_Yellow)[index] = true;
                                     }
@@ -769,43 +758,39 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                var duration = position - bre;
-                                instrumentTrack.SpecialPhrases[bre].Add(SpecialPhraseType.BRE, (duration, 100));
+                                instrumentTrack.BREs.Append_NoReturn(bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
                         else
                         {
-                            // Note: Solo phrase is handled in the sixfret note scope for optimization reasons
                             switch (note.Value)
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        var duration = position - overdrivePosition;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(overdrivePosition)
-                                                .Add(SpecialPhraseType.StarPower, (duration, 100));
+                                        instrumentTrack.Overdrives.Append_NoReturn(overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
+                                    }
+                                    break;
+                                case MidiLoader_Constants.SOLO:
+                                    if (soloPosition.Ticks > -1)
+                                    {
+                                        instrumentTrack.Soloes.Append_NoReturn(soloPosition, position - soloPosition);
+                                        soloPosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        var duration = position - tremoloPostion;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(tremoloPostion)
-                                                .Add(SpecialPhraseType.Tremolo, (duration, 100));
+                                        instrumentTrack.Tremolos.Append_NoReturn(tremoloPostion, position - tremoloPostion);
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        var duration = position - trillPosition;
-                                        instrumentTrack.SpecialPhrases
-                                                .TraverseBackwardsUntil(trillPosition)
-                                                .Add(SpecialPhraseType.Trill, (duration, 100));
+                                        instrumentTrack.Trills.Append_NoReturn(trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
@@ -813,7 +798,7 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = false;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
-                                        var diffTrack = instrumentTrack[i]!;
+                                        var diffTrack = instrumentTrack.Difficulties[i]!;
                                         if (diffTrack.Notes.TryGetLastValue(position, out var drum))
                                         {
                                             drum->IsFlammed = false;
