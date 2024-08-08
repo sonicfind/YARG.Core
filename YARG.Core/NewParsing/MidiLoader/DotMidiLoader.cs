@@ -207,7 +207,7 @@ namespace YARG.Core.NewParsing
             var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
             {
-                if (stats.Type <= MidiEventType.Text_EnumLimit)
+                if (MidiEventType.Text <= stats.Type && stats.Type <= MidiEventType.Text_EnumLimit && stats.Type != MidiEventType.Text_TrackName)
                 {
                     position.Ticks = stats.Position;
                     position.Seconds = chart.Sync.ConvertToSeconds(stats.Position, ref tempoIndex);
