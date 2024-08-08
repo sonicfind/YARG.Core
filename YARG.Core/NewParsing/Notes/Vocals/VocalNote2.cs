@@ -4,13 +4,6 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public enum TalkieState
-    {
-        None,
-        Talkie,
-        Lenient
-    }
-
     public struct VocalNote2
     {
         public static readonly PitchValidator VALIDATOR = new(2, 6);
