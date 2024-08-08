@@ -24,7 +24,7 @@ namespace YARG.Core.NewParsing
         public InstrumentTrack2(PhraseTrack source)
             : base(source) {}
 
-        public new bool IsEmpty()
+        public override bool IsEmpty()
         {
             foreach (var diff in Difficulties)
             {
@@ -36,7 +36,7 @@ namespace YARG.Core.NewParsing
             return base.IsEmpty();
         }
 
-        public new void Clear()
+        public override void Clear()
         {
             foreach (var diff in Difficulties)
             {
@@ -45,7 +45,7 @@ namespace YARG.Core.NewParsing
             base.Clear();
         }
 
-        public new void TrimExcess()
+        public override void TrimExcess()
         {
             for (var i = 0; i < Difficulties.Length; i++)
             {
@@ -85,7 +85,7 @@ namespace YARG.Core.NewParsing
             return endTime;
         }
 
-        public new void Dispose()
+        public override void Dispose()
         {
             foreach (var diff in Difficulties)
             {
