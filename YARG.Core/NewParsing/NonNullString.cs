@@ -1,5 +1,8 @@
-﻿namespace YARG.Core.NewParsing
+﻿using System.Diagnostics;
+
+namespace YARG.Core.NewParsing
 {
+    [DebuggerDisplay("{_str}")]
     public class NonNullString
     {
         private string _str;
