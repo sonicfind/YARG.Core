@@ -40,39 +40,8 @@ namespace YARG.Core.NewParsing
                 }
             }
 
-            Track?[] tracks =
-            {
-                chart.FiveFretGuitar,
-                chart.FiveFretBass,
-                chart.FiveFretRhythm,
-                chart.FiveFretCoopGuitar,
-                chart.SixFretGuitar,
-                chart.SixFretBass,
-                chart.SixFretRhythm,
-                chart.SixFretCoopGuitar,
-
-                chart.Keys,
-
-                chart.FourLaneDrums,
-                chart.FiveLaneDrums,
-
-                //chart.TrueDrums,
-
-                chart.ProGuitar_17Fret,
-                chart.ProGuitar_22Fret,
-                chart.ProBass_17Fret,
-                chart.ProBass_22Fret,
-
-                chart.ProKeys,
-
-                //chart.Dj,
-
-                chart.LeadVocals,
-                chart.HarmonyVocals,
-            };
-
-            DualTime lastNoteTime = default;
-            foreach (var track in tracks)
+            static void Test<TTrack>(TTrack? track, ref DualTime lastNoteTime)
+                where TTrack : class, ITrack
             {
                 if (track != null)
                 {
@@ -81,6 +50,35 @@ namespace YARG.Core.NewParsing
                         lastNoteTime = lastTime;
                 }
             }
+
+            DualTime lastNoteTime = default;
+            Test(chart.FiveFretGuitar, ref lastNoteTime);
+            Test(chart.FiveFretBass, ref lastNoteTime);
+            Test(chart.FiveFretRhythm, ref lastNoteTime);
+            Test(chart.FiveFretCoopGuitar, ref lastNoteTime);
+            Test(chart.SixFretGuitar, ref lastNoteTime);
+            Test(chart.SixFretBass, ref lastNoteTime);
+            Test(chart.SixFretRhythm, ref lastNoteTime);
+            Test(chart.SixFretCoopGuitar, ref lastNoteTime);
+
+            Test(chart.Keys, ref lastNoteTime);
+
+            Test(chart.FourLaneDrums, ref lastNoteTime);
+            Test(chart.FiveLaneDrums, ref lastNoteTime);
+
+            // Test(chart.TrueDrums, ref lastNoteTime);
+
+            Test(chart.ProGuitar_17Fret, ref lastNoteTime);
+            Test(chart.ProGuitar_22Fret, ref lastNoteTime);
+            Test(chart.ProBass_17Fret, ref lastNoteTime);
+            Test(chart.ProBass_22Fret, ref lastNoteTime);
+
+            Test(chart.ProKeys, ref lastNoteTime);
+
+            // Test(chart.Dj, ref lastNoteTime);
+
+            Test(chart.LeadVocals, ref lastNoteTime);
+            Test(chart.HarmonyVocals, ref lastNoteTime);
             return lastNoteTime;
         }
 
