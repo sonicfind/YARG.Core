@@ -70,19 +70,23 @@ namespace YARG.Core.NewParsing
         {
             var newDifficulty = new DifficultyTrack2<FiveLaneDrums>(source);
             newDifficulty.Notes.Capacity = source.Notes.Count;
-            var buffer = default(FiveLaneDrums);
             var end = source.Notes.End;
             for (var curr = source.Notes.Data; curr < end; ++curr)
             {
-                buffer.Bass = curr->Value.Bass;
-                buffer.IsDoubleBass = curr->Value.IsDoubleBass;
-                buffer.IsFlammed = curr->Value.IsFlammed;
-                buffer.Snare = curr->Value.Snare;
-                buffer.Yellow = curr->Value.Yellow;
-                buffer.Blue = curr->Value.Blue;
-                buffer.Orange = curr->Value.Orange;
-                buffer.Green = curr->Value.Green;
-                newDifficulty.Notes.Append(curr->Key, in buffer);
+                var note = newDifficulty.Notes.Append(curr->Key);
+                note->Bass = curr->Value.Bass;
+                note->IsDoubleBass = curr->Value.IsDoubleBass;
+                note->IsFlammed = curr->Value.IsFlammed;
+                note->Snare = curr->Value.Snare;
+                note->Yellow = curr->Value.Yellow;
+                note->Blue = curr->Value.Blue;
+                note->Orange = curr->Value.Orange;
+                note->Green = curr->Value.Green;
+                note->Dynamics_Snare = curr->Value.Dynamics_Snare;
+                note->Dynamics_Yellow = curr->Value.Dynamics_Yellow;
+                note->Dynamics_Blue = curr->Value.Dynamics_Blue;
+                note->Dynamics_Orange = curr->Value.Dynamics_Orange;
+                note->Dynamics_Green = curr->Value.Dynamics_Green;
             }
             source.Notes.Dispose();
             return newDifficulty;
