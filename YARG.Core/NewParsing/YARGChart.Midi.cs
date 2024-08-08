@@ -69,6 +69,7 @@ namespace YARG.Core.NewParsing
             var encoding = Encoding.UTF8;
             LoadMidiTracks(chart, sync, midi, ref encoding, activeInstruments);
             YARGChartFinalizer.FinalizeBeats(chart);
+            chart.TrimExcessData();
             return chart;
         }
 
@@ -97,6 +98,7 @@ namespace YARG.Core.NewParsing
 
             LoadMidiTracks(chart, sync, midi, ref encoding, activeInstruments);
             YARGChartFinalizer.FinalizeBeats(chart);
+            chart.TrimExcessData();
             return chart;
         }
 
