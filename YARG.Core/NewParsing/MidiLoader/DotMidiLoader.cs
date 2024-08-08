@@ -206,7 +206,7 @@ namespace YARG.Core.NewParsing
             var position = default(DualTime);
             while (midiTrack.ParseEvent())
             {
-                if (midiTrack.Type <= MidiEventType.Text_EnumLimit)
+                if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit && midiTrack.Type != MidiEventType.Text_TrackName)
                 {
                     position.Ticks = midiTrack.Position;
                     position.Seconds = sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex);
