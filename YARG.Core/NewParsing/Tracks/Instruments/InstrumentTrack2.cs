@@ -8,13 +8,25 @@ namespace YARG.Core.NewParsing
         public const int NUM_DIFFICULTIES = 4;
     }
 
-    public class InstrumentTrack2<TDifficultyTrack> : Track, IEnumerable<TDifficultyTrack?>
-        where TDifficultyTrack : Track
+    public class InstrumentTrack2<TDifficultyTrack> : PhraseTrack, IEnumerable<TDifficultyTrack?>
+        where TDifficultyTrack : class, ITrack, new()
     {
-        protected readonly TDifficultyTrack?[] difficulties = new TDifficultyTrack[InstrumentTrack2.NUM_DIFFICULTIES];
-        public override bool IsEmpty()
+        public readonly TDifficultyTrack?[] Difficulties = new TDifficultyTrack[InstrumentTrack2.NUM_DIFFICULTIES];
+
+        public InstrumentTrack2() {}
+
+        /// <summary>
+        /// Move constructor that siphons all phrases and special events from the source,
+        /// leaving it in a default state.
+        /// </summary>
+        /// <remarks>Does not effect <see cref="Difficulties"/>. Those remains unchanged and <see cref="null"/></remarks>
+        /// <param name="source"></param>
+        public InstrumentTrack2(PhraseTrack source)
+            : base(source) {}
+
+        public new bool IsEmpty()
         {
-            foreach (var diff in difficulties)
+            foreach (var diff in Difficulties)
             {
                 if (diff != null && !diff.IsEmpty())
                 {
@@ -24,30 +36,42 @@ namespace YARG.Core.NewParsing
             return base.IsEmpty();
         }
 
-        public override void Clear()
+        public new void Clear()
         {
-            base.Clear();
-            foreach (var diff in difficulties)
+            foreach (var diff in Difficulties)
             {
                 diff?.Clear();
             }
+            base.Clear();
         }
 
-        public override void TrimExcess()
+        public new void TrimExcess()
         {
-            foreach (var diff in difficulties)
+            for (var i = 0; i < Difficulties.Length; i++)
             {
-                diff?.TrimExcess();
+                var diff = Difficulties[i];
+                if (diff != null)
+                {
+                    if (diff.IsEmpty())
+                    {
+                        diff.Dispose();
+                        Difficulties[i] = null;
+                    }
+                    else
+                    {
+                        diff.TrimExcess();
+                    }
+                }
             }
+            base.TrimExcess();
         }
 
-        public ref TDifficultyTrack? this[int index] { get { return ref difficulties[index]; } }
-        public ref TDifficultyTrack? this[Difficulty diff] { get { return ref difficulties[(int) diff - 1]; } }
+        public ref TDifficultyTrack? this[Difficulty diff] { get { return ref Difficulties[(int) diff - 1]; } }
 
         public override DualTime GetLastNoteTime()
         {
             DualTime endTime = default;
-            foreach (var diff in difficulties)
+            foreach (var diff in Difficulties)
             {
                 if (diff != null)
                 {
@@ -61,19 +85,13 @@ namespace YARG.Core.NewParsing
             return endTime;
         }
 
-        protected override void Dispose(bool disposing)
+        public new void Dispose()
         {
-            if (!disposedValue)
+            foreach (var diff in Difficulties)
             {
-                if (disposing)
-                {
-                    foreach (var diff in difficulties)
-                    {
-                        diff?.Dispose();
-                    }
-                }
-                base.Dispose(disposing);
+                diff?.Dispose();
             }
+            base.Dispose();
         }
 
         IEnumerator<TDifficultyTrack> IEnumerable<TDifficultyTrack?>.GetEnumerator()
@@ -107,7 +125,7 @@ namespace YARG.Core.NewParsing
                 return diffIndex < InstrumentTrack2.NUM_DIFFICULTIES;
             }
 
-            public readonly TDifficultyTrack? Current => _track.difficulties[diffIndex];
+            public readonly TDifficultyTrack? Current => _track.Difficulties[diffIndex];
 
             readonly object? IEnumerator.Current => Current;
 

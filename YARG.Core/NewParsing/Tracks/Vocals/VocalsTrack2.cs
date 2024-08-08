@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Melanchall.DryWetMidi.MusicTheory;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -8,6 +9,14 @@ namespace YARG.Core.NewParsing
     {
         public YARGNativeSortedList<DualTime, VocalNote2> Notes;
         public YARGManagedSortedList<DualTime, NonNullString> Lyrics;
+
+        public readonly void TrimExcess()
+        {
+            if ((Notes.Count < 100 || 2000 <= Notes.Count) && Notes.Count < Notes.Capacity)
+            {
+                Notes.TrimExcess();
+            }
+        }
 
         public readonly void Clear()
         {
@@ -21,10 +30,17 @@ namespace YARG.Core.NewParsing
         }
     }
 
-    public class VocalTrack2 : Track
+    public class VocalTrack2 : ITrack
     {
         private readonly VocalPart2[] _parts;
-        public readonly YARGNativeSortedList<DualTime, VocalPercussion2> Percussion = new();
+        public readonly YARGNativeSortedList<DualTime, bool> Percussion = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> VocalPhrases_1 = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> VocalPhrases_2 = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> HarmonyLines = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> RangeShifts = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> Overdrives = new();
+        public readonly YARGNativeSortedSet<DualTime> LyricShifts = new();
+        public readonly YARGManagedSortedList<DualTime, HashSet<string>> Events = new();
 
         public VocalPart2 this[int index] => _parts[index];
 
@@ -38,7 +54,7 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        public override bool IsEmpty()
+        public bool IsEmpty()
         {
             for (int i = 0; i < _parts.Length; ++i)
             {
@@ -47,37 +63,52 @@ namespace YARG.Core.NewParsing
                     return false;
                 }
             }
-            return Percussion.IsEmpty() && base.IsEmpty();
+            return Percussion.IsEmpty()
+                && VocalPhrases_1.IsEmpty()
+                && VocalPhrases_2.IsEmpty()
+                && HarmonyLines.IsEmpty()
+                && RangeShifts.IsEmpty()
+                && Overdrives.IsEmpty()
+                && LyricShifts.IsEmpty()
+                && Events.IsEmpty();
         }
 
-        public override void Clear()
+        public void Clear()
         {
             for (int i = 0; i < _parts.Length; i++)
             {
                 _parts[i].Clear();
             }
             Percussion.Clear();
-            base.Clear();
+            VocalPhrases_1.Clear();
+            VocalPhrases_2.Clear();
+            HarmonyLines.Clear();
+            RangeShifts.Clear();
+            Overdrives.Clear();
+            LyricShifts.Clear();
+            Events.Clear();
         }
 
-        public override void TrimExcess()
+        public void TrimExcess()
         {
             for (int i = 0; i < _parts.Length; i++)
             {
-                var notes = _parts[i].Notes;
-                if ((notes.Count < 100 || 2000 <= notes.Count) && notes.Count < notes.Capacity)
-                {
-                    notes.TrimExcess();
-                }
+                _parts[i].TrimExcess();
             }
 
             if ((Percussion.Count < 20 || 400 <= Percussion.Count) && Percussion.Count < Percussion.Capacity)
             {
                 Percussion.TrimExcess();
             }
+            VocalPhrases_1.TrimExcess();
+            VocalPhrases_2.TrimExcess();
+            HarmonyLines.TrimExcess();
+            RangeShifts.TrimExcess();
+            Overdrives.TrimExcess();
+            LyricShifts.TrimExcess();
         }
 
-        public override unsafe DualTime GetLastNoteTime()
+        public unsafe DualTime GetLastNoteTime()
         {
             DualTime endTime = default;
             for (int i = 0; i < _parts.Length; i++)
@@ -105,21 +136,20 @@ namespace YARG.Core.NewParsing
             return endTime;
         }
 
-        protected override void Dispose(bool disposing)
+        public void Dispose()
         {
-            if (!disposedValue)
+            for (int i = 0; i < _parts.Length; i++)
             {
-                if (disposing)
-                {
-                    for (int i = 0; i < _parts.Length; i++)
-                    {
-                        _parts[i].Notes.Dispose();
-                        _parts[i].Lyrics.Clear();
-                    }
-                    Percussion.Dispose();
-                }
-                base.Dispose(disposing);
+                _parts[i].Notes.Dispose();
+                _parts[i].Lyrics.Clear();
             }
+            Percussion.Dispose();
+            VocalPhrases_1.Dispose();
+            VocalPhrases_2.Dispose();
+            HarmonyLines.Dispose();
+            RangeShifts.Dispose();
+            Overdrives.Dispose();
+            LyricShifts.Dispose();
         }
     }
 }

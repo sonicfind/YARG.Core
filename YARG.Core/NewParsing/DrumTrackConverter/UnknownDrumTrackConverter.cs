@@ -8,21 +8,13 @@ namespace YARG.Core.NewParsing
     {
         public static InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> ConvertToFourLane(this InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> source, bool isPro)
         {
-            var newTrack = new InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>
-            {
-                SpecialPhrases = source.SpecialPhrases,
-                Events = source.Events
-            };
+            var newTrack = new InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>(source);
             return ConvertToFourLane(source, newTrack, isPro);
         }
 
         public static InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> ConvertToFiveLane(this InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> source)
         {
-            var newTrack = new InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>
-            {
-                SpecialPhrases = source.SpecialPhrases,
-                Events = source.Events
-            };
+            var newTrack = new InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>(source);
             return ConvertToFiveLane(source, newTrack);
         }
 
@@ -30,11 +22,11 @@ namespace YARG.Core.NewParsing
         {
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                var diff = source[i];
+                var diff = source.Difficulties[i];
                 if (diff != null && !diff.IsEmpty())
                 {
-                    destination[i] = diff.ConvertToFourLane(isPro);
-                    source[i] = null;
+                    destination.Difficulties[i] = diff.ConvertToFourLane(isPro);
+                    source.Difficulties[i] = null;
                 }
             }
             return destination;
@@ -44,23 +36,19 @@ namespace YARG.Core.NewParsing
         {
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                var diff = source[i];
+                var diff = source.Difficulties[i];
                 if (diff != null && !diff.IsEmpty())
                 {
-                    destination[i] = diff.ConvertToFiveLane();
-                    source[i] = null;
+                    destination.Difficulties[i] = diff.ConvertToFiveLane();
+                    source.Difficulties[i] = null;
                 }
             }
             return destination;
         }
 
-        private unsafe static DifficultyTrack2<FourLaneDrums> ConvertToFourLane(this DifficultyTrack2<UnknownLaneDrums> source, bool isPro)
+        private static unsafe DifficultyTrack2<FourLaneDrums> ConvertToFourLane(this DifficultyTrack2<UnknownLaneDrums> source, bool isPro)
         {
-            var newDifficulty = new DifficultyTrack2<FourLaneDrums>()
-            {
-                SpecialPhrases = source.SpecialPhrases,
-                Events = source.Events
-            };
+            var newDifficulty = new DifficultyTrack2<FourLaneDrums>(source);
 
             newDifficulty.Notes.Capacity = source.Notes.Count;
             var end = source.Notes.End;
@@ -78,14 +66,9 @@ namespace YARG.Core.NewParsing
             return newDifficulty;
         }
 
-        private unsafe static DifficultyTrack2<FiveLaneDrums> ConvertToFiveLane(this DifficultyTrack2<UnknownLaneDrums> source)
+        private static unsafe DifficultyTrack2<FiveLaneDrums> ConvertToFiveLane(this DifficultyTrack2<UnknownLaneDrums> source)
         {
-            var newDifficulty = new DifficultyTrack2<FiveLaneDrums>()
-            {
-                SpecialPhrases = source.SpecialPhrases,
-                Events = source.Events
-            };
-
+            var newDifficulty = new DifficultyTrack2<FiveLaneDrums>(source);
             newDifficulty.Notes.Capacity = source.Notes.Count;
             var buffer = default(FiveLaneDrums);
             var end = source.Notes.End;
