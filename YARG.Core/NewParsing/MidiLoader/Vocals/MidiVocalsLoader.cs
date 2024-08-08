@@ -182,7 +182,7 @@ namespace YARG.Core.NewParsing.Midi
                         }
                     }
                 }
-                else if (MidiEventType.Text <= stats.Type && stats.Type <= MidiEventType.Text_EnumLimit)
+                else if (MidiEventType.Text <= stats.Type && stats.Type <= MidiEventType.Text_EnumLimit && stats.Type != MidiEventType.Text_TrackName)
                 {
                     var str = midiTrack.ExtractTextOrSysEx();
                     if (str.length == 0 || str[0] != '[')
