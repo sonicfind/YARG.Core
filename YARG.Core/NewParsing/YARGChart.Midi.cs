@@ -252,7 +252,7 @@ namespace YARG.Core.NewParsing
                     {
                         position.Ticks = stats.Position;
                         position.Seconds = sync.ConvertToSeconds(stats.Position, ref tempoIndex);
-                        *beats.GetLastOrAppend(position) = note.value == 12 ? BeatlineType.Measure : BeatlineType.Strong;
+                        beats.AppendOrUpdate(position, note.value == 12 ? BeatlineType.Measure : BeatlineType.Strong);
                     }
                 }
             }
