@@ -39,7 +39,7 @@ namespace YARG.Core.NewParsing
             Events = source.Events.MoveToNewList();
         }
 
-        public bool IsEmpty()
+        public virtual bool IsEmpty()
         {
             return Overdrives.IsEmpty()
                 && Soloes.IsEmpty()
@@ -51,7 +51,7 @@ namespace YARG.Core.NewParsing
                 && Events.IsEmpty();
         }
 
-        public void Clear()
+        public virtual void Clear()
         {
             Overdrives.Clear();
             Soloes.Clear();
@@ -63,7 +63,7 @@ namespace YARG.Core.NewParsing
             Events.Clear();
         }
 
-        public void TrimExcess()
+        public virtual void TrimExcess()
         {
             Overdrives.TrimExcess();
             Soloes.TrimExcess();
@@ -75,7 +75,7 @@ namespace YARG.Core.NewParsing
             // Ignore Events, as GC doesn't guarantee quick disposal of the old array
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             Overdrives.Dispose();
             Soloes.Dispose();
