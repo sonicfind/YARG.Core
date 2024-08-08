@@ -205,7 +205,7 @@ namespace YARG.Core.NewParsing
                     {
                         position.Ticks = midiTrack.Position;
                         position.Seconds = sync.ConvertToSeconds(midiTrack.Position, ref tempoIndex);
-                        *beats.GetLastOrAppend(position) = note.value == 12 ? BeatlineType.Measure : BeatlineType.Strong;
+                        beats.AppendOrUpdate(position, note.value == 12 ? BeatlineType.Measure : BeatlineType.Strong);
                     }
                 }
             }
