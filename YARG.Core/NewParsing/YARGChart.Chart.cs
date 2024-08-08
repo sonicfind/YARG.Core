@@ -312,9 +312,9 @@ namespace YARG.Core.NewParsing
                     {
                         unsafe
                         {
-                            _unknownDrumType = drumsInChart;
+                            UnknownLaneDrums.DrumType = drumsInChart;
                             bool result = LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref unknownDrums);
-                            drumsInChart = _unknownDrumType;
+                            drumsInChart = UnknownLaneDrums.DrumType;
                             return result;
                         }
                     }
