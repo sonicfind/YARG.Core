@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using YARG.Core.Chart;
 
@@ -18,6 +19,12 @@ namespace YARG.Core.NewParsing
             _tickrate = tickrate;
             TempoMarkers.Append(0, Tempo2.DEFAULT);
             TimeSigs.Append(0, TimeSig2.DEFAULT);
+        }
+
+        public void TrimExcessData()
+        {
+            TempoMarkers.TrimExcess();
+            TimeSigs.TrimExcess();
         }
 
         public void Reset()

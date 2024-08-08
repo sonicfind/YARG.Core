@@ -208,6 +208,7 @@ namespace YARG.Core.NewParsing
                 }
             }
             YARGChartFinalizer.FinalizeBeats(chart);
+            chart.TrimExcessData();
         }
 
         private static bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
@@ -480,8 +481,6 @@ namespace YARG.Core.NewParsing
                         break;
                 }
             }
-
-            difficultyTrack.TrimExcess();
             return true;
         }
     }
