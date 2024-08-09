@@ -27,7 +27,7 @@ namespace YARG.Core.NewParsing.Midi
             return vocalTrack;
         }
 
-        public static bool Load(YARGMidiTrack midiTrack, SyncTrack2 sync, VocalTrack2 vocalTrack, int trackIndex, ref Encoding encoding)
+        public static unsafe bool Load(YARGMidiTrack midiTrack, SyncTrack2 sync, VocalTrack2 vocalTrack, int trackIndex, ref Encoding encoding)
         {
             var part = vocalTrack[trackIndex];
             if (!part.IsEmpty())
@@ -48,14 +48,15 @@ namespace YARG.Core.NewParsing.Midi
             var overdrivePosition = DualTime.Inactive;
             var rangeShiftPosition = DualTime.Inactive;
 
-            int tempoIndex = 0;
+            var currTempo = sync.TempoMarkers.Data;
+            var tempoEnd = sync.TempoMarkers.End;
             var note = default(MidiNote);
             var position = default(DualTime);
             var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
             {
                 position.Ticks = stats.Position;
-                position.Seconds = sync.ConvertToSeconds(position.Ticks, ref tempoIndex);
+                position.Seconds = sync.ConvertToSeconds(position.Ticks, ref currTempo, tempoEnd);
                 if (stats.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
@@ -221,7 +222,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             var endPoint = position;
                             endPoint.Ticks += sync.Tickrate;
-                            endPoint.Seconds = sync.ConvertToSeconds(endPoint.Ticks, ref tempoIndex);
+                            endPoint.Seconds = sync.ConvertToSeconds(endPoint.Ticks, ref currTempo, tempoEnd);
                             vocalTrack.RangeShifts.AppendOrUpdate(in position, endPoint - position);
                         }
                         else

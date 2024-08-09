@@ -196,7 +196,7 @@ namespace YARG.Core.NewParsing
         }
 
         private static readonly byte[][] PREFIXES = { Encoding.ASCII.GetBytes("[section "), Encoding.ASCII.GetBytes("[prc_") };
-        private static void LoadEventsTrack_Midi(YARGChart chart, ref Encoding encoding, YARGMidiTrack midiTrack)
+        private static unsafe void LoadEventsTrack_Midi(YARGChart chart, ref Encoding encoding, YARGMidiTrack midiTrack)
         {
             if (!chart.Globals.IsEmpty() || !chart.Sections.IsEmpty())
             {
@@ -204,7 +204,8 @@ namespace YARG.Core.NewParsing
                 return;
             }
 
-            int tempoIndex = 0;
+            var currTempo = chart.Sync.TempoMarkers.Data;
+            var tempoEnd = chart.Sync.TempoMarkers.End;
             var position = default(DualTime);
             var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
@@ -212,7 +213,7 @@ namespace YARG.Core.NewParsing
                 if (MidiEventType.Text <= stats.Type && stats.Type <= MidiEventType.Text_EnumLimit && stats.Type != MidiEventType.Text_TrackName)
                 {
                     position.Ticks = stats.Position;
-                    position.Seconds = chart.Sync.ConvertToSeconds(stats.Position, ref tempoIndex);
+                    position.Seconds = chart.Sync.ConvertToSeconds(stats.Position, ref currTempo, tempoEnd);
 
                     var text = midiTrack.ExtractTextOrSysEx();
                     if (text.StartsWith(PREFIXES[0]))
@@ -239,9 +240,10 @@ namespace YARG.Core.NewParsing
                 return;
             }
 
-            // Used to lesson the impact of the ticks-seconds search algorithm as the the position
+            // Used to lesson the impact of the ticks-seconds search algorithm as the position
             // gets larger by tracking the previous position.
-            int tempoIndex = 0;
+            var currTempo = sync.TempoMarkers.Data;
+            var tempoEnd = sync.TempoMarkers.End;
             var note = default(MidiNote);
             var position = default(DualTime);
             var stats = default(MidiStats);
@@ -253,7 +255,7 @@ namespace YARG.Core.NewParsing
                     if (note.Velocity > 0)
                     {
                         position.Ticks = stats.Position;
-                        position.Seconds = sync.ConvertToSeconds(stats.Position, ref tempoIndex);
+                        position.Seconds = sync.ConvertToSeconds(stats.Position, ref currTempo, tempoEnd);
                         beats.AppendOrUpdate(position, note.Value == 12 ? BeatlineType.Measure : BeatlineType.Strong);
                     }
                 }

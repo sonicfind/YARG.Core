@@ -82,7 +82,8 @@ namespace YARG.Core.NewParsing.Midi
             var FaceOffPosition_2 = DualTime.Inactive;
 
             ReadOnlySpan<byte> SYSEXTAG = stackalloc byte[] { (byte) 'P', (byte) 'S', (byte) '\0', };
-            int tempoIndex = 0;
+            var currTempo = sync.TempoMarkers.Data;
+            var tempoEnd = sync.TempoMarkers.End;
             var position = default(DualTime);
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
@@ -90,7 +91,7 @@ namespace YARG.Core.NewParsing.Midi
             while (midiTrack.ParseEvent(ref stats))
             {
                 position.Ticks = stats.Position;
-                position.Seconds = sync.ConvertToSeconds(position.Ticks, ref tempoIndex);
+                position.Seconds = sync.ConvertToSeconds(position.Ticks, ref currTempo, tempoEnd);
                 if (stats.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
