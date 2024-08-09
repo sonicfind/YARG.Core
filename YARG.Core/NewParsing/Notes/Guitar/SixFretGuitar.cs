@@ -5,7 +5,7 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public struct SixFretGuitar : IInstrumentNote, IDotChartLoadable
+    public struct SixFretGuitar : IGuitarNote, IDotChartLoadable
     {
         public DualTime Open;
         public DualTime Black1;
@@ -14,7 +14,13 @@ namespace YARG.Core.NewParsing
         public DualTime White1;
         public DualTime White2;
         public DualTime White3;
-        public GuitarState State;
+        private GuitarState _state;
+
+        public GuitarState State
+        {
+            readonly get => _state;
+            set => _state = value;
+        }
 
         public readonly int NUMLANES => 7;
 
@@ -28,12 +34,12 @@ namespace YARG.Core.NewParsing
                 case 3: Black1 = DualTime.Truncate(length); break;
                 case 4: Black2 = DualTime.Truncate(length); break;
                 case 5:
-                    if (State == GuitarState.Natural)
+                    if (_state == GuitarState.Natural)
                     {
-                        State = GuitarState.Forced;
+                        _state = GuitarState.Forced;
                     }
                     break;
-                case 6: State = GuitarState.Tap; break;
+                case 6: _state = GuitarState.Tap; break;
                 case 7: Open = DualTime.Truncate(length); break;
                 case 8: Black3 = DualTime.Truncate(length); break;
                 default:
@@ -123,9 +129,9 @@ namespace YARG.Core.NewParsing
             {
                 stringBuilder.Append($"White 3: {White3.Ticks}");
             }
-            if (State != GuitarState.Natural)
+            if (_state != GuitarState.Natural)
             {
-                stringBuilder.Append(State.ToString());
+                stringBuilder.Append(_state.ToString());
             }
             return stringBuilder.ToString();
         }
