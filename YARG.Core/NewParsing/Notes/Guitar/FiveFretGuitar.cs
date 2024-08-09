@@ -6,13 +6,13 @@ namespace YARG.Core.NewParsing
 {
     public struct FiveFretGuitar : IInstrumentNote, IDotChartLoadable
     {
+        public GuitarState State;
         public DualTime Open;
         public DualTime Green;
         public DualTime Red;
         public DualTime Yellow;
         public DualTime Blue;
         public DualTime Orange;
-        public GuitarState State;
 
         public readonly int NUMLANES => 6;
 
