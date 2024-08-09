@@ -181,7 +181,7 @@ namespace YARG.Core.NewParsing
             return sync;
         }
 
-        private static bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
+        private static unsafe bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (!chart.Globals.IsEmpty() || !chart.Sections.IsEmpty() || (chart.LeadVocals != null && !chart.LeadVocals.IsEmpty()))
@@ -190,9 +190,10 @@ namespace YARG.Core.NewParsing
                 return false;
             }
 
-            // Used to lesson the impact of the ticks-seconds search algorithm as the the position
+            // Used to lesson the impact of the ticks-seconds search algorithm as the position
             // gets larger by tracking the previous position.
-            int tempoIndex = 0;
+            var currTempo = chart.Sync.TempoMarkers.Data;
+            var tempoEnd = chart.Sync.TempoMarkers.End;
             var phrase = DualTime.Inactive;
 
             DotChartEvent ev = default;
@@ -202,7 +203,7 @@ namespace YARG.Core.NewParsing
                 if (ev.Type == ChartEventType.Text)
                 {
                     position.Ticks = ev.Position;
-                    position.Seconds = chart.Sync.ConvertToSeconds(ev.Position, ref tempoIndex);
+                    position.Seconds = chart.Sync.ConvertToSeconds(ev.Position, ref currTempo, tempoEnd);
 
                     string str = YARGTextReader.ExtractText(ref container, true);
                     if (str.StartsWith(SECTION))
@@ -362,11 +363,12 @@ namespace YARG.Core.NewParsing
             difficultyTrack = new DifficultyTrack2<TNote>();
             difficultyTrack.Notes.Capacity = 5000;
 
-            // Used to lesson the impact of the ticks-seconds search algorithm as the the position
+            // Used to lesson the impact of the ticks-seconds search algorithm as the position
             // gets larger by tracking the previous position.
-            int tempoIndex = 0;
-            
-             var soloQueue = stackalloc DualTime[2] { DualTime.Inactive, DualTime.Inactive };
+            var currTempo = sync.TempoMarkers.Data;
+            var tempoEnd = sync.TempoMarkers.End;
+
+            var soloQueue = stackalloc DualTime[2] { DualTime.Inactive, DualTime.Inactive };
 
             DotChartEvent ev = default;
             DualTime position = default;
@@ -387,7 +389,7 @@ namespace YARG.Core.NewParsing
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
             {
                 position.Ticks = ev.Position;
-                position.Seconds = sync.ConvertToSeconds(ev.Position, ref tempoIndex);
+                position.Seconds = sync.ConvertToSeconds(ev.Position, ref currTempo, tempoEnd);
                 switch (ev.Type)
                 {
                     case ChartEventType.Note:
@@ -402,7 +404,7 @@ namespace YARG.Core.NewParsing
                             }
 
                             duration.Ticks = tickDuration;
-                            duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
+                            duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, currTempo, tempoEnd) - position.Seconds;
                             if (!note->SetFromDotChart(lane, in duration))
                             {
                                 if (note->GetNumActiveLanes() == 0)
@@ -419,7 +421,7 @@ namespace YARG.Core.NewParsing
                             if (tickDuration > 0)
                             {
                                 duration.Ticks = tickDuration;
-                                duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, tempoIndex) - position.Seconds;
+                                duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, currTempo, tempoEnd) - position.Seconds;
                                 switch (type)
                                 {
                                     case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(difficultyTrack.Faceoff_Player1); break;
@@ -449,7 +451,7 @@ namespace YARG.Core.NewParsing
                                 else
                                 {
                                     ++position.Ticks;
-                                    position.Seconds = sync.ConvertToSeconds(position.Ticks, tempoIndex);
+                                    position.Seconds = sync.ConvertToSeconds(position.Ticks, currTempo, tempoEnd);
                                     difficultyTrack.Soloes.Append(in soloQueue[0], position - soloQueue[0]);
                                 }
                             }
