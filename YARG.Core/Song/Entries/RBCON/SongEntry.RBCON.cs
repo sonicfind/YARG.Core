@@ -178,7 +178,7 @@ namespace YARG.Core.Song
                 return null;
             }
 
-            using var updateStream = UpdateMidi != null ? new FileStream(UpdateMidi.Value.FullName, FileMode.Open, FileAccess.Read, FileShare.Read) : null;
+            using var updateStream = UpdateMidi != null ? File.OpenRead(UpdateMidi.Value.FullName) : null;
             using var upgradeStream = Upgrade?.GetUpgradeMidiStream();
             if (upgradeStream == null && Upgrade != null)
             {
