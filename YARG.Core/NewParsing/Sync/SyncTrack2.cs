@@ -26,54 +26,44 @@ namespace YARG.Core.NewParsing
             TimeSigs.TrimExcess();
         }
 
-        public double ConvertToSeconds(long ticks, int startIndex = 0)
+        public unsafe double ConvertToSeconds(long ticks, YARGKeyValuePair<long, Tempo2>* curr, in YARGKeyValuePair<long, Tempo2>* end)
         {
-            return ConvertToSeconds(ticks, ref startIndex);
+            return ConvertToSeconds(ticks, ref curr, end);
         }
 
-        public double ConvertToSeconds(long ticks, ref int startIndex)
+        public unsafe double ConvertToSeconds(long ticks, ref YARGKeyValuePair<long, Tempo2>* curr, in YARGKeyValuePair<long, Tempo2>* end)
         {
-            unsafe
+            while (curr < end)
             {
-                var end = TempoMarkers.End;
-                for (var curr = TempoMarkers.Data + startIndex;  curr < end; ++curr)
+                if (curr + 1 == end || ticks < curr[1].Key)
                 {
-                    if (curr + 1 == end || ticks < curr[1].Key)
-                    {
-                        startIndex = (int)(curr - TempoMarkers.Data);
-
-                        double quarters = (ticks - curr->Key) / (double) _tickrate;
-                        long micros = (long)(curr->Value.MicrosPerQuarter * quarters) + curr->Value.Anchor;
-                        return micros / (double) Tempo2.MICROS_PER_SECOND;
-                    }
+                    double quarters = (ticks - curr->Key) / (double) _tickrate;
+                    long micros = (long) (curr->Value.MicrosPerQuarter * quarters) + curr->Value.Anchor;
+                    return micros / (double) Tempo2.MICROS_PER_SECOND;
                 }
-                throw new ArgumentOutOfRangeException(nameof(startIndex));
+                ++curr;
             }
+            throw new ArgumentOutOfRangeException(nameof(curr));
         }
 
-        public long ConvertToTicks(double seconds, int startIndex = 0)
+        public unsafe long ConvertToTicks(double seconds, YARGKeyValuePair<long, Tempo2>* curr, in YARGKeyValuePair<long, Tempo2>* end)
         {
-            return ConvertToTicks(seconds, ref startIndex);
+            return ConvertToTicks(seconds, ref curr, end);
         }
 
-        public long ConvertToTicks(double seconds, ref int startIndex)
+        public unsafe long ConvertToTicks(double seconds, ref YARGKeyValuePair<long, Tempo2>* curr, in YARGKeyValuePair<long, Tempo2>* end)
         {
             long micros = (long) (seconds * Tempo2.MICROS_PER_SECOND);
-            unsafe
+            while (curr < end)
             {
-                var end = TempoMarkers.End;
-                for (var curr = TempoMarkers.Data + startIndex; curr < end; ++curr)
+                if (curr + 1 == end || micros < curr[1].Key)
                 {
-                    if (curr + 1 == end || micros < curr[1].Key)
-                    {
-                        startIndex = (int) (curr - TempoMarkers.Data);
-
-                        double quarters = (micros - curr->Value.Anchor) / (double) curr->Value.MicrosPerQuarter;
-                        return (long)(quarters * _tickrate) + curr->Key;
-                    }
+                    double quarters = (micros - curr->Value.Anchor) / (double) curr->Value.MicrosPerQuarter;
+                    return (long) (quarters * _tickrate) + curr->Key;
                 }
-                throw new ArgumentOutOfRangeException(nameof(startIndex));
+                ++curr;
             }
+            throw new ArgumentOutOfRangeException(nameof(curr));
         }
 
         public void Dispose()
