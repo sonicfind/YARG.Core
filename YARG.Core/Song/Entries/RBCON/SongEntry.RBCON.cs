@@ -122,7 +122,7 @@ namespace YARG.Core.Song
                 return null;
             }
 
-            using var updateStream = _updateMidi != null ? new FileStream(_updateMidi.Value.FullName, FileMode.Open, FileAccess.Read, FileShare.Read) : null;
+            using var updateStream = _updateMidi != null ? File.OpenRead(_updateMidi.Value.FullName) : null;
             using var upgradeStream = _upgrade?.GetUpgradeMidiStream();
             if (upgradeStream == null && _upgrade != null)
             {
