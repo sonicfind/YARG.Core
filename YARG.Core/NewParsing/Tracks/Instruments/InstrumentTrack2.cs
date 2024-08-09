@@ -19,7 +19,7 @@ namespace YARG.Core.NewParsing
         /// Move constructor that siphons all phrases and special events from the source,
         /// leaving it in a default state.
         /// </summary>
-        /// <remarks>Does not effect <see cref="Difficulties"/>. Those remains unchanged and <see cref="null"/></remarks>
+        /// <remarks>Does not effect <see cref="Difficulties"/>. Those remains unchanged and <see langword="null"/></remarks>
         /// <param name="source"></param>
         public InstrumentTrack2(PhraseTrack source)
             : base(source) {}
