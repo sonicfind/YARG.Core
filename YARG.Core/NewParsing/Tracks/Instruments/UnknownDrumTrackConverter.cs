@@ -49,8 +49,8 @@ namespace YARG.Core.NewParsing
         private static unsafe DifficultyTrack2<FourLaneDrums> ConvertToFourLane(this DifficultyTrack2<UnknownLaneDrums> source, bool isPro)
         {
             var newDifficulty = new DifficultyTrack2<FourLaneDrums>(source);
-
             newDifficulty.Notes.Capacity = source.Notes.Count;
+
             var end = source.Notes.End;
             for (var curr = source.Notes.Data; curr < end; ++curr)
             {
@@ -70,6 +70,7 @@ namespace YARG.Core.NewParsing
         {
             var newDifficulty = new DifficultyTrack2<FiveLaneDrums>(source);
             newDifficulty.Notes.Capacity = source.Notes.Count;
+
             var end = source.Notes.End;
             for (var curr = source.Notes.Data; curr < end; ++curr)
             {
