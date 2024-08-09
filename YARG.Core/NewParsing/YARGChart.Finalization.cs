@@ -95,7 +95,8 @@ namespace YARG.Core.NewParsing
             long multipliedTickrate = 4 * sync.Tickrate;
 
             int beatIndex = 0;
-            int tempoIndex = 0;
+            var currTempo = sync.TempoMarkers.Data;
+            var tempoEnd = sync.TempoMarkers.End;
 
             DualTime buffer = default;
             var end = sync.TimeSigs.End;
@@ -133,7 +134,7 @@ namespace YARG.Core.NewParsing
                         if (beatIndex == beats.Count || position < beats.Data[beatIndex].Key.Ticks)
                         {
                             buffer.Ticks = position;
-                            buffer.Seconds = sync.ConvertToSeconds(position, ref tempoIndex);
+                            buffer.Seconds = sync.ConvertToSeconds(position, ref currTempo, tempoEnd);
                             beats.Insert_Forced(beatIndex, in buffer, BeatlineType.Weak);
                         }
                         ++beatIndex;
@@ -145,7 +146,7 @@ namespace YARG.Core.NewParsing
                 if (currSig + 1 == end)
                 {
                     buffer.Ticks = endTime;
-                    buffer.Seconds = sync.ConvertToSeconds(endTime, ref tempoIndex);
+                    buffer.Seconds = sync.ConvertToSeconds(endTime, ref currTempo, tempoEnd);
                     beats.Append(buffer, BeatlineType.Measure);
                 }
             }
@@ -155,7 +156,9 @@ namespace YARG.Core.NewParsing
         {
             long multipliedTickrate = 4 * sync.Tickrate;
 
-            int tempoIndex = 0;
+            var currTempo = sync.TempoMarkers.Data;
+            var tempoEnd = sync.TempoMarkers.End;
+
             DualTime buffer = default;
             var end = sync.TimeSigs.End;
             for (var currSig = sync.TimeSigs.Data; currSig < end; ++currSig)
@@ -210,7 +213,7 @@ namespace YARG.Core.NewParsing
                     for (int i = 0; i < numerator && position < endTime; ++i, position += ticksPerMarker)
                     {
                         buffer.Ticks = position;
-                        buffer.Seconds = sync.ConvertToSeconds(position, ref tempoIndex);
+                        buffer.Seconds = sync.ConvertToSeconds(position, ref currTempo, tempoEnd);
                         beats.Append(buffer, pattern[i]);
                     }
                     currSig->Key += ticksPerMeasure;
@@ -219,7 +222,7 @@ namespace YARG.Core.NewParsing
                 if (currSig + 1 == end)
                 {
                     buffer.Ticks = endTime;
-                    buffer.Seconds = sync.ConvertToSeconds(endTime, ref tempoIndex);
+                    buffer.Seconds = sync.ConvertToSeconds(endTime, ref currTempo, tempoEnd);
                     beats.Append(buffer, BeatlineType.Measure);
                 }
             }
