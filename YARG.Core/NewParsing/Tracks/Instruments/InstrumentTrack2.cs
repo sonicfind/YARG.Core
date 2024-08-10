@@ -66,7 +66,27 @@ namespace YARG.Core.NewParsing
             base.TrimExcess();
         }
 
-        public ref TDifficultyTrack? this[Difficulty diff] { get { return ref Difficulties[(int) diff - 1]; } }
+        public ref TDifficultyTrack? this[Difficulty diff]
+        {
+            get
+            {
+                switch (diff)
+                {
+                    case Difficulty.Beginner:
+                    case Difficulty.Easy:
+                        return ref Difficulties[0];
+                    case Difficulty.Medium:
+                        return ref Difficulties[1];
+                    case Difficulty.Hard:
+                        return ref Difficulties[2];
+                    case Difficulty.Expert:
+                    case Difficulty.ExpertPlus:
+                        return ref Difficulties[3];
+                    default:
+                        throw new System.ArgumentOutOfRangeException();
+                }
+            }
+        }
 
         public override DualTime GetLastNoteTime()
         {
