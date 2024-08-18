@@ -10,8 +10,6 @@ namespace YARG.Core.NewParsing
     {
         public static DrumsType DrumType;
 
-        public bool IsDoubleBass;
-        public bool IsFlammed;
         public DualTime Bass;
         public DualTime Snare;
         public DualTime Yellow;
@@ -24,6 +22,8 @@ namespace YARG.Core.NewParsing
         public bool Cymbal_Yellow;
         public bool Cymbal_Blue;
         public bool Cymbal_Orange;
+        public bool IsDoubleBass;
+        public bool IsFlammed;
         // Placed at the bottom to allowed best blittability with FourLane
         // as that will be the most common conversion
         public DualTime Green;
