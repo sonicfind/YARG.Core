@@ -7,8 +7,6 @@ namespace YARG.Core.NewParsing
 {
     public struct FourLaneDrums : IInstrumentNote, IDotChartLoadable
     {
-        public bool IsDoubleBass;
-        public bool IsFlammed;
         public DualTime Bass;
         public DualTime Snare;
         public DualTime Yellow;
@@ -21,6 +19,8 @@ namespace YARG.Core.NewParsing
         public bool Cymbal_Yellow;
         public bool Cymbal_Blue;
         public bool Cymbal_Green;
+        public bool IsDoubleBass;
+        public bool IsFlammed;
 
         public readonly int NUMLANES => 5;
 
