@@ -8,14 +8,20 @@ namespace YARG.Core.NewParsing
         {
             unsafe
             {
-                var end = sync.TempoMarkers.End;
+                double tickrate = sync.Tickrate;
                 // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
-                for (var marker = sync.TempoMarkers.Data + 1; marker < end; ++marker)
+                for (YARGKeyValuePair<long, Tempo2>* prev = sync.TempoMarkers.Data, curr = prev + 1, end = prev + sync.TempoMarkers.Count;
+                    curr < end;
+                    prev = curr++)
                 {
-                    if (marker->Value.Anchor == 0)
+                    double numQuarters = (curr->Key - prev->Key) / tickrate;
+                    if (curr->Value.Anchor == 0)
                     {
-                        var prev = marker - 1;
-                        marker->Value.Anchor = (long) (((marker->Key - prev->Key) / (float) sync.Tickrate) * prev->Value.MicrosPerQuarter) + prev->Value.Anchor;
+                        curr->Value.Anchor = (long) (numQuarters * prev->Value.MicrosPerQuarter) + prev->Value.Anchor;
+                    }
+                    else
+                    {
+                        prev->Value.MicrosPerQuarter = (int)((curr->Value.Anchor - prev->Value.Anchor) / numQuarters);
                     }
                 }
             }
