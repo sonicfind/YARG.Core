@@ -66,15 +66,14 @@ namespace YARG.Core.NewParsing.Midi
             var trillPosition = DualTime.Inactive;
 
             ReadOnlySpan<byte> SYSEXTAG = stackalloc byte[] { (byte) 'P', (byte) 'S', (byte) '\0', };
-            var currTempo = sync.TempoMarkers.Data;
-            var tempoEnd = sync.TempoMarkers.End;
             var position = default(DualTime);
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
+            var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
                 position.Ticks = midiTrack.Position;
-                position.Seconds = sync.ConvertToSeconds(position.Ticks, ref currTempo, tempoEnd);
+                position.Seconds = tempoTracker.Traverse(position.Ticks);
                 if (midiTrack.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);

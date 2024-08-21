@@ -48,14 +48,13 @@ namespace YARG.Core.NewParsing.Midi
             var overdrivePosition = DualTime.Inactive;
             var rangeShiftPosition = DualTime.Inactive;
 
-            var currTempo = sync.TempoMarkers.Data;
-            var tempoEnd = sync.TempoMarkers.End;
             var note = default(MidiNote);
             var position = default(DualTime);
+            var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
                 position.Ticks = midiTrack.Position;
-                position.Seconds = sync.ConvertToSeconds(position.Ticks, ref currTempo, tempoEnd);
+                position.Seconds = tempoTracker.Traverse(position.Ticks);
                 if (midiTrack.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
@@ -221,7 +220,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             var endPoint = position;
                             endPoint.Ticks += sync.Tickrate;
-                            endPoint.Seconds = sync.ConvertToSeconds(endPoint.Ticks, ref currTempo, tempoEnd);
+                            endPoint.Seconds = tempoTracker.UnmovingConvert(endPoint.Ticks);
                             vocalTrack.RangeShifts.AppendOrUpdate(in position, endPoint - position);
                         }
                         else
