@@ -1,0 +1,61 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text;
+
+namespace YARG.Core.NewParsing
+{
+    public unsafe struct TempoTracker
+    {
+        private readonly long _tickrate;
+        private readonly YARGKeyValuePair<long, Tempo2>* _end;
+        private YARGKeyValuePair<long, Tempo2>* _position;
+
+        public TempoTracker(SyncTrack2 sync)
+        {
+            Debug.Assert(sync.TempoMarkers.Count > 0, "There must exist at least one marker in the tempo list");
+            _tickrate = sync.Tickrate;
+            _position = sync.TempoMarkers.Data;
+            _end = _position + sync.TempoMarkers.Count;
+        }
+
+        /// <summary>
+        /// Converts the provided ticks to seconds
+        /// </summary>
+        /// <remarks>This modifies internal state to perform performance-optimized searches</remarks>
+        /// <param name="ticks">Position in ticks to convert</param>
+        /// <returns>The position in seconds</returns>
+        public unsafe double Traverse(long ticks)
+        {
+            Debug.Assert(ticks >= _position->Key, "Tick position to convert placed before the current key");
+            while (_position + 1 < _end && _position[1].Key <= ticks)
+            {
+                ++_position;
+            }
+
+            double quarters = (ticks - _position->Key) / (double) _tickrate;
+            long micros = (long) (_position->Value.MicrosPerQuarter * quarters) + _position->Value.Anchor;
+            return micros / (double) Tempo2.MICROS_PER_SECOND;
+        }
+
+        /// <summary>
+        /// Converts the provided ticks to seconds
+        /// </summary>
+        /// <remarks>The internal state of the tracker will not change from this call</remarks>
+        /// <param name="ticks">Position in ticks to convert</param>
+        /// <returns>The position in seconds</returns>
+        public readonly unsafe double UnmovingConvert(long ticks)
+        {
+            Debug.Assert(ticks >= _position->Key, "Tick position to convert placed before the current key");
+            var tmp = _position;
+            while (tmp + 1 < _end && tmp[1].Key <= ticks)
+            {
+                ++tmp;
+            }
+
+            double quarters = (ticks - tmp->Key) / (double) _tickrate;
+            long micros = (long) (tmp->Value.MicrosPerQuarter * quarters) + tmp->Value.Anchor;
+            return micros / (double) Tempo2.MICROS_PER_SECOND;
+        }
+    }
+}
