@@ -55,6 +55,62 @@ namespace YARG.Core.NewParsing
             Settings = LoaderSettings.Default;
         }
 
+        public DualTime GetEndTime()
+        {
+            var globals = Globals.Span;
+            for (int i = globals.Length - 1; i >= 0; --i)
+            {
+                foreach (string ev in globals[i].Value)
+                {
+                    if (ev == "[end]")
+                    {
+                        return globals[i].Key;
+                    }
+                }
+            }
+
+            static void Test<TTrack>(TTrack? track, ref DualTime lastNoteTime)
+                where TTrack : class, ITrack
+            {
+                if (track != null)
+                {
+                    var lastTime = track.GetLastNoteTime();
+                    if (lastTime > lastNoteTime)
+                        lastNoteTime = lastTime;
+                }
+            }
+
+            DualTime lastNoteTime = default;
+            Test(FiveFretGuitar, ref lastNoteTime);
+            Test(FiveFretBass, ref lastNoteTime);
+            Test(FiveFretRhythm, ref lastNoteTime);
+            Test(FiveFretCoopGuitar, ref lastNoteTime);
+            Test(SixFretGuitar, ref lastNoteTime);
+            Test(SixFretBass, ref lastNoteTime);
+            Test(SixFretRhythm, ref lastNoteTime);
+            Test(SixFretCoopGuitar, ref lastNoteTime);
+
+            Test(Keys, ref lastNoteTime);
+
+            Test(FourLaneDrums, ref lastNoteTime);
+            Test(FiveLaneDrums, ref lastNoteTime);
+
+            // Test(TrueDrums, ref lastNoteTime);
+
+            Test(ProGuitar_17Fret, ref lastNoteTime);
+            Test(ProGuitar_22Fret, ref lastNoteTime);
+            Test(ProBass_17Fret, ref lastNoteTime);
+            Test(ProBass_22Fret, ref lastNoteTime);
+
+            Test(ProKeys, ref lastNoteTime);
+
+            // Test(Dj, ref lastNoteTime);
+
+            Test(LeadVocals, ref lastNoteTime);
+            Test(HarmonyVocals, ref lastNoteTime);
+            return lastNoteTime;
+        }
+
         private void TrimExcessData()
         {
             Sync.TrimExcessData();
