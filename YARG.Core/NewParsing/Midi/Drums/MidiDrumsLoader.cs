@@ -52,16 +52,15 @@ namespace YARG.Core.NewParsing.Midi
             var tremoloPostion = DualTime.Inactive;
             var trillPosition = DualTime.Inactive;
 
-            var currTempo = sync.TempoMarkers.Data;
-            var tempoEnd = sync.TempoMarkers.End;
             var position = default(DualTime);
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
             var stats = default(MidiStats);
+            var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent(ref stats))
             {
                 position.Ticks = stats.Position;
-                position.Seconds = sync.ConvertToSeconds(position.Ticks, ref currTempo, tempoEnd);
+                position.Seconds = tempoTracker.Traverse(position.Ticks);
                 if (stats.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
@@ -320,16 +319,15 @@ namespace YARG.Core.NewParsing.Midi
             var tremoloPostion = DualTime.Inactive;
             var trillPosition = DualTime.Inactive;
 
-            var currTempo = sync.TempoMarkers.Data;
-            var tempoEnd = sync.TempoMarkers.End;
             var position = default(DualTime);
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
             var stats = default(MidiStats);
+            var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent(ref stats))
             {
                 position.Ticks = stats.Position;
-                position.Seconds = sync.ConvertToSeconds(position.Ticks, ref currTempo, tempoEnd);
+                position.Seconds = tempoTracker.Traverse(position.Ticks);
                 if (stats.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
@@ -557,16 +555,15 @@ namespace YARG.Core.NewParsing.Midi
             var tremoloPostion = DualTime.Inactive;
             var trillPosition = DualTime.Inactive;
 
-            var currTempo = sync.TempoMarkers.Data;
-            var tempoEnd = sync.TempoMarkers.End;
             var position = default(DualTime);
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
             var stats = default(MidiStats);
+            var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent(ref stats))
             {
                 position.Ticks = stats.Position;
-                position.Seconds = sync.ConvertToSeconds(position.Ticks, ref currTempo, tempoEnd);
+                position.Seconds = tempoTracker.Traverse(position.Ticks);
                 if (stats.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
