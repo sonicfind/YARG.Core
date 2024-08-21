@@ -61,8 +61,8 @@ namespace YARG.Core.NewLoading.Guitar
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
 
             var modifiers = profile.CurrentModifiers;
-            var overdriveRanges = diff.Overdrives.Count > 0 ? diff.Overdrives : track.Overdrives;
-            var soloRanges = diff.Soloes.Count > 0 ? diff.Soloes : track.Soloes;
+            var overdriveRanges = diff.Phrases.Overdrives.Count > 0 ? diff.Phrases.Overdrives : track.Phrases.Overdrives;
+            var soloRanges = diff.Phrases.Soloes.Count > 0 ? diff.Phrases.Soloes : track.Phrases.Soloes;
 
             var curr = diff.Notes.Data;
             var end = curr + diff.Notes.Count;
