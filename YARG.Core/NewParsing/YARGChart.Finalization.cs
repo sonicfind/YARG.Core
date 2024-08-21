@@ -95,12 +95,12 @@ namespace YARG.Core.NewParsing
             long multipliedTickrate = 4 * sync.Tickrate;
 
             int beatIndex = 0;
-            var currTempo = sync.TempoMarkers.Data;
-            var tempoEnd = sync.TempoMarkers.End;
+            var tempoTracker = new TempoTracker(sync);
 
             DualTime buffer = default;
-            var end = sync.TimeSigs.End;
-            for (var currSig = sync.TimeSigs.Data; currSig < end; ++currSig)
+            for (YARGKeyValuePair<long, TimeSig2>* currSig = sync.TimeSigs.Data, end = sync.TimeSigs.End;
+                currSig < end;
+                ++currSig)
             {
                 long ticksPerMarker = multipliedTickrate >> currSig->Value.Denominator;
                 long ticksPerMeasure = (multipliedTickrate * currSig->Value.Numerator) >> currSig->Value.Denominator;
@@ -134,7 +134,7 @@ namespace YARG.Core.NewParsing
                         if (beatIndex == beats.Count || position < beats.Data[beatIndex].Key.Ticks)
                         {
                             buffer.Ticks = position;
-                            buffer.Seconds = sync.ConvertToSeconds(position, ref currTempo, tempoEnd);
+                            buffer.Seconds = tempoTracker.Traverse(position);
                             beats.Insert_Forced(beatIndex, in buffer, BeatlineType.Weak);
                         }
                         ++beatIndex;
@@ -146,7 +146,7 @@ namespace YARG.Core.NewParsing
                 if (currSig + 1 == end)
                 {
                     buffer.Ticks = endTime;
-                    buffer.Seconds = sync.ConvertToSeconds(endTime, ref currTempo, tempoEnd);
+                    buffer.Seconds = tempoTracker.Traverse(endTime);
                     beats.Append(buffer, BeatlineType.Measure);
                 }
             }
@@ -155,13 +155,12 @@ namespace YARG.Core.NewParsing
         private static unsafe void GenerateAllBeats(SyncTrack2 sync, YARGNativeSortedList<DualTime, BeatlineType> beats, in DualTime endPosition)
         {
             long multipliedTickrate = 4 * sync.Tickrate;
-
-            var currTempo = sync.TempoMarkers.Data;
-            var tempoEnd = sync.TempoMarkers.End;
+            var tempoTracker = new TempoTracker(sync);
 
             DualTime buffer = default;
-            var end = sync.TimeSigs.End;
-            for (var currSig = sync.TimeSigs.Data; currSig < end; ++currSig)
+            for (YARGKeyValuePair<long, TimeSig2>* currSig = sync.TimeSigs.Data, end = sync.TimeSigs.End;
+                currSig < end;
+                ++currSig)
             {
                 int numerator = currSig->Value.Numerator;
                 int markersPerClick = (6 << currSig->Value.Denominator) / currSig->Value.Metronome;
@@ -213,7 +212,7 @@ namespace YARG.Core.NewParsing
                     for (int i = 0; i < numerator && position < endTime; ++i, position += ticksPerMarker)
                     {
                         buffer.Ticks = position;
-                        buffer.Seconds = sync.ConvertToSeconds(position, ref currTempo, tempoEnd);
+                        buffer.Seconds = tempoTracker.Traverse(position);
                         beats.Append(buffer, pattern[i]);
                     }
                     currSig->Key += ticksPerMeasure;
@@ -222,7 +221,7 @@ namespace YARG.Core.NewParsing
                 if (currSig + 1 == end)
                 {
                     buffer.Ticks = endTime;
-                    buffer.Seconds = sync.ConvertToSeconds(endTime, ref currTempo, tempoEnd);
+                    buffer.Seconds = tempoTracker.Traverse(endTime);
                     beats.Append(buffer, BeatlineType.Measure);
                 }
             }

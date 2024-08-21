@@ -279,20 +279,16 @@ namespace YARG.Core.NewParsing
                 return false;
             }
 
-            // Used to lesson the impact of the ticks-seconds search algorithm as the position
-            // gets larger by tracking the previous position.
-            var currTempo = chart.Sync.TempoMarkers.Data;
-            var tempoEnd = chart.Sync.TempoMarkers.End;
+            var tempoTracker = new TempoTracker(chart.Sync);
+            var ev = default(DotChartEvent);
+            var position = default(DualTime);
             var phrase = DualTime.Inactive;
-
-            DotChartEvent ev = default;
-            DualTime position = default;
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
             {
                 if (ev.Type == ChartEventType.Text)
                 {
                     position.Ticks = ev.Position;
-                    position.Seconds = chart.Sync.ConvertToSeconds(ev.Position, ref currTempo, tempoEnd);
+                    position.Seconds = tempoTracker.Traverse(ev.Position);
 
                     string str = YARGTextReader.ExtractText(ref container, true);
                     if (str.StartsWith(SECTION))
@@ -368,16 +364,11 @@ namespace YARG.Core.NewParsing
             difficultyTrack = new DifficultyTrack2<TNote>();
             difficultyTrack.Notes.Capacity = 5000;
 
-            // Used to lesson the impact of the ticks-seconds search algorithm as the position
-            // gets larger by tracking the previous position.
-            var currTempo = sync.TempoMarkers.Data;
-            var tempoEnd = sync.TempoMarkers.End;
-
             var soloQueue = stackalloc DualTime[2] { DualTime.Inactive, DualTime.Inactive };
 
-            DotChartEvent ev = default;
-            DualTime position = default;
-            DualTime duration = default;
+            var ev = default(DotChartEvent);
+            var position = default(DualTime);
+            var duration = default(DualTime);
             void AddSpecialPhrase(YARGNativeSortedList<DualTime, DualTime> phrases)
             {
                 if (phrases.Count > 0)
@@ -391,10 +382,11 @@ namespace YARG.Core.NewParsing
                 phrases.Append(in position, duration);
             }
 
+            var tempoTracker = new TempoTracker(sync);
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
             {
                 position.Ticks = ev.Position;
-                position.Seconds = sync.ConvertToSeconds(ev.Position, ref currTempo, tempoEnd);
+                position.Seconds = tempoTracker.Traverse(ev.Position);
                 switch (ev.Type)
                 {
                     case ChartEventType.Note:
@@ -409,7 +401,7 @@ namespace YARG.Core.NewParsing
                             }
 
                             duration.Ticks = tickDuration;
-                            duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, currTempo, tempoEnd) - position.Seconds;
+                            duration.Seconds = tempoTracker.UnmovingConvert(position.Ticks + tickDuration) - position.Seconds;
                             if (!note->SetFromDotChart(lane, in duration))
                             {
                                 if (note->GetNumActiveLanes() == 0)
@@ -426,7 +418,7 @@ namespace YARG.Core.NewParsing
                             if (tickDuration > 0)
                             {
                                 duration.Ticks = tickDuration;
-                                duration.Seconds = sync.ConvertToSeconds(position.Ticks + tickDuration, currTempo, tempoEnd) - position.Seconds;
+                                duration.Seconds = tempoTracker.UnmovingConvert(position.Ticks + tickDuration) - position.Seconds;
                                 switch (type)
                                 {
                                     case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(difficultyTrack.Faceoff_Player1); break;
@@ -456,7 +448,7 @@ namespace YARG.Core.NewParsing
                                 else
                                 {
                                     ++position.Ticks;
-                                    position.Seconds = sync.ConvertToSeconds(position.Ticks, currTempo, tempoEnd);
+                                    position.Seconds = tempoTracker.UnmovingConvert(position.Ticks);
                                     difficultyTrack.Soloes.Append(in soloQueue[0], position - soloQueue[0]);
                                 }
                             }
