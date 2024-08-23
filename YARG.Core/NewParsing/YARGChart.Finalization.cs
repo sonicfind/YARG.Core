@@ -1,19 +1,27 @@
-﻿using YARG.Core.Chart;
+﻿using System.Diagnostics;
+using YARG.Core.Chart;
 
 namespace YARG.Core.NewParsing
 {
-    internal class YARGChartFinalizer
+    public partial class YARGChart
     {
-        public static void FinalizeAnchors(SyncTrack2 sync)
+        private static void FinalizeAnchors(SyncTrack2 sync)
         {
+            Debug.Assert(sync.TempoMarkers.Count > 0, "A least one tempo marker must exist");
             unsafe
             {
                 double tickrate = sync.Tickrate;
-                // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
-                for (YARGKeyValuePair<long, Tempo2>* prev = sync.TempoMarkers.Data, curr = prev + 1, end = prev + sync.TempoMarkers.Count;
-                    curr < end;
-                    prev = curr++)
+                var curr = sync.TempoMarkers.Data;
+                var end = curr + sync.TempoMarkers.Count;
+                while (true)
                 {
+                    // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
+                    var prev = curr++;
+                    if (curr == end)
+                    {
+                        break;
+                    }
+
                     double numQuarters = (curr->Key - prev->Key) / tickrate;
                     if (curr->Value.Anchor == 0)
                     {
@@ -21,92 +29,67 @@ namespace YARG.Core.NewParsing
                     }
                     else
                     {
-                        prev->Value.MicrosPerQuarter = (int)((curr->Value.Anchor - prev->Value.Anchor) / numQuarters);
+                        prev->Value.MicrosPerQuarter = (int) ((curr->Value.Anchor - prev->Value.Anchor) / numQuarters);
                     }
                 }
             }
         }
 
-        public static DualTime GetEndTime(YARGChart chart)
+        private static void FinalizeDeserialization(YARGChart chart)
         {
-            var globals = chart.Globals.Span;
-            for (int i = globals.Length - 1; i >= 0; --i)
-            {
-                foreach (string ev in globals[i].Value)
-                {
-                    if (ev == "[end]")
-                    {
-                        return globals[i].Key;
-                    }
-                }
-            }
-
-            static void Test<TTrack>(TTrack? track, ref DualTime lastNoteTime)
-                where TTrack : class, ITrack
-            {
-                if (track != null)
-                {
-                    var lastTime = track.GetLastNoteTime();
-                    if (lastTime > lastNoteTime)
-                        lastNoteTime = lastTime;
-                }
-            }
-
-            DualTime lastNoteTime = default;
-            Test(chart.FiveFretGuitar, ref lastNoteTime);
-            Test(chart.FiveFretBass, ref lastNoteTime);
-            Test(chart.FiveFretRhythm, ref lastNoteTime);
-            Test(chart.FiveFretCoopGuitar, ref lastNoteTime);
-            Test(chart.SixFretGuitar, ref lastNoteTime);
-            Test(chart.SixFretBass, ref lastNoteTime);
-            Test(chart.SixFretRhythm, ref lastNoteTime);
-            Test(chart.SixFretCoopGuitar, ref lastNoteTime);
-
-            Test(chart.Keys, ref lastNoteTime);
-
-            Test(chart.FourLaneDrums, ref lastNoteTime);
-            Test(chart.FiveLaneDrums, ref lastNoteTime);
-
-            // Test(chart.TrueDrums, ref lastNoteTime);
-
-            Test(chart.ProGuitar_17Fret, ref lastNoteTime);
-            Test(chart.ProGuitar_22Fret, ref lastNoteTime);
-            Test(chart.ProBass_17Fret, ref lastNoteTime);
-            Test(chart.ProBass_22Fret, ref lastNoteTime);
-
-            Test(chart.ProKeys, ref lastNoteTime);
-
-            // Test(chart.Dj, ref lastNoteTime);
-
-            Test(chart.LeadVocals, ref lastNoteTime);
-            Test(chart.HarmonyVocals, ref lastNoteTime);
-            return lastNoteTime;
-        }
-
-        public static void FinalizeBeats(YARGChart chart)
-        {
-            var endPosition = GetEndTime(chart);
+            var endPosition = chart.GetEndTime();
             if (chart.BeatMap.IsEmpty())
             {
-                GenerateAllBeats(chart.Sync, chart.BeatMap, endPosition);
+                GenerateAllBeats(chart, endPosition);
             }
             else
             {
-                GenerateLeftoverBeats(chart.Sync, chart.BeatMap, endPosition);
+                GenerateLeftoverBeats(chart, endPosition);
             }
+
+            chart.Sync.TempoMarkers.TrimExcess();
+            chart.Sync.TimeSigs.TrimExcess();
+            chart.BeatMap.TrimExcess();
+            chart.FiveFretGuitar?.TrimExcess();
+            chart.FiveFretBass?.TrimExcess();
+            chart.FiveFretRhythm?.TrimExcess();
+            chart.FiveFretCoopGuitar?.TrimExcess();
+
+            chart.SixFretGuitar?.TrimExcess();
+            chart.SixFretBass?.TrimExcess();
+            chart.SixFretRhythm?.TrimExcess();
+            chart.SixFretCoopGuitar?.TrimExcess();
+
+            chart.Keys?.TrimExcess();
+
+            chart.FourLaneDrums?.TrimExcess();
+            chart.FiveLaneDrums?.TrimExcess();
+
+            // chart.TrueDrums?.TrimExcess();
+
+            chart.ProGuitar_17Fret?.TrimExcess();
+            chart.ProGuitar_22Fret?.TrimExcess();
+            chart.ProBass_17Fret?.TrimExcess();
+            chart.ProBass_22Fret?.TrimExcess();
+
+            chart.ProKeys?.TrimExcess();
+
+            // chart.DJ?.Dispose();
+
+            chart.LeadVocals?.TrimExcess();
+            chart.HarmonyVocals?.TrimExcess();
         }
 
-        private static unsafe void GenerateLeftoverBeats(SyncTrack2 sync, YARGNativeSortedList<DualTime, BeatlineType> beats, in DualTime endPosition)
+        private static unsafe void GenerateLeftoverBeats(YARGChart chart, in DualTime endPosition)
         {
-            long multipliedTickrate = 4 * sync.Tickrate;
+            long multipliedTickrate = 4 * chart.Sync.Tickrate;
 
             int beatIndex = 0;
-            var tempoTracker = new TempoTracker(sync);
+            var tempoTracker = new TempoTracker(chart.Sync);
 
             DualTime buffer = default;
-            for (YARGKeyValuePair<long, TimeSig2>* currSig = sync.TimeSigs.Data, end = sync.TimeSigs.End;
-                currSig < end;
-                ++currSig)
+            var end = chart.Sync.TimeSigs.End;
+            for (var currSig = chart.Sync.TimeSigs.Data; currSig < end; ++currSig)
             {
                 long ticksPerMarker = multipliedTickrate >> currSig->Value.Denominator;
                 long ticksPerMeasure = (multipliedTickrate * currSig->Value.Numerator) >> currSig->Value.Denominator;
@@ -132,16 +115,16 @@ namespace YARG.Core.NewParsing
                     long position = currSig->Key;
                     for (uint n = 0; n < currSig->Value.Numerator && position < endTime; ++n)
                     {
-                        while (beatIndex < beats.Count && beats.Data[beatIndex].Key.Ticks < position)
+                        while (beatIndex < chart.BeatMap.Count && chart.BeatMap.Data[beatIndex].Key.Ticks < position)
                         {
                             ++beatIndex;
                         }
 
-                        if (beatIndex == beats.Count || position < beats.Data[beatIndex].Key.Ticks)
+                        if (beatIndex == chart.BeatMap.Count || position < chart.BeatMap.Data[beatIndex].Key.Ticks)
                         {
                             buffer.Ticks = position;
                             buffer.Seconds = tempoTracker.Traverse(position);
-                            beats.Insert_Forced(beatIndex, in buffer, BeatlineType.Weak);
+                            chart.BeatMap.Insert_Forced(beatIndex, in buffer, BeatlineType.Weak);
                         }
                         ++beatIndex;
                         position += ticksPerMarker;
@@ -153,20 +136,19 @@ namespace YARG.Core.NewParsing
                 {
                     buffer.Ticks = endTime;
                     buffer.Seconds = tempoTracker.Traverse(endTime);
-                    beats.Append(buffer, BeatlineType.Measure);
+                    chart.BeatMap.Append(buffer, BeatlineType.Measure);
                 }
             }
         }
 
-        private static unsafe void GenerateAllBeats(SyncTrack2 sync, YARGNativeSortedList<DualTime, BeatlineType> beats, in DualTime endPosition)
+        private static unsafe void GenerateAllBeats(YARGChart chart, in DualTime endPosition)
         {
-            long multipliedTickrate = 4 * sync.Tickrate;
-            var tempoTracker = new TempoTracker(sync);
+            long multipliedTickrate = 4 * chart.Sync.Tickrate;
+            var tempoTracker = new TempoTracker(chart.Sync);
 
             DualTime buffer = default;
-            for (YARGKeyValuePair<long, TimeSig2>* currSig = sync.TimeSigs.Data, end = sync.TimeSigs.End;
-                currSig < end;
-                ++currSig)
+            var end = chart.Sync.TimeSigs.End;
+            for (var currSig = chart.Sync.TimeSigs.Data; currSig < end; ++currSig)
             {
                 int numerator = currSig->Value.Numerator;
                 int markersPerClick = (6 << currSig->Value.Denominator) / currSig->Value.Metronome;
@@ -219,7 +201,7 @@ namespace YARG.Core.NewParsing
                     {
                         buffer.Ticks = position;
                         buffer.Seconds = tempoTracker.Traverse(position);
-                        beats.Append(buffer, pattern[i]);
+                        chart.BeatMap.Append(buffer, pattern[i]);
                     }
                     currSig->Key += ticksPerMeasure;
                 }
@@ -228,7 +210,7 @@ namespace YARG.Core.NewParsing
                 {
                     buffer.Ticks = endTime;
                     buffer.Seconds = tempoTracker.Traverse(endTime);
-                    beats.Append(buffer, BeatlineType.Measure);
+                    chart.BeatMap.Append(buffer, BeatlineType.Measure);
                 }
             }
         }

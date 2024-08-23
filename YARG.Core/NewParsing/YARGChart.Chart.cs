@@ -166,7 +166,7 @@ namespace YARG.Core.NewParsing
                         }
                     }
                 }
-                YARGChartFinalizer.FinalizeAnchors(chart.Sync);
+                FinalizeAnchors(chart.Sync);
             }
             DualTime.SetTruncationLimit(settings, 1);
             return chart;
@@ -207,8 +207,7 @@ namespace YARG.Core.NewParsing
                     unknownDrums.ConvertToFiveLane(chart.FiveLaneDrums);
                 }
             }
-            YARGChartFinalizer.FinalizeBeats(chart);
-            chart.TrimExcessData();
+            FinalizeDeserialization(chart);
         }
 
         private static unsafe bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
