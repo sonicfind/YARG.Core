@@ -63,24 +63,20 @@ namespace YARG.Core.NewParsing
         /// </summary>
         public YARGKeyValuePair<TKey, TValue>[] Data => _buffer;
 
+        public YARGManagedSortedList() { }
+
         /// <summary>
         /// Transfers all the data to a new instance of the list, leaving the current one in its default state.
         /// </summary>
         /// <remarks>This is only to be used to dodge double-frees from any sort of conversions with readonly instances</remarks>
-        /// <returns>The new instance that contains the original data</returns>
-        public YARGManagedSortedList<TKey, TValue> MoveToNewList()
+        public YARGManagedSortedList(YARGManagedSortedList<TKey, TValue> original)
         {
-            var newList = new YARGManagedSortedList<TKey, TValue>()
-            {
-                _buffer = _buffer,
-                _count = _count,
-                _version = _version,
-            };
-            
-            _buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
-            _count = 0;
-            _version = 0;
-            return newList;
+            _buffer = original._buffer;
+            _count = original._count;
+            _version = original._version;
+            original._buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
+            original._count = 0;
+            original._version = 0;
         }
 
         /// <summary>
