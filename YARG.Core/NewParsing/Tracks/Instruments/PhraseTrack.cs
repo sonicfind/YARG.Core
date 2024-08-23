@@ -29,14 +29,14 @@ namespace YARG.Core.NewParsing
 
         protected PhraseTrack(PhraseTrack source)
         {
-            Overdrives = source.Overdrives.MoveToNewList();
-            Soloes = source.Soloes.MoveToNewList();
-            Trills = source.Trills.MoveToNewList();
-            Tremolos = source.Tremolos.MoveToNewList();
-            BREs = source.BREs.MoveToNewList();
-            Faceoff_Player1 = source.Faceoff_Player1.MoveToNewList();
-            Faceoff_Player2 = source.Faceoff_Player2.MoveToNewList();
-            Events = source.Events.MoveToNewList();
+            Overdrives      = new(source.Overdrives);
+            Soloes          = new(source.Soloes);
+            Trills          = new(source.Trills);
+            Tremolos        = new(source.Tremolos);
+            BREs            = new(source.BREs);
+            Faceoff_Player1 = new(source.Faceoff_Player1);
+            Faceoff_Player2 = new(source.Faceoff_Player2);
+            Events          = new(source.Events);
         }
 
         public virtual bool IsEmpty()
