@@ -149,8 +149,7 @@ namespace YARG.Core.NewParsing
                 }
             }
 
-            YARGChartFinalizer.FinalizeBeats(chart);
-            chart.TrimExcessData();
+            FinalizeDeserialization(chart);
             return chart;
         }
 
@@ -199,7 +198,7 @@ namespace YARG.Core.NewParsing
                             break;
                     }
                 }
-                YARGChartFinalizer.FinalizeAnchors(sync);
+                FinalizeAnchors(sync);
             }
             return new YARGChart(sync, metadata, settings, miscellaneous);
         }
