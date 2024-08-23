@@ -103,8 +103,7 @@ namespace YARG.Core.NewParsing
 
             var encoding = YARGTextReader.UTF8Strict;
             LoadTracks_Midi(chart, ref midi, ref encoding, ref drumsInChart, activeInstruments);
-            YARGChartFinalizer.FinalizeBeats(chart);
-            chart.TrimExcessData();
+            FinalizeDeserialization(chart);
             return chart;
         }
 
@@ -129,8 +128,7 @@ namespace YARG.Core.NewParsing
             }
 
             LoadTracks_Midi(chart, ref mainMidi, ref encoding, ref drumsInChart, activeInstruments);
-            YARGChartFinalizer.FinalizeBeats(chart);
-            chart.TrimExcessData();
+            FinalizeDeserialization(chart);
             return chart;
         }
 
@@ -192,7 +190,7 @@ namespace YARG.Core.NewParsing
                     }
                 }
             }
-            YARGChartFinalizer.FinalizeAnchors(sync);
+            FinalizeAnchors(sync);
         }
 
         private static readonly byte[][] PREFIXES = { Encoding.ASCII.GetBytes("[section "), Encoding.ASCII.GetBytes("[prc_") };
