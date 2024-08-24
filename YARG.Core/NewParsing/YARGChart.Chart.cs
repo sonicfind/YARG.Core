@@ -363,72 +363,43 @@ namespace YARG.Core.NewParsing
             difficultyTrack = new DifficultyTrack2<TNote>();
             difficultyTrack.Notes.Capacity = 5000;
 
-
-            var ev = default(DotChartEvent);
-            var position = default(DualTime);
-            var duration = default(DualTime);
-            void AddSpecialPhrase(YARGNativeSortedList<DualTime, DualTime> phrases)
-            {
-                if (phrases.Count > 0)
-                {
-                    ref var last = ref phrases.Data[phrases.Count - 1];
-                    if (last.Key + last.Value > position)
-                    {
-                        last.Value = position - last.Key;
-                    }
-                }
-                phrases.Append(in position, duration);
-            }
             // Keeps tracks of soloes that start on the same tick when another solo ends
             var soloPosition = DualTime.Inactive;
             var nextSoloPosition = DualTime.Inactive;
 
+            var ev = default(DotChartEvent);
             var tempoTracker = new TempoTracker(sync);
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
             {
-                position.Ticks = ev.Position;
-                position.Seconds = tempoTracker.Traverse(ev.Position);
+                var position = new DualTime
+                {
+                    Ticks = ev.Position,
+                    Seconds = tempoTracker.Traverse(ev.Position)
+                };
+
                 switch (ev.Type)
                 {
                     case ChartEventType.Note:
                         {
+                            var (lane, duration) = YARGChartFileReader.ExtractLaneAndDuration(ref container, in position, in tempoTracker);
                             var note = difficultyTrack.Notes.GetLastOrAppend(in position);
-
-                            int lane = YARGTextReader.ExtractInt32AndWhitespace(ref container);
-                            long tickDuration = YARGTextReader.ExtractInt64AndWhitespace(ref container);
-                            if (tickDuration == 0)
+                            if (!note->SetFromDotChart(lane, in duration) && note->GetNumActiveLanes() == 0)
                             {
-                                tickDuration = 1;
-                            }
-
-                            duration.Ticks = tickDuration;
-                            duration.Seconds = tempoTracker.UnmovingConvert(position.Ticks + tickDuration) - position.Seconds;
-                            if (!note->SetFromDotChart(lane, in duration))
-                            {
-                                if (note->GetNumActiveLanes() == 0)
-                                {
-                                    difficultyTrack.Notes.Pop();
-                                }
+                                difficultyTrack.Notes.Pop();
                             }
                             break;
                         }
                     case ChartEventType.Special:
                         {
-                            var type = (SpecialPhraseType) YARGTextReader.ExtractInt32AndWhitespace(ref container);
-                            long tickDuration = YARGTextReader.ExtractInt64AndWhitespace(ref container);
-                            if (tickDuration > 0)
+                            var (lane, duration) = YARGChartFileReader.ExtractLaneAndDuration(ref container, in position, in tempoTracker);
+                            switch ((SpecialPhraseType) lane)
                             {
-                                duration.Ticks = tickDuration;
-                                duration.Seconds = tempoTracker.UnmovingConvert(position.Ticks + tickDuration) - position.Seconds;
-                                switch (type)
-                                {
-                                    case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(difficultyTrack.Faceoff_Player1); break;
-                                    case SpecialPhraseType.FaceOff_Player2: AddSpecialPhrase(difficultyTrack.Faceoff_Player2); break;
-                                    case SpecialPhraseType.StarPower:       AddSpecialPhrase(difficultyTrack.Overdrives); break;
-                                    case SpecialPhraseType.BRE:             AddSpecialPhrase(difficultyTrack.BREs); break;
-                                    case SpecialPhraseType.Tremolo:         AddSpecialPhrase(difficultyTrack.Tremolos); break;
-                                    case SpecialPhraseType.Trill:           AddSpecialPhrase(difficultyTrack.Trills); break;
-                                }
+                                case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(difficultyTrack.Faceoff_Player1, in position, in duration); break;
+                                case SpecialPhraseType.FaceOff_Player2: AddSpecialPhrase(difficultyTrack.Faceoff_Player2, in position, in duration); break;
+                                case SpecialPhraseType.StarPower:       AddSpecialPhrase(difficultyTrack.Overdrives,      in position, in duration); break;
+                                case SpecialPhraseType.BRE:             AddSpecialPhrase(difficultyTrack.BREs,            in position, in duration); break;
+                                case SpecialPhraseType.Tremolo:         AddSpecialPhrase(difficultyTrack.Tremolos,        in position, in duration); break;
+                                case SpecialPhraseType.Trill:           AddSpecialPhrase(difficultyTrack.Trills,          in position, in duration); break;
                             }
                             break;
                         }
@@ -477,6 +448,19 @@ namespace YARG.Core.NewParsing
                 }
             }
             return true;
+        }
+
+        private static unsafe void AddSpecialPhrase(YARGNativeSortedList<DualTime, DualTime> phrases, in DualTime position, in DualTime duration)
+        {
+            if (phrases.Count > 0)
+            {
+                ref var last = ref phrases.Data[phrases.Count - 1];
+                if (last.Key + last.Value > position)
+                {
+                    last.Value = position - last.Key;
+                }
+            }
+            phrases.Append(in position, duration);
         }
     }
 }
