@@ -222,6 +222,24 @@ namespace YARG.Core.IO
             }
             return timeSig;
         }
+
+        public static (int lane, DualTime duration) ExtractLaneAndDuration<TChar>(ref YARGTextContainer<TChar> container, in DualTime position, in TempoTracker tracker)
+            where TChar : unmanaged, IEquatable<TChar>, IConvertible
+        {
+            int lane = ExtractWithWhitespace<TChar, int>(ref container);
+            long tickDuration = ExtractWithWhitespace<TChar, long>(ref container);
+            if (tickDuration <= 0)
+            {
+                tickDuration = 1;
+            }
+
+            var duration = new DualTime()
+            {
+                Ticks = tickDuration,
+                Seconds = tracker.UnmovingConvert(position.Ticks + tickDuration) - position.Seconds
+            };
+            return (lane, duration);
+        }
         public static TNumber Extract<TChar, TNumber>(ref YARGTextContainer<TChar> text)
             where TChar : unmanaged, IConvertible
             where TNumber : unmanaged, IComparable, IComparable<TNumber>, IConvertible, IEquatable<TNumber>, IFormattable
