@@ -244,6 +244,24 @@ namespace YARG.Core.IO
             }
             return timeSig;
         }
+        
+        public static (int lane, DualTime duration) ExtractLaneAndDuration<TChar>(ref YARGTextContainer<TChar> container, in DualTime position, in TempoTracker tracker)
+            where TChar : unmanaged, IEquatable<TChar>, IConvertible
+        {
+            int lane = YARGTextReader.ExtractInt32AndWhitespace(ref container);
+            long tickDuration = YARGTextReader.ExtractInt64AndWhitespace(ref container);
+            if (tickDuration <= 0)
+            {
+                tickDuration = 1;
+            }
+
+            var duration = new DualTime()
+            {
+                Ticks = tickDuration,
+                Seconds = tracker.UnmovingConvert(position.Ticks + tickDuration) - position.Seconds
+            };
+            return (lane, duration);
+        }
 
         public static readonly Dictionary<string, IniModifierCreator> CHART_MODIFIERS = new()
         {
