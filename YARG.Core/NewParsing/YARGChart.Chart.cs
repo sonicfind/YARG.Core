@@ -370,7 +370,6 @@ namespace YARG.Core.NewParsing
             difficultyTrack = new DifficultyTrack2<TNote>();
             difficultyTrack.Notes.Capacity = 5000;
 
-            var soloQueue = stackalloc DualTime[2] { DualTime.Inactive, DualTime.Inactive };
 
             var ev = default(DotChartEvent);
             var position = default(DualTime);
@@ -387,6 +386,9 @@ namespace YARG.Core.NewParsing
                 }
                 phrases.Append(in position, duration);
             }
+            // Keeps tracks of soloes that start on the same tick when another solo ends
+            var soloPosition = DualTime.Inactive;
+            var nextSoloPosition = DualTime.Inactive;
 
             var tempoTracker = new TempoTracker(sync);
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
@@ -439,35 +441,42 @@ namespace YARG.Core.NewParsing
                         }
                     case ChartEventType.Text:
                         string str = YARGTextReader.ExtractText(ref container, true);
-                        if (str == SOLOEND)
+                        if (str == SOLO)
                         {
-                            if (soloQueue[0].Ticks != -1)
+                            if (soloPosition.Ticks == -1)
+                            {
+                                soloPosition = position;
+                            }
+                            else
+                            {
+                                nextSoloPosition = position;
+                            }
+                        }
+                        else if (str == SOLOEND)
+                        {
+                            if (soloPosition.Ticks != -1)
                             {
                                 // .chart handles solo phrases with *inclusive ends*, so we have to add one tick.
                                 // The only exception will be if another solo starts on the same exact tick.
-                                if (soloQueue[1] == position)
-                                {
-                                    difficultyTrack.Soloes.Append(in soloQueue[0], soloQueue[1] - soloQueue[0]);
-                                    soloQueue[0] = soloQueue[1];
-                                    soloQueue[1] = DualTime.Inactive;
-                                }
-                                else
+                                //
+                                // Comparing to the current tick instead of against uint.MaxValue ensures
+                                // that the we don't allow overlaps
+                                if (nextSoloPosition != position)
                                 {
                                     ++position.Ticks;
                                     position.Seconds = tempoTracker.UnmovingConvert(position.Ticks);
-                                    difficultyTrack.Soloes.Append(in soloQueue[0], position - soloQueue[0]);
+                                    difficultyTrack.Soloes.Append(in soloPosition, position - soloPosition);
+                                    soloPosition = DualTime.Inactive;
+                                }
+                                else
+                                {
+                                    difficultyTrack.Soloes.Append(in soloPosition, nextSoloPosition - soloPosition);
+                                    soloPosition = nextSoloPosition;
+                                    nextSoloPosition = DualTime.Inactive;
                                 }
                             }
                         }
-                        else if (str == SOLO)
-                        {
-                            unsafe
-                            {
-                                bool useBackup = soloQueue[0].Ticks != -1;
-                                soloQueue[*(byte*)&useBackup] = position;
-                            }
-                        }
-                        else
+                        else 
                         {
                             difficultyTrack.Events.GetLastOrAppend(in position).Add(str);
                         }
