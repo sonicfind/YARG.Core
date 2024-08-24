@@ -307,13 +307,10 @@ namespace YARG.Core.NewParsing
                 default:
                     if (activeTracks == null)
                     {
-                        unsafe
-                        {
-                            UnknownLaneDrums.DrumType = drumsInChart;
-                            bool result = LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref unknownDrums);
-                            drumsInChart = UnknownLaneDrums.DrumType;
-                            return result;
-                        }
+                        UnknownLaneDrums.DrumType = drumsInChart;
+                        bool result = LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref unknownDrums);
+                        drumsInChart = UnknownLaneDrums.DrumType;
+                        return result;
                     }
                     break;
                 }
@@ -324,9 +321,7 @@ namespace YARG.Core.NewParsing
                 return false;
             }
 
-            unsafe
-            {
-                return instrument switch
+            return instrument switch
                 {
                     Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretGuitar),
                     Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretBass),
@@ -342,7 +337,6 @@ namespace YARG.Core.NewParsing
                     Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.Keys),
                     _ => false,
                 };
-            }
         }
 
         private enum SpecialPhraseType
@@ -355,7 +349,7 @@ namespace YARG.Core.NewParsing
             Trill = 66,
         }
 
-        private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref InstrumentTrack2<DifficultyTrack2<TNote>>? track)
+        private static bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref InstrumentTrack2<DifficultyTrack2<TNote>>? track)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TNote : unmanaged, IInstrumentNote, IDotChartLoadable
         {
@@ -387,6 +381,7 @@ namespace YARG.Core.NewParsing
                 switch (ev.Type)
                 {
                     case ChartEventType.Note:
+                        unsafe
                         {
                             var (lane, duration) = YARGChartFileReader.ExtractLaneAndDuration(ref container, in position, in tempoTracker);
                             var note = difficultyTrack.Notes.GetLastOrAppend(in position);
