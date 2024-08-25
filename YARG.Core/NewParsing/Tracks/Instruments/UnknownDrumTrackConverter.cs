@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace YARG.Core.NewParsing
@@ -68,6 +69,8 @@ namespace YARG.Core.NewParsing
 
         private static unsafe DifficultyTrack2<FiveLaneDrums> ConvertToFiveLane(this DifficultyTrack2<UnknownLaneDrums> source)
         {
+            const int DUAL_COUNT = 5;
+            const int DYMANICS_COUNT = 4;
             var newDifficulty = new DifficultyTrack2<FiveLaneDrums>(source);
             newDifficulty.Notes.Capacity = source.Notes.Count;
 
@@ -75,19 +78,16 @@ namespace YARG.Core.NewParsing
             for (var curr = source.Notes.Data; curr < end; ++curr)
             {
                 var note = newDifficulty.Notes.Append(in curr->Key);
-                note->Bass = curr->Value.Bass;
+                //                                          Bass + four pads = 5
+                Unsafe.CopyBlock(&note->Bass, &curr->Value.Bass, DUAL_COUNT * (uint) sizeof(DualTime));
+                note->Green = curr->Value.Green;
+
+                //                                                                   four pads = 4 (duh)
+                Unsafe.CopyBlock(&note->Dynamics_Snare, &curr->Value.Dynamics_Snare, DYMANICS_COUNT * (uint) sizeof(DrumDynamics));
+                note->Dynamics_Green = curr->Value.Dynamics_Green;
+
                 note->IsDoubleBass = curr->Value.IsDoubleBass;
                 note->IsFlammed = curr->Value.IsFlammed;
-                note->Snare = curr->Value.Snare;
-                note->Yellow = curr->Value.Yellow;
-                note->Blue = curr->Value.Blue;
-                note->Orange = curr->Value.Orange;
-                note->Green = curr->Value.Green;
-                note->Dynamics_Snare = curr->Value.Dynamics_Snare;
-                note->Dynamics_Yellow = curr->Value.Dynamics_Yellow;
-                note->Dynamics_Blue = curr->Value.Dynamics_Blue;
-                note->Dynamics_Orange = curr->Value.Dynamics_Orange;
-                note->Dynamics_Green = curr->Value.Dynamics_Green;
             }
             source.Notes.Dispose();
             return newDifficulty;
