@@ -43,8 +43,8 @@ namespace YARG.Core.NewParsing
 
         // public TBDTrack DJ;
 
-        public VocalTrack2? LeadVocals;
-        public VocalTrack2? HarmonyVocals;
+        public LeadVocalsTrack? LeadVocals;
+        public HarmonyVocalsTrack? HarmonyVocals;
 
         public VenueTrack2? Venue;
 
