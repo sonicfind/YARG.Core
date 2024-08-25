@@ -327,11 +327,11 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Harm2:
                 case MidiTrackType.Harm3:
                     {
-                        var harmony = chart.HarmonyVocals ??= new VocalTrack2(3);
+                        chart.HarmonyVocals ??= new HarmonyVocalsTrack();
                         int index = type - MidiTrackType.Harm1;
-                        if (harmony[index].IsEmpty())
+                        if (chart.HarmonyVocals[index].IsEmpty())
                         {
-                            MidiVocalsLoader.Load(midiTrack, sync, harmony, index, ref encoding);
+                            MidiVocalsLoader.Load(midiTrack, sync, chart.HarmonyVocals, index, ref encoding);
                         }
                         break;
                     }
