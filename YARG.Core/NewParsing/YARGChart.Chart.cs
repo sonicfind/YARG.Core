@@ -19,6 +19,14 @@ namespace YARG.Core.NewParsing
         private const string PHRASE_START = "phrase_start";
         private const string PHRASE_END = "phrase_end";
 
+        /// <summary>
+        /// Creates an empty chart with supplied sync, metadata, and settings.
+        /// </summary>
+        /// <remarks>For use solely for deserialization</remarks>
+        /// <param name="sync">The backing sync track</param>
+        /// <param name="metadata">The Ini and/or .chart metdata info</param>
+        /// <param name="settings">The settings for converting notes to their engine types</param>
+        /// <param name="miscellaneous">Container of miscellaneous modifiers from the [Song] chunk</param>
         private YARGChart(SyncTrack2 sync, SongMetadata metadata, LoaderSettings settings, Dictionary<string, IniModifier> miscellaneous)
         {
             Sync = sync;

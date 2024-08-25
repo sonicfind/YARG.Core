@@ -4,6 +4,9 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
+    /// <summary>
+    /// Contains the microseconds per quarter and microseconds position for a specific tick position
+    /// </summary>
     public struct Tempo2
     {
         public const int MICROS_PER_SECOND =  1000000;
@@ -23,6 +26,9 @@ namespace YARG.Core.NewParsing
         public int MicrosPerQuarter;
         public long Anchor;
 
+        /// <summary>
+        /// Handles the conversions to and from float BPMs from and to microseconds per quarter (respectively)
+        /// </summary>
         public float BPM
         {
             readonly get { return MicrosPerQuarter != 0 ? (float) BPM_FACTOR / MicrosPerQuarter : float.MaxValue; }

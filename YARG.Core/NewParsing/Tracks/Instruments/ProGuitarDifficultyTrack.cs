@@ -9,23 +9,36 @@ namespace YARG.Core.NewParsing
     {
         public readonly YARGNativeSortedList<DualTime, DualTime> Arpeggios = new();
 
+        /// <summary>
+        /// Returns whether the track contains no notes, arpeggios, phrases, nor events
+        /// </summary>
+        /// <returns>Whether the track is empty</returns>
         public override bool IsEmpty()
         {
             return Arpeggios.IsEmpty() && base.IsEmpty();
         }
 
+        /// <summary>
+        /// Clears all notes, arpeggios, phrases, and events
+        /// </summary>
         public override void Clear()
         {
             Arpeggios.Clear();
             base.Clear();
         }
 
+        /// <summary>
+        /// Trims excess unmanaged buffer data from notes, arpeggios, and phrases
+        /// </summary>
         public override void TrimExcess()
         {
             Arpeggios.TrimExcess();
             base.TrimExcess();
         }
 
+        /// <summary>
+        /// Diposes all unmanagaed buffer data of notes, arpeggios, and phrases
+        /// </summary>
         public override void Dispose()
         {
             Arpeggios.Dispose();
