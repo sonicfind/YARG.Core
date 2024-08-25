@@ -114,7 +114,7 @@ namespace YARG.Core.NewParsing
             var chart = LoadHeaderAndSync_Chart(ref container, in metadata, in settings);
             if (activeTracks == null || activeTracks.Contains(Instrument.Vocals))
             {
-                chart.LeadVocals = new VocalTrack2(1);
+                chart.LeadVocals = new LeadVocalsTrack();
             }
 
             InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>>? unknownDrums = null;
