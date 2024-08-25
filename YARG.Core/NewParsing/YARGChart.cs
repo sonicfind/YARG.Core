@@ -48,9 +48,9 @@ namespace YARG.Core.NewParsing
 
         public VenueTrack2? Venue;
 
-        public YARGChart()
+        public YARGChart(uint tickrate = 480)
         {
-            Sync = new SyncTrack2(480);
+            Sync = new SyncTrack2(tickrate);
             Metadata = SongMetadata.Default;
             Settings = LoaderSettings.Default;
         }
