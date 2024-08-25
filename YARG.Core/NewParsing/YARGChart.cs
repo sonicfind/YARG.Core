@@ -32,7 +32,7 @@ namespace YARG.Core.NewParsing
         public InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>? FourLaneDrums;
         public InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>? FiveLaneDrums;
 
-        // public InstrumentTrack2<TrueDrums>? TrueDrums;
+        // public InstrumentTrack2<EliteDrums>? EliteDrums;
 
         public ProGuitarInstrumentTrack<ProFret_17>? ProGuitar_17Fret;
         public ProGuitarInstrumentTrack<ProFret_22>? ProGuitar_22Fret;
@@ -48,6 +48,10 @@ namespace YARG.Core.NewParsing
 
         public VenueTrack2? Venue;
 
+        /// <summary>
+        /// Constructs an empty chart with default metadata and settings
+        /// </summary>
+        /// <param name="tickrate">The tick rate to initialize the sync track to</param>
         public YARGChart(long tickrate = 480)
         {
             Sync = new SyncTrack2(tickrate);
@@ -64,6 +68,11 @@ namespace YARG.Core.NewParsing
             Miscellaneous = modifiers;
         }
 
+        /// <summary>
+        /// Calculates when the chart should end based on the notes and text events contained within it.
+        /// </summary>
+        /// <remarks>If the "[end]" global text event is present in the chart, the position of that event will be used.</remarks>
+        /// <returns>The end time for the chart</returns>
         public DualTime GetEndTime()
         {
             var globals = Globals.Span;
@@ -120,6 +129,9 @@ namespace YARG.Core.NewParsing
             return lastNoteTime;
         }
 
+        /// <summary>
+        /// Disposes of all unmanaged data present in any of the chart's tracks or containers
+        /// </summary>
         public void Dispose()
         {
             Sync.Dispose();

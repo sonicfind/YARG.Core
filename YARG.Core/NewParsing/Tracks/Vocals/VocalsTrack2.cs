@@ -13,11 +13,20 @@ namespace YARG.Core.NewParsing
         public readonly YARGNativeSortedSet<DualTime> LyricShifts = new();
         public readonly YARGManagedSortedList<DualTime, HashSet<string>> Events = new();
 
+        /// <summary>
+        /// Returns the vocal part (lyrics and notes) for the specified index
+        /// </summary>
+        /// <param name="index">The part index</param>
+        /// <returns>The notes and lyrics for a specific vocal part</returns>
         public abstract VocalPart2 this[int index] { get; }
         public abstract int NumTracks { get; }
 
         protected VocalTrack2() { }
 
+        /// <summary>
+        /// Returns whether all parts, percussion, phrases, and events are empty
+        /// </summary>
+        /// <returns>If all containers are empty, return true</returns>
         public virtual bool IsEmpty()
         {
             return Percussion.IsEmpty()
@@ -30,6 +39,9 @@ namespace YARG.Core.NewParsing
                 && Events.IsEmpty();
         }
 
+        /// <summary>
+        /// Clears all parts, percussion, phrase, and events
+        /// </summary>
         public virtual void Clear()
         {
             Percussion.Clear();
@@ -42,6 +54,9 @@ namespace YARG.Core.NewParsing
             Events.Clear();
         }
 
+        /// <summary>
+        /// Trims the buffers for parts, percussion, and phrases
+        /// </summary>
         public virtual void TrimExcess()
         {
             if ((Percussion.Count < 20 || 400 <= Percussion.Count) && Percussion.Count < Percussion.Capacity)
@@ -56,6 +71,10 @@ namespace YARG.Core.NewParsing
             LyricShifts.TrimExcess();
         }
 
+        /// <summary>
+        /// Returns the latest time when any part (or percussion) ends
+        /// </summary>
+        /// <returns>The latest end time of the track</returns>
         public virtual unsafe DualTime GetLastNoteTime()
         {
             DualTime endTime = default;
@@ -70,6 +89,9 @@ namespace YARG.Core.NewParsing
             return endTime;
         }
 
+        /// <summary>
+        /// Disposes all unmanaged buffer data for each part, percussion, and phrases
+        /// </summary>
         public virtual void Dispose()
         {
             Percussion.Dispose();
@@ -86,6 +108,11 @@ namespace YARG.Core.NewParsing
     {
         private readonly VocalPart2 _part;
 
+        /// <summary>
+        /// Returns the lead vocal part when given index 0
+        /// </summary>
+        /// <param name="index">The part index</param>
+        /// <returns>The notes and lyrics for lead vocals</returns>
         public override VocalPart2 this[int index]
         {
             get
@@ -100,28 +127,45 @@ namespace YARG.Core.NewParsing
 
         public override int NumTracks => 1;
 
+        /// <summary>
+        /// Constructs a vocal track with the single lead vocals part
+        /// </summary>
         public LeadVocalsTrack()
         {
             _part.Notes = new YARGNativeSortedList<DualTime, VocalNote2>();
             _part.Lyrics = new YARGManagedSortedList<DualTime, NonNullString>();
         }
 
+        /// <summary>
+        /// Returns whether lead vocal part, percussion, phrases, and events are empty
+        /// </summary>
+        /// <returns>If all containers are empty, return true</returns>
         public override bool IsEmpty()
         {
             return _part.IsEmpty() && base.IsEmpty();
         }
 
+        /// <summary>
+        /// Clears all notes, lyrics, percussion, phrase, and events
+        /// </summary>
         public override void Clear()
         {
             _part.Clear();
             base.Clear();
         }
 
+        /// <summary>
+        /// Trims the buffers for the lead's notes, percussion, and phrases
+        /// </summary>
         public override void TrimExcess()
         {
             _part.TrimExcess();
         }
 
+        /// <summary>
+        /// Returns the latest time when lead vocals or percussion ends
+        /// </summary>
+        /// <returns>The latest end time of the track</returns>
         public override unsafe DualTime GetLastNoteTime()
         {
             var endTime = base.GetLastNoteTime();
@@ -137,6 +181,9 @@ namespace YARG.Core.NewParsing
             return endTime;
         }
 
+        /// <summary>
+        /// Disposes all unmanaged buffer data for lead's notes and lyrics, percussion, and phrases
+        /// </summary>
         public override void Dispose()
         {
             _part.Notes.Dispose();
@@ -149,10 +196,18 @@ namespace YARG.Core.NewParsing
     {
         private readonly VocalPart2[] _parts = new VocalPart2[3];
 
+        /// <summary>
+        /// Returns the vocal part (lyrics and notes) for the specified index [0,1,2]
+        /// </summary>
+        /// <param name="index">The part index</param>
+        /// <returns>The notes and lyrics for a specific vocal part</returns>
         public override VocalPart2 this[int index] => _parts[index];
 
         public override int NumTracks => 3;
 
+        /// <summary>
+        /// Constructs a vocals track comprising of three separate vocal parts
+        /// </summary>
         public HarmonyVocalsTrack()
         {
             for (int i = 0; i < NumTracks; ++i)
@@ -162,6 +217,10 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        /// <summary>
+        /// Returns whether all parts, percussion, phrases, and events are empty
+        /// </summary>
+        /// <returns>If all containers are empty, return true</returns>
         public override bool IsEmpty()
         {
             for (int i = 0; i < NumTracks; ++i)
@@ -174,6 +233,9 @@ namespace YARG.Core.NewParsing
             return base.IsEmpty();
         }
 
+        /// <summary>
+        /// Clears all parts, percussion, phrase, and events
+        /// </summary>
         public override void Clear()
         {
             for (int i = 0; i < NumTracks; ++i)
@@ -183,6 +245,9 @@ namespace YARG.Core.NewParsing
             base.Clear();
         }
 
+        /// <summary>
+        /// Trims the buffers for parts, percussion, and phrases
+        /// </summary>
         public override void TrimExcess()
         {
             for (int i = 0; i < NumTracks; ++i)
@@ -191,6 +256,10 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        /// <summary>
+        /// Returns the latest time when any part (or percussion) ends
+        /// </summary>
+        /// <returns>The latest end time of the track</returns>
         public override unsafe DualTime GetLastNoteTime()
         {
             var endTime = base.GetLastNoteTime();
@@ -211,6 +280,9 @@ namespace YARG.Core.NewParsing
             return endTime;
         }
 
+        /// <summary>
+        /// Disposes all unmanaged buffer data for each part, percussion, and phrases
+        /// </summary>
         public override void Dispose()
         {
             for (int i = 0; i < NumTracks; ++i)
