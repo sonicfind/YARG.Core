@@ -20,9 +20,9 @@ namespace YARG.Core.NewParsing.Midi
 
         private static readonly byte[] RANGESHIFT_TEXT = Encoding.ASCII.GetBytes("[range_shift]");
 
-        public static VocalTrack2 LoadPartVocals(YARGMidiTrack midiTrack, SyncTrack2 sync, ref Encoding encoding)
+        public static LeadVocalsTrack LoadPartVocals(YARGMidiTrack midiTrack, SyncTrack2 sync, ref Encoding encoding)
         {
-            var vocalTrack = new VocalTrack2(1);
+            var vocalTrack = new LeadVocalsTrack();
             Load(midiTrack, sync, vocalTrack, 0, ref encoding);
             return vocalTrack;
         }
