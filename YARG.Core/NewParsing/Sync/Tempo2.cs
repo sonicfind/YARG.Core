@@ -25,8 +25,8 @@ namespace YARG.Core.NewParsing
 
         public float BPM
         {
-            readonly get { return MicrosPerQuarter != 0 ? (float) BPM_FACTOR / MicrosPerQuarter : 0; }
-            set { MicrosPerQuarter = value != 0 ? (int) (BPM_FACTOR / value) : 0; }
+            readonly get { return MicrosPerQuarter != 0 ? (float) BPM_FACTOR / MicrosPerQuarter : float.MaxValue; }
+            set { MicrosPerQuarter = value != 0 ? (int) (BPM_FACTOR / value) : int.MaxValue; }
         }
     }
 }
