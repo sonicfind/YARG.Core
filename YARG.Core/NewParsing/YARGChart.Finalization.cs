@@ -5,32 +5,29 @@ namespace YARG.Core.NewParsing
 {
     public partial class YARGChart
     {
-        private static void FinalizeAnchors(SyncTrack2 sync)
+        private static unsafe void FinalizeAnchors(SyncTrack2 sync)
         {
             Debug.Assert(sync.TempoMarkers.Count > 0, "A least one tempo marker must exist");
-            unsafe
+            double tickrate = sync.Tickrate;
+            var curr = sync.TempoMarkers.Data;
+            var end = curr + sync.TempoMarkers.Count;
+            while (true)
             {
-                double tickrate = sync.Tickrate;
-                var curr = sync.TempoMarkers.Data;
-                var end = curr + sync.TempoMarkers.Count;
-                while (true)
+                // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
+                var prev = curr++;
+                if (curr == end)
                 {
-                    // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
-                    var prev = curr++;
-                    if (curr == end)
-                    {
-                        break;
-                    }
+                    break;
+                }
 
-                    double numQuarters = (curr->Key - prev->Key) / tickrate;
-                    if (curr->Value.Anchor == 0)
-                    {
-                        curr->Value.Anchor = (long) (numQuarters * prev->Value.MicrosPerQuarter) + prev->Value.Anchor;
-                    }
-                    else
-                    {
-                        prev->Value.MicrosPerQuarter = (int) ((curr->Value.Anchor - prev->Value.Anchor) / numQuarters);
-                    }
+                double numQuarters = (curr->Key - prev->Key) / tickrate;
+                if (curr->Value.Anchor == 0)
+                {
+                    curr->Value.Anchor = (long) (numQuarters * prev->Value.MicrosPerQuarter) + prev->Value.Anchor;
+                }
+                else
+                {
+                    prev->Value.MicrosPerQuarter = (int) ((curr->Value.Anchor - prev->Value.Anchor) / numQuarters);
                 }
             }
         }
