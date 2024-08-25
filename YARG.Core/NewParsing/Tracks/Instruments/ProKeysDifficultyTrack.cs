@@ -19,28 +19,28 @@ namespace YARG.Core.NewParsing
         public readonly YARGNativeSortedList<DualTime, ProKey_Ranges> Ranges = new();
         public readonly YARGNativeSortedList<DualTime, DualTime> Glissandos = new();
 
-        public new bool IsEmpty()
+        public override bool IsEmpty()
         {
             return Ranges.IsEmpty()
                 && Glissandos.IsEmpty()
                 && base.IsEmpty();
         }
 
-        public new void TrimExcess()
+        public override void TrimExcess()
         {
             Ranges.TrimExcess();
             Glissandos.TrimExcess();
             base.TrimExcess();
         }
 
-        public new void Clear()
+        public override void Clear()
         {
             Ranges.Clear();
             Glissandos.Clear();
             base.Clear();
         }
 
-        public new void Dispose()
+        public override void Dispose()
         {
             Ranges.Dispose();
             Glissandos.Dispose();

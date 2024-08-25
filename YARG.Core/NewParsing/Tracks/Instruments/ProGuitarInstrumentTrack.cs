@@ -14,7 +14,7 @@ namespace YARG.Core.NewParsing
         public readonly YARGNativeSortedList<DualTime, DualTime> HideChords = new();
         public readonly YARGNativeSortedList<DualTime, DualTime> AccidentalSwitches = new();
 
-        public new bool IsEmpty()
+        public override bool IsEmpty()
         {
             return Roots.IsEmpty()
                 && HandPositions.IsEmpty()
@@ -25,7 +25,7 @@ namespace YARG.Core.NewParsing
                 && base.IsEmpty();
         }
 
-        public new void TrimExcess()
+        public override void TrimExcess()
         {
             Roots.TrimExcess();
             HandPositions.TrimExcess();
@@ -36,7 +36,7 @@ namespace YARG.Core.NewParsing
             base.TrimExcess();
         }
 
-        public new void Clear()
+        public override void Clear()
         {
             Roots.Clear();
             HandPositions.Clear();
@@ -47,7 +47,7 @@ namespace YARG.Core.NewParsing
             base.Clear();
         }
 
-        public new void Dispose()
+        public override void Dispose()
         {
             Roots.Dispose();
             HandPositions.Dispose();
