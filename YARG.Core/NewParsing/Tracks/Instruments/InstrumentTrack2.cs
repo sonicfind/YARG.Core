@@ -8,7 +8,7 @@ namespace YARG.Core.NewParsing
         public const int NUM_DIFFICULTIES = 4;
     }
 
-    public class InstrumentTrack2<TDifficultyTrack> : PhraseTrack, IEnumerable<TDifficultyTrack?>
+    public class InstrumentTrack2<TDifficultyTrack> : PhraseTrack
         where TDifficultyTrack : class, ITrack, new()
     {
         public readonly TDifficultyTrack?[] Difficulties = new TDifficultyTrack[InstrumentTrack2.NUM_DIFFICULTIES];
@@ -112,47 +112,6 @@ namespace YARG.Core.NewParsing
                 diff?.Dispose();
             }
             base.Dispose();
-        }
-
-        IEnumerator<TDifficultyTrack> IEnumerable<TDifficultyTrack?>.GetEnumerator()
-        {
-            return ((IEnumerable<TDifficultyTrack>) this).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
-
-        public struct Enumerator : IEnumerator<TDifficultyTrack?>, IEnumerator
-        {
-            private readonly InstrumentTrack2<TDifficultyTrack> _track;
-            private int diffIndex;
-
-            internal Enumerator(InstrumentTrack2<TDifficultyTrack> track)
-            {
-                _track = track;
-                diffIndex = -1;
-            }
-
-            public readonly void Dispose()
-            {
-            }
-
-            public bool MoveNext()
-            {
-                ++diffIndex;
-                return diffIndex < InstrumentTrack2.NUM_DIFFICULTIES;
-            }
-
-            public readonly TDifficultyTrack? Current => _track.Difficulties[diffIndex];
-
-            readonly object? IEnumerator.Current => Current;
-
-            void IEnumerator.Reset()
-            {
-                diffIndex = -1;
-            }
         }
     }
 }
