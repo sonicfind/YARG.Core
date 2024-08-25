@@ -33,7 +33,7 @@ namespace YARG.Core.NewParsing
         public InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>? FourLaneDrums;
         public InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>? FiveLaneDrums;
 
-        // public InstrumentTrack2<TrueDrums>? TrueDrums;
+        // public InstrumentTrack2<EliteDrums>? EliteDrums;
 
         public ProGuitarInstrumentTrack<ProFret_17>? ProGuitar_17Fret;
         public ProGuitarInstrumentTrack<ProFret_22>? ProGuitar_22Fret;
@@ -49,6 +49,10 @@ namespace YARG.Core.NewParsing
 
         public VenueTrack2? Venue;
 
+        /// <summary>
+        /// Constructs an empty chart with default metadata and settings
+        /// </summary>
+        /// <param name="tickrate">The tick rate to initialize the sync track to</param>
         public YARGChart(uint tickrate = 480)
         {
             Sync = new SyncTrack2(tickrate);
@@ -56,7 +60,15 @@ namespace YARG.Core.NewParsing
             Settings = ParseSettings.Default;
         }
 
-        public YARGChart(SyncTrack2 sync, SongMetadata metadata, ParseSettings settings, string? midiSequenceName = null)
+        /// <summary>
+        /// Creates an empty chart with supplied sync, metadata, and settings.
+        /// </summary>
+        /// <remarks>For use solely for deserialization</remarks>
+        /// <param name="sync">The backing sync track</param>
+        /// <param name="metadata">The Ini and/or .chart metdata info</param>
+        /// <param name="settings">The settings for converting notes to their engine types</param>
+        /// <param name="midiSequenceName">The name to use for a written midi file sequence</param>
+        private YARGChart(SyncTrack2 sync, SongMetadata metadata, ParseSettings settings, string? midiSequenceName = null)
         {
             Sync = sync;
             Metadata = metadata;
@@ -64,6 +76,11 @@ namespace YARG.Core.NewParsing
             MidiSequenceName = midiSequenceName ?? string.Empty;
         }
 
+        /// <summary>
+        /// Calculates when the chart should end based on the notes and text events contained within it.
+        /// </summary>
+        /// <remarks>If the "[end]" global text event is present in the chart, the position of that event will be used.</remarks>
+        /// <returns>The end time for the chart</returns>
         public DualTime GetEndTime()
         {
             var globals = Globals.Span;
@@ -162,6 +179,9 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        /// <summary>
+        /// Disposes of all unmanaged data present in any of the chart's tracks or containers
+        /// </summary>
         public void Dispose()
         {
             _Dispose();

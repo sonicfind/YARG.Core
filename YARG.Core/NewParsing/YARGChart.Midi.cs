@@ -15,6 +15,13 @@ namespace YARG.Core.NewParsing
 {
     public partial class YARGChart
     {
+        /// <summary>
+        /// Loads a YARGChart object from the provided midi file. <br></br>
+        /// If an ini file is present in the same directory, its data will be pulled to use during the deserialization.
+        /// </summary>
+        /// <param name="chartInfo">The file path for the midi file to load</param>
+        /// <param name="activeInstruments">Provides guidance over which instruments from the midi file to load. If null, all instruments will be loaded.</param>
+        /// <returns>The chart data from the midi file</returns>
         public static YARGChart LoadMidi_Single(FileInfo chartInfo, HashSet<MidiTrackType>? activeInstruments)
         {
             var iniInfo = new FileInfo(Path.Combine(chartInfo.DirectoryName, "song.ini"));
@@ -55,6 +62,15 @@ namespace YARG.Core.NewParsing
             return LoadMidi_Single(file.ToStream(), metadata, settings, activeInstruments);
         }
 
+        /// <summary>
+        /// Loads a YARGChart object, using the stream to provided the midi file data.<br></br>
+        /// The chart will use provided metadata and settings during initialization, with the settings also being used during deserialization.
+        /// </summary>
+        /// <param name="stream">The stream that contains or points to the midi file data</param>
+        /// <param name="metadata">The ini metadata to initiliaze the chart with</param>
+        /// <param name="settings">The settings to use during the deserialization and/or conversion of tracks to their engine variants</param>
+        /// <param name="activeInstruments">Provides guidance over which instruments from the midi file to load. If null, all instruments will be loaded.</param>
+        /// <returns>The chart data from the midi stream</returns>
         public static YARGChart LoadMidi_Single(Stream stream, in SongMetadata metadata, in ParseSettings settings, HashSet<MidiTrackType>? activeInstruments)
         {
             var midi = new YARGMidiFile(stream);
@@ -69,6 +85,18 @@ namespace YARG.Core.NewParsing
             return chart;
         }
 
+        /// <summary>
+        /// Loads a YARGChart object, using multiple streams to provide all the midi file data to combine.<br></br>
+        /// The chart will use provided metadata and settings during initialization, with the settings also being used during deserialization.
+        /// </summary>
+        /// <remarks>Any conflicting data present in any of the streams will apply with this order of precedence: Update > Upgrade > Original</remarks>
+        /// <param name="mainStream">The stream that contains or points to the original midi file data</param>
+        /// <param name="updateStream">The stream that contains or points to the update midi file data</param>
+        /// <param name="upgradeStream">The stream that contains or points to the upgrade midi file data</param>
+        /// <param name="metadata">The ini metadata to initiliaze the chart with</param>
+        /// <param name="settings">The settings to use during the deserialization and/or conversion of tracks to their engine variants</param>
+        /// <param name="activeInstruments">Provides guidance over which instruments from the midi file to load. If null, all instruments will be loaded.</param>
+        /// <returns>The combined chart data from all the midi streams</returns>
         public static YARGChart LoadMidi_Multi(Stream mainStream, Stream? updateStream, Stream? upgradeStream, in SongMetadata metadata, in ParseSettings settings, HashSet<MidiTrackType>? activeInstruments)
         {
             var midi = new YARGMidiFile(mainStream);
@@ -77,6 +105,7 @@ namespace YARG.Core.NewParsing
             DualTime.SetTruncationLimit(settings, sync.Tickrate / 3);
             MidiFiveFretLoader.SetOverdriveMidiNote(settings.StarPowerNote);
 
+            // Temporary start point. The settings variable may carry that information in the future.
             var encoding = Encoding.UTF8;
             if (updateStream != null)
             {
@@ -97,6 +126,14 @@ namespace YARG.Core.NewParsing
             return chart;
         }
 
+        /// <summary>
+        /// Loads tempo markers and time signatures from the initial midi track
+        /// </summary>
+        /// <remarks>
+        /// The midi file should be in its default state to work properly.
+        /// </remarks>
+        /// <param name="midi">The untouched midi file to pull the track from</param>
+        /// <returns></returns>
         private static unsafe (SyncTrack2 Sync, string? SequenceName) LoadSyncTrack_Midi(YARGMidiFile midi)
         {
             var sync = new SyncTrack2(midi.TickRate);
@@ -125,6 +162,14 @@ namespace YARG.Core.NewParsing
             return (sync, sequenceName);
         }
 
+        /// <summary>
+        /// Loops through all the tracks present in the provided midifile object
+        /// </summary>
+        /// <param name="chart">The chart to load data into</param>
+        /// <param name="sync">The synctrack to use when loading subtracks. This may not be the synctrack present in the chart object in the case of CON files.</param>
+        /// <param name="midi">The midifile containing the tracks to load</param>
+        /// <param name="encoding">The encoding to use to decode midi text events to lyrics</param>
+        /// <param name="activeInstruments">Provides guidance over which instruments from the midi file to load. If null, all instruments will be loaded.</param>
         private static void LoadMidiTracks(YARGChart chart, SyncTrack2 sync, YARGMidiFile midi, ref Encoding encoding, HashSet<MidiTrackType>? activeInstruments)
         {
             int count = 1;
@@ -159,6 +204,12 @@ namespace YARG.Core.NewParsing
         }
 
         private static readonly byte[][] PREFIXES = { Encoding.ASCII.GetBytes("[section "), Encoding.ASCII.GetBytes("[prc_") };
+        /// <summary>
+        /// Loads sections and global event data from the EVENTS track
+        /// </summary>
+        /// <param name="chart">The chart that'll hold the sections and globals</param>
+        /// <param name="sync">The backing sync track to use for proper positioning</param>
+        /// <param name="midiTrack">The midi track containing the event data</param>
         private static void LoadEventsTrack_Midi(YARGChart chart, SyncTrack2 sync, YARGMidiTrack midiTrack)
         {
             if (!chart.Globals.IsEmpty() || !chart.Sections.IsEmpty())
@@ -194,6 +245,12 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        /// <summary>
+        /// Loads the beat track with measure and strong beats from the BEATS track
+        /// </summary>
+        /// <param name="beats">The beats track to fill/param>
+        /// <param name="sync">The backing sync track to use for proper positioning</param>
+        /// <param name="midiTrack">The midi track containing the beat track data</param>
         private static void LoadBeatsTrack_Midi(YARGNativeSortedList<DualTime, BeatlineType> beats, SyncTrack2 sync, YARGMidiTrack midiTrack)
         {
             const int MEASURE_BEAT = 12;
@@ -212,6 +269,7 @@ namespace YARG.Core.NewParsing
                 if (midiTrack.Type == MidiEventType.Note_On)
                 {
                     midiTrack.ExtractMidiNote(ref note);
+                    // No need to handle note offs
                     if (note.velocity > 0)
                     {
                         position.Ticks = midiTrack.Position;
@@ -227,6 +285,14 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        /// <summary>
+        /// Uses the provided track type to select the correct instrument to load the track data into
+        /// </summary>
+        /// <param name="chart">The chart with all the tracks... duh</param>
+        /// <param name="type">The track type to load</param>
+        /// <param name="sync">The backing sync track to use for proper positioning</param>
+        /// <param name="midiTrack">The track containing the instrument or vocal data</param>
+        /// <param name="encoding">The encoding to use to decode midi text events to lyrics</param>
         private static void LoadInstrument_Midi(YARGChart chart, MidiTrackType type, SyncTrack2 sync, YARGMidiTrack midiTrack, ref Encoding encoding) 
         {
             switch (type)
@@ -291,6 +357,7 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Pro_Keys_E:
                     {
                         chart.ProKeys ??= new InstrumentTrack2<ProKeysDifficultyTrack>();
+                        // Handled per-difficulty, so we use 0-3 indexing
                         MidiProKeysLoader.Load(midiTrack, sync, chart.ProKeys, type - MidiTrackType.Pro_Keys_E);
                         break;
                     }
