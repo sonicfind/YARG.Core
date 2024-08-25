@@ -201,8 +201,8 @@ namespace YARG.Core.NewParsing
                 return;
             }
 
-            var note = default(MidiNote);
             var position = default(DualTime);
+            var note = default(MidiNote);
             var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
