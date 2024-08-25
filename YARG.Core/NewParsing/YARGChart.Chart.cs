@@ -177,7 +177,7 @@ namespace YARG.Core.NewParsing
         {
             if (activeTracks == null || activeTracks.Contains(Instrument.Vocals))
             {
-                chart.LeadVocals = new VocalTrack2(1);
+                chart.LeadVocals = new LeadVocalsTrack();
             }
 
             InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>>? unknownDrums = null;
