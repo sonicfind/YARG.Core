@@ -14,6 +14,9 @@ namespace YARG.Core.NewParsing
 
         public long Tickrate => _tickrate;
 
+        /// <summary>
+        /// Initializes the synctrack with the given tickrate, a default timesig of 4/4, and a default bpm of 120
+        /// </summary>
         public SyncTrack2(long tickrate)
         {
             _tickrate = tickrate;
@@ -21,6 +24,9 @@ namespace YARG.Core.NewParsing
             TimeSigs.Append(0, TimeSig2.DEFAULT);
         }
 
+        /// <summary>
+        /// Resets the synctrack to its initial state with 120bpm at 4/4
+        /// </summary>
         public void Reset()
         {
             TempoMarkers.Clear();
@@ -29,6 +35,9 @@ namespace YARG.Core.NewParsing
             TimeSigs.Append(0, TimeSig2.DEFAULT);
         }
 
+        /// <summary>
+        /// Disposes all unmanaged data held by the sync track
+        /// </summary>
         public void Dispose()
         {
             TempoMarkers.Dispose();

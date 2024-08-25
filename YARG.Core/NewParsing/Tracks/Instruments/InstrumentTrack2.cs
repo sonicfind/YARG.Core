@@ -24,6 +24,10 @@ namespace YARG.Core.NewParsing
         public InstrumentTrack2(PhraseTrack source)
             : base(source) {}
 
+        /// <summary>
+        /// Returns whether all active difficulties and track-scope phrases and events are empty
+        /// </summary>
+        /// <returns>Whether the instrument contains no data</returns>
         public override bool IsEmpty()
         {
             foreach (var diff in Difficulties)
@@ -36,6 +40,9 @@ namespace YARG.Core.NewParsing
             return base.IsEmpty();
         }
 
+        /// <summary>
+        /// Clears all difficulties, phrases, and events
+        /// </summary>
         public override void Clear()
         {
             foreach (var diff in Difficulties)
@@ -45,6 +52,10 @@ namespace YARG.Core.NewParsing
             base.Clear();
         }
 
+        /// <summary>
+        /// Trims excess unmanaged buffer data from all difficulties and the track's phrases.<br></br>
+        /// This will also delete any completely empty difficulties.
+        /// </summary>
         public override void TrimExcess()
         {
             for (var i = 0; i < Difficulties.Length; i++)
@@ -66,6 +77,16 @@ namespace YARG.Core.NewParsing
             base.TrimExcess();
         }
 
+        /// <summary>
+        /// Returns a reference to the track that best matches the provided <see cref="Difficulty"></see>
+        /// </summary>
+        /// <remarks>
+        /// <see cref="Difficulty.Beginner"></see> maps to <see cref="Difficulty.Easy"></see><br></br>
+        /// <see cref="Difficulty.ExpertPlus"></see> maps to <see cref="Difficulty.Expert"></see>
+        /// </remarks>
+        /// <param name="diff">The difficulty to grab</param>
+        /// <returns>A direct ref to the appropriate track</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">Some unhandled difficulty was provided</exception>
         public ref TDifficultyTrack? this[Difficulty diff]
         {
             get
@@ -88,6 +109,10 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        /// <summary>
+        /// Checks all difficulties to determine the end point of the track
+        /// </summary>
+        /// <returns>The end point of the track</returns>
         public override DualTime GetLastNoteTime()
         {
             DualTime endTime = default;
@@ -105,6 +130,9 @@ namespace YARG.Core.NewParsing
             return endTime;
         }
 
+        /// <summary>
+        /// Disposes all unmanaged buffer data from every active difficulty and all phrase constainers
+        /// </summary>
         public override void Dispose()
         {
             foreach (var diff in Difficulties)

@@ -5,6 +5,17 @@ namespace YARG.Core.NewParsing
 {
     public partial class YARGChart
     {
+        /// <summary>
+        /// Traverses through every tempo marker in the provided sync to set all anchors to their
+        /// appropriate microseconds positions.
+        /// </summary>
+        /// <remarks>
+        /// If an anchor is already set, it will instead, for consistency, alter the tempomarker that comes before
+        /// to ensure as correct alignment as possible.
+        /// <br></br><br></br>
+        /// This MUST be called following the deserialization of a sync track from either file format.
+        /// </remarks>
+        /// <param name="sync">The synctrack to finalize</param>
         private static unsafe void FinalizeAnchors(SyncTrack2 sync)
         {
             Debug.Assert(sync.TempoMarkers.Count > 0, "A least one tempo marker must exist");
@@ -32,6 +43,10 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        /// <summary>
+        /// Generates or fills in the chart's beat track and trims any excess data leftover from track deserialization
+        /// </summary>
+        /// <param name="chart"></param>
         private static void FinalizeDeserialization(YARGChart chart)
         {
             var endPosition = chart.GetEndTime();
@@ -77,6 +92,11 @@ namespace YARG.Core.NewParsing
             chart.HarmonyVocals?.TrimExcess();
         }
 
+        /// <summary>
+        /// Traverses through a deserialized beattrack to fill empty gaps with weak beats.
+        /// </summary>
+        /// <param name="chart">The chart with the beattrack to alter</param>
+        /// <param name="endPosition">The position where the chart data should stop</param>
         private static unsafe void GenerateLeftoverBeats(YARGChart chart, in DualTime endPosition)
         {
             long multipliedTickrate = 4 * chart.Sync.Tickrate;
@@ -138,6 +158,11 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        /// <summary>
+        /// Generates the entire beat track for the provided chart.
+        /// </summary>
+        /// <param name="chart">The chart with the beattrack to alter</param>
+        /// <param name="endPosition">The position where the chart data should stop</param>
         private static unsafe void GenerateAllBeats(YARGChart chart, in DualTime endPosition)
         {
             long multipliedTickrate = 4 * chart.Sync.Tickrate;
