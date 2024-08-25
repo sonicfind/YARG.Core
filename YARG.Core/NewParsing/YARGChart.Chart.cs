@@ -365,14 +365,12 @@ namespace YARG.Core.NewParsing
             var nextSoloPosition = DualTime.Inactive;
 
             var ev = default(DotChartEvent);
+            var position = default(DualTime);
             var tempoTracker = new TempoTracker(sync);
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
             {
-                var position = new DualTime
-                {
-                    Ticks = ev.Position,
-                    Seconds = tempoTracker.Traverse(ev.Position)
-                };
+                position.Ticks = ev.Position;
+                position.Seconds = tempoTracker.Traverse(ev.Position);
 
                 switch (ev.Type)
                 {
