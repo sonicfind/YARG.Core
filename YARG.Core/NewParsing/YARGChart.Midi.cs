@@ -147,12 +147,18 @@ namespace YARG.Core.NewParsing
             return chart;
         }
 
-        private static unsafe (SyncTrack2 Sync, string SequenceName) LoadSyncTrack_Midi(YARGMidiFile midi)
+        private static unsafe (SyncTrack2 Sync, string? SequenceName) LoadSyncTrack_Midi(YARGMidiFile midi)
         {
             var sync = new SyncTrack2(midi.Resolution);
 
-            using var midiTrack = midi.LoadNextTrack()!;
-            string sequenceName = midiTrack.FindTrackName(Encoding.UTF8)!;
+            using var midiTrack = midi.LoadNextTrack();
+            if (midiTrack == null)
+            {
+                // Technically, this means there's no data, so we'll just ensure default initialization
+                return (sync, string.Empty);
+            }
+
+            string? sequenceName = midiTrack.FindTrackName(Encoding.UTF8);
             while (midiTrack.ParseEvent())
             {
                 switch (midiTrack.Type)
@@ -171,27 +177,34 @@ namespace YARG.Core.NewParsing
 
         private static void LoadMidiTracks(YARGChart chart, SyncTrack2 sync, YARGMidiFile midi, ref Encoding encoding, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
         {
+            int count = 1;
             foreach (var midiTrack in midi)
             {
-                string trackname = midiTrack.FindTrackName(Encoding.UTF8)!;
-                if (!YARGMidiTrack.TRACKNAMES.TryGetValue(trackname, out var type))
+                string? trackname = midiTrack.FindTrackName(Encoding.UTF8);
+                if (trackname != null && YARGMidiTrack.TRACKNAMES.TryGetValue(trackname, out var type))
+                {
+                    if (type == MidiTrackType.Events)
+                    {
+                        LoadEventsTrack_Midi(chart, sync, midiTrack);
+                    }
+                    else if (type == MidiTrackType.Beat)
+                    {
+                        LoadBeatsTrack_Midi(chart.BeatMap, sync, midiTrack);
+                    }
+                    else if (activeInstruments == null || activeInstruments.Contains(type))
+                    {
+                        LoadInstrument_Midi(chart, ref drumsInChart, type, sync, midiTrack, ref encoding);
+                    }
+                }
+                else if (trackname == null)
+                {
+                    YargLogger.LogInfo($"MIDI Track #{count}'s track name is ambiguous from multiple trackname events and thus could not be loaded.");
+                }
+                else
                 {
                     YargLogger.LogInfo($"Unrecognized MIDI Track: {trackname}");
-                    continue;
                 }
-
-                if (type == MidiTrackType.Events)
-                {
-                    LoadEventsTrack_Midi(chart, sync, midiTrack);
-                }
-                else if (type == MidiTrackType.Beat)
-                {
-                    LoadBeatsTrack_Midi(chart.BeatMap, sync, midiTrack);
-                }
-                else if (activeInstruments == null || activeInstruments.Contains(type))
-                {
-                    LoadInstrument_Midi(chart, ref drumsInChart, type, sync, midiTrack, ref encoding);
-                }
+                ++count;
             }
         }
 
