@@ -245,6 +245,8 @@ namespace YARG.Core.NewParsing
 
         private static void LoadBeatsTrack_Midi(YARGNativeSortedList<DualTime, BeatlineType> beats, SyncTrack2 sync, YARGMidiTrack midiTrack)
         {
+            const int MEASURE_BEAT = 12;
+            const int STRONG_BEAT = 13;
             if (!beats.IsEmpty())
             {
                 YargLogger.LogInfo("BEATS track appears multiple times. Not parsing repeats...");
@@ -263,7 +265,12 @@ namespace YARG.Core.NewParsing
                     {
                         position.Ticks = midiTrack.Position;
                         position.Seconds = tempoTracker.Traverse(midiTrack.Position);
-                        beats.AppendOrUpdate(position, note.value == 12 ? BeatlineType.Measure : BeatlineType.Strong);
+
+                        switch (note.value)
+                        {
+                            case MEASURE_BEAT: beats.AppendOrUpdate(in position, BeatlineType.Measure); break;
+                            case STRONG_BEAT:  beats.AppendOrUpdate(in position, BeatlineType.Strong); break;
+                        }
                     }
                 }
             }
