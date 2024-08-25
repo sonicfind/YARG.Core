@@ -19,8 +19,8 @@ namespace YARG.Core.NewParsing
         {
             var iniInfo = new FileInfo(Path.Combine(chartInfo.DirectoryName, "song.ini"));
 
-            SongMetadata metadata;
-            ParseSettings settings;
+            var metadata = SongMetadata.Default;
+            var settings = ParseSettings.Default;
             if (iniInfo.Exists)
             {
                 var modifiers = SongIniHandler.ReadSongIniFile(iniInfo);
@@ -49,11 +49,6 @@ namespace YARG.Core.NewParsing
                     drums = DrumsType.Unknown;
                 }
                 settings = new ParseSettings(modifiers, drums);
-            }
-            else
-            {
-                metadata = SongMetadata.Default;
-                settings = ParseSettings.Default;
             }
 
             using var file = MemoryMappedArray.Load(chartInfo);
