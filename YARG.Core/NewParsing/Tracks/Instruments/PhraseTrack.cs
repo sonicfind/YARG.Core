@@ -27,6 +27,10 @@ namespace YARG.Core.NewParsing
             Events = new();
         }
 
+        /// <summary>
+        /// Move constructor that pulls all the phrases and events from the source into the new track
+        /// </summary>
+        /// <param name="source">The track to be left in a default state after the call</param>
         protected PhraseTrack(PhraseTrack source)
         {
             Overdrives      = new(source.Overdrives);
@@ -39,6 +43,9 @@ namespace YARG.Core.NewParsing
             Events          = new(source.Events);
         }
 
+        /// <summary>
+        /// Returns if no phrases nor events are present
+        /// </summary>
         public virtual bool IsEmpty()
         {
             return Overdrives.IsEmpty()
@@ -51,6 +58,9 @@ namespace YARG.Core.NewParsing
                 && Events.IsEmpty();
         }
 
+        /// <summary>
+        /// Clears all phrases and events
+        /// </summary>
         public virtual void Clear()
         {
             Overdrives.Clear();
@@ -63,6 +73,9 @@ namespace YARG.Core.NewParsing
             Events.Clear();
         }
 
+        /// <summary>
+        /// Trims excess data from all phrase containers
+        /// </summary>
         public virtual void TrimExcess()
         {
             Overdrives.TrimExcess();
@@ -75,6 +88,9 @@ namespace YARG.Core.NewParsing
             // Ignore Events, as GC doesn't guarantee quick disposal of the old array
         }
 
+        /// <summary>
+        /// Dispose the unmanaged buffer for each phrase container
+        /// </summary>
         public virtual void Dispose()
         {
             Overdrives.Dispose();
@@ -86,6 +102,10 @@ namespace YARG.Core.NewParsing
             Faceoff_Player2.Dispose();
         }
 
+        /// <summary>
+        /// Returns the time when the last note present in the track ends
+        /// </summary>
+        /// <returns>The end point of the track</returns>
         public abstract DualTime GetLastNoteTime();
     }
 }

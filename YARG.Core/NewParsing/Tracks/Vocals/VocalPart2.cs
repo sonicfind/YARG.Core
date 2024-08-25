@@ -4,6 +4,9 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
+    /// <summary>
+    /// Holds the notes and lyrics for a specific vocal line
+    /// </summary>
     public struct VocalPart2
     {
         public YARGNativeSortedList<DualTime, VocalNote2> Notes;

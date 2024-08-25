@@ -5,12 +5,19 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
+    /// <summary>
+    /// Handles tracking the position in seconds of a particular tick. It uses a moving pointer to dodge long binary searches.
+    /// </summary>
     public unsafe struct TempoTracker
     {
         private readonly long _tickrate;
         private readonly YARGKeyValuePair<long, Tempo2>* _end;
         private YARGKeyValuePair<long, Tempo2>* _position;
 
+        /// <summary>
+        /// Initializes the tracker to the starting position of the given sync track
+        /// </summary>
+        /// <param name="sync">The sync track to traverse</param>
         public TempoTracker(SyncTrack2 sync)
         {
             Debug.Assert(sync.TempoMarkers.Count > 0, "There must exist at least one marker in the tempo list");
