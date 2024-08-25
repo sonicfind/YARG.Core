@@ -39,7 +39,9 @@ namespace YARG.Core.NewParsing
                     }
                     else
                     {
-                        drums = DrumsType.Unknown;
+                        // We can not pre-determine whether tom markers are present,
+                        // so setting the type to FourLane won't work.
+                        drums = DrumsType.Unknown_Four;
                     }
                 }
                 else if (modifiers.TryGet("pro_drums", out bool prodrums) && !prodrums)
@@ -235,19 +237,31 @@ namespace YARG.Core.NewParsing
                             chart.FiveLaneDrums ??= MidiDrumsLoader.LoadFiveLane(midiTrack, sync);
                             break;
                         default:
-                            // No `using/dipose` as events & phrases need to persist
-                            var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, sync, ref chart.Settings.DrumsType);
-                            switch (chart.Settings.DrumsType)
                             {
-                                case DrumsType.FourLane:
-                                case DrumsType.ProDrums:
-                                    chart.FourLaneDrums = track.ConvertToFourLane(chart.Settings.DrumsType == DrumsType.ProDrums);
+                                // Edna Mode: NO DUPLI-CAPES
+                                if (chart.FourLaneDrums != null || chart.FiveLaneDrums != null)
+                                {
                                     break;
-                                case DrumsType.FiveLane:
-                                    chart.FiveLaneDrums = track.ConvertToFiveLane();
-                                    break;
+                                }
+
+                                // The phrases and events will be moved to the converted track, so it is safe to call dispose
+                                using var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, sync, ref chart.Settings.DrumsType);
+                                switch (chart.Settings.DrumsType)
+                                {
+                                    case DrumsType.FiveLane:
+                                        chart.FiveLaneDrums = track.ConvertToFiveLane();
+                                        break;
+                                    case DrumsType.ProDrums:
+                                    case DrumsType.UnknownPro:
+                                        chart.FourLaneDrums = track.ConvertToFourLane(true);
+                                        break;
+                                    // Fourlane, Unknown, or Unknown_Four
+                                    default:
+                                        chart.FourLaneDrums = track.ConvertToFourLane(false);
+                                        break;
+                                }
+                                break;
                             }
-                            break;
                     }
                     break;
                 case MidiTrackType.Pro_Guitar_17: chart.ProGuitar_17Fret ??=   MidiProGuitarLoader.Load<ProFret_17>(midiTrack, sync); break;
