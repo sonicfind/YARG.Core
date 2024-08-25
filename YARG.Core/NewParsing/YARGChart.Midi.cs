@@ -237,7 +237,8 @@ namespace YARG.Core.NewParsing
                     }
                     else
                     {
-                        chart.Globals.GetLastOrAppend(position).Add(Encoding.UTF8.GetString(bytes));
+                        // Other miscellaneous events are queries, so those should always be bound within ASCII
+                        chart.Globals.GetLastOrAppend(position).Add(Encoding.ASCII.GetString(bytes));
                     }
                 }
             }
