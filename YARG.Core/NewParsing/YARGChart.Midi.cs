@@ -110,8 +110,8 @@ namespace YARG.Core.NewParsing
             var midi = new YARGMidiFile(stream);
             var (sync, sequencename) = LoadSyncTrack_Midi(midi);
             var chart = new YARGChart(sync, metadata, settings, sequencename);
-            DualTime.SetTruncationLimit(chart.Settings, (uint) (midi.Resolution / 3));
-            MidiFiveFretLoader.SetOverdriveMidiNote(chart.Settings.OverdiveMidiNote);
+            DualTime.SetTruncationLimit(settings, sync.Tickrate / 3);
+            MidiFiveFretLoader.SetOverdriveMidiNote(settings.OverdiveMidiNote);
 
             var encoding = Encoding.UTF8;
             LoadMidiTracks(chart, sync, midi, ref encoding, drumsInChart, activeInstruments);
@@ -124,8 +124,8 @@ namespace YARG.Core.NewParsing
             var midi = new YARGMidiFile(mainStream);
             var (sync, sequencename) = LoadSyncTrack_Midi(midi);
             var chart = new YARGChart(sync, metadata, settings, sequencename);
-            DualTime.SetTruncationLimit(chart.Settings, (uint) (midi.Resolution / 3));
-            MidiFiveFretLoader.SetOverdriveMidiNote(chart.Settings.OverdiveMidiNote);
+            DualTime.SetTruncationLimit(settings, sync.Tickrate / 3);
+            MidiFiveFretLoader.SetOverdriveMidiNote(settings.OverdiveMidiNote);
 
             var encoding = Encoding.UTF8;
             if (updateStream != null)
