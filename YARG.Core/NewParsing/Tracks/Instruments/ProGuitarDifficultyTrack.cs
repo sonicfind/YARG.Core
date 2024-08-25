@@ -9,24 +9,24 @@ namespace YARG.Core.NewParsing
     {
         public readonly YARGNativeSortedList<DualTime, DualTime> Arpeggios = new();
 
-        public new bool IsEmpty()
+        public override bool IsEmpty()
         {
             return Arpeggios.IsEmpty() && base.IsEmpty();
         }
 
-        public new void Clear()
+        public override void Clear()
         {
             Arpeggios.Clear();
             base.Clear();
         }
 
-        public new void TrimExcess()
+        public override void TrimExcess()
         {
             Arpeggios.TrimExcess();
             base.TrimExcess();
         }
 
-        public new void Dispose()
+        public override void Dispose()
         {
             Arpeggios.Dispose();
             base.Dispose();
