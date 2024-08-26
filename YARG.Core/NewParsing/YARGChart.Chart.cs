@@ -66,6 +66,8 @@ namespace YARG.Core.NewParsing
             uint tickrate = ParseTickrate_Chart(ref container);
             var sync = ReadSynctrack_Chart(ref container, tickrate);
             var chart = new YARGChart(sync, metadata, settings);
+            chart.Settings.ChordHopoCancellation = false;
+
             if (activeTracks == null || activeTracks.Contains(Instrument.Vocals))
             {
                 chart.LeadVocals = new LeadVocalsTrack();
