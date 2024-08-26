@@ -21,11 +21,11 @@ namespace YARG.Core.NewLoading.FourLane
 
         public struct SubNote
         {
-            public int Index;
-            public HitStatus Status;
+            public readonly int Index;
             public readonly CymbalState State;
             public readonly DrumDynamics Dynamics;
             public readonly DualTime EndPosition;
+            public HitStatus Status;
 
             public SubNote(int index, CymbalState state, DrumDynamics dynamics, DualTime endPosition)
             {
@@ -150,22 +150,12 @@ namespace YARG.Core.NewLoading.FourLane
                 {
                     if (lanes[i].IsActive() && (i >= SNARE || (!disableKick && (isExpertPlus || !curr->Value.IsDoubleBass))))
                     {
+                        int index = !profile.LeftyFlip || i < SNARE ? i : NUMLANES - i;
                         var state = isProDrums
                             ? i >= YELLOW && (&curr->Value.Cymbal_Yellow)[i - YELLOW] ? CymbalState.On : CymbalState.Off
                             : CymbalState.NonPro;
                         var dynamics = i >= SNARE ? (&curr->Value.Dynamics_Snare)[i - SNARE] : DrumDynamics.None;
-                        buffer[laneCount++] = new SubNote(i, state, dynamics, lanes[i] + curr->Key);
-                    }
-                }
-
-                if (Profile.LeftyFlip)
-                {
-                    for (int i = 0; i < laneCount; ++i)
-                    {
-                        if (buffer[i].Index >= SNARE)
-                        {
-                            buffer[i].Index = NUMLANES - buffer[i].Index;
-                        }
+                        buffer[laneCount++] = new SubNote(index, state, dynamics, lanes[i] + curr->Key);
                     }
                 }
 
@@ -291,22 +281,15 @@ namespace YARG.Core.NewLoading.FourLane
                             _ => i,
                         };
 
+                        if (profile.LeftyFlip && index >= SNARE)
+                        {
+                            index = NUMLANES - index;
+                        }
+
                         var state = isProDrums
                             ? i == YELLOW || i == ORANGE ? CymbalState.On : CymbalState.Off
                             : CymbalState.NonPro;
                         buffer[laneCount++] = new SubNote(index, state, dynamics, lanes[i] + curr->Key);
-                    }
-                }
-
-                if (Profile.LeftyFlip)
-                {
-                    for (int i = 0; i < laneCount; ++i)
-                    {
-                        if (buffer[i].Index >= 1)
-                        {
-                            buffer[i].Index = NUMLANES - buffer[i].Index;
-                            break;
-                        }
                     }
                 }
 
