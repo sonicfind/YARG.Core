@@ -150,11 +150,13 @@ namespace YARG.Core.Chart
             {
                 return HopoThreshold;
             }
-            else if (EighthNoteHopo)
+
+            if (EighthNoteHopo)
             {
                 return resolution / 2;
             }
-            else if (HopoFreq_FoF >= 0)
+
+            if (HopoFreq_FoF >= 0)
             {
                 int denominator = HopoFreq_FoF switch
                 {
@@ -168,10 +170,41 @@ namespace YARG.Core.Chart
                 };
                 return (resolution * 4) / denominator;
             }
-            else
+            return resolution / 3;
+        }
+
+        public readonly long GetHopoThreshold(long resolution)
+        {
+            // Prefer in this order:
+            // 1. hopo_threshold
+            // 2. eighthnote_hopo
+            // 3. hopofreq
+
+            if (HopoThreshold > 0)
             {
-                return resolution / 3;
+                return HopoThreshold;
             }
+
+            if (EighthNoteHopo)
+            {
+                return resolution / 2;
+            }
+
+            if (HopoFreq_FoF >= 0)
+            {
+                int denominator = HopoFreq_FoF switch
+                {
+                    0 => 12,
+                    1 => 8,
+                    2 => 6,
+                    3 => 4,
+                    4 => 3,
+                    5 => 2,
+                    _ => throw new NotImplementedException($"Unhandled hopofreq value {HopoFreq_FoF}!")
+                };
+                return (resolution * 2) / denominator;
+            }
+            return resolution / 3;
         }
     }
 }
