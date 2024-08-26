@@ -10,7 +10,7 @@ namespace YARG.Core.NewParsing
     /// </summary>
     public unsafe struct TempoTracker
     {
-        private readonly uint _tickrate;
+        private readonly long _tickrate;
         private readonly YARGKeyValuePair<long, Tempo2>* _end;
         private YARGKeyValuePair<long, Tempo2>* _position;
 

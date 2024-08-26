@@ -99,7 +99,7 @@ namespace YARG.Core.NewParsing
         /// <param name="endPosition">The position where the chart data should stop</param>
         private static unsafe void GenerateLeftoverBeats(YARGChart chart, in DualTime endPosition)
         {
-            uint multipliedTickrate = 4u * chart.Sync.Tickrate;
+            long multipliedTickrate = 4u * chart.Sync.Tickrate;
 
             int beatIndex = 0;
             var tempoTracker = new TempoTracker(chart.Sync);
@@ -165,7 +165,7 @@ namespace YARG.Core.NewParsing
         /// <param name="endPosition">The position where the chart data should stop</param>
         private static unsafe void GenerateAllBeats(YARGChart chart, in DualTime endPosition)
         {
-            uint multipliedTickrate = 4u * chart.Sync.Tickrate;
+            long multipliedTickrate = 4u * chart.Sync.Tickrate;
             var tempoTracker = new TempoTracker(chart.Sync);
 
             DualTime buffer = default;

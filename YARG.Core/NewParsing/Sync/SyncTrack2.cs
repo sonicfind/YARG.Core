@@ -7,14 +7,14 @@ namespace YARG.Core.NewParsing
 {
     public class SyncTrack2 : IDisposable
     {
-        private uint _tickrate;
+        private long _tickrate;
         public readonly YARGNativeSortedList<long, Tempo2> TempoMarkers = new();
         public readonly YARGNativeSortedList<long, TimeSig2> TimeSigs = new();
 
         /// <summary>
         /// Can you guess?
         /// </summary>
-        public uint Tickrate => _tickrate;
+        public long Tickrate => _tickrate;
 
         /// <summary>
         /// Initializes the synctrack with the given tickrate, a default timesig of 4/4, a default bmp of 120
