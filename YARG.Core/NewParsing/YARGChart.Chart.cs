@@ -152,6 +152,7 @@ namespace YARG.Core.NewParsing
             }
 
             FinalizeDeserialization(chart);
+            chart.Settings.AllowHopoAfterChord = true;
             return chart;
         }
 

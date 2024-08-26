@@ -141,6 +141,7 @@ namespace YARG.Core.NewParsing
             var encoding = Encoding.UTF8;
             LoadMidiTracks(chart, sync, midi, ref encoding, ref drumsInChart, activeInstruments);
             FinalizeDeserialization(chart);
+            chart.Settings.AllowHopoAfterChord = false;
             return chart;
         }
 
@@ -182,6 +183,7 @@ namespace YARG.Core.NewParsing
 
             LoadMidiTracks(chart, sync, midi, ref encoding, ref drumsInChart, activeInstruments);
             FinalizeDeserialization(chart);
+            chart.Settings.AllowHopoAfterChord = false;
             return chart;
         }
 
