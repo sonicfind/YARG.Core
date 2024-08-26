@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using YARG.Core.Game;
-using YARG.Core.NewLoading.Guitar;
 using YARG.Core.NewLoading.Players;
 using YARG.Core.NewParsing;
 
@@ -12,7 +8,7 @@ namespace YARG.Core.NewLoading.FiveLane
 {
     
 
-    public sealed class FiveLanePlayer : InstrumentPlayer<FiveLaneDrums, FiveLanePlayer.Note>
+    public sealed class FiveLanePlayer : InstrumentPlayer
     {
         public struct SubNote
         {
@@ -52,41 +48,26 @@ namespace YARG.Core.NewLoading.FiveLane
             }
         }
 
-        private readonly InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>? _fourlaneTrack;
+        private readonly Note[] _notes;
+        private int _noteIndex = -1;
 
-        public FiveLanePlayer(YARGChart chart, YargProfile profile)
-            : base(chart.FiveLaneDrums, chart.Sync, profile)
+        private const int NUMLANES = 6;
+        private const int BASS = 0;
+        private const int SNARE = 1;
+        private const int YELLOW = 2;
+        private const int BLUE = 3;
+        private const int ORANGE = 4;
+        private const int GREEN = 5;
+
+        public unsafe FiveLanePlayer(InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> track, SyncTrack2 sync, YargProfile profile)
+            : base(sync, profile)
         {
-            _fourlaneTrack = chart.FourLaneDrums;
-            _notes = null!;
-            _overdrives = null!;
-            _soloes = null!;
-        }
-
-        public override void Set(in DualTime startTime, in DualTime endTime)
-        {
-            if (_track != null)
-            {
-                LoadFiveLane(in startTime, in endTime);
-            }
-            else
-            {
-                LoadFourLane(in startTime, in endTime);
-            }
-        }
-
-        private unsafe void LoadFiveLane(in DualTime startTime, in DualTime endTime)
-        {
-            const int NUMLANES = 6;
-            const int BASS = 0;
-            const int SNARE = 1;
-
-            var diff = _track![Profile.CurrentDifficulty];
+            var diff = track[profile.CurrentDifficulty];
             Debug.Assert(diff != null, "This function should only be used with a valid difficulty");
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
 
-            var overdriveRanges = diff.Phrases.Overdrives.Count > 0 ? diff.Phrases.Overdrives : _track.Phrases.Overdrives;
-            var soloRanges = diff.Phrases.Soloes.Count > 0 ? diff.Phrases.Soloes : _track.Phrases.Soloes;
+            var overdriveRanges = diff.Phrases.Overdrives.Count > 0 ? diff.Phrases.Overdrives : track.Phrases.Overdrives;
+            var soloRanges = diff.Phrases.Soloes.Count > 0 ? diff.Phrases.Soloes : track.Phrases.Soloes;
 
             var curr = diff.Notes.Data;
             var end = curr + diff.Notes.Count;
@@ -101,19 +82,13 @@ namespace YARG.Core.NewLoading.FiveLane
             int currSolo = 0;
             int soloNoteCount = 0;
 
-            bool disableKick = (Profile.CurrentModifiers & Modifier.NoKicks) > 0;
-            bool isExpertPlus = Profile.CurrentDifficulty == Difficulty.ExpertPlus;
-            bool isProDrums = Profile.CurrentInstrument == Instrument.ProDrums;
+            bool disableKick = (profile.CurrentModifiers & Modifier.NoKicks) > 0;
+            bool isExpertPlus = profile.CurrentDifficulty == Difficulty.ExpertPlus;
+            bool isProDrums = profile.CurrentInstrument == Instrument.ProDrums;
 
             var buffer = stackalloc SubNote[NUMLANES];
             while (curr < end)
             {
-                if (curr->Key < startTime)
-                {
-                    ++curr;
-                    continue;
-                }
-
                 while (currOverdrive < overdriveRanges.Count)
                 {
                     ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
@@ -188,23 +163,17 @@ namespace YARG.Core.NewLoading.FiveLane
             _notes = notes[..numNotes];
         }
 
-        private unsafe void LoadFourLane(in DualTime startTime, in DualTime endTime)
+        public unsafe FiveLanePlayer(InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> track, SyncTrack2 sync, YargProfile profile)
+            : base(sync, profile)
         {
-            const int NUMLANES = 6;
             const int FOURLANECOUNT = 5;
-            const int BASS = 0;
-            const int SNARE = 1;
-            const int YELLOW = 2;
-            const int BLUE = 3;
-            const int ORANGE = 4;
-            const int GREEN = 5;
 
-            var diff = _fourlaneTrack![Profile.CurrentDifficulty];
+            var diff = track[profile.CurrentDifficulty];
             Debug.Assert(diff != null, "This function should only be used with a valid difficulty");
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
 
-            var overdriveRanges = diff.Phrases.Overdrives.Count > 0 ? diff.Phrases.Overdrives : _fourlaneTrack.Phrases.Overdrives;
-            var soloRanges = diff.Phrases.Soloes.Count > 0 ? diff.Phrases.Soloes : _fourlaneTrack.Phrases.Soloes;
+            var overdriveRanges = diff.Phrases.Overdrives.Count > 0 ? diff.Phrases.Overdrives : track.Phrases.Overdrives;
+            var soloRanges = diff.Phrases.Soloes.Count > 0 ? diff.Phrases.Soloes : track.Phrases.Soloes;
 
             var curr = diff.Notes.Data;
             var end = curr + diff.Notes.Count;
@@ -219,19 +188,13 @@ namespace YARG.Core.NewLoading.FiveLane
             int currSolo = 0;
             int soloNoteCount = 0;
 
-            bool disableKick = (Profile.CurrentModifiers & Modifier.NoKicks) > 0;
-            bool isExpertPlus = Profile.CurrentDifficulty == Difficulty.ExpertPlus;
-            bool isProDrums = Profile.CurrentInstrument == Instrument.ProDrums;
+            bool disableKick = (profile.CurrentModifiers & Modifier.NoKicks) > 0;
+            bool isExpertPlus = profile.CurrentDifficulty == Difficulty.ExpertPlus;
+            bool isProDrums = profile.CurrentInstrument == Instrument.ProDrums;
 
             var buffer = stackalloc SubNote[NUMLANES];
             while (curr < end)
             {
-                if (curr->Key < startTime)
-                {
-                    ++curr;
-                    continue;
-                }
-
                 while (currOverdrive < overdriveRanges.Count)
                 {
                     ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
@@ -333,6 +296,10 @@ namespace YARG.Core.NewLoading.FiveLane
                 soloNoteCount = 0;
             }
             _notes = notes[..numNotes];
+        }
+
+        public override void Set(in DualTime startTime, in DualTime endTime)
+        {
         }
     }
 }

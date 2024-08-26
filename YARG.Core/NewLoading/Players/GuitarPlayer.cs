@@ -5,12 +5,6 @@ using YARG.Core.NewParsing;
 
 namespace YARG.Core.NewLoading.Guitar
 {
-    public struct GuitarParams
-    {
-        public bool IsDotChart;
-        public int hopoThreshold;
-    }
-
     public static class GuitarPlayerLoader
     {
         public struct SubNote
@@ -49,11 +43,7 @@ namespace YARG.Core.NewLoading.Guitar
             }
         }
 
-        internal static unsafe (Note[], OverdrivePhrase[], SoloPhrase[]) Load<TNote>(InstrumentTrack2<DifficultyTrack2<TNote>> track
-                                                                            , YargProfile profile
-                                                                            , in GuitarParams settings
-                                                                            , in DualTime startTime
-                                                                            , in DualTime endTime)
+        internal static unsafe (Note[], OverdrivePhrase[], SoloPhrase[]) Load<TNote>(InstrumentTrack2<DifficultyTrack2<TNote>> track, YargProfile profile, long hopoThreshold, bool allowHopoAfterChord)
             where TNote : unmanaged, IGuitarNote
         {
             var diff = track[profile.CurrentDifficulty];
@@ -79,16 +69,8 @@ namespace YARG.Core.NewLoading.Guitar
 
             YARGKeyValuePair<DualTime, TNote>* prev = null;
             var buffer = stackalloc SubNote[6];
-            while (curr < end && curr->Key < endTime)
+            while (curr < end)
             {
-                if (curr->Key < startTime)
-                {
-                    // When note shuffle is implemented, update the rng here as well
-                    prev = curr;
-                    ++curr;
-                    continue;
-                }
-
                 while (currOverdrive < overdriveRanges.Count)
                 {
                     ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
@@ -126,7 +108,7 @@ namespace YARG.Core.NewLoading.Guitar
 
                 if (laneCount > 0)
                 {
-                    var state = ParseGuitarState(curr, prev, curr->Value.State, modifiers, in settings);
+                    var state = ParseGuitarState(curr, prev, curr->Value.State, modifiers, hopoThreshold, allowHopoAfterChord);
                     int ovdIndex = -1;
                     if (currOverdrive < overdriveRanges.Count && curr->Key >= overdriveRanges.Data[currOverdrive].Key)
                     {
@@ -161,11 +143,10 @@ namespace YARG.Core.NewLoading.Guitar
                 ++currSolo;
                 soloNoteCount = 0;
             }
-            notes = notes[..numNotes];
-            return (notes, overdrives, soloes);
+            return (notes[..numNotes], overdrives, soloes);
         }
 
-        private static unsafe GuitarState ParseGuitarState<TNote>(YARGKeyValuePair<DualTime, TNote>* curr, YARGKeyValuePair<DualTime, TNote>* prev, GuitarState state, Modifier modifiers, in GuitarParams settings)
+        private static unsafe GuitarState ParseGuitarState<TNote>(YARGKeyValuePair<DualTime, TNote>* curr, YARGKeyValuePair<DualTime, TNote>* prev, GuitarState state, Modifier modifiers, long hopoThreshold, bool allowHopoAfterChord)
             where TNote : unmanaged, IGuitarNote
         {
             if ((modifiers & Modifier.AllStrums) > 0)
@@ -194,8 +175,8 @@ namespace YARG.Core.NewLoading.Guitar
             {
                 var naturalState = prev != null
                     && curr->Value.GetNumActiveLanes() == 1
-                    && !Contains((DualTime*) &curr->Value, (DualTime*) &prev->Value, curr->Value.NUMLANES, settings.IsDotChart)
-                    && curr->Key.Ticks <= prev->Key.Ticks + settings.hopoThreshold
+                    && !Contains((DualTime*) &curr->Value, (DualTime*) &prev->Value, curr->Value.NUMLANES, allowHopoAfterChord)
+                    && curr->Key.Ticks <= prev->Key.Ticks + hopoThreshold
                     ? GuitarState.Strum
                     : GuitarState.Hopo;
 
@@ -206,7 +187,7 @@ namespace YARG.Core.NewLoading.Guitar
             return state;
         }
 
-        private static unsafe bool Contains(DualTime* currLanes, DualTime* prevLanes, int numlanes, bool isDotChart)
+        private static unsafe bool Contains(DualTime* currLanes, DualTime* prevLanes, int numlanes, bool allowHopoAfterChord)
         {
             bool isNotTopLane = false;
             for (int i = numlanes - 1; i >= 0; --i)
@@ -219,7 +200,7 @@ namespace YARG.Core.NewLoading.Guitar
                         // is the top most lane of said chord, we must interpret the note as a hopo.
                         //
                         // Why? Beats me, but it is what it is.
-                        return !isDotChart || isNotTopLane;
+                        return !allowHopoAfterChord || isNotTopLane;
                     }
                     isNotTopLane = true;
                 }
