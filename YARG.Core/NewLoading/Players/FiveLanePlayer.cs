@@ -16,10 +16,10 @@ namespace YARG.Core.NewLoading.FiveLane
     {
         public struct SubNote
         {
-            public int Index;
-            public HitStatus Status;
+            public readonly int Index;
             public readonly DrumDynamics Dynamics;
             public readonly DualTime EndPosition;
+            public HitStatus Status;
 
             public SubNote(int index, DrumDynamics dynamics, DualTime endPosition)
             {
@@ -143,20 +143,9 @@ namespace YARG.Core.NewLoading.FiveLane
                 {
                     if (lanes[i].IsActive() && (i >= SNARE || (!disableKick && (curr->Value.KickState == KickState.Shared || (isExpertPlus == (curr->Value.KickState == KickState.PlusOnly))))))
                     {
+                        int index = !Profile.LeftyFlip || i < SNARE ? i : NUMLANES - i;
                         var dynamics = i >= SNARE ? (&curr->Value.Dynamics_Snare)[i - SNARE] : DrumDynamics.None;
-                        buffer[laneCount++] = new SubNote(i, dynamics, lanes[i] + curr->Key);
-                    }
-                }
-
-                if (Profile.LeftyFlip)
-                {
-                    for (int i = 0; i < laneCount; ++i)
-                    {
-                        if (buffer[i].Index >= 1)
-                        {
-                            buffer[i].Index = NUMLANES - buffer[i].Index;
-                            break;
-                        }
+                        buffer[laneCount++] = new SubNote(index, dynamics, lanes[i] + curr->Key);
                     }
                 }
 
@@ -297,18 +286,12 @@ namespace YARG.Core.NewLoading.FiveLane
                                 }
                                 break;
                         }
-                        buffer[laneCount++] = new SubNote(index, dynamics, lanes[i] + curr->Key);
-                    }
-                }
 
-                if (Profile.LeftyFlip)
-                {
-                    for (int i = 0; i < laneCount; ++i)
-                    {
-                        if (buffer[i].Index >= SNARE)
+                        if (Profile.LeftyFlip && index >= SNARE)
                         {
-                            buffer[i].Index = NUMLANES - buffer[i].Index;
+                            index = NUMLANES - index;
                         }
+                        buffer[laneCount++] = new SubNote(index, dynamics, lanes[i] + curr->Key);
                     }
                 }
 
