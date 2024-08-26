@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using YARG.Core.Game;
-using YARG.Core.NewLoading.FiveLane;
-using YARG.Core.NewLoading.FourLane;
-using YARG.Core.NewLoading.Guitar;
+﻿using YARG.Core.Game;
 using YARG.Core.NewParsing;
 
 namespace YARG.Core.NewLoading
