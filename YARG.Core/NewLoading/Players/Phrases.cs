@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using YARG.Core.NewParsing;
+﻿using YARG.Core.NewParsing;
 
 namespace YARG.Core.NewLoading
 {
