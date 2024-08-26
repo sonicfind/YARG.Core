@@ -191,7 +191,7 @@ namespace YARG.Core.NewParsing
 
                 if (!YARGMidiTrack.TRACKNAMES.TryGetValue(name, out var type))
                 {
-                    YargLogger.LogInfo($"Unrecognized MIDI Track: {name}");
+                    YargLogger.LogInfo($"Unrecognized MIDI Track #{midi.TrackNumber}: {name}");
                     continue;
                 }
 
