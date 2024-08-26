@@ -59,7 +59,7 @@ namespace YARG.Core.NewParsing
             }
 
             using var file = MemoryMappedArray.Load(chartInfo);
-            return LoadMidi_Single(file.ToStream(), metadata, settings, activeInstruments);
+            return LoadMidi_Single(file.ToStream(), in metadata, in settings, activeInstruments);
         }
 
         /// <summary>
