@@ -15,9 +15,9 @@ namespace YARG.Core.NewLoading.Guitar
     {
         public struct SubNote
         {
-            public int Index;
-            public HitStatus Status;
+            public readonly int Index;
             public readonly DualTime EndPosition;
+            public HitStatus Status;
 
             public SubNote(int index, DualTime endPosition)
             {
@@ -112,13 +112,15 @@ namespace YARG.Core.NewLoading.Guitar
                     soloNoteCount = 0;
                 }
 
+                const int OPEN_NOTE = 0;
                 var frets = (DualTime*) &curr->Value;
                 int laneCount = 0;
                 for (int i = 0; i < curr->Value.NUMLANES; ++i)
                 {
                     if (frets[i].IsActive())
                     {
-                        buffer[laneCount++] = new SubNote(i, frets[i] + curr->Key);
+                        int index = !profile.LeftyFlip || i == OPEN_NOTE ? i : curr->Value.NUMLANES - i;
+                        buffer[laneCount++] = new SubNote(index, frets[i] + curr->Key);
                     }
                 }
 
