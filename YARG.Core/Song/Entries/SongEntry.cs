@@ -59,12 +59,14 @@ namespace YARG.Core.Song
         {
             HopoThreshold = -1,
             SustainCutoffThreshold = -1,
-            OverdiveMidiNote = 116
+            OverdiveMidiNote = 116,
+            AllowHopoAfterChord = false,
         };
 
         public long HopoThreshold;
         public long SustainCutoffThreshold;
         public int OverdiveMidiNote;
+        public bool AllowHopoAfterChord;
     }
 
     /// <summary>
