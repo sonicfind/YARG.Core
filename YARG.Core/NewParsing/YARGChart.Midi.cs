@@ -197,7 +197,7 @@ namespace YARG.Core.NewParsing
                 }
                 else
                 {
-                    YargLogger.LogInfo($"Unrecognized MIDI Track: {trackname}");
+                    YargLogger.LogInfo($"Unrecognized MIDI Track #{count}: {trackname}");
                 }
                 ++count;
             }
