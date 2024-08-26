@@ -84,7 +84,7 @@ namespace YARG.Core.NewParsing
             }
 
             using var stream = new FileStream(chartPath, FileMode.Open, FileAccess.Read, FileShare.Read, 1);
-            var chart = LoadMidi_Single(stream, metadata, in settings, drumType, activeInstruments);
+            var chart = LoadMidi_Single(stream, in metadata, in settings, drumType, activeInstruments);
             if (!modifiers.TryGet("hopo_frequency", out chart.Settings.HopoThreshold) || chart.Settings.HopoThreshold <= 0)
             {
                 if (modifiers.TryGet("eighthnote_hopo", out bool eighthNoteHopo))
