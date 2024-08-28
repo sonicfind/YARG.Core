@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace YARG.Core.NewParsing
+namespace YARG.Core.Containers
 {
     /// <summary>
     /// Represents a sorted collection of values, specialized for unmanaged types.
@@ -114,7 +114,7 @@ namespace YARG.Core.NewParsing
         }
 
         /// <summary>
-        /// Shrinks the buffer down to match the number of values
+        /// Shrinks the buffer down to match the number of elements
         /// </summary>
         public void TrimExcess()
         {
@@ -137,21 +137,12 @@ namespace YARG.Core.NewParsing
         }
 
         /// <summary>
-        /// Appends a new value to the end of the set.
+        /// Appends a new value to the end of the set if the set does not already end with the value
         /// </summary>
         /// <remarks>This does not do any checks in regards to ordering.</remarks>
         /// <param name="value">The value to add</param>
-        public void Append(in TValue value)
-        {
-            CheckAndGrow();
-            _buffer[_count++] = value;
-        }
-
-        /// <summary>
-        /// Appends a new value to the end of the set if the value doesn't match.
-        /// </summary>
-        /// <param name="value">The key to potentially add</param>
-        public bool TryAppend(in TValue value)
+        /// <returns>Whether the value was appended to the set</returns>
+        public bool Push(in TValue value)
         {
             if (_count > 0 && _buffer[_count - 1].Equals(value))
             {
@@ -160,57 +151,6 @@ namespace YARG.Core.NewParsing
 
             CheckAndGrow();
             _buffer[_count++] = value;
-            return true;
-        }
-
-        /// <summary>
-        /// Forcibly inserts a value at the positional index.
-        /// </summary>
-        /// <remarks>
-        /// Does not check for correct key ordering on forced insertion. Unsafe.
-        /// </remarks>
-        /// <param name="index">The position to place the node - an array offset.</param>
-        /// <param name="value">The value to insert</param>
-        public void Insert_Forced(int index, in TValue value)
-        {
-            CheckAndGrow();
-            var position = _buffer + index;
-            if (index < _count)
-            {
-                int leftover = (_count - index) * sizeof(TValue);
-                Buffer.MemoryCopy(position, position + 1, leftover, leftover);
-            }
-            *position = value;
-            ++_count;
-        }
-
-        /// <summary>
-        /// Removes the value from the list if present
-        /// </summary>
-        /// <param name="value">The value to query for</param>
-        /// <returns>Whether the value was found and removed</returns>
-        public bool Remove(in TValue value)
-        {
-            int index = Find(value);
-            return RemoveAtIndex(index);
-        }
-
-        /// <summary>
-        /// Removes the value present at the provided array offset index
-        /// </summary>
-        /// <param name="index">The offset into the inner array buffer</param>
-        /// <returns>Whether the index was valid</returns>
-        public bool RemoveAtIndex(int index)
-        {
-            if (index < 0 || _count <= index)
-            {
-                return false;
-            }
-
-            --_count;
-            var position = _buffer + index;
-            int amount = (_count - index) * sizeof(TValue);
-            Buffer.MemoryCopy(position + 1, position, amount, amount);
             return true;
         }
 
@@ -232,6 +172,76 @@ namespace YARG.Core.NewParsing
         }
 
         /// <summary>
+        /// Inserts the given value into the set if not already present
+        /// </summary>
+        /// <param name="value">The value to insert</param>
+        /// <returns>Whether the value was added</returns>
+        public bool Add(in TValue value)
+        {
+            int index = Find(value);
+            if (index >= 0)
+            {
+                return false;
+            }
+            Insert(~index, in value);
+            return true;
+        }
+
+        /// <summary>
+        /// Forcibly inserts a value at the positional index.
+        /// </summary>
+        /// <remarks>
+        /// Does not check for correct ordering on forced insertion
+        /// </remarks>
+        /// <param name="index">The position to place the node - an array offset.</param>
+        /// <param name="value">The value to insert</param>
+        public void Insert(int index, in TValue value)
+        {
+            CheckAndGrow();
+            var position = _buffer + index;
+            if (index < _count)
+            {
+                int leftover = (_count - index) * sizeof(TValue);
+                Buffer.MemoryCopy(position, position + 1, leftover, leftover);
+            }
+            *position = value;
+            ++_count;
+        }
+
+        /// <summary>
+        /// Removes the value from the list if present
+        /// </summary>
+        /// <param name="value">The value to query for</param>
+        /// <returns>Whether the value was found and removed</returns>
+        public bool Remove(in TValue value)
+        {
+            int index = Find(value);
+            if (index < 0)
+            {
+                return false;
+            }
+            RemoveAt(index);
+            return true;
+        }
+
+        /// <summary>
+        /// Removes the value present at the provided array offset index
+        /// </summary>
+        /// <param name="index">The offset into the inner array buffer</param>
+        public void RemoveAt(int index)
+        {
+            if (index < 0 || _count <= index)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            --_count;
+            var position = _buffer + index;
+            int amount = (_count - index) * sizeof(TValue);
+            Buffer.MemoryCopy(position + 1, position, amount, amount);
+        }
+
+        /// <summary>
         /// Searches for the provided value and returns the array positional index.
         /// </summary>
         /// <remarks>Performs a binary search</remarks>
@@ -248,7 +258,7 @@ namespace YARG.Core.NewParsing
             var hi = _buffer + Count - 1;
             while (lo <= hi)
             {
-                var curr = lo + ((hi - lo) >> 1);
+                var curr = lo + (hi - lo >> 1);
                 int order = curr->CompareTo(value);
                 if (order == 0)
                 {
