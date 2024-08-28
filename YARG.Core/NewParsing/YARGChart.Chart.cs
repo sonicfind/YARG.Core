@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using YARG.Core.Chart;
-using YARG.Core.Game;
+using YARG.Core.Containers;
 using YARG.Core.IO;
 using YARG.Core.IO.Ini;
 using YARG.Core.Logging;
