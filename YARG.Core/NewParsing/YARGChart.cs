@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using YARG.Core.Chart;
+using YARG.Core.Containers;
 using YARG.Core.IO.Ini;
 using YARG.Core.Song;
 
