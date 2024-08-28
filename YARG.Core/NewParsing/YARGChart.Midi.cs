@@ -10,6 +10,7 @@ using YARG.Core.IO.Ini;
 using YARG.Core.NewParsing.Midi;
 using YARG.Core.Song;
 using YARG.Core.IO.Disposables;
+using YARG.Core.Containers;
 
 namespace YARG.Core.NewParsing
 {

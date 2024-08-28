@@ -141,7 +141,7 @@ namespace YARG.Core.NewParsing
                         {
                             buffer.Ticks = position;
                             buffer.Seconds = tempoTracker.Traverse(position);
-                            chart.BeatMap.Insert_Forced(beatIndex, in buffer, BeatlineType.Weak);
+                            chart.BeatMap.Insert(beatIndex, in buffer, BeatlineType.Weak);
                         }
                         ++beatIndex;
                         position += ticksPerMarker;
