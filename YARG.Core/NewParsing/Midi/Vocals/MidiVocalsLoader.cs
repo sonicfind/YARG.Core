@@ -110,7 +110,7 @@ namespace YARG.Core.NewParsing.Midi
                             }
                             else if (note.value == LYRICSHIFT)
                             {
-                                vocalTrack.LyricShifts.Append(position);
+                                vocalTrack.LyricShifts.Push(position);
                             }
                         }
                         else if (trackIndex == 1 && (note.value == VOCAL_PHRASE_1 || note.value == VOCAL_PHRASE_2))

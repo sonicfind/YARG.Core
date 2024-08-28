@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace YARG.Core.NewParsing
+namespace YARG.Core.Containers
 {
     [DebuggerDisplay("{Key} = {Value}")]
     public struct YARGKeyValuePair<TKey, TValue>
