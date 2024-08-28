@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using YARG.Core.Chart;
+using YARG.Core.Containers;
 
 namespace YARG.Core.NewParsing
 {
