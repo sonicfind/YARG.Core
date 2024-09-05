@@ -181,7 +181,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    (&instrumentTrack.Difficulties[diffIndex]!.Notes.TraverseBackwardsUntil(in colorPosition)->Bass)[lane] = DualTime.Truncate(position - colorPosition);
+                                    (&instrumentTrack.Difficulties[diffIndex]!.Notes.TraverseBackwardsUntil(in colorPosition)->Bass)[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
                                 }
                             }
@@ -196,7 +196,7 @@ namespace YARG.Core.NewParsing.Midi
                                 if (colorPosition.Ticks != -1)
                                 {
                                     var drum = expertTrack.Notes.TraverseBackwardsUntil(in colorPosition);
-                                    drum->Bass = DualTime.Truncate(position - colorPosition);
+                                    drum->Bass = position - colorPosition;
                                     drum->IsDoubleBass = true;
                                     colorPosition.Ticks = -1;
                                 }
@@ -426,7 +426,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    (&instrumentTrack.Difficulties[diffIndex]!.Notes.TraverseBackwardsUntil(in colorPosition)->Bass)[lane] = DualTime.Truncate(position - colorPosition);
+                                    (&instrumentTrack.Difficulties[diffIndex]!.Notes.TraverseBackwardsUntil(in colorPosition)->Bass)[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
                                 }
                             }
@@ -441,7 +441,7 @@ namespace YARG.Core.NewParsing.Midi
                                 if (colorPosition.Ticks != -1)
                                 {
                                     var drum = expertTrack.Notes.TraverseBackwardsUntil(in colorPosition);
-                                    drum->Bass = DualTime.Truncate(position - colorPosition);
+                                    drum->Bass = position - colorPosition;
                                     drum->IsDoubleBass = true;
                                     colorPosition.Ticks = -1;
                                 }
@@ -706,7 +706,7 @@ namespace YARG.Core.NewParsing.Midi
                                 if (colorPosition.Ticks != -1)
                                 {
                                     var drum = instrumentTrack.Difficulties[diffIndex]!.Notes.TraverseBackwardsUntil(in colorPosition);
-                                    var duration = DualTime.Truncate(position - colorPosition);
+                                    var duration = position - colorPosition;
                                     if (lane < FIFTH_LANE)
                                     {
                                         (&drum->Bass)[lane] = duration;
@@ -729,7 +729,7 @@ namespace YARG.Core.NewParsing.Midi
                                 if (colorPosition.Ticks != -1)
                                 {
                                     var drum = expertTrack.Notes.TraverseBackwardsUntil(in colorPosition);
-                                    drum->Bass = DualTime.Truncate(position - colorPosition);
+                                    drum->Bass = position - colorPosition;
                                     drum->IsDoubleBass = true;
                                     colorPosition.Ticks = -1;
                                 }
