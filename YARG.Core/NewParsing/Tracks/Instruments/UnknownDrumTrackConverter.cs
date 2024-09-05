@@ -9,13 +9,13 @@ namespace YARG.Core.NewParsing
     {
         public static InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> ConvertToFourLane(this InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> source, bool isPro)
         {
-            var newTrack = new InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>(source);
+            var newTrack = new InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>(source.Phrases, source.Events);
             return ConvertToFourLane(source, newTrack, isPro);
         }
 
         public static InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> ConvertToFiveLane(this InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> source)
         {
-            var newTrack = new InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>(source);
+            var newTrack = new InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>(source.Phrases, source.Events);
             return ConvertToFiveLane(source, newTrack);
         }
 
@@ -49,7 +49,7 @@ namespace YARG.Core.NewParsing
 
         private static unsafe DifficultyTrack2<FourLaneDrums> ConvertToFourLane(this DifficultyTrack2<UnknownLaneDrums> source, bool isPro)
         {
-            var newDifficulty = new DifficultyTrack2<FourLaneDrums>(source);
+            var newDifficulty = new DifficultyTrack2<FourLaneDrums>(source.Phrases, source.Events);
             newDifficulty.Notes.Capacity = source.Notes.Count;
 
             var end = source.Notes.End;
@@ -71,7 +71,7 @@ namespace YARG.Core.NewParsing
         {
             const int DUAL_COUNT = 5;
             const int DYMANICS_COUNT = 4;
-            var newDifficulty = new DifficultyTrack2<FiveLaneDrums>(source);
+            var newDifficulty = new DifficultyTrack2<FiveLaneDrums>(source.Phrases, source.Events);
             newDifficulty.Notes.Capacity = source.Notes.Count;
 
             var end = source.Notes.End;
