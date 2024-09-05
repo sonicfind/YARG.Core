@@ -111,21 +111,21 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
+                                        instrumentTrack.Phrases.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case SOLO_MIDI:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Soloes.Append(in soloPosition, position - soloPosition);
+                                        instrumentTrack.Phrases.Soloes.Append(in soloPosition, position - soloPosition);
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
                                 case BRE_MIDI:
                                     if (brePosition.Ticks > -1)
                                     {
-                                        instrumentTrack.BREs.Append(in brePosition, position - brePosition);
+                                        instrumentTrack.Phrases.BREs.Append(in brePosition, position - brePosition);
                                         brePosition.Ticks = -1;
                                     }
                                     break;
@@ -139,7 +139,7 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Trills.Append(in trillPosition, position - trillPosition);
+                                        instrumentTrack.Phrases.Trills.Append(in trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
