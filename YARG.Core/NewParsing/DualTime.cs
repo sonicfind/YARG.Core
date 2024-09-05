@@ -23,12 +23,6 @@ namespace YARG.Core.NewParsing
             return Ticks > 0;
         }
 
-        private static long TruncationLimit = 170;
-        public static void SetTruncationLimit(LoaderSettings settings, long defaultThreshold)
-        {
-            TruncationLimit = settings.SustainCutoffThreshold != -1 ? settings.SustainCutoffThreshold : defaultThreshold;
-        }
-
         /// <summary>
         /// Returns a <see cref="DualTime"/> structure that abides by the current truncation limit
         /// <br></br>If the time exceeds the limit, it returns unchanged. Otherwise, it gets proportionally scaled down to a tick value of one.

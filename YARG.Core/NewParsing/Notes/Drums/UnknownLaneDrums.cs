@@ -35,17 +35,17 @@ namespace YARG.Core.NewParsing
         {
             switch (lane)
             {
-                case 0: Bass = DualTime.Truncate(length); break;
-                case 1: Snare = DualTime.Truncate(length); break;
-                case 2: Yellow = DualTime.Truncate(length); break;
-                case 3: Blue = DualTime.Truncate(length); break;
-                case 4: Orange = DualTime.Truncate(length); break;
+                case 0: Bass = length; break;
+                case 1: Snare = length; break;
+                case 2: Yellow = length; break;
+                case 3: Blue = length; break;
+                case 4: Orange = length; break;
                 case 5:
                     if (DrumType != DrumsType.Unknown && DrumType != DrumsType.FiveLane)
                     {
                         return false;
                     }
-                    Green = DualTime.Truncate(length);
+                    Green = length;
                     DrumType = DrumsType.FiveLane;
                     break;
                 case 32: IsDoubleBass = true; break;

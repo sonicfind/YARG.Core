@@ -28,11 +28,11 @@ namespace YARG.Core.NewParsing
         {
             switch (lane)
             {
-                case 0: White1 = DualTime.Truncate(length); break;
-                case 1: White2 = DualTime.Truncate(length); break;
-                case 2: White3 = DualTime.Truncate(length); break;
-                case 3: Black1 = DualTime.Truncate(length); break;
-                case 4: Black2 = DualTime.Truncate(length); break;
+                case 0: White1 = length; break;
+                case 1: White2 = length; break;
+                case 2: White3 = length; break;
+                case 3: Black1 = length; break;
+                case 4: Black2 = length; break;
                 case 5:
                     if (_state == GuitarState.Natural)
                     {
@@ -40,8 +40,8 @@ namespace YARG.Core.NewParsing
                     }
                     break;
                 case 6: _state = GuitarState.Tap; break;
-                case 7: Open = DualTime.Truncate(length); break;
-                case 8: Black3 = DualTime.Truncate(length); break;
+                case 7: Open = length; break;
+                case 8: Black3 = length; break;
                 default:
                     return false;
             }

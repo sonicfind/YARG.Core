@@ -126,7 +126,6 @@ namespace YARG.Core.NewParsing
             }
 
             InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>>? unknownDrums = null;
-            DualTime.SetTruncationLimit(settings, 1);
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
                 if (!SelectTrack_Chart(ref container, chart, ref drumsInChart, activeTracks, ref unknownDrums))

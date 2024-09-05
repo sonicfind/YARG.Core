@@ -235,7 +235,7 @@ namespace YARG.Core.NewParsing.Midi
                                     ref var stringPosition = ref strings[diffIndex * NUM_STRINGS + lane];
                                     if (stringPosition.Ticks != -1)
                                     {
-                                        ((ProGuitarString<TProFret>*) diffTrack.Notes.TraverseBackwardsUntil(in stringPosition))[lane].Duration = DualTime.Truncate(position - stringPosition);
+                                        ((ProGuitarString<TProFret>*) diffTrack.Notes.TraverseBackwardsUntil(in stringPosition))[lane].Duration = position - stringPosition;
                                         stringPosition.Ticks = -1;
                                     }
                                 }
@@ -265,7 +265,7 @@ namespace YARG.Core.NewParsing.Midi
                                     case ARPEGGIO_VALUE:
                                         if (midiDiff.Arpeggio.Ticks != -1)
                                         {
-                                            diffTrack.Arpeggios.Append(in midiDiff.Arpeggio, DualTime.Normalize(position - midiDiff.Arpeggio));
+                                            diffTrack.Arpeggios.Append(in midiDiff.Arpeggio, position - midiDiff.Arpeggio);
                                             midiDiff.Arpeggio.Ticks = -1;
                                         }
                                         break;
