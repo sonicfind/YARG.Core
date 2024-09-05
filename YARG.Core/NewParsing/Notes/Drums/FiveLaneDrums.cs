@@ -27,12 +27,12 @@ namespace YARG.Core.NewParsing
         {
             switch (lane)
             {
-                case 0: Bass = DualTime.Truncate(length); break;
-                case 1: Snare = DualTime.Truncate(length); break;
-                case 2: Yellow = DualTime.Truncate(length); break;
-                case 3: Blue = DualTime.Truncate(length); break;
-                case 4: Orange = DualTime.Truncate(length); break;
-                case 5: Green = DualTime.Truncate(length); break;
+                case 0: Bass = length; break;
+                case 1: Snare = length; break;
+                case 2: Yellow = length; break;
+                case 3: Blue = length; break;
+                case 4: Orange = length; break;
+                case 5: Green = length; break;
 
                 case 32: IsDoubleBass = true; break;
 

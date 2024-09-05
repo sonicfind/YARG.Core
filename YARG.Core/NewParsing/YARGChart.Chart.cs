@@ -168,7 +168,6 @@ namespace YARG.Core.NewParsing
                 }
                 FinalizeAnchors(chart.Sync);
             }
-            DualTime.SetTruncationLimit(settings, 1);
             return chart;
         }
 

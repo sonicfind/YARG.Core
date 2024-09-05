@@ -201,7 +201,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    ((DualTime*)diffTrack.Notes.TraverseBackwardsUntil(in colorPosition))[lane] = DualTime.Truncate(position - colorPosition);
+                                    ((DualTime*)diffTrack.Notes.TraverseBackwardsUntil(in colorPosition))[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
                                 }
                             }

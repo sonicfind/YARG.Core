@@ -116,7 +116,6 @@ namespace YARG.Core.NewParsing
         {
             var midi = YARGMidiFile.Load(data);
             var chart = new YARGChart(midi.Resolution, in metadata, in settings, modifiers);
-            DualTime.SetTruncationLimit(chart.Settings, (uint) (midi.Resolution / 3));
             MidiFiveFretLoader.SetOverdriveMidiNote(chart.Settings.OverdiveMidiNote);
 
             var encoding = YARGTextReader.UTF8Strict;
@@ -142,7 +141,6 @@ namespace YARG.Core.NewParsing
         {
             var mainMidi = YARGMidiFile.Load(mainData);
             var chart = new YARGChart(mainMidi.Resolution, in metadata, in settings, null);
-            DualTime.SetTruncationLimit(chart.Settings, (uint) (mainMidi.Resolution / 3));
             MidiFiveFretLoader.SetOverdriveMidiNote(chart.Settings.OverdiveMidiNote);
 
             // Temporary start point. The settings variable may carry that information in the future.
