@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using YARG.Core.Containers;
 
 namespace YARG.Core.NewParsing
 {
@@ -8,10 +9,12 @@ namespace YARG.Core.NewParsing
         public const int NUM_DIFFICULTIES = 4;
     }
 
-    public class InstrumentTrack2<TDifficultyTrack> : PhraseTrack
+    public class InstrumentTrack2<TDifficultyTrack> : ITrack
         where TDifficultyTrack : class, ITrack, new()
     {
         public readonly TDifficultyTrack?[] Difficulties = new TDifficultyTrack[InstrumentTrack2.NUM_DIFFICULTIES];
+        public readonly InstrumentPhrases Phrases = new();
+        public readonly YARGManagedSortedList<DualTime, HashSet<string>> Events = new();
 
         public InstrumentTrack2() {}
 
@@ -19,16 +22,20 @@ namespace YARG.Core.NewParsing
         /// Move constructor that siphons all phrases and special events from the source,
         /// leaving it in a default state.
         /// </summary>
-        /// <remarks>Does not effect <see cref="Difficulties"/>. Those remains unchanged and <see langword="null"/></remarks>
-        /// <param name="source"></param>
-        public InstrumentTrack2(PhraseTrack source)
-            : base(source) {}
+        /// <remarks>Does not effect <see cref="Difficulties"/>. Those remains unchanged and <see langword="null"/>.</remarks>
+        /// <param name="phrases">Collection of phrases to move</param>
+        /// <param name="events">Collection of text events to move</param>
+        public InstrumentTrack2(InstrumentPhrases phrases, YARGManagedSortedList<DualTime, HashSet<string>> events)
+        {
+            Phrases = new(phrases);
+            Events = new(events);
+        }
 
         /// <summary>
         /// Returns whether all active difficulties and track-scope phrases and events are empty
         /// </summary>
         /// <returns>Whether the instrument contains no data</returns>
-        public override bool IsEmpty()
+        public virtual bool IsEmpty()
         {
             foreach (var diff in Difficulties)
             {
@@ -37,26 +44,27 @@ namespace YARG.Core.NewParsing
                     return false;
                 }
             }
-            return base.IsEmpty();
+            return Phrases.IsEmpty() && Events.IsEmpty();
         }
 
         /// <summary>
         /// Clears all difficulties, phrases, and events
         /// </summary>
-        public override void Clear()
+        public virtual void Clear()
         {
             foreach (var diff in Difficulties)
             {
                 diff?.Clear();
             }
-            base.Clear();
+            Phrases.Clear();
+            Events.Clear();
         }
 
         /// <summary>
         /// Trims excess unmanaged buffer data from all difficulties and the track's phrases.<br></br>
         /// This will also delete any completely empty difficulties.
         /// </summary>
-        public override void TrimExcess()
+        public virtual void TrimExcess()
         {
             for (var i = 0; i < Difficulties.Length; i++)
             {
@@ -74,7 +82,7 @@ namespace YARG.Core.NewParsing
                     }
                 }
             }
-            base.TrimExcess();
+            Phrases.TrimExcess();
         }
 
         /// <summary>
@@ -113,7 +121,7 @@ namespace YARG.Core.NewParsing
         /// Checks all difficulties to determine the end point of the track
         /// </summary>
         /// <returns>The end point of the track</returns>
-        public override DualTime GetLastNoteTime()
+        public DualTime GetLastNoteTime()
         {
             DualTime endTime = default;
             foreach (var diff in Difficulties)
@@ -133,13 +141,13 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Disposes all unmanaged buffer data from every active difficulty and all phrase constainers
         /// </summary>
-        public override void Dispose()
+        public virtual void Dispose()
         {
             foreach (var diff in Difficulties)
             {
                 diff?.Dispose();
             }
-            base.Dispose();
+            Phrases.Dispose();
         }
     }
 }
