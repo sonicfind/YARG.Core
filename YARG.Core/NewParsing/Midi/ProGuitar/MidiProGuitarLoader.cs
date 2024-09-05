@@ -292,7 +292,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[3] == brePositions[4]
                                 && brePositions[4] == brePositions[5])
                             {
-                                instrumentTrack.BREs.Append(in bre, position - bre);
+                                instrumentTrack.Phrases.BREs.Append(in bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
@@ -303,14 +303,14 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
+                                        instrumentTrack.Phrases.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case SOLO_MIDI:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Soloes.Append(in soloPosition, position - soloPosition);
+                                        instrumentTrack.Phrases.Soloes.Append(in soloPosition, position - soloPosition);
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
@@ -318,10 +318,10 @@ namespace YARG.Core.NewParsing.Midi
                                     if (tremoloPostion.Ticks > -1)
                                     {
                                         var duration = position - tremoloPostion;
-                                        expertTrack.Tremolos.Append(in tremoloPostion, duration);
+                                        expertTrack.Phrases.Tremolos.Append(in tremoloPostion, duration);
                                         if (tremoloOnHard)
                                         {
-                                            hardTrack.Tremolos.Append(in tremoloPostion, duration);
+                                            hardTrack.Phrases.Tremolos.Append(in tremoloPostion, duration);
                                             tremoloOnHard = false;
                                         }
                                         tremoloPostion.Ticks = -1;
@@ -331,10 +331,10 @@ namespace YARG.Core.NewParsing.Midi
                                     if (trillPosition.Ticks > -1)
                                     {
                                         var duration = position - trillPosition;
-                                        expertTrack.Trills.Append(in trillPosition, duration);
+                                        expertTrack.Phrases.Trills.Append(in trillPosition, duration);
                                         if (trillOnHard)
                                         {
-                                            hardTrack.Trills.Append(in trillPosition, duration);
+                                            hardTrack.Phrases.Trills.Append(in trillPosition, duration);
                                             trillOnHard = false;
                                         }
                                         trillPosition.Ticks = -1;
