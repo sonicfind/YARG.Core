@@ -393,12 +393,12 @@ namespace YARG.Core.NewParsing
                             var (lane, duration) = YARGChartFileReader.ExtractLaneAndDuration(ref container, in position, in tempoTracker);
                             switch ((SpecialPhraseType) lane)
                             {
-                                case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(difficultyTrack.Faceoff_Player1, in position, in duration); break;
-                                case SpecialPhraseType.FaceOff_Player2: AddSpecialPhrase(difficultyTrack.Faceoff_Player2, in position, in duration); break;
-                                case SpecialPhraseType.StarPower:       AddSpecialPhrase(difficultyTrack.Overdrives,      in position, in duration); break;
-                                case SpecialPhraseType.BRE:             AddSpecialPhrase(difficultyTrack.BREs,            in position, in duration); break;
-                                case SpecialPhraseType.Tremolo:         AddSpecialPhrase(difficultyTrack.Tremolos,        in position, in duration); break;
-                                case SpecialPhraseType.Trill:           AddSpecialPhrase(difficultyTrack.Trills,          in position, in duration); break;
+                                case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(difficultyTrack.Phrases.Faceoff_Player1, in position, in duration); break;
+                                case SpecialPhraseType.FaceOff_Player2: AddSpecialPhrase(difficultyTrack.Phrases.Faceoff_Player2, in position, in duration); break;
+                                case SpecialPhraseType.StarPower:       AddSpecialPhrase(difficultyTrack.Phrases.Overdrives,      in position, in duration); break;
+                                case SpecialPhraseType.BRE:             AddSpecialPhrase(difficultyTrack.Phrases.BREs,            in position, in duration); break;
+                                case SpecialPhraseType.Tremolo:         AddSpecialPhrase(difficultyTrack.Phrases.Tremolos,        in position, in duration); break;
+                                case SpecialPhraseType.Trill:           AddSpecialPhrase(difficultyTrack.Phrases.Trills,          in position, in duration); break;
                             }
                             break;
                         }
@@ -428,12 +428,12 @@ namespace YARG.Core.NewParsing
                                 {
                                     ++position.Ticks;
                                     position.Seconds = tempoTracker.UnmovingConvert(position.Ticks);
-                                    difficultyTrack.Soloes.Append(in soloPosition, position - soloPosition);
+                                    difficultyTrack.Phrases.Soloes.Append(in soloPosition, position - soloPosition);
                                     soloPosition = DualTime.Inactive;
                                 }
                                 else
                                 {
-                                    difficultyTrack.Soloes.Append(in soloPosition, nextSoloPosition - soloPosition);
+                                    difficultyTrack.Phrases.Soloes.Append(in soloPosition, nextSoloPosition - soloPosition);
                                     soloPosition = nextSoloPosition;
                                     nextSoloPosition = DualTime.Inactive;
                                 }
