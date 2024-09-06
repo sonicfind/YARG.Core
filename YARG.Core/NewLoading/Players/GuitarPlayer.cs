@@ -2,6 +2,7 @@
 using YARG.Core.Containers;
 using YARG.Core.Game;
 using YARG.Core.NewParsing;
+using YARG.Core.Song;
 
 namespace YARG.Core.NewLoading.Guitar
 {
@@ -43,7 +44,7 @@ namespace YARG.Core.NewLoading.Guitar
             }
         }
 
-        internal static unsafe (Note[], OverdrivePhrase[], SoloPhrase[]) Load<TNote>(InstrumentTrack2<DifficultyTrack2<TNote>> track, YargProfile profile, long hopoThreshold, bool allowHopoAfterChord)
+        internal static unsafe (Note[], OverdrivePhrase[], SoloPhrase[]) Load<TNote>(InstrumentTrack2<DifficultyTrack2<TNote>> track, YargProfile profile, in LoaderSettings settings)
             where TNote : unmanaged, IGuitarNote
         {
             var diff = track[profile.CurrentDifficulty];
@@ -102,13 +103,13 @@ namespace YARG.Core.NewLoading.Guitar
                     if (frets[i].IsActive())
                     {
                         int index = !profile.LeftyFlip || i == OPEN_NOTE ? i : curr->Value.NUMLANES - i;
-                        buffer[laneCount++] = new SubNote(index, frets[i] + curr->Key);
+                        buffer[laneCount++] = new SubNote(index, DualTime.Truncate(frets[i], settings.SustainCutoffThreshold) + curr->Key);
                     }
                 }
 
                 if (laneCount > 0)
                 {
-                    var state = ParseGuitarState(curr, prev, curr->Value.State, modifiers, hopoThreshold, allowHopoAfterChord);
+                    var state = ParseGuitarState(curr, prev, curr->Value.State, modifiers, settings.HopoThreshold, settings.AllowHopoAfterChord);
                     int ovdIndex = -1;
                     if (currOverdrive < overdriveRanges.Count && curr->Key >= overdriveRanges.Data[currOverdrive].Key)
                     {

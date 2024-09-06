@@ -59,7 +59,7 @@ namespace YARG.Core.NewLoading.FiveLane
         private const int ORANGE = 4;
         private const int GREEN = 5;
 
-        public unsafe FiveLanePlayer(InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> track, SyncTrack2 sync, YargProfile profile)
+        public unsafe FiveLanePlayer(InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
             : base(sync, profile)
         {
             var diff = track[profile.CurrentDifficulty];
@@ -120,7 +120,7 @@ namespace YARG.Core.NewLoading.FiveLane
                     {
                         int index = !Profile.LeftyFlip || i < SNARE ? i : NUMLANES - i;
                         var dynamics = i >= SNARE ? (&curr->Value.Dynamics_Snare)[i - SNARE] : DrumDynamics.None;
-                        buffer[laneCount++] = new SubNote(index, dynamics, lanes[i] + curr->Key);
+                        buffer[laneCount++] = new SubNote(index, dynamics, DualTime.Truncate(lanes[i], sustainCutoff) + curr->Key);
                     }
                 }
 
@@ -163,7 +163,7 @@ namespace YARG.Core.NewLoading.FiveLane
             _notes = notes[..numNotes];
         }
 
-        public unsafe FiveLanePlayer(InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> track, SyncTrack2 sync, YargProfile profile)
+        public unsafe FiveLanePlayer(InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
             : base(sync, profile)
         {
             const int FOURLANECOUNT = 5;
@@ -254,7 +254,7 @@ namespace YARG.Core.NewLoading.FiveLane
                         {
                             index = NUMLANES - index;
                         }
-                        buffer[laneCount++] = new SubNote(index, dynamics, lanes[i] + curr->Key);
+                        buffer[laneCount++] = new SubNote(index, dynamics, DualTime.Truncate(lanes[i], sustainCutoff) + curr->Key);
                     }
                 }
 
