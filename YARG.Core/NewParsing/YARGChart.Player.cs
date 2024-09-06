@@ -14,7 +14,7 @@ namespace YARG.Core.NewParsing
             switch (profile.GameMode)
             {
                 case GameMode.FiveFretGuitar:
-                    return new NewLoading.Guitar.FiveFretPlayer(profile.CurrentInstrument switch
+                    return NewLoading.Guitar.GuitarPlayer.Load(profile.CurrentInstrument switch
                     {
                         Instrument.FiveFretGuitar =>     FiveFretGuitar!,
                         Instrument.FiveFretBass =>       FiveFretBass!,
@@ -22,44 +22,43 @@ namespace YARG.Core.NewParsing
                         Instrument.FiveFretCoopGuitar => FiveFretCoopGuitar!,
                         Instrument.Keys =>               Keys!,
                         _ => throw new InvalidOperationException(),
-                    }, Settings.GetHopoThreshold(Sync.Tickrate), !Settings.ChordHopoCancellation, Sync, profile);
+                    }, Sync, profile, Settings.GetHopoThreshold(Sync.Tickrate), !Settings.ChordHopoCancellation);
                 case GameMode.SixFretGuitar:
                     {
                         long hopoThreshold = Settings.GetHopoThreshold(Sync.Tickrate);
-                        bool allowHopoAfterChord = !Settings.ChordHopoCancellation;
                         return profile.CurrentInstrument switch
                         {
-                            Instrument.SixFretGuitar =>      new NewLoading.Guitar.SixFretPlayer(SixFretGuitar!,      hopoThreshold, allowHopoAfterChord, Sync, profile),
-                            Instrument.SixFretBass =>        new NewLoading.Guitar.SixFretPlayer(SixFretBass!,        hopoThreshold, allowHopoAfterChord, Sync, profile),
-                            Instrument.SixFretRhythm =>      new NewLoading.Guitar.SixFretPlayer(SixFretRhythm!,      hopoThreshold, allowHopoAfterChord, Sync, profile),
-                            Instrument.SixFretCoopGuitar =>  new NewLoading.Guitar.SixFretPlayer(SixFretCoopGuitar!,  hopoThreshold, allowHopoAfterChord, Sync, profile),
+                            Instrument.SixFretGuitar =>      NewLoading.Guitar.GuitarPlayer.Load(SixFretGuitar!,      Sync, profile, hopoThreshold, !Settings.ChordHopoCancellation),
+                            Instrument.SixFretBass =>        NewLoading.Guitar.GuitarPlayer.Load(SixFretBass!,        Sync, profile, hopoThreshold, !Settings.ChordHopoCancellation),
+                            Instrument.SixFretRhythm =>      NewLoading.Guitar.GuitarPlayer.Load(SixFretRhythm!,      Sync, profile, hopoThreshold, !Settings.ChordHopoCancellation),
+                            Instrument.SixFretCoopGuitar =>  NewLoading.Guitar.GuitarPlayer.Load(SixFretCoopGuitar!,  Sync, profile, hopoThreshold, !Settings.ChordHopoCancellation),
 
-                            Instrument.FiveFretGuitar =>     new NewLoading.Guitar.SixFretPlayer(FiveFretGuitar!,     hopoThreshold, allowHopoAfterChord, Sync, profile),
-                            Instrument.FiveFretBass =>       new NewLoading.Guitar.SixFretPlayer(FiveFretBass!,       hopoThreshold, allowHopoAfterChord, Sync, profile),
-                            Instrument.FiveFretRhythm =>     new NewLoading.Guitar.SixFretPlayer(FiveFretRhythm!,     hopoThreshold, allowHopoAfterChord, Sync, profile),
-                            Instrument.FiveFretCoopGuitar => new NewLoading.Guitar.SixFretPlayer(FiveFretCoopGuitar!, hopoThreshold, allowHopoAfterChord, Sync, profile),
-                            Instrument.Keys =>               new NewLoading.Guitar.SixFretPlayer(Keys!,               hopoThreshold, allowHopoAfterChord, Sync, profile),
+                            Instrument.FiveFretGuitar =>     NewLoading.Guitar.GuitarPlayer.Load(FiveFretGuitar!,     Sync, profile, hopoThreshold, !Settings.ChordHopoCancellation),
+                            Instrument.FiveFretBass =>       NewLoading.Guitar.GuitarPlayer.Load(FiveFretBass!,       Sync, profile, hopoThreshold, !Settings.ChordHopoCancellation),
+                            Instrument.FiveFretRhythm =>     NewLoading.Guitar.GuitarPlayer.Load(FiveFretRhythm!,     Sync, profile, hopoThreshold, !Settings.ChordHopoCancellation),
+                            Instrument.FiveFretCoopGuitar => NewLoading.Guitar.GuitarPlayer.Load(FiveFretCoopGuitar!, Sync, profile, hopoThreshold, !Settings.ChordHopoCancellation),
+                            Instrument.Keys =>               NewLoading.Guitar.GuitarPlayer.Load(Keys!,               Sync, profile, hopoThreshold, !Settings.ChordHopoCancellation),
                             _ => throw new InvalidOperationException(),
                         };
                     }
                 case GameMode.FourLaneDrums:
                     if (FourLaneDrums != null)
                     {
-                        return new NewLoading.FourLane.FourLanePlayer(FourLaneDrums, Sync, profile);
+                        return NewLoading.Drums.DrumPlayer.LoadFourLane(FourLaneDrums, Sync, profile);
                     }
                     if (FiveLaneDrums != null)
                     {
-                        return new NewLoading.FourLane.FourLanePlayer(FiveLaneDrums, Sync, profile);
+                        return NewLoading.Drums.DrumPlayer.LoadFourLane(FiveLaneDrums, Sync, profile);
                     }
                     throw new InvalidOperationException();
                 case GameMode.FiveLaneDrums:
                     if (FiveLaneDrums != null)
                     {
-                        return new NewLoading.FiveLane.FiveLanePlayer(FiveLaneDrums, Sync, profile);
+                        return NewLoading.Drums.DrumPlayer.LoadFiveLane(FiveLaneDrums, Sync, profile);
                     }
                     if (FourLaneDrums != null)
                     {
-                        return new NewLoading.FiveLane.FiveLanePlayer(FourLaneDrums, Sync, profile);
+                        return NewLoading.Drums.DrumPlayer.LoadFiveLane(FourLaneDrums, Sync, profile);
                     }
                     throw new InvalidOperationException();
                 case GameMode.ProGuitar:
