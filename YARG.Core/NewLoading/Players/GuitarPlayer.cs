@@ -103,7 +103,7 @@ namespace YARG.Core.NewLoading.Guitar
                     if (frets[i].IsActive())
                     {
                         int index = !profile.LeftyFlip || i == OPEN_NOTE ? i : curr->Value.NUMLANES - i;
-                        buffer[laneCount++] = new SubNote(index, frets[i] + curr->Key);
+                        buffer[laneCount++] = new SubNote(index, DualTime.Truncate(frets[i]) + curr->Key);
                     }
                 }
 

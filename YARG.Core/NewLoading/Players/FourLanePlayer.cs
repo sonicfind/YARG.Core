@@ -129,7 +129,7 @@ namespace YARG.Core.NewLoading.FourLane
                             ? i >= YELLOW && (&curr->Value.Cymbal_Yellow)[i - YELLOW] ? CymbalState.On : CymbalState.Off
                             : CymbalState.NonPro;
                         var dynamics = i >= SNARE ? (&curr->Value.Dynamics_Snare)[i - SNARE] : DrumDynamics.None;
-                        buffer[laneCount++] = new SubNote(index, state, dynamics, lanes[i] + curr->Key);
+                        buffer[laneCount++] = new SubNote(index, state, dynamics, DualTime.Truncate(lanes[i]) + curr->Key);
                     }
                 }
 
@@ -253,7 +253,7 @@ namespace YARG.Core.NewLoading.FourLane
                         var state = isProDrums
                             ? i == YELLOW || i == ORANGE ? CymbalState.On : CymbalState.Off
                             : CymbalState.NonPro;
-                        buffer[laneCount++] = new SubNote(index, state, dynamics, lanes[i] + curr->Key);
+                        buffer[laneCount++] = new SubNote(index, state, dynamics, DualTime.Truncate(lanes[i]) + curr->Key);
                     }
                 }
 

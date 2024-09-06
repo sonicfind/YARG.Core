@@ -120,7 +120,7 @@ namespace YARG.Core.NewLoading.FiveLane
                     {
                         int index = !profile.LeftyFlip || i < SNARE ? i : NUMLANES - i;
                         var dynamics = i >= SNARE ? (&curr->Value.Dynamics_Snare)[i - SNARE] : DrumDynamics.None;
-                        buffer[laneCount++] = new SubNote(index, dynamics, lanes[i] + curr->Key);
+                        buffer[laneCount++] = new SubNote(index, dynamics, DualTime.Truncate(lanes[i]) + curr->Key);
                     }
                 }
 
@@ -254,7 +254,7 @@ namespace YARG.Core.NewLoading.FiveLane
                         {
                             index = NUMLANES - index;
                         }
-                        buffer[laneCount++] = new SubNote(index, dynamics, lanes[i] + curr->Key);
+                        buffer[laneCount++] = new SubNote(index, dynamics, DualTime.Truncate(lanes[i]) + curr->Key);
                     }
                 }
 
