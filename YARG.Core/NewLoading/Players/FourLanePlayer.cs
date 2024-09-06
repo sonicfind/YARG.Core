@@ -65,7 +65,7 @@ namespace YARG.Core.NewLoading.FourLane
         private const int YELLOW = 2;
         private const int BLUE = 3;
 
-        public unsafe FourLanePlayer(InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> track, SyncTrack2 sync, YargProfile profile)
+        public unsafe FourLanePlayer(InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
             : base(sync, profile)
         {
             var diff = track[profile.CurrentDifficulty];
@@ -134,7 +134,7 @@ namespace YARG.Core.NewLoading.FourLane
                             ? i >= YELLOW && (&curr->Value.Cymbal_Yellow)[i - YELLOW] ? CymbalState.On : CymbalState.Off
                             : CymbalState.NonPro;
                         var dynamics = i >= SNARE ? (&curr->Value.Dynamics_Snare)[i - SNARE] : DrumDynamics.None;
-                        buffer[laneCount++] = new SubNote(index, state, dynamics, lanes[i] + curr->Key);
+                        buffer[laneCount++] = new SubNote(index, state, dynamics, DualTime.Truncate(lanes[i], sustainCutoff) + curr->Key);
                     }
                 }
 
@@ -178,7 +178,7 @@ namespace YARG.Core.NewLoading.FourLane
             _notes = notes[..numNotes];
         }
 
-        public unsafe FourLanePlayer(InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> track, SyncTrack2 sync, YargProfile profile)
+        public unsafe FourLanePlayer(InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
             : base(sync, profile)
         {
             const int FIVELANECOUNT = 6;
@@ -263,7 +263,7 @@ namespace YARG.Core.NewLoading.FourLane
                         var state = isProDrums
                             ? i == YELLOW || i == ORANGE ? CymbalState.On : CymbalState.Off
                             : CymbalState.NonPro;
-                        buffer[laneCount++] = new SubNote(index, state, dynamics, lanes[i] + curr->Key);
+                        buffer[laneCount++] = new SubNote(index, state, dynamics, DualTime.Truncate(lanes[i], sustainCutoff) + curr->Key);
                     }
                 }
 
