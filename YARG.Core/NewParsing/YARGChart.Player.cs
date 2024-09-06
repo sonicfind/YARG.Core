@@ -14,7 +14,7 @@ namespace YARG.Core.NewParsing
             switch (profile.GameMode)
             {
                 case GameMode.FiveFretGuitar:
-                    return new NewLoading.Guitar.FiveFretPlayer(profile.CurrentInstrument switch
+                    return NewLoading.Guitar.GuitarPlayer.Load(profile.CurrentInstrument switch
                     {
                         Instrument.FiveFretGuitar =>     FiveFretGuitar!,
                         Instrument.FiveFretBass =>       FiveFretBass!,
@@ -22,42 +22,40 @@ namespace YARG.Core.NewParsing
                         Instrument.FiveFretCoopGuitar => FiveFretCoopGuitar!,
                         Instrument.Keys =>               Keys!,
                         _ => throw new InvalidOperationException(),
-                    }, in Settings, Sync, profile);
+                    }, Sync, profile, in Settings);
                 case GameMode.SixFretGuitar:
+                    return profile.CurrentInstrument switch
                     {
-                        return profile.CurrentInstrument switch
-                        {
-                            Instrument.SixFretGuitar =>      new NewLoading.Guitar.SixFretPlayer(SixFretGuitar!,      in Settings, Sync, profile),
-                            Instrument.SixFretBass =>        new NewLoading.Guitar.SixFretPlayer(SixFretBass!,        in Settings, Sync, profile),
-                            Instrument.SixFretRhythm =>      new NewLoading.Guitar.SixFretPlayer(SixFretRhythm!,      in Settings, Sync, profile),
-                            Instrument.SixFretCoopGuitar =>  new NewLoading.Guitar.SixFretPlayer(SixFretCoopGuitar!,  in Settings, Sync, profile),
+                        Instrument.SixFretGuitar =>      NewLoading.Guitar.GuitarPlayer.Load(SixFretGuitar!,      Sync, profile, in Settings),
+                        Instrument.SixFretBass =>        NewLoading.Guitar.GuitarPlayer.Load(SixFretBass!,        Sync, profile, in Settings),
+                        Instrument.SixFretRhythm =>      NewLoading.Guitar.GuitarPlayer.Load(SixFretRhythm!,      Sync, profile, in Settings),
+                        Instrument.SixFretCoopGuitar =>  NewLoading.Guitar.GuitarPlayer.Load(SixFretCoopGuitar!,  Sync, profile, in Settings),
 
-                            Instrument.FiveFretGuitar =>     new NewLoading.Guitar.SixFretPlayer(FiveFretGuitar!,     in Settings, Sync, profile),
-                            Instrument.FiveFretBass =>       new NewLoading.Guitar.SixFretPlayer(FiveFretBass!,       in Settings, Sync, profile),
-                            Instrument.FiveFretRhythm =>     new NewLoading.Guitar.SixFretPlayer(FiveFretRhythm!,     in Settings, Sync, profile),
-                            Instrument.FiveFretCoopGuitar => new NewLoading.Guitar.SixFretPlayer(FiveFretCoopGuitar!, in Settings, Sync, profile),
-                            Instrument.Keys =>               new NewLoading.Guitar.SixFretPlayer(Keys!,               in Settings, Sync, profile),
-                            _ => throw new InvalidOperationException(),
-                        };
-                    }
+                        Instrument.FiveFretGuitar =>     NewLoading.Guitar.GuitarPlayer.Load(FiveFretGuitar!,     Sync, profile, in Settings),
+                        Instrument.FiveFretBass =>       NewLoading.Guitar.GuitarPlayer.Load(FiveFretBass!,       Sync, profile, in Settings),
+                        Instrument.FiveFretRhythm =>     NewLoading.Guitar.GuitarPlayer.Load(FiveFretRhythm!,     Sync, profile, in Settings),
+                        Instrument.FiveFretCoopGuitar => NewLoading.Guitar.GuitarPlayer.Load(FiveFretCoopGuitar!, Sync, profile, in Settings),
+                        Instrument.Keys =>               NewLoading.Guitar.GuitarPlayer.Load(Keys!,               Sync, profile, in Settings),
+                        _ => throw new InvalidOperationException(),
+                    };
                 case GameMode.FourLaneDrums:
                     if (FourLaneDrums != null)
                     {
-                        return new NewLoading.FourLane.FourLanePlayer(FourLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
+                        return NewLoading.Drums.DrumPlayer.LoadFourLane(FourLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
                     }
                     if (FiveLaneDrums != null)
                     {
-                        return new NewLoading.FourLane.FourLanePlayer(FiveLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
+                        return NewLoading.Drums.DrumPlayer.LoadFourLane(FiveLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
                     }
                     throw new InvalidOperationException();
                 case GameMode.FiveLaneDrums:
                     if (FiveLaneDrums != null)
                     {
-                        return new NewLoading.FiveLane.FiveLanePlayer(FiveLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
+                        return NewLoading.Drums.DrumPlayer.LoadFiveLane(FiveLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
                     }
                     if (FourLaneDrums != null)
                     {
-                        return new NewLoading.FiveLane.FiveLanePlayer(FourLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
+                        return NewLoading.Drums.DrumPlayer.LoadFiveLane(FourLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
                     }
                     throw new InvalidOperationException();
                 case GameMode.ProGuitar:
