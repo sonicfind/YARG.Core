@@ -1,50 +1,48 @@
 ﻿using System.Diagnostics;
 using YARG.Core.Containers;
 using YARG.Core.Game;
+using YARG.Core.IO;
+using YARG.Core.NewLoading.Players;
 using YARG.Core.NewParsing;
 using YARG.Core.Song;
 
 namespace YARG.Core.NewLoading.Guitar
 {
-    public static class GuitarPlayerLoader
+    public struct SubNote
     {
-        public struct SubNote
+        public readonly int Index;
+        public readonly DualTime EndPosition;
+        public HitStatus Status;
+
+        public SubNote(int index, DualTime endPosition)
         {
-            public readonly int Index;
-            public readonly DualTime EndPosition;
-            public HitStatus Status;
-
-            public SubNote(int index, DualTime endPosition)
-            {
-                Index = index;
-                EndPosition = endPosition;
-                Status = HitStatus.Idle;
-            }
+            Index = index;
+            EndPosition = endPosition;
+            Status = HitStatus.Idle;
         }
+    }
 
-        public readonly struct Note
+    public readonly struct Note
+    {
+        public readonly GuitarState State;
+        public readonly int NoteIndex;
+        public readonly int LaneCount;
+        public readonly int OverdriveIndex;
+        public readonly int SoloIndex;
+
+        public unsafe Note(GuitarState state, int noteIndex, int laneCount, int overdrive, int solo)
         {
-            public readonly DualTime StartPosition;
-            public readonly GuitarState State;
-            public readonly SubNote[] Notes;
-            public readonly int OverdriveIndex;
-            public readonly int SoloIndex;
-
-            public unsafe Note(in DualTime start, GuitarState state, SubNote* notes, int laneCount, int overdrive, int solo)
-            {
-                StartPosition = start;
-                State = state;
-                Notes = new SubNote[laneCount];
-                for (int i = 0; i < laneCount; i++)
-                {
-                    Notes[i] = notes[i];
-                }
-                OverdriveIndex = overdrive;
-                SoloIndex = solo;
-            }
+            State = state;
+            NoteIndex = noteIndex;
+            LaneCount = laneCount;
+            OverdriveIndex = overdrive;
+            SoloIndex = solo;
         }
+    }
 
-        internal static unsafe (Note[], OverdrivePhrase[], SoloPhrase[]) Load<TNote>(InstrumentTrack2<DifficultyTrack2<TNote>> track, YargProfile profile, in LoaderSettings settings)
+    public static class GuitarPlayer
+    {
+        public static unsafe InstrumentPlayer<Note, SubNote> Load<TNote>(InstrumentTrack2<DifficultyTrack2<TNote>> track, SyncTrack2 sync, YargProfile profile, in LoaderSettings settings)
             where TNote : unmanaged, IGuitarNote
         {
             var diff = track[profile.CurrentDifficulty];
@@ -58,11 +56,19 @@ namespace YARG.Core.NewLoading.Guitar
             var curr = diff.Notes.Data;
             var end = curr + diff.Notes.Count;
 
-            var notes = new Note[diff.Notes.Count];
-            var overdrives = new OverdrivePhrase[overdriveRanges.Count];
-            var soloes = new SoloPhrase[soloRanges.Count];
+            var notes = new YARGNativeSortedList<DualTime, Note>()
+            {
+                Capacity = diff.Notes.Count,
+            };
 
-            int numNotes = 0;
+            var subNotes = new YARGNativeList<SubNote>()
+            {
+                Capacity = diff.Notes.Count * 2,
+            };
+
+            var overdrives = FixedArray<OverdrivePhrase>.Alloc(overdriveRanges.Count);
+            var soloes = FixedArray<SoloPhrase>.Alloc(soloRanges.Count);
+
             int currOverdrive = 0;
             int overdriveNoteCount = 0;
             int currSolo = 0;
@@ -123,7 +129,8 @@ namespace YARG.Core.NewLoading.Guitar
                         soloNoteCount++;
                         soloIndex = currSolo;
                     }
-                    notes[numNotes++] = new Note(curr->Key, state, buffer, laneCount, ovdIndex, soloIndex);
+                    notes.Append(curr->Key, new Note(state, subNotes.Count, laneCount, ovdIndex, soloIndex));
+                    subNotes.AddRange(buffer, laneCount);
                 }
                 prev = curr;
                 ++curr;
@@ -144,7 +151,9 @@ namespace YARG.Core.NewLoading.Guitar
                 ++currSolo;
                 soloNoteCount = 0;
             }
-            return (notes[..numNotes], overdrives, soloes);
+            notes.TrimExcess();
+            subNotes.TrimExcess();
+            return new InstrumentPlayer<Note, SubNote>(notes, subNotes, soloes, overdrives, sync, profile);
         }
 
         private static unsafe GuitarState ParseGuitarState<TNote>(YARGKeyValuePair<DualTime, TNote>* curr, YARGKeyValuePair<DualTime, TNote>* prev, GuitarState state, Modifier modifiers, long hopoThreshold, bool allowHopoAfterChord)
