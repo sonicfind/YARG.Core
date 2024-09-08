@@ -51,6 +51,7 @@ namespace YARG.Core.NewParsing.Midi
         public static unsafe ProGuitarInstrumentTrack<TProFret> Load<TProFret>(YARGMidiTrack midiTrack, SyncTrack2 sync)
             where TProFret : unmanaged, IProFret
         {
+            // Pre-load empty instances of all difficulties
             var instrumentTrack = new ProGuitarInstrumentTrack<TProFret>();
             var difficulties = new ProGuitarDifficultyTrack<TProFret>[InstrumentTrack2.NUM_DIFFICULTIES]
             {
@@ -61,6 +62,7 @@ namespace YARG.Core.NewParsing.Midi
             };
 
             var diffModifiers = stackalloc (DualTime Arpeggio, ProSlide Slide, EmphasisType Emphasis, bool Hopo)[InstrumentTrack2.NUM_DIFFICULTIES];
+            // Per-difficulty tracker of note positions
             var strings = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_STRINGS]
             {
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
@@ -69,11 +71,12 @@ namespace YARG.Core.NewParsing.Midi
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
             };
 
+            // Various special phrases trackers
             var brePositions = stackalloc DualTime[6];
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
 
-            // Tremolo & trill both utilize the velocity value to determine what difficulties to apply to
+            // Tremolo & trill utilize the velocity value to determine what difficulties to apply to
             //
             // Velocities of 50-41 apply to hard alongside the default of only Expert
             var tremoloPostion = DualTime.Inactive;
@@ -81,14 +84,17 @@ namespace YARG.Core.NewParsing.Midi
             bool tremoloOnHard = false;
             bool trillOnHard = false;
 
+            // Various chord marker positions
             var slashPosition = DualTime.Inactive;
             var hideChordPosition = DualTime.Inactive;
             var accidentalPosition = DualTime.Inactive;
             var fullChordPosition = DualTime.Inactive;
 
             var position = default(DualTime);
+            // Used for snapping together chordal notes that get accidentally misaligned during authoring
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
+            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
@@ -97,8 +103,11 @@ namespace YARG.Core.NewParsing.Midi
                 if (midiTrack.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
+                    // Only noteOn events with non-zero velocities actually count as "ON"
                     if (midiTrack.Type == MidiEventType.Note_On && note.velocity > 0)
                     {
+                        // If the distance between the current NoteOn and the previous NoteOn rests within this tick threshold
+                        // the previous position will override the current one, as to "chord" multiple notes together
                         if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
                         {
                             position = lastOnNote;

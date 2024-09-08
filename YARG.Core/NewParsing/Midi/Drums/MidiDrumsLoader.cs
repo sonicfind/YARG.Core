@@ -27,6 +27,7 @@ namespace YARG.Core.NewParsing.Midi
         private const int TOM_MAX_VALUE = 112;
         public static unsafe InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> LoadFourLane(YARGMidiTrack midiTrack, SyncTrack2 sync, bool isProDrums)
         {
+            // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>();
             var difficulties = new DifficultyTrack2<FourLaneDrums>[InstrumentTrack2.NUM_DIFFICULTIES]
             {
@@ -37,6 +38,7 @@ namespace YARG.Core.NewParsing.Midi
             };
 
             const int NUM_LANES = 5;
+            // Per-difficulty tracker of note positions
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_LANES]
             {
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
@@ -47,7 +49,12 @@ namespace YARG.Core.NewParsing.Midi
 
             bool enableDynamics = false;
             bool flamFlag = false;
+            // By default, all non-kick notes in a four lane track are cymbals.
+            // While a player may choose non-pro drums, the conversion to that state should happen after parsing.
+            // The only exception is when the .ini attached the song explicitly defines the file as tom-only.
             var cymbalFlags = stackalloc bool[3] { isProDrums, isProDrums, isProDrums };
+
+            // Various special phrases trackers
             var brePositions = stackalloc DualTime[5];
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
@@ -55,8 +62,10 @@ namespace YARG.Core.NewParsing.Midi
             var trillPosition = DualTime.Inactive;
 
             var position = default(DualTime);
+            // Used for snapping together notes that get accidentally misaligned during authoring
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
+            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
@@ -65,8 +74,11 @@ namespace YARG.Core.NewParsing.Midi
                 if (midiTrack.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
+                    // Only noteOn events with non-zero velocities actually count as "ON"
                     if (midiTrack.Type == MidiEventType.Note_On && note.velocity > 0)
                     {
+                        // If the distance between the current NoteOn and the previous NoteOn rests within this tick threshold
+                        // the previous position will override the current one, as to "chord" multiple notes together
                         if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
                         {
                             position = lastOnNote;
@@ -87,18 +99,26 @@ namespace YARG.Core.NewParsing.Midi
                                 lanes[diffIndex * NUM_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
+                                    // We do this on the commonality that most charts do exceed this number of notes.
+                                    // Helps keep reallocations to a minimum.
                                     diffTrack.Notes.Capacity = 5000;
                                 }
 
+                                // We only need to touch the flam flag when we add a new note.
+                                // Any changes to the flag after this point will automatically occur from a separate scope.
                                 if (diffTrack.Notes.GetLastOrAppend(in position, out var drum))
                                 {
                                     drum->IsFlammed = flamFlag;
                                 }
 
+                                // Kicks don't use dynamics... I hope
                                 if (lane >= SNARE_LANE)
                                 {
                                     if (enableDynamics)
                                     {
+                                        // The FourLaneDrums type lays all the dynamics adjacent to each other.
+                                        // Having the pointer to an instance thus allows us to use arithmetic on the location
+                                        // of the first dynamic enum variable to get the specific one we want.
                                         (&drum->Dynamics_Snare)[lane - SNARE_LANE] = note.velocity switch
                                         {
                                             127 => DrumDynamics.Accent,
@@ -107,8 +127,10 @@ namespace YARG.Core.NewParsing.Midi
                                         };
                                     }
 
+                                    // Yellow, Blue, and Green can be cymbals
                                     if (lane >= YELLOW_LANE)
                                     {
+                                        // Same idea as the drum dynamics above.
                                         int index = lane - YELLOW_LANE;
                                         (&drum->Cymbal_Yellow)[index] = cymbalFlags[index];
                                     }
@@ -129,6 +151,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             if (!isProDrums)
                             {
+                                // But we ignore them because the .ini told us to
                                 continue;
                             }
 
@@ -136,8 +159,11 @@ namespace YARG.Core.NewParsing.Midi
                             cymbalFlags[index] = false;
                             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                             {
+                                // If a flag flips on the same tick of any notes,
+                                // we MUST flip the applicable cymbal marker for those notes to match
                                 if (difficulties[i].Notes.TryGetLastValue(in position, out var drum))
                                 {
+                                    // Blah blah: pointer arithmetic
                                     (&drum->Cymbal_Yellow)[index] = false;
                                 }
                             }
@@ -166,6 +192,8 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = true;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
+                                        // If a flag flips on the same tick of any notes,
+                                        // we MUST flip the applicable flam marker for those notes to match
                                         if (difficulties[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = true;
@@ -188,6 +216,9 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
+                                    // The FourLaneDrums type lays all the inner lanes adjacent to each other.
+                                    // Having the pointer to an instance thus allows us to use arithmetic on the location
+                                    // of the Bass lane variable to get the specific one we want.
                                     (&difficulties[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition)->Bass)[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
                                 }
@@ -213,6 +244,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             if (!isProDrums)
                             {
+                                // But we ignore them because the .ini told us to
                                 continue;
                             }
 
@@ -220,8 +252,11 @@ namespace YARG.Core.NewParsing.Midi
                             cymbalFlags[index] = true;
                             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                             {
+                                // If a flag flips on the same tick of any notes,
+                                // we MUST flip the applicable cymbal marker for those notes to match
                                 if (difficulties[i].Notes.TryGetLastValue(in position, out var drum))
                                 {
+                                    // Blah blah: pointer arithmetic
                                     (&drum->Cymbal_Yellow)[index] = true;
                                 }
                             }
@@ -229,6 +264,8 @@ namespace YARG.Core.NewParsing.Midi
                         else if (MidiLoader_Constants.BRE_MIN <= note.value && note.value <= MidiLoader_Constants.BRE_MAX)
                         {
                             ref var bre = ref brePositions[note.value - MidiLoader_Constants.BRE_MIN];
+                            // We only want to add a BRE phrase if we can confirm that all the BRE lanes
+                            // were set to "ON" on the same tick
                             if (bre.Ticks > -1
                                 && brePositions[0] == brePositions[1]
                                 && brePositions[1] == brePositions[2]
@@ -275,6 +312,8 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = false;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
+                                        // If a flag flips on the same tick of any notes,
+                                        // we MUST flip the applicable flam marker for those notes to match
                                         if (difficulties[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = false;
@@ -288,12 +327,15 @@ namespace YARG.Core.NewParsing.Midi
                 else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit && midiTrack.Type != MidiEventType.Text_TrackName)
                 {
                     var str = midiTrack.ExtractTextOrSysEx();
+                    // We only need to check dynamics once
                     if (!enableDynamics && str.SequenceEqual(DYNAMICS_STRING))
                     {
                         enableDynamics = true;
                     }
                     else
                     {
+                        // Unless, for some stupid-ass reason, this track contains lyrics,
+                        // all actually useful events will utilize ASCII encoding for state
                         var ev = Encoding.ASCII.GetString(str);
                         instrumentTrack.Events
                             .GetLastOrAppend(position)
@@ -306,6 +348,7 @@ namespace YARG.Core.NewParsing.Midi
 
         public static unsafe InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> LoadFiveLane(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
+            // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>();
             var difficulties = new DifficultyTrack2<FiveLaneDrums>[InstrumentTrack2.NUM_DIFFICULTIES]
             {
@@ -316,6 +359,7 @@ namespace YARG.Core.NewParsing.Midi
             };
 
             const int NUM_LANES = 6;
+            // Per-difficulty tracker of note positions
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_LANES]
             {
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
@@ -326,6 +370,7 @@ namespace YARG.Core.NewParsing.Midi
 
             bool enableDynamics = false;
             bool flamFlag = false;
+            // Various special phrases trackers
             var brePositions = stackalloc DualTime[5];
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
@@ -333,8 +378,10 @@ namespace YARG.Core.NewParsing.Midi
             var trillPosition = DualTime.Inactive;
 
             var position = default(DualTime);
+            // Used for snapping together notes that get accidentally misaligned during authoring
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
+            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
@@ -343,8 +390,11 @@ namespace YARG.Core.NewParsing.Midi
                 if (midiTrack.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
+                    // Only noteOn events with non-zero velocities actually count as "ON"
                     if (midiTrack.Type == MidiEventType.Note_On && note.velocity > 0)
                     {
+                        // If the distance between the current NoteOn and the previous NoteOn rests within this tick threshold
+                        // the previous position will override the current one, as to "chord" multiple notes together
                         if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
                         {
                             position = lastOnNote;
@@ -365,16 +415,24 @@ namespace YARG.Core.NewParsing.Midi
                                 lanes[diffIndex * NUM_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
+                                    // We do this on the commonality that most charts do exceed this number of notes.
+                                    // Helps keep reallocations to a minimum.
                                     diffTrack.Notes.Capacity = 5000;
                                 }
 
+                                // We only need to touch the flam flag when we add a new note.
+                                // Any changes to the flag after this point will automatically occur from a separate scope.
                                 if (diffTrack.Notes.GetLastOrAppend(in position, out var drum))
                                 {
                                     drum->IsFlammed = flamFlag;
                                 }
 
+                                // Kicks don't use dynamics... I hope
                                 if (enableDynamics && lane >= SNARE_LANE)
                                 {
+                                    // The FiveLaneDrums type lays all the dynamics adjacent to each other.
+                                    // Having the pointer to an instance thus allows us to use arithmetic on the location
+                                    // of the first dynamic enum variable to get the specific one we want.
                                     (&drum->Dynamics_Snare)[lane - SNARE_LANE] = note.velocity switch
                                     {
                                         127 => DrumDynamics.Accent,
@@ -418,6 +476,8 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = true;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
+                                        // If a flag flips on the same tick of any notes,
+                                        // we MUST flip the applicable flam marker for those notes to match
                                         if (difficulties[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = true;
@@ -440,6 +500,9 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
+                                    // The FiveLaneDrums type lays all the inner lanes adjacent to each other.
+                                    // Having the pointer to an instance thus allows us to use arithmetic on the location
+                                    // of the Bass lane variable to get the specific one we want.
                                     (&difficulties[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition)->Bass)[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
                                 }
@@ -464,6 +527,8 @@ namespace YARG.Core.NewParsing.Midi
                         else if (MidiLoader_Constants.BRE_MIN <= note.value && note.value <= MidiLoader_Constants.BRE_MAX)
                         {
                             ref var bre = ref brePositions[note.value - MidiLoader_Constants.BRE_MIN];
+                            // We only want to add a BRE phrase if we can confirm that all the BRE lanes
+                            // were set to "ON" on the same tick
                             if (bre.Ticks > -1
                                 && brePositions[0] == brePositions[1]
                                 && brePositions[1] == brePositions[2]
@@ -510,6 +575,8 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = false;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
+                                        // If a flag flips on the same tick of any notes,
+                                        // we MUST flip the applicable flam marker for those notes to match
                                         if (difficulties[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = false;
@@ -523,12 +590,15 @@ namespace YARG.Core.NewParsing.Midi
                 else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit && midiTrack.Type != MidiEventType.Text_TrackName)
                 {
                     var str = midiTrack.ExtractTextOrSysEx();
+                    // We only need to check dynamics once
                     if (!enableDynamics && str.SequenceEqual(DYNAMICS_STRING))
                     {
                         enableDynamics = true;
                     }
                     else
                     {
+                        // Unless, for some stupid-ass reason, this track contains lyrics,
+                        // all actually useful events will utilize ASCII encoding for state
                         var ev = Encoding.ASCII.GetString(str);
                         instrumentTrack.Events
                             .GetLastOrAppend(position)
@@ -541,6 +611,7 @@ namespace YARG.Core.NewParsing.Midi
 
         public static unsafe InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> LoadUnknownDrums(YARGMidiTrack midiTrack, SyncTrack2 sync, ref DrumsType type)
         {
+            // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>>();
             var difficulties = new DifficultyTrack2<UnknownLaneDrums>[InstrumentTrack2.NUM_DIFFICULTIES]
             {
@@ -561,9 +632,13 @@ namespace YARG.Core.NewParsing.Midi
 
             // Unknown_Four cannot become five lane
             int numLanes = type != DrumsType.Unknown_Four ? 6 : 5;
+            // Flips to true if it finds the text string for enabling dynamics
             bool enableDynamics = false;
             bool flamFlag = false;
+            // By default, all non-kick notes are cymbals (unless the track maps to five lane).
             var cymbalFlags = stackalloc bool[3] { true, true, true };
+
+            // Various special phrases trackers
             var brePositions = stackalloc DualTime[5];
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
@@ -571,8 +646,10 @@ namespace YARG.Core.NewParsing.Midi
             var trillPosition = DualTime.Inactive;
 
             var position = default(DualTime);
+            // Used for snapping together notes that get accidentally misaligned during authoring
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
+            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
@@ -581,8 +658,11 @@ namespace YARG.Core.NewParsing.Midi
                 if (midiTrack.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
+                    // Only noteOn events with non-zero velocities actually count as "ON"
                     if (midiTrack.Type == MidiEventType.Note_On && note.velocity > 0)
                     {
+                        // If the distance between the current NoteOn and the previous NoteOn rests within this tick threshold
+                        // the previous position will override the current one, as to "chord" multiple notes together
                         if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
                         {
                             position = lastOnNote;
@@ -604,9 +684,13 @@ namespace YARG.Core.NewParsing.Midi
                                 lanes[diffIndex * MAX_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
+                                    // We do this on the commonality that most charts do exceed this number of notes.
+                                    // Helps keep reallocations to a minimum.
                                     diffTrack.Notes.Capacity = 5000;
                                 }
 
+                                // We only need to touch the flam flag when we add a new note.
+                                // Any changes to the flag after this point will automatically occur from a separate scope.
                                 if (diffTrack.Notes.GetLastOrAppend(in position, out var drum))
                                 {
                                     drum->IsFlammed = flamFlag;
@@ -614,10 +698,14 @@ namespace YARG.Core.NewParsing.Midi
 
                                 if (lane < FIFTH_LANE)
                                 {
+                                    // Kicks don't use dynamics... I hope
                                     if (lane >= SNARE_LANE)
                                     {
                                         if (enableDynamics)
                                         {
+                                            // The UnknownLaneDrums type lays the dynamics of the first four lanes adjacent to each other.
+                                            // Having the pointer to an instance thus allows us to use arithmetic on the location
+                                            // of the first dynamic enum variable to get the specific one we want.
                                             (&drum->Dynamics_Snare)[lane - SNARE_LANE] = note.velocity switch
                                             {
                                                 127 => DrumDynamics.Accent,
@@ -626,8 +714,10 @@ namespace YARG.Core.NewParsing.Midi
                                             };
                                         }
 
+                                        // Yellow, Blue, and Green can be cymbals
                                         if (lane >= YELLOW_LANE)
                                         {
+                                            // Same idea as the drum dynamics above.
                                             int cymbalIndex = lane - YELLOW_LANE;
                                             (&drum->Cymbal_Yellow)[cymbalIndex] = cymbalFlags[cymbalIndex];
                                         }
@@ -666,8 +756,11 @@ namespace YARG.Core.NewParsing.Midi
                                 cymbalFlags[index] = false;
                                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                 {
+                                    // If a flag flips on the same tick of any notes,
+                                    // we MUST flip the applicable cymbal marker for those notes to match
                                     if (difficulties[i].Notes.TryGetLastValue(in position, out var drum))
                                     {
+                                        // Blah blah: pointer arithmetic
                                         (&drum->Cymbal_Yellow)[index] = false;
                                     }
                                 }
@@ -699,6 +792,8 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = true;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
+                                        // If a flag flips on the same tick of any notes,
+                                        // we MUST flip the applicable flam marker for those notes to match
                                         if (difficulties[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = true;
@@ -725,6 +820,9 @@ namespace YARG.Core.NewParsing.Midi
                                     var duration = position - colorPosition;
                                     if (lane < FIFTH_LANE)
                                     {
+                                        // The UnknownLaneDrums type lays kick and the first four pad lanes adjacent to each other.
+                                        // Having the pointer to an instance thus allows us to use arithmetic on the location
+                                        // of the Bass lane variable to get the specific one we want.
                                         (&drum->Bass)[lane] = duration;
                                     }
                                     else
@@ -759,8 +857,11 @@ namespace YARG.Core.NewParsing.Midi
                                 cymbalFlags[index] = true;
                                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                 {
+                                    // If a flag flips on the same tick of any notes,
+                                    // we MUST flip the applicable cymbal marker for those notes to match
                                     if (difficulties[i].Notes.TryGetLastValue(in position, out var drum))
                                     {
+                                        // Blah blah: pointer arithmetic
                                         (&drum->Cymbal_Yellow)[index] = true;
                                     }
                                 }
@@ -769,6 +870,8 @@ namespace YARG.Core.NewParsing.Midi
                         else if (MidiLoader_Constants.BRE_MIN <= note.value && note.value <= MidiLoader_Constants.BRE_MAX)
                         {
                             ref var bre = ref brePositions[note.value - MidiLoader_Constants.BRE_MIN];
+                            // We only want to add a BRE phrase if we can confirm that all the BRE lanes
+                            // were set to "ON" on the same tick
                             if (bre.Ticks > -1
                                 && brePositions[0] == brePositions[1]
                                 && brePositions[1] == brePositions[2]
@@ -815,6 +918,8 @@ namespace YARG.Core.NewParsing.Midi
                                     flamFlag = false;
                                     for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                     {
+                                        // If a flag flips on the same tick of any notes,
+                                        // we MUST flip the applicable flam marker for those notes to match
                                         if (difficulties[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = false;
@@ -828,12 +933,15 @@ namespace YARG.Core.NewParsing.Midi
                 else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit && midiTrack.Type != MidiEventType.Text_TrackName)
                 {
                     var str = midiTrack.ExtractTextOrSysEx();
+                    // We only need to check dynamics once
                     if (!enableDynamics && str.SequenceEqual(DYNAMICS_STRING))
                     {
                         enableDynamics = true;
                     }
                     else
                     {
+                        // Unless, for some stupid-ass reason, this track contains lyrics,
+                        // all actually useful events will utilize ASCII encoding for state
                         var ev = Encoding.ASCII.GetString(str);
                         instrumentTrack.Events
                             .GetLastOrAppend(position)
