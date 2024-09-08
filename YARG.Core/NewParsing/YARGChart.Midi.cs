@@ -375,9 +375,11 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Drums:
                     switch (drumsInChart)
                     {
-                        case DrumsType.FourLane:
                         case DrumsType.ProDrums:
-                            chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, sync);
+                            chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, sync, true);
+                            break;
+                        case DrumsType.FourLane:
+                            chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, sync, false);
                             break;
                         case DrumsType.FiveLane:
                             chart.FiveLaneDrums ??= MidiDrumsLoader.LoadFiveLane(midiTrack, sync);
