@@ -43,12 +43,12 @@ namespace YARG.Core.NewParsing.Midi
             var trillPosition = DualTime.Inactive;
 
             var position = default(DualTime);
-            // Used for snapping together chordal notes that get accidentally misaligned during authoring
-            var lastOnNote = default(DualTime);
             var note = default(MidiNote);
             var stats = default(MidiStats);
             // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(sync);
+            // Used for snapping together notes that get accidentally misaligned during authoring
+            var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent(ref stats))
             {
                 position.Ticks = stats.Position;
@@ -59,15 +59,11 @@ namespace YARG.Core.NewParsing.Midi
                     // Only noteOn events with non-zero velocities actually count as "ON"
                     if (stats.Type == MidiEventType.Note_On && note.Velocity > 0)
                     {
-                        // If the distance between the current NoteOn and the previous NoteOn rests within this tick threshold
-                        // the previous position will override the current one, as to "chord" multiple notes together
-                        if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
+                        // If the distance between the current NoteOn and the previous NoteOn is less than a certain threshold
+                        // the previous position will override the current one, to "chord" multiple notes together
+                        if (chordSnapper.Snap(ref position) && stats.Position > 0)
                         {
-                            position = lastOnNote;
-                        }
-                        else
-                        {
-                            lastOnNote = position;
+                            YargLogger.LogInfo("Snap occured");
                         }
 
                         if (PROKEY_MIN <= note.Value && note.Value <= PROKEY_MAX)
