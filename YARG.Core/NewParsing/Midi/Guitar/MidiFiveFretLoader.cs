@@ -35,13 +35,6 @@ namespace YARG.Core.NewParsing.Midi
 
         private static readonly byte[][] ENHANCED_STRINGS = new byte[][] { Encoding.ASCII.GetBytes("[ENHANCED_OPENS]"), Encoding.ASCII.GetBytes("ENHANCED_OPENS") };
 
-        private struct FiveFretDiff
-        {
-            public bool SliderNotes;
-            public bool HopoOn;
-            public bool HopoOff;
-        }
-
         public static unsafe InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>();
@@ -53,7 +46,7 @@ namespace YARG.Core.NewParsing.Midi
                 instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new DifficultyTrack2<FiveFretGuitar>(),
             };
 
-            var diffModifiers = stackalloc FiveFretDiff[InstrumentTrack2.NUM_DIFFICULTIES];
+            var diffModifiers = stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES];
 
             // Zero is reserved for open notes. Open notes apply in two situations:
             // 1. The 13s will swap to zeroes when the ENHANCED_OPENS toggle occurs

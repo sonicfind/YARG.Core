@@ -34,13 +34,6 @@ namespace YARG.Core.NewParsing.Midi
             0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 11,
         };
 
-        private struct SixFretDiff
-        {
-            public bool SliderNotes;
-            public bool HopoOn;
-            public bool HopoOff;
-        }
-
         public static unsafe InstrumentTrack2<DifficultyTrack2<SixFretGuitar>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>();
@@ -52,8 +45,8 @@ namespace YARG.Core.NewParsing.Midi
                 instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new DifficultyTrack2<SixFretGuitar>(),
             };
 
-            var diffModifiers = stackalloc SixFretDiff[InstrumentTrack2.NUM_DIFFICULTIES];
 
+            var diffModifiers = stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES];
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_LANES]
             {
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,

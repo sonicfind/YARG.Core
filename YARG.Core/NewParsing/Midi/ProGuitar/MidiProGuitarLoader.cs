@@ -48,14 +48,6 @@ namespace YARG.Core.NewParsing.Midi
             PitchName.E, PitchName.F, PitchName.F_Sharp_Gb, PitchName.G, PitchName.G_Sharp_Ab, PitchName.A, PitchName.A_Sharp_Bb, PitchName.B, PitchName.C, PitchName.C_Sharp_Db, PitchName.D, PitchName.D_Sharp_Eb
         };
 
-        private struct ProGuitarDiff
-        {
-            public DualTime Arpeggio;
-            public ProSlide Slide;
-            public EmphasisType Emphasis;
-            public bool Hopo;
-        }
-
         public static unsafe ProGuitarInstrumentTrack<TProFret> Load<TProFret>(YARGMidiTrack midiTrack, SyncTrack2 sync)
             where TProFret : unmanaged, IProFret
         {
@@ -68,7 +60,7 @@ namespace YARG.Core.NewParsing.Midi
                 instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new ProGuitarDifficultyTrack<TProFret>(),
             };
 
-            var difficulties = stackalloc ProGuitarDiff[InstrumentTrack2.NUM_DIFFICULTIES];
+            var diffModifiers = stackalloc (DualTime Arpeggio, ProSlide Slide, EmphasisType Emphasis, bool Hopo)[InstrumentTrack2.NUM_DIFFICULTIES];
             var strings = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_STRINGS]
             {
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
