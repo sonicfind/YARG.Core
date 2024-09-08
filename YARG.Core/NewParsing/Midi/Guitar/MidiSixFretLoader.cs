@@ -33,6 +33,7 @@ namespace YARG.Core.NewParsing.Midi
 
         public static unsafe InstrumentTrack2<DifficultyTrack2<SixFretGuitar>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
+            // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>();
             var difficulties = new DifficultyTrack2<SixFretGuitar>[InstrumentTrack2.NUM_DIFFICULTIES]
             {
@@ -42,8 +43,8 @@ namespace YARG.Core.NewParsing.Midi
                 instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new DifficultyTrack2<SixFretGuitar>(),
             };
 
-
             var diffModifiers = stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES];
+            // Per-difficulty tracker of note positions
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_LANES]
             {
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
@@ -52,6 +53,7 @@ namespace YARG.Core.NewParsing.Midi
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
             };
 
+            // Various special phrases trackers
             var brePositions = stackalloc DualTime[5];
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
@@ -60,18 +62,23 @@ namespace YARG.Core.NewParsing.Midi
 
             ReadOnlySpan<byte> SYSEXTAG = stackalloc byte[] { (byte) 'P', (byte) 'S', (byte) '\0', };
             var position = default(DualTime);
+            // Used for snapping together chordal notes that get accidentally misaligned during authoring
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
+            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
                 position.Ticks = midiTrack.Position;
                 position.Seconds = tempoTracker.Traverse(position.Ticks);
+                // Only noteOn events with non-zero velocities actually count as "ON"
                 if (midiTrack.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
                     if (midiTrack.Type == MidiEventType.Note_On && note.velocity > 0)
                     {
+                        // If the distance between the current NoteOn and the previous NoteOn rests within this tick threshold
+                        // the previous position will override the current one, as to "chord" multiple notes together
                         if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
                         {
                             position = lastOnNote;
@@ -92,9 +99,14 @@ namespace YARG.Core.NewParsing.Midi
                                 lanes[diffIndex * NUM_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
+                                    // We do this on the commonality that most charts do exceed this number of notes.
+                                    // Helps keep reallocations to a minimum.
                                     diffTrack.Notes.Capacity = 5000;
                                 }
 
+                                // We only need to touch the guitar state when we add a new note.
+                                // Any changes to the state afterwards will only occur if one of the applicable
+                                // flags undergoes a flip on the same tick, but solely within that scope.
                                 if (diffTrack.Notes.GetLastOrAppend(in position, out var guitar))
                                 {
                                     ref var diffModifier = ref diffModifiers[diffIndex];
@@ -120,6 +132,9 @@ namespace YARG.Core.NewParsing.Midi
                                     case HOPO_ON_INDEX:
                                         {
                                             diffModifiers[diffIndex].HopoOn = true;
+                                            // We must alter any notes present on the same tick to match the correct state
+                                            //
+                                            // However, Tap, alone, overrides Hopo
                                             if (diffTrack.Notes.TryGetLastValue(in position, out var guitar) && guitar->State != GuitarState.Tap)
                                             {
                                                 guitar->State = GuitarState.Hopo;
@@ -129,6 +144,9 @@ namespace YARG.Core.NewParsing.Midi
                                     case HOPO_OFF_INDEX:
                                         {
                                             diffModifiers[diffIndex].HopoOff = true;
+                                            // We must alter any notes present on the same tick to match the correct state
+                                            //
+                                            // However, Tap & Hopo override Strum
                                             if (diffTrack.Notes.TryGetLastValue(in position, out var guitar) && guitar->State == GuitarState.Natural)
                                             {
                                                 guitar->State = GuitarState.Strum;
@@ -157,6 +175,7 @@ namespace YARG.Core.NewParsing.Midi
                                             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                                             {
                                                 diffModifiers[i].SliderNotes = true;
+                                                // If any note exists on the same tick, we must change the state to match
                                                 if (difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
                                                 {
                                                     guitar->State = GuitarState.Tap;
@@ -201,6 +220,9 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
+                                    // FiveFretGuitar lays all the lanes adjacent to each other right at the top of the type.
+                                    // Having a pointer to an instance therefore equates to having the pointer to the first lane.
+                                    // This means we can use simple indexing to grab the lane that we desire
                                     ((DualTime*)diffTrack.Notes.TraverseBackwardsUntil(in colorPosition))[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
                                 }
@@ -212,6 +234,9 @@ namespace YARG.Core.NewParsing.Midi
                                     case HOPO_ON_INDEX:
                                         {
                                             diffModifiers[diffIndex].HopoOn = false;
+                                            // We must alter any notes present on the same tick to match the correct state
+                                            //
+                                            // However, Tap overrides all others
                                             if (diffTrack.Notes.TryGetLastValue(in position, out var guitar) && guitar->State != GuitarState.Tap)
                                             {
                                                 guitar->State = diffModifiers[diffIndex].HopoOff ? GuitarState.Strum : GuitarState.Natural;
@@ -221,6 +246,9 @@ namespace YARG.Core.NewParsing.Midi
                                     case HOPO_OFF_INDEX:
                                         {
                                             diffModifiers[diffIndex].HopoOff = false;
+                                            // We must alter any notes present on the same tick to match the correct state
+                                            //
+                                            // However, Tap & Hopo override Strum
                                             if (diffTrack.Notes.TryGetLastValue(in position, out var guitar) && guitar->State == GuitarState.Strum)
                                             {
                                                 guitar->State = GuitarState.Natural;
@@ -254,6 +282,9 @@ namespace YARG.Core.NewParsing.Midi
                                             {
                                                 ref var diffModifier = ref diffModifiers[i];
                                                 diffModifier.SliderNotes = false;
+                                                // If any note exists on the same tick, we must change the state to match
+                                                // From state heirarchy rules, the state for a found note IS already set to Tap.
+                                                // We don't need to check.
                                                 if (difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
                                                 {
                                                     if (diffModifier.HopoOn)
@@ -278,6 +309,8 @@ namespace YARG.Core.NewParsing.Midi
                         else if (MidiLoader_Constants.BRE_MIN <= note.value && note.value <= MidiLoader_Constants.BRE_MAX)
                         {
                             ref var bre = ref brePositions[note.value - MidiLoader_Constants.BRE_MIN];
+                            // We only want to add a BRE phrase if we can confirm that all the BRE lanes
+                            // were set to "ON" on the same tick
                             if (bre.Ticks > -1
                                 && brePositions[0] == brePositions[1]
                                 && brePositions[1] == brePositions[2]
@@ -330,6 +363,10 @@ namespace YARG.Core.NewParsing.Midi
                     bool enable = sysex[SYSEX_STATUS_INDEX] == 1;
                     if (enable)
                     {
+                        // If the distance between the current NoteOn and the previous NoteOn rests within this tick threshold
+                        // the previous position will override the current one, as to "chord" multiple notes together
+                        //
+                        // While this isn't an actual NoteOn midi event, we should interpret it like one in this instance for safety.
                         if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
                         {
                             position = lastOnNote;
@@ -382,8 +419,9 @@ namespace YARG.Core.NewParsing.Midi
                 }
                 else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit && midiTrack.Type != MidiEventType.Text_TrackName)
                 {
-                    var str = midiTrack.ExtractTextOrSysEx();
-                    var ev = Encoding.ASCII.GetString(str);
+                    // Unless, for some stupid-ass reason, this track contains lyrics,
+                    // all actually useful events will utilize ASCII encoding for state
+                    var ev = Encoding.ASCII.GetString(midiTrack.ExtractTextOrSysEx());
                     instrumentTrack.Events
                         .GetLastOrAppend(position)
                         .Add(ev);
