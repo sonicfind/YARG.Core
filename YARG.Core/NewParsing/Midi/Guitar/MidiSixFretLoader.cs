@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using YARG.Core.IO;
+using YARG.Core.Logging;
 
 namespace YARG.Core.NewParsing.Midi
 {
@@ -62,11 +63,11 @@ namespace YARG.Core.NewParsing.Midi
 
             ReadOnlySpan<byte> SYSEXTAG = stackalloc byte[] { (byte) 'P', (byte) 'S', (byte) '\0', };
             var position = default(DualTime);
-            // Used for snapping together chordal notes that get accidentally misaligned during authoring
-            var lastOnNote = default(DualTime);
             var note = default(MidiNote);
             // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(sync);
+            // Used for snapping together notes that get accidentally misaligned during authoring
+            var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent())
             {
                 position.Ticks = midiTrack.Position;
@@ -77,15 +78,11 @@ namespace YARG.Core.NewParsing.Midi
                     midiTrack.ExtractMidiNote(ref note);
                     if (midiTrack.Type == MidiEventType.Note_On && note.velocity > 0)
                     {
-                        // If the distance between the current NoteOn and the previous NoteOn rests within this tick threshold
-                        // the previous position will override the current one, as to "chord" multiple notes together
-                        if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
+                        // If the distance between the current NoteOn and the previous NoteOn is less than a certain threshold
+                        // the previous position will override the current one, to "chord" multiple notes together
+                        if (chordSnapper.Snap(ref position) && midiTrack.Position > 0)
                         {
-                            position = lastOnNote;
-                        }
-                        else
-                        {
-                            lastOnNote = position;
+                            YargLogger.LogInfo("Snap occured");
                         }
 
                         if (SIXFRET_MIN <= note.value && note.value <= SIXFRET_MAX)
@@ -363,17 +360,13 @@ namespace YARG.Core.NewParsing.Midi
                     bool enable = sysex[SYSEX_STATUS_INDEX] == 1;
                     if (enable)
                     {
-                        // If the distance between the current NoteOn and the previous NoteOn rests within this tick threshold
-                        // the previous position will override the current one, as to "chord" multiple notes together
+                        // If the distance between the current NoteOn and the previous NoteOn is less than a certain threshold
+                        // the previous position will override the current one, to "chord" multiple notes together
                         //
                         // While this isn't an actual NoteOn midi event, we should interpret it like one in this instance for safety.
-                        if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
+                        if (chordSnapper.Snap(ref position) && midiTrack.Position > 0)
                         {
-                            position = lastOnNote;
-                        }
-                        else
-                        {
-                            lastOnNote = position;
+                            YargLogger.LogInfo("Snap occured");
                         }
                     }
 
