@@ -43,6 +43,7 @@ namespace YARG.Core.NewParsing.Midi
 
             var percussionPosition = DualTime.Inactive;
 
+            // Various special phrases trackers
             var phrasePosition_1 = DualTime.Inactive;
             var phrasePosition_2 = DualTime.Inactive;
             var overdrivePosition = DualTime.Inactive;
@@ -51,6 +52,7 @@ namespace YARG.Core.NewParsing.Midi
             var note = default(MidiNote);
             var position = default(DualTime);
             var stats = default(MidiStats);
+            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent(ref stats))
             {
@@ -59,7 +61,7 @@ namespace YARG.Core.NewParsing.Midi
                 if (stats.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
-                    // Note Ons with no velocity equates to a note Off by spec
+                    // Only noteOn events with non-zero velocities actually count as "ON"
                     if (stats.Type == MidiEventType.Note_On && note.Velocity > 0)
                     {
                         if ((VOCAL_MIN <= note.Value && note.Value <= VOCAL_MAX) || note.Value == GH_TALKIE)
@@ -87,6 +89,7 @@ namespace YARG.Core.NewParsing.Midi
                             vocalPosition = position;
                             vocalPitch = note.Value;
                         }
+                        // Only the lead track can hold non-harmony line phrases...
                         else if (trackIndex == 0)
                         {
                             if (note.Value == VOCAL_PHRASE_1)
@@ -114,6 +117,7 @@ namespace YARG.Core.NewParsing.Midi
                                 vocalTrack.LyricShifts.Push(position);
                             }
                         }
+                        // and only harmony 2 can specify harmony lines
                         else if (trackIndex == 1 && (note.Value == VOCAL_PHRASE_1 || note.Value == VOCAL_PHRASE_2))
                         {
                             phrasePosition_1 = position;
@@ -130,6 +134,7 @@ namespace YARG.Core.NewParsing.Midi
                             }
                             vocalPosition.Ticks = -1;
                         }
+                        // Only the lead track can add non-harmony line phrases...
                         else if (trackIndex == 0)
                         {
                             switch (note.Value)
@@ -172,6 +177,7 @@ namespace YARG.Core.NewParsing.Midi
                                     break;
                             }
                         }
+                        // and only harmony 2 can add harmony lines
                         else if (trackIndex == 1 && (note.Value == VOCAL_PHRASE_1 || note.Value == VOCAL_PHRASE_2))
                         {
                             if (phrasePosition_1.Ticks > -1)
@@ -202,7 +208,6 @@ namespace YARG.Core.NewParsing.Midi
                             lyric = str.GetString(encoding);
                         }
 
-                        vocalNote.TalkieState = TalkieState.None;
                         if (lyric.Length > 0)
                         {
                             vocalNote.TalkieState = lyric[^1] switch
@@ -212,7 +217,10 @@ namespace YARG.Core.NewParsing.Midi
                                 _          => TalkieState.None,
                             };
                         }
-
+                        else
+                        {
+                            vocalNote.TalkieState = TalkieState.None;
+                        }
                         part.Lyrics.AppendOrUpdate(position, lyric);
                     }
                     else if (trackIndex == 0)
@@ -245,6 +253,8 @@ namespace YARG.Core.NewParsing.Midi
                 }
                 else
                 {
+                    // Solely to account for Gh talkite notes
+                    // But if the lyric already tells you it's talkie, then no override
                     vocalNote.Pitch = 0;
                     if (vocalNote.TalkieState == TalkieState.None)
                     {
