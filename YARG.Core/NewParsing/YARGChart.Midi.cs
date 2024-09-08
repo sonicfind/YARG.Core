@@ -190,7 +190,7 @@ namespace YARG.Core.NewParsing
 
                 if (!YARGMidiTrack.TRACKNAMES.TryGetValue(name, out var type))
                 {
-                    YargLogger.LogInfo($"Unrecognized MIDI Track #{midi.TrackNumber}: {name}");
+                    YargLogger.LogInfo($"Unrecognized MIDI Track #{trackNumber}: {name}");
                     continue;
                 }
 
@@ -345,13 +345,9 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Drums:
                     switch (drumsInChart)
                     {
-                    case DrumsType.FourLane:
-                    case DrumsType.ProDrums:
-                        chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, chart.Sync);
-                            break;
-                    case DrumsType.FiveLane:
-                        chart.FiveLaneDrums ??= MidiDrumsLoader.LoadFiveLane(midiTrack, chart.Sync);
-                        break;
+                    case DrumsType.FourLane: chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, chart.Sync, false); break;
+                    case DrumsType.ProDrums: chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, chart.Sync, true); break;
+                    case DrumsType.FiveLane: chart.FiveLaneDrums ??= MidiDrumsLoader.LoadFiveLane(midiTrack, chart.Sync); break;
                     default:
                         // No `using/dipose` as events & phrases need to persist
                         var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, chart.Sync, ref drumsInChart);

@@ -25,7 +25,7 @@ namespace YARG.Core.NewParsing.Midi
 
         private const int TOM_MIN_VALUE = 110;
         private const int TOM_MAX_VALUE = 112;
-        public static unsafe InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> LoadFourLane(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> LoadFourLane(YARGMidiTrack midiTrack, SyncTrack2 sync, bool isProDrums)
         {
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>();
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
@@ -45,7 +45,7 @@ namespace YARG.Core.NewParsing.Midi
 
             bool enableDynamics = false;
             bool flamFlag = false;
-            var cymbalFlags = stackalloc bool[3] { true, true, true };
+            var cymbalFlags = stackalloc bool[3] { isProDrums, isProDrums, isProDrums };
             var brePositions = stackalloc DualTime[5];
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
@@ -126,6 +126,11 @@ namespace YARG.Core.NewParsing.Midi
                         }
                         else if (TOM_MIN_VALUE <= note.Value && note.Value <= TOM_MAX_VALUE)
                         {
+                            if (!isProDrums)
+                            {
+                                continue;
+                            }
+
                             int index = note.Value - TOM_MIN_VALUE;
                             cymbalFlags[index] = false;
                             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
@@ -205,6 +210,11 @@ namespace YARG.Core.NewParsing.Midi
                         }
                         else if (TOM_MIN_VALUE <= note.Value && note.Value <= TOM_MAX_VALUE)
                         {
+                            if (!isProDrums)
+                            {
+                                continue;
+                            }
+
                             int index = note.Value - TOM_MIN_VALUE;
                             cymbalFlags[index] = true;
                             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
