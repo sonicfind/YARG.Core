@@ -44,10 +44,13 @@ namespace YARG.Core.NewParsing.Midi
         public static unsafe InstrumentTrack2<DifficultyTrack2<SixFretGuitar>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>();
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+            var difficulties = new DifficultyTrack2<SixFretGuitar>[InstrumentTrack2.NUM_DIFFICULTIES]
             {
-                instrumentTrack.Difficulties[i] = new DifficultyTrack2<SixFretGuitar>();
-            }
+                instrumentTrack.Difficulties[0] = instrumentTrack[Difficulty.Easy]   = new DifficultyTrack2<SixFretGuitar>(),
+                instrumentTrack.Difficulties[1] = instrumentTrack[Difficulty.Medium] = new DifficultyTrack2<SixFretGuitar>(),
+                instrumentTrack.Difficulties[2] = instrumentTrack[Difficulty.Hard]   = new DifficultyTrack2<SixFretGuitar>(),
+                instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new DifficultyTrack2<SixFretGuitar>(),
+            };
 
             var diffModifiers = stackalloc SixFretDiff[InstrumentTrack2.NUM_DIFFICULTIES];
 
@@ -93,8 +96,8 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - SIXFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                             ref var diffModifier = ref diffModifiers[diffIndex];
+                            var diffTrack = difficulties[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -193,8 +196,8 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - SIXFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                             ref var diffModifier = ref diffModifiers[diffIndex];
+                            var diffTrack = difficulties[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {

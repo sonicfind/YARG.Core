@@ -45,10 +45,13 @@ namespace YARG.Core.NewParsing.Midi
         public static unsafe InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
         {
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>();
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+            var difficulties = new DifficultyTrack2<FiveFretGuitar>[InstrumentTrack2.NUM_DIFFICULTIES]
             {
-                instrumentTrack.Difficulties[i] = new DifficultyTrack2<FiveFretGuitar>();
-            }
+                instrumentTrack.Difficulties[0] = instrumentTrack[Difficulty.Easy]   = new DifficultyTrack2<FiveFretGuitar>(),
+                instrumentTrack.Difficulties[1] = instrumentTrack[Difficulty.Medium] = new DifficultyTrack2<FiveFretGuitar>(),
+                instrumentTrack.Difficulties[2] = instrumentTrack[Difficulty.Hard]   = new DifficultyTrack2<FiveFretGuitar>(),
+                instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new DifficultyTrack2<FiveFretGuitar>(),
+            };
 
             var diffModifiers = stackalloc FiveFretDiff[InstrumentTrack2.NUM_DIFFICULTIES];
 
@@ -109,8 +112,8 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - FIVEFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                             ref var diffModifier = ref diffModifiers[diffIndex];
+                            var diffTrack = difficulties[diffIndex];
                             int lane = laneIndices[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -224,8 +227,8 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - FIVEFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                             ref var diffModifier = ref diffModifiers[diffIndex];
+                            var diffTrack = difficulties[diffIndex];
                             int lane = laneIndices[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -400,9 +403,8 @@ namespace YARG.Core.NewParsing.Midi
                             case SYSEX_OPEN_TYPE:
                                 for (int diffIndex = 0; diffIndex < InstrumentTrack2.NUM_DIFFICULTIES; ++diffIndex)
                                 {
-                                    var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                                     diffModifiers[diffIndex].SliderNotes = enable;
-                                    if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
+                                    if (difficulties[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
                                     {
                                         if (enable)
                                         {
@@ -433,9 +435,8 @@ namespace YARG.Core.NewParsing.Midi
                                 break;
                             case SYSEX_OPEN_TYPE:
                                 {
-                                    var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                                     diffModifiers[diffIndex].SliderNotes = enable;
-                                    if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
+                                    if (difficulties[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
                                     {
                                         if (enable)
                                         {
