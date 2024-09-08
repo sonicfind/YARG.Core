@@ -60,12 +60,13 @@ namespace YARG.Core.NewParsing.Midi
             where TProFret : unmanaged, IProFret
         {
             var instrumentTrack = new ProGuitarInstrumentTrack<TProFret>();
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+            var difficulties = new ProGuitarDifficultyTrack<TProFret>[InstrumentTrack2.NUM_DIFFICULTIES]
             {
-                instrumentTrack.Difficulties[i] = new ProGuitarDifficultyTrack<TProFret>();
-            }
-            var expertTrack = instrumentTrack[Difficulty.Expert]!;
-            var hardTrack = instrumentTrack[Difficulty.Hard]!;
+                instrumentTrack.Difficulties[0] = instrumentTrack[Difficulty.Easy]   = new ProGuitarDifficultyTrack<TProFret>(),
+                instrumentTrack.Difficulties[1] = instrumentTrack[Difficulty.Medium] = new ProGuitarDifficultyTrack<TProFret>(),
+                instrumentTrack.Difficulties[2] = instrumentTrack[Difficulty.Hard]   = new ProGuitarDifficultyTrack<TProFret>(),
+                instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new ProGuitarDifficultyTrack<TProFret>(),
+            };
 
             var difficulties = stackalloc ProGuitarDiff[InstrumentTrack2.NUM_DIFFICULTIES];
             var strings = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_STRINGS]
@@ -119,8 +120,8 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.value - PROGUITAR_MIN;
                             int diffIndex = DIFFVALUES[noteValue];
-                            var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                             ref var midiDiff = ref difficulties[diffIndex];
+                            var diffTrack = difficulties[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_STRINGS)
                             {
@@ -225,8 +226,8 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.value - PROGUITAR_MIN;
                             int diffIndex = DIFFVALUES[noteValue];
-                            var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
                             ref var midiDiff = ref difficulties[diffIndex];
+                            var diffTrack = difficulties[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_STRINGS)
                             {
@@ -317,10 +318,10 @@ namespace YARG.Core.NewParsing.Midi
                                     if (tremoloPostion.Ticks > -1)
                                     {
                                         var duration = position - tremoloPostion;
-                                        expertTrack.Phrases.Tremolos.Append(in tremoloPostion, duration);
+                                        difficulties[3].Phrases.Tremolos.Append(in tremoloPostion, duration);
                                         if (tremoloOnHard)
                                         {
-                                            hardTrack.Phrases.Tremolos.Append(in tremoloPostion, duration);
+                                            difficulties[2].Phrases.Tremolos.Append(in tremoloPostion, duration);
                                             tremoloOnHard = false;
                                         }
                                         tremoloPostion.Ticks = -1;
@@ -330,10 +331,10 @@ namespace YARG.Core.NewParsing.Midi
                                     if (trillPosition.Ticks > -1)
                                     {
                                         var duration = position - trillPosition;
-                                        expertTrack.Phrases.Trills.Append(in trillPosition, duration);
+                                        difficulties[3].Phrases.Trills.Append(in trillPosition, duration);
                                         if (trillOnHard)
                                         {
-                                            hardTrack.Phrases.Trills.Append(in trillPosition, duration);
+                                            difficulties[2].Phrases.Trills.Append(in trillPosition, duration);
                                             trillOnHard = false;
                                         }
                                         trillPosition.Ticks = -1;
