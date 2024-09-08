@@ -14,9 +14,6 @@ namespace YARG.Core.NewParsing.Midi
         private const int SP_SOLO_INDEX = 9;
         private const int TAP_INDEX = 10;
 
-        private const int BRE_MIN = 120;
-        private const int BRE_MAX = 124;
-
         private const int STARPOWER_DIFF_OFFSET = 8;
         private const int STARPOWER_DIFF_VALUE = 12;
 
@@ -55,7 +52,7 @@ namespace YARG.Core.NewParsing.Midi
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
             };
 
-            var brePositions = stackalloc DualTime[6];
+            var brePositions = stackalloc DualTime[5];
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
             var tremoloPostion = DualTime.Inactive;
@@ -171,9 +168,9 @@ namespace YARG.Core.NewParsing.Midi
                                 }
                             }
                         }
-                        else if (BRE_MIN <= note.Value && note.Value <= BRE_MAX)
+                        else if (MidiLoader_Constants.BRE_MIN <= note.Value && note.Value <= MidiLoader_Constants.BRE_MAX)
                         {
-                            brePositions[note.Value - BRE_MIN] = position;
+                            brePositions[note.Value - MidiLoader_Constants.BRE_MIN] = position;
                         }
                         else
                         {
@@ -279,15 +276,14 @@ namespace YARG.Core.NewParsing.Midi
                                 }
                             }
                         }
-                        else if (BRE_MIN <= note.Value && note.Value <= BRE_MAX)
+                        else if (MidiLoader_Constants.BRE_MIN <= note.Value && note.Value <= MidiLoader_Constants.BRE_MAX)
                         {
-                            ref var bre = ref brePositions[note.Value - BRE_MIN];
+                            ref var bre = ref brePositions[note.Value - MidiLoader_Constants.BRE_MIN];
                             if (bre.Ticks > -1
                                 && brePositions[0] == brePositions[1]
                                 && brePositions[1] == brePositions[2]
                                 && brePositions[2] == brePositions[3]
-                                && brePositions[3] == brePositions[4]
-                                && brePositions[4] == brePositions[5])
+                                && brePositions[3] == brePositions[4])
                             {
                                 instrumentTrack.Phrases.BREs.Append(in bre, position - bre);
                             }
