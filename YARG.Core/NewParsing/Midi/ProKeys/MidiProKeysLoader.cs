@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using YARG.Core.IO;
+using YARG.Core.Logging;
 
 namespace YARG.Core.NewParsing.Midi
 {
@@ -30,6 +31,7 @@ namespace YARG.Core.NewParsing.Midi
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
             };
 
+            // Various special phrases trackers
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
             var brePosition = DualTime.Inactive;
@@ -37,8 +39,10 @@ namespace YARG.Core.NewParsing.Midi
             var trillPosition = DualTime.Inactive;
 
             var position = default(DualTime);
+            // Used for snapping together chordal notes that get accidentally misaligned during authoring
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
+            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
@@ -47,9 +51,11 @@ namespace YARG.Core.NewParsing.Midi
                 if (midiTrack.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
-                    // Note Ons with no velocity equates to a note Off by spec
+                    // Only noteOn events with non-zero velocities actually count as "ON"
                     if (midiTrack.Type == MidiEventType.Note_On && note.velocity > 0)
                     {
+                        // If the distance between the current NoteOn and the previous NoteOn rests within this tick threshold
+                        // the previous position will override the current one, as to "chord" multiple notes together
                         if (lastOnNote.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
                         {
                             position = lastOnNote;
@@ -100,7 +106,13 @@ namespace YARG.Core.NewParsing.Midi
                             ref var lane = ref lanes[note.value - PROKEY_MIN];
                             if (lane.Ticks > -1)
                             {
-                                ProKeyNote.Add(diffTrack.Notes.TraverseBackwardsUntil(in lane), note.value, position - lane);
+                                // Attempts to add a lane to the found note
+                                //
+                                // Will fail if four lanes were already applied to said note
+                                if (!ProKeyNote.Add(diffTrack.Notes.TraverseBackwardsUntil(in lane), note.value, position - lane))
+                                {
+                                    YargLogger.LogWarning("Illegal pro keys charting discovered");
+                                }
                                 lane.Ticks = -1;
                             }
                         }
@@ -150,8 +162,9 @@ namespace YARG.Core.NewParsing.Midi
                 }
                 else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit && midiTrack.Type != MidiEventType.Text_TrackName)
                 {
-                    var str = midiTrack.ExtractTextOrSysEx();
-                    var ev = Encoding.ASCII.GetString(str);
+                    // Unless, for some stupid-ass reason, this track contains lyrics,
+                    // all actually useful events will utilize ASCII encoding for state
+                    var ev = Encoding.ASCII.GetString(midiTrack.ExtractTextOrSysEx());
                     instrumentTrack.Events
                         .GetLastOrAppend(position)
                         .Add(ev);
