@@ -77,7 +77,7 @@ namespace YARG.Core.NewParsing.Midi
             var FaceOffPosition_1 = DualTime.Inactive;
             var FaceOffPosition_2 = DualTime.Inactive;
 
-            ReadOnlySpan<byte> SYSEXTAG = stackalloc byte[] { (byte) 'P', (byte) 'S', (byte) '\0', };
+            ReadOnlySpan<byte> SYSEXTAG = stackalloc byte[] { (byte) 'P', (byte) 'S', (byte) '\0' };
             var position = default(DualTime);
             var lastOnNote = default(DualTime);
             var note = default(MidiNote);
@@ -480,9 +480,11 @@ namespace YARG.Core.NewParsing.Midi
                     var str = midiTrack.ExtractTextOrSysEx();
                     if (laneIndices[0] == 13 && (str.SequenceEqual(ENHANCED_STRINGS[0]) || str.SequenceEqual(ENHANCED_STRINGS[1])))
                     {
-                        for (int diff = 0; diff < InstrumentTrack2.NUM_DIFFICULTIES; ++diff)
+                        for (int offset = 0;
+                            offset < InstrumentTrack2.NUM_DIFFICULTIES * MidiLoader_Constants.NOTES_PER_DIFFICULTY;
+                            offset += MidiLoader_Constants.NOTES_PER_DIFFICULTY)
                         {
-                            laneIndices[MidiLoader_Constants.NOTES_PER_DIFFICULTY * diff] = 0;
+                            laneIndices[offset] = 0;
                         }
                     }
                     else
