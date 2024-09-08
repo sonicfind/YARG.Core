@@ -264,7 +264,9 @@ namespace YARG.Core.NewParsing.Midi
 
                 if (part.Notes.Capacity == 0)
                 {
-                    part.Notes.Capacity = 500;
+                    // We do this on the commonality that most charts do exceed this number of notes.
+                    // Helps keep reallocations to a minimum.
+                    part.Notes.Capacity = 1000;
                 }
                 part.Notes.Append(in vocalPosition, in vocalNote);
                 vocalNote.TalkieState = TalkieState.None;
