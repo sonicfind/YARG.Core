@@ -22,6 +22,10 @@ namespace YARG.Core.NewParsing.Midi
             }
 
             diffTrack = new ProKeysDifficultyTrack();
+            // We do this on the commonality that most charts do exceed this number of notes.
+            // Helps keep reallocations to a minimum.
+            diffTrack.Notes.Capacity = 5000;
+
             var lanes = stackalloc DualTime[NUM_NOTES]
             {
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
