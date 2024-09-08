@@ -113,8 +113,8 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - PROGUITAR_MIN;
                             int diffIndex = DIFFVALUES[noteValue];
-                            ref var midiDiff = ref diffModifiers[diffIndex];
                             var diffTrack = difficulties[diffIndex];
+                            ref var diffMods = ref diffModifiers[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_STRINGS)
                             {
@@ -125,9 +125,9 @@ namespace YARG.Core.NewParsing.Midi
 
                                 if (diffTrack.Notes.GetLastOrAppend(in position, out var guitar))
                                 {
-                                    guitar->HOPO = midiDiff.Hopo;
-                                    guitar->Slide = midiDiff.Slide;
-                                    guitar->Emphasis = midiDiff.Emphasis;
+                                    guitar->HOPO = diffMods.Hopo;
+                                    guitar->Slide = diffMods.Slide;
+                                    guitar->Emphasis = diffMods.Emphasis;
                                 }
 
                                 var proString = (ProGuitarString<TProFret>*) guitar + lane;
@@ -141,7 +141,7 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     case HOPO_VALUE:
                                         {
-                                            midiDiff.Hopo = true;
+                                            diffMods.Hopo = true;
                                             if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                             {
                                                 guitar->HOPO = true;
@@ -150,18 +150,18 @@ namespace YARG.Core.NewParsing.Midi
                                         }
                                     case SLIDE_VALUE:
                                         {
-                                            midiDiff.Slide = stats.Channel == 11 ? ProSlide.Reversed : ProSlide.Normal;
+                                            diffMods.Slide = stats.Channel == 11 ? ProSlide.Reversed : ProSlide.Normal;
                                             if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                             {
-                                                guitar->Slide = midiDiff.Slide;
+                                                guitar->Slide = diffMods.Slide;
                                             }
                                             break;
                                         }
                                     case ARPEGGIO_VALUE:
-                                        midiDiff.Arpeggio = position;
+                                        diffMods.Arpeggio = position;
                                         break;
                                     case EMPHASIS_VALUE:
-                                        midiDiff.Emphasis = stats.Channel switch
+                                        diffMods.Emphasis = stats.Channel switch
                                         {
                                             13 => EmphasisType.High,
                                             14 => EmphasisType.Middle,
@@ -172,7 +172,7 @@ namespace YARG.Core.NewParsing.Midi
                                         {
                                             if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                             {
-                                                guitar->Emphasis = midiDiff.Emphasis;
+                                                guitar->Emphasis = diffMods.Emphasis;
                                             }
                                         }
                                         break;
@@ -219,8 +219,8 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - PROGUITAR_MIN;
                             int diffIndex = DIFFVALUES[noteValue];
-                            ref var midiDiff = ref diffModifiers[diffIndex];
                             var diffTrack = difficulties[diffIndex];
+                            ref var diffMods = ref diffModifiers[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_STRINGS)
                             {
@@ -240,7 +240,7 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     case HOPO_VALUE:
                                         {
-                                            midiDiff.Hopo = false;
+                                            diffMods.Hopo = false;
                                             if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                             {
                                                 guitar->HOPO = false;
@@ -249,7 +249,7 @@ namespace YARG.Core.NewParsing.Midi
                                         }
                                     case SLIDE_VALUE:
                                         {
-                                            midiDiff.Slide = ProSlide.None;
+                                            diffMods.Slide = ProSlide.None;
                                             if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                             {
                                                 guitar->Slide = ProSlide.None;
@@ -257,15 +257,15 @@ namespace YARG.Core.NewParsing.Midi
                                             break;
                                         }
                                     case ARPEGGIO_VALUE:
-                                        if (midiDiff.Arpeggio.Ticks != -1)
+                                        if (diffMods.Arpeggio.Ticks != -1)
                                         {
-                                            diffTrack.Arpeggios.Append(in midiDiff.Arpeggio, position - midiDiff.Arpeggio);
-                                            midiDiff.Arpeggio.Ticks = -1;
+                                            diffTrack.Arpeggios.Append(in diffMods.Arpeggio, position - diffMods.Arpeggio);
+                                            diffMods.Arpeggio.Ticks = -1;
                                         }
                                         break;
                                     case EMPHASIS_VALUE:
                                         {
-                                            midiDiff.Emphasis = EmphasisType.None;
+                                            diffMods.Emphasis = EmphasisType.None;
                                             if (diffTrack.Notes.TryGetLastValue(in position, out var guitar))
                                             {
                                                 guitar->Emphasis = EmphasisType.None;
