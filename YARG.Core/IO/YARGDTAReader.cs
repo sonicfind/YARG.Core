@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using YARG.Core.Extensions;
 using YARG.Core.Logging;
@@ -9,6 +10,66 @@ namespace YARG.Core.IO
 {
     public class DTAEntry
     {
+        public static DTAEntry[] LoadEntries(FileInfo dta)
+        {
+            using var data = MemoryMappedArray.Load(dta);
+            var entries = LoadEntries(data);
+            if (entries == null)
+            {
+                YargLogger.LogError($"Error while loading {dta.FullName}");
+                entries = Array.Empty<DTAEntry>();
+            }
+            return entries;
+        }
+
+        public static DTAEntry[] LoadEntries(FileStream stream, CONFileListing? listing)
+        {
+            if (listing == null)
+            {
+                return Array.Empty<DTAEntry>();
+            }
+
+            using var data = listing.LoadAllBytes(stream);
+            var entries = LoadEntries(data);
+            if (entries == null)
+            {
+                YargLogger.LogError($"Error while loading {listing.Filename}");
+                entries = Array.Empty<DTAEntry>();
+            }
+            return entries;
+        }
+
+        private static unsafe DTAEntry[]? LoadEntries(FixedArray<byte> data)
+        {
+            if ((data[0] == 0xFF && data[1] == 0xFE) || (data[0] == 0xFE && data[1] == 0xFF))
+            {
+                YargLogger.LogError("UTF-16 & UTF-32 are not supported for .dta files");
+                return null;
+            }
+
+            var container = data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF
+                ? new YARGTextContainer<byte>(data.Ptr + 3, data.Ptr + data.Length, Encoding.UTF8)
+                : new YARGTextContainer<byte>(data.Ptr, data.Ptr + data.Length, YARGTextReader.Latin1);
+
+            var entries = new List<DTAEntry>();
+            try
+            {
+                while (YARGDTAReader.StartNode(ref container))
+                {
+                    string name = YARGDTAReader.GetNameOfNode(ref container, true);
+                    var entry = new DTAEntry(name, container);
+                    entries.Add(entry);
+                    YARGDTAReader.EndNode(ref container);
+                }
+            }
+            catch (Exception e)
+            {
+                YargLogger.LogException(e);
+                return null;
+            }
+            return entries.ToArray();
+        }
+
         public readonly string NodeName;
         public readonly string? Name;
         public readonly string? Artist;
