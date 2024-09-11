@@ -1,12 +1,398 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using YARG.Core.Extensions;
 using YARG.Core.Logging;
+using YARG.Core.Song;
 
 namespace YARG.Core.IO
 {
+    public class DTAEntry
+    {
+        public readonly string NodeName;
+        public readonly string? Name;
+        public readonly string? Artist;
+        public readonly string? Album;
+        public readonly string? Genre;
+        public readonly string? Charter;
+        public readonly string? Source;
+        public readonly string? Playlist;
+        public readonly string? Year;
+        public readonly int YearAsNumber;
+
+        public readonly ulong SongLength;
+        public readonly uint SongRating;  // 1 = FF; 2 = SR; 3 = M; 4 = NR
+
+        public readonly long PreviewStart;
+        public readonly long PreviewEnd;
+        public readonly bool IsMaster;
+
+        public readonly int AlbumTrack;
+
+        public readonly string? SongID;
+        public readonly uint AnimTempo;
+        public readonly string? DrumBank;
+        public readonly string? VocalPercussionBank;
+        public readonly uint VocalSongScrollSpeed;
+        public readonly bool VocalGender; //true for male, false for female
+        //public bool HasAlbumArt;
+        //public bool IsFake;
+        public readonly uint VocalTonicNote;
+        public readonly bool SongTonality; // 0 = major, 1 = minor
+        public readonly int TuningOffsetCents;
+        public readonly uint VenueVersion;
+
+        public readonly string[]? Soloes;
+        public readonly string[]? VideoVenues;
+
+        public readonly int[]? RealGuitarTuning;
+        public readonly int[]? RealBassTuning;
+
+        public readonly RBAudio<int> Indices;
+        public readonly RBAudio<float> Panning;
+
+        public readonly string? Location;
+        public readonly float[]? Pans;
+        public readonly float[]? Volumes;
+        public readonly float[]? Cores;
+        public readonly long HopoThreshold;
+        public readonly bool AlternatePath;
+        public readonly bool DiscUpdate;
+        public readonly Encoding Encoding;
+
+        public readonly RBCONDifficulties RBDifficulties;
+        public readonly AvailableParts Parts;
+
+        public DTAEntry(string nodename, YARGTextContainer<byte> container)
+        {
+            NodeName = nodename;
+            Encoding = container.Encoding;
+            while (YARGDTAReader.StartNode(ref container))
+            {
+                string name = YARGDTAReader.GetNameOfNode(ref container, false);
+                switch (name)
+                {
+                    case "name": Name = YARGDTAReader.ExtractText(ref container); break;
+                    case "artist": Artist = YARGDTAReader.ExtractText(ref container); break;
+                    case "master": IsMaster = YARGDTAReader.ExtractBoolean_FlippedDefault(ref container); break;
+                    case "context": /*Context = container.Read<uint>();*/ break;
+                    case "song":
+                        while (YARGDTAReader.StartNode(ref container))
+                        {
+                            string descriptor = YARGDTAReader.GetNameOfNode(ref container, false);
+                            switch (descriptor)
+                            {
+                                case "name": Location = YARGDTAReader.ExtractText(ref container); break;
+                                case "tracks":
+                                    while (YARGDTAReader.StartNode(ref container))
+                                    {
+                                        while (YARGDTAReader.StartNode(ref container))
+                                        {
+                                            switch (YARGDTAReader.GetNameOfNode(ref container, false))
+                                            {
+                                                case "drum"  : Indices.Drums = YARGDTAReader.ExtractArray_Int(ref container); break;
+                                                case "bass"  : Indices.Bass = YARGDTAReader.ExtractArray_Int(ref container); break;
+                                                case "guitar": Indices.Guitar = YARGDTAReader.ExtractArray_Int(ref container); break;
+                                                case "keys"  : Indices.Keys = YARGDTAReader.ExtractArray_Int(ref container); break;
+                                                case "vocals": Indices.Vocals = YARGDTAReader.ExtractArray_Int(ref container); break;
+                                            }
+                                            YARGDTAReader.EndNode(ref container);
+                                        }
+                                        YARGDTAReader.EndNode(ref container);
+                                    }
+                                    break;
+                                case "crowd_channels": Indices.Crowd = YARGDTAReader.ExtractArray_Int(ref container); break;
+                                //case "vocal_parts": VocalParts = container.Read<ushort>(); break;
+                                case "pans": Pans = YARGDTAReader.ExtractArray_Float(ref container); break;
+                                case "vols": Volumes = YARGDTAReader.ExtractArray_Float(ref container); break;
+                                case "cores": Cores = YARGDTAReader.ExtractArray_Float(ref container); break;
+                                case "hopo_threshold": HopoThreshold = YARGDTAReader.ExtractInt64(ref container); break;
+                            }
+                            YARGDTAReader.EndNode(ref container);
+                        }
+                        break;
+                    case "song_vocals": while (YARGDTAReader.StartNode(ref container)) YARGDTAReader.EndNode(ref container); break;
+                    case "song_scroll_speed": VocalSongScrollSpeed = YARGDTAReader.ExtractUInt32(ref container); break;
+                    case "tuning_offset_cents": TuningOffsetCents = YARGDTAReader.ExtractInt32(ref container); break;
+                    case "bank": VocalPercussionBank = YARGDTAReader.ExtractText(ref container); break;
+                    case "anim_tempo":
+                        {
+                            string val = YARGDTAReader.ExtractText(ref container);
+                            AnimTempo = val switch
+                            {
+                                "kTempoSlow" => 16,
+                                "kTempoMedium" => 32,
+                                "kTempoFast" => 64,
+                                _ => uint.Parse(val)
+                            };
+                            break;
+                        }
+                    case "preview":
+                        PreviewStart = YARGDTAReader.ExtractInt64(ref container);
+                        PreviewEnd = YARGDTAReader.ExtractInt64(ref container);
+                        break;
+                    case "rank":
+                        while (YARGDTAReader.StartNode(ref container))
+                        {
+                            string descriptor = YARGDTAReader.GetNameOfNode(ref container, false);
+                            int diff = YARGDTAReader.ExtractInt32(ref container);
+                            switch (descriptor)
+                            {
+                                case "drum":
+                                case "drums":
+                                    RBDifficulties.FourLaneDrums = (short) diff;
+                                    SetRank(ref Parts.FourLaneDrums.Intensity, diff, DrumDiffMap);
+                                    if (Parts.ProDrums.Intensity == -1)
+                                    {
+                                        Parts.ProDrums.Intensity = Parts.FourLaneDrums.Intensity;
+                                    }
+                                    break;
+                                case "guitar":
+                                    RBDifficulties.FiveFretGuitar = (short) diff;
+                                    SetRank(ref Parts.FiveFretGuitar.Intensity, diff, GuitarDiffMap);
+                                    if (Parts.ProGuitar_17Fret.Intensity == -1)
+                                    {
+                                        Parts.ProGuitar_22Fret.Intensity = Parts.ProGuitar_17Fret.Intensity = Parts.FiveFretGuitar.Intensity;
+                                    }
+                                    break;
+                                case "bass":
+                                    RBDifficulties.FiveFretBass = (short) diff;
+                                    SetRank(ref Parts.FiveFretBass.Intensity, diff, BassDiffMap);
+                                    if (Parts.ProBass_17Fret.Intensity == -1)
+                                    {
+                                        Parts.ProBass_22Fret.Intensity = Parts.ProBass_17Fret.Intensity = Parts.FiveFretBass.Intensity;
+                                    }
+                                    break;
+                                case "vocals":
+                                    RBDifficulties.LeadVocals = (short) diff;
+                                    SetRank(ref Parts.LeadVocals.Intensity, diff, VocalsDiffMap);
+                                    if (Parts.HarmonyVocals.Intensity == -1)
+                                    {
+                                        Parts.HarmonyVocals.Intensity = Parts.LeadVocals.Intensity;
+                                    }
+                                    break;
+                                case "keys":
+                                    RBDifficulties.Keys = (short) diff;
+                                    SetRank(ref Parts.Keys.Intensity, diff, KeysDiffMap);
+                                    if (Parts.ProKeys.Intensity == -1)
+                                    {
+                                        Parts.ProKeys.Intensity = Parts.Keys.Intensity;
+                                    }
+                                    break;
+                                case "realGuitar":
+                                case "real_guitar":
+                                    RBDifficulties.ProGuitar = (short) diff;
+                                    SetRank(ref Parts.ProGuitar_17Fret.Intensity, diff, RealGuitarDiffMap);
+                                    Parts.ProGuitar_22Fret.Intensity = Parts.ProGuitar_17Fret.Intensity;
+                                    if (Parts.FiveFretGuitar.Intensity == -1)
+                                    {
+                                        Parts.FiveFretGuitar.Intensity = Parts.ProGuitar_17Fret.Intensity;
+                                    }
+                                    break;
+                                case "realBass":
+                                case "real_bass":
+                                    RBDifficulties.ProBass = (short) diff;
+                                    SetRank(ref Parts.ProBass_17Fret.Intensity, diff, RealBassDiffMap);
+                                    Parts.ProBass_22Fret.Intensity = Parts.ProBass_17Fret.Intensity;
+                                    if (Parts.FiveFretBass.Intensity == -1)
+                                    {
+                                        Parts.FiveFretBass.Intensity = Parts.ProBass_17Fret.Intensity;
+                                    }
+                                    break;
+                                case "realKeys":
+                                case "real_keys":
+                                    RBDifficulties.ProKeys = (short) diff;
+                                    SetRank(ref Parts.ProKeys.Intensity, diff, RealKeysDiffMap);
+                                    if (Parts.Keys.Intensity == -1)
+                                    {
+                                        Parts.Keys.Intensity = Parts.ProKeys.Intensity;
+                                    }
+                                    break;
+                                case "realDrums":
+                                case "real_drums":
+                                    RBDifficulties.ProDrums = (short) diff;
+                                    SetRank(ref Parts.ProDrums.Intensity, diff, RealDrumsDiffMap);
+                                    if (Parts.FourLaneDrums.Intensity == -1)
+                                    {
+                                        Parts.FourLaneDrums.Intensity = Parts.ProDrums.Intensity;
+                                    }
+                                    break;
+                                case "harmVocals":
+                                case "vocal_harm":
+                                    RBDifficulties.HarmonyVocals = (short) diff;
+                                    SetRank(ref Parts.HarmonyVocals.Intensity, diff, HarmonyDiffMap);
+                                    if (Parts.LeadVocals.Intensity == -1)
+                                    {
+                                        Parts.LeadVocals.Intensity = Parts.HarmonyVocals.Intensity;
+                                    }
+                                    break;
+                                case "band":
+                                    RBDifficulties.Band = (short) diff;
+                                    SetRank(ref Parts.BandDifficulty.Intensity, diff, BandDiffMap);
+                                    Parts.BandDifficulty.SubTracks = 1;
+                                    break;
+                            }
+                            YARGDTAReader.EndNode(ref container);
+                        }
+                        break;
+                    case "solo": Soloes = YARGDTAReader.ExtractArray_String(ref container); break;
+                    case "genre": Genre = YARGDTAReader.ExtractText(ref container); break;
+                    case "decade": /*Decade = container.ExtractText();*/ break;
+                    case "vocal_gender": VocalGender = YARGDTAReader.ExtractText(ref container) == "male"; break;
+                    case "format": /*Format = container.Read<uint>();*/ break;
+                    case "version": VenueVersion = YARGDTAReader.ExtractUInt32(ref container); break;
+                    case "fake": /*IsFake = container.ExtractText();*/ break;
+                    case "downloaded": /*Downloaded = container.ExtractText();*/ break;
+                    case "game_origin":
+                        {
+                            string str = YARGDTAReader.ExtractText(ref container);
+                            if ((str == "ugc" || str == "ugc_plus"))
+                            {
+                                if (!nodename.StartsWith("UGC_"))
+                                    Source = "customs";
+                            }
+                            else if (str == "#ifdef")
+                            {
+                                string conditional = YARGDTAReader.ExtractText(ref container);
+                                if (conditional == "CUSTOMSOURCE")
+                                {
+                                    Source = YARGDTAReader.ExtractText(ref container);
+                                }
+                                else
+                                {
+                                    Source = "customs";
+                                }
+                            }
+                            else
+                            {
+                                Source = str;
+                            }
+
+                            //// if the source is any official RB game or its DLC, charter = Harmonix
+                            //if (SongSources.GetSource(str).Type == SongSources.SourceType.RB)
+                            //{
+                            //    _charter = "Harmonix";
+                            //}
+
+                            //// if the source is meant for usage in TBRB, it's a master track
+                            //// TODO: NEVER assume localized version contains "Beatles"
+                            //if (SongSources.SourceToGameName(str).Contains("Beatles")) _isMaster = true;
+                            break;
+                        }
+                    case "song_id": SongID = YARGDTAReader.ExtractText(ref container); break;
+                    case "rating": SongRating = YARGDTAReader.ExtractUInt32(ref container); break;
+                    case "short_version": /*ShortVersion = container.Read<uint>();*/ break;
+                    case "album_art": /*HasAlbumArt = container.ExtractBoolean();*/ break;
+                    case "year_released":
+                    case "year_recorded":
+                        YearAsNumber = YARGDTAReader.ExtractInt32(ref container);
+                        Year = YearAsNumber.ToString();
+                        break;
+                    case "album_name": Album = YARGDTAReader.ExtractText(ref container); break;
+                    case "album_track_number": AlbumTrack = YARGDTAReader.ExtractInt32(ref container); break;
+                    case "pack_name": Playlist = YARGDTAReader.ExtractText(ref container); break;
+                    case "base_points": /*BasePoints = container.Read<uint>();*/ break;
+                    case "band_fail_cue": /*BandFailCue = container.ExtractText();*/ break;
+                    case "drum_bank": DrumBank = YARGDTAReader.ExtractText(ref container); break;
+                    case "song_length": SongLength = YARGDTAReader.ExtractUInt64(ref container); break;
+                    case "sub_genre": /*Subgenre = container.ExtractText();*/ break;
+                    case "author": Charter = YARGDTAReader.ExtractText(ref container); break;
+                    case "guide_pitch_volume": /*GuidePitchVolume = container.ReadFloat();*/ break;
+                    case "encoding":
+                        Encoding = YARGDTAReader.ExtractText(ref container).ToLower() switch
+                        {
+                            "latin1" => YARGTextReader.Latin1,
+                            "utf-8" or
+                            "utf8" => Encoding.UTF8,
+                            _ => container.Encoding
+                        };
+
+                        if (container.Encoding != Encoding)
+                        {
+                            string Convert(string str)
+                            {
+                                byte[] bytes = container.Encoding.GetBytes(str);
+                                return Encoding.GetString(bytes);
+                            }
+
+                            if (Name != null)
+                                Name = Convert(Name);
+                            if (Artist != null)
+                                Artist = Convert(Artist);
+                            if (Album != null)
+                                Album = Convert(Album);
+                            if (Genre != null)
+                                Genre = Convert(Genre);
+                            if (Charter != null)
+                                Charter = Convert(Charter);
+                            if (Source != null)
+                                Source = Convert(Source);
+
+                            if (Playlist != null)
+                                Playlist = Convert(Playlist);
+                            container.Encoding = Encoding;
+                        }
+
+                        break;
+                    case "vocal_tonic_note": VocalTonicNote = YARGDTAReader.ExtractUInt32(ref container); break;
+                    case "song_tonality": SongTonality = YARGDTAReader.ExtractBoolean(ref container); break;
+                    case "alternate_path": AlternatePath = YARGDTAReader.ExtractBoolean(ref container); break;
+                    case "real_guitar_tuning": RealGuitarTuning = YARGDTAReader.ExtractArray_Int(ref container); break;
+                    case "real_bass_tuning": RealBassTuning = YARGDTAReader.ExtractArray_Int(ref container); break;
+                    case "video_venues": VideoVenues = YARGDTAReader.ExtractArray_String(ref container); break;
+                    case "extra_authoring":
+                        {
+                            StringBuilder authors = new();
+                            foreach (string str in YARGDTAReader.ExtractArray_String(ref container))
+                            {
+                                if (str == "disc_update")
+                                {
+                                    DiscUpdate = true;
+                                }
+                                else if (authors.Length == 0 && Charter == SongMetadata.DEFAULT_CHARTER)
+                                {
+                                    authors.Append(str);
+                                }
+                                else
+                                {
+                                    if (authors.Length == 0)
+                                        authors.Append(Charter);
+                                    authors.Append(", " + str);
+                                }
+                            }
+
+                            if (authors.Length == 0)
+                                authors.Append(Charter);
+
+                            Charter = authors.ToString();
+                        }
+                        break;
+                }
+                YARGDTAReader.EndNode(ref container);
+            }
+        }
+
+        private static readonly int[] BandDiffMap = { 163, 215, 243, 267, 292, 345 };
+        private static readonly int[] GuitarDiffMap = { 139, 176, 221, 267, 333, 409 };
+        private static readonly int[] BassDiffMap = { 135, 181, 228, 293, 364, 436 };
+        private static readonly int[] DrumDiffMap = { 124, 151, 178, 242, 345, 448 };
+        private static readonly int[] KeysDiffMap = { 153, 211, 269, 327, 385, 443 };
+        private static readonly int[] VocalsDiffMap = { 132, 175, 218, 279, 353, 427 };
+        private static readonly int[] RealGuitarDiffMap = { 150, 205, 264, 323, 382, 442 };
+        private static readonly int[] RealBassDiffMap = { 150, 208, 267, 325, 384, 442 };
+        private static readonly int[] RealDrumsDiffMap = { 124, 151, 178, 242, 345, 448 };
+        private static readonly int[] RealKeysDiffMap = { 153, 211, 269, 327, 385, 443 };
+        private static readonly int[] HarmonyDiffMap = { 132, 175, 218, 279, 353, 427 };
+
+        private static void SetRank(ref sbyte intensity, int rank, int[] values)
+        {
+            sbyte i = 0;
+            while (i < 6 && values[i] <= rank)
+                ++i;
+            intensity = i;
+        }
+    }
+
     public unsafe static class YARGDTAReader
     {
         public static bool TryCreate(in FixedArray<byte> data, out YARGTextContainer<byte> container)
