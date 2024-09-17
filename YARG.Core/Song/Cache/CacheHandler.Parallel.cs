@@ -17,45 +17,82 @@ namespace YARG.Core.Song.Cache
 
         protected override void FindNewEntries()
         {
-            var tracker = new PlaylistTracker(fullDirectoryPlaylists, null);
-            Parallel.ForEach(iniGroups, group =>
+            var tracker = new PlaylistTracker(_fullDirectoryPlaylists, null);
+            Parallel.ForEach(_iniGroups, group =>
             {
                 var dirInfo = new DirectoryInfo(group.Directory);
                 ScanDirectory(dirInfo, group, tracker);
             });
 
-            var conActions = new Action[conGroups.Count + extractedConGroups.Count];
-            for (int i = 0; i < conGroups.Count; ++i)
+            unsafe void ScanCONGroup<TGroup, TEntry>(TGroup group, delegate*<TGroup, string, DTAEntry, SongUpdate?, (DTAEntry? entry, RBProUpgrade? node), (ScanResult, TEntry?)> func)
+                where TGroup : CONGroup<TEntry>
+                where TEntry : RBCONEntry
             {
-                var group = conGroups[i];
+                bool TryGetLocked(string name, out TEntry entry)
+                {
+                    lock (group.SongEntries)
+                    {
+                        return group.SongEntries.TryGetValue(name, out entry);
+                    }
+                }
+
+                Parallel.ForEach(group.DTAEntries, node =>
+                {
+                    // If found, then the entry was added during the cache read process
+                    if (!TryGetLocked(node.Key, out var currEntry))
+                    {
+                        _updates.TryGetValue(node.Key, out var update);
+                        _upgrades.TryGetValue(node.Key, out var upgrade);
+                        var (result, entry) = func(group, node.Key, node.Value, update, upgrade);
+                        if (result != ScanResult.Success)
+                        {
+                            AddToBadSongs(group.Location + $" - Node {node.Key}", result);
+                        }
+                        else if (AddEntry(entry!))
+                        {
+                            lock (group.SongEntries)
+                            {
+                                group.SongEntries.Add(node.Key, entry!);
+                            }
+                        }
+                    }
+                    // A failure to add to the combined list means this instance
+                    // is seen as a duplicate
+                    else if (!AddEntry(currEntry))
+                    {
+                        // And a rejection means we need to keep it from bring cached
+                        // ... for now.
+                        lock (group.SongEntries)
+                        {
+                            group.SongEntries.Remove(node.Key);
+                        }
+                    }
+                });
+            }
+
+            var conActions = new Action[_conGroups.Count + _extractedConGroups.Count];
+            for (int i = 0; i < _conGroups.Count; ++i)
+            {
+                var group = _conGroups[i];
                 conActions[i] = () =>
                 {
-                    if (group.LoadSongs(out var container))
+                    using var stream = group.Stream = new FileStream(group.Info.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, 1);
+                    unsafe
                     {
-                        ScanCONGroup(group, ref container, ScanPackedCONNode);
+                        ScanCONGroup(group, &PackedRBCONEntry.ProcessNewEntry);
                     }
-                    group.DisposeStreamAndSongDTA();
                 };
             }
 
-            for (int i = 0; i < extractedConGroups.Count; ++i)
+            for (int i = 0; i < _extractedConGroups.Count; ++i)
             {
-                var group = extractedConGroups[i];
-                conActions[conGroups.Count + i] = () =>
+                var group = _extractedConGroups[i];
+                unsafe
                 {
-                    if (group.LoadDTA(out var container))
-                    {
-                        ScanCONGroup(group, ref container, ScanUnpackedCONNode);
-                    }
-                    group.Dispose();
-                };
+                    conActions[_conGroups.Count + i] = () => ScanCONGroup(group, &UnpackedRBCONEntry.ProcessNewEntry);
+                }
             }
-
             Parallel.ForEach(conActions, action => action());
-            foreach (var group in conGroups)
-            {
-                group.DisposeUpgradeDTA();
-            }
         }
 
         protected override void TraverseDirectory(in FileCollection collection, IniGroup group, PlaylistTracker tracker)
@@ -76,7 +113,7 @@ namespace YARG.Core.Song.Cache
 
         protected override bool AddEntry(SongEntry entry)
         {
-            lock (cache.Entries)
+            lock (_cache.Entries)
             {
                 return base.AddEntry(entry);
             }
@@ -84,22 +121,22 @@ namespace YARG.Core.Song.Cache
 
         protected override void SortEntries()
         {
-            Parallel.ForEach(cache.Entries, node =>
+            Parallel.ForEach(_cache.Entries, node =>
             {
                 foreach (var entry in node.Value)
                 {
-                    CategorySorter<string, TitleConfig>.Add(entry, cache.Titles);
-                    CategorySorter<SortString, ArtistConfig>.Add(entry, cache.Artists);
-                    CategorySorter<SortString, AlbumConfig>.Add(entry, cache.Albums);
-                    CategorySorter<SortString, GenreConfig>.Add(entry, cache.Genres);
-                    CategorySorter<string, YearConfig>.Add(entry, cache.Years);
-                    CategorySorter<SortString, CharterConfig>.Add(entry, cache.Charters);
-                    CategorySorter<SortString, PlaylistConfig>.Add(entry, cache.Playlists);
-                    CategorySorter<SortString, SourceConfig>.Add(entry, cache.Sources);
-                    CategorySorter<SortString, ArtistAlbumConfig>.Add(entry, cache.ArtistAlbums);
-                    CategorySorter<string, SongLengthConfig>.Add(entry, cache.SongLengths);
-                    CategorySorter<DateTime, DateAddedConfig>.Add(entry, cache.DatesAdded);
-                    InstrumentSorter.Add(entry, cache.Instruments);
+                    CategorySorter<string, TitleConfig>.Add(entry, _cache.Titles);
+                    CategorySorter<SortString, ArtistConfig>.Add(entry, _cache.Artists);
+                    CategorySorter<SortString, AlbumConfig>.Add(entry, _cache.Albums);
+                    CategorySorter<SortString, GenreConfig>.Add(entry, _cache.Genres);
+                    CategorySorter<string, YearConfig>.Add(entry, _cache.Years);
+                    CategorySorter<SortString, CharterConfig>.Add(entry, _cache.Charters);
+                    CategorySorter<SortString, PlaylistConfig>.Add(entry, _cache.Playlists);
+                    CategorySorter<SortString, SourceConfig>.Add(entry, _cache.Sources);
+                    CategorySorter<SortString, ArtistAlbumConfig>.Add(entry, _cache.ArtistAlbums);
+                    CategorySorter<string, SongLengthConfig>.Add(entry, _cache.SongLengths);
+                    CategorySorter<DateTime, DateAddedConfig>.Add(entry, _cache.DatesAdded);
+                    InstrumentSorter.Add(entry, _cache.Instruments);
                 }
             });
         }
@@ -168,55 +205,55 @@ namespace YARG.Core.Song.Cache
             }
         }
 
-        protected override void AddUpdate(string name, DateTime dtaLastWrite, SongUpdate update)
+        protected override void AddUpdate(string name, SongUpdate update)
         {
-            lock (updates)
+            lock (_updates)
             {
-                if (!updates.TryGetValue(name, out var list))
+                if (_updates.TryGetValue(name, out var currentUpdate))
                 {
-                    updates.Add(name, list = new());
+                    update = SongUpdate.Union(update, currentUpdate);
                 }
-                list.Add(dtaLastWrite, update);
+                _updates[name] = update;
             }
         }
 
-        protected override void AddUpgrade(string name, in YARGTextContainer<byte> container, RBProUpgrade upgrade)
+        protected override void AddUpgrade(string name, DTAEntry? entry, RBProUpgrade upgrade)
         {
-            lock (upgrades)
+            lock (_upgrades)
             {
-                upgrades[name] = new(container, upgrade);
+                _upgrades[name] = new(entry, upgrade);
             }
         }
 
         protected override void AddPackedCONGroup(PackedCONGroup group)
         {
-            lock (conGroups)
+            lock (_conGroups)
             {
-                conGroups.Add(group);
+                _conGroups.Add(group);
             }
         }
 
         protected override void AddUnpackedCONGroup(UnpackedCONGroup group)
         {
-            lock (extractedConGroups)
+            lock (_extractedConGroups)
             {
-                extractedConGroups.Add(group);
+                _extractedConGroups.Add(group);
             }
         }
 
         protected override void AddUpdateGroup(UpdateGroup group)
         {
-            lock (updateGroups)
+            lock (_updateGroups)
             {
-                updateGroups.Add(group);
+                _updateGroups.Add(group);
             }
         }
 
         protected override void AddUpgradeGroup(UpgradeGroup group)
         {
-            lock (upgradeGroups)
+            lock (_upgradeGroups)
             {
-                upgradeGroups.Add(group);
+                _upgradeGroups.Add(group);
             }
         }
 
@@ -230,22 +267,22 @@ namespace YARG.Core.Song.Cache
 
         protected override void RemoveCONEntry(string shortname)
         {
-            lock (conGroups)
+            lock (_conGroups)
             {
-                foreach (var group in conGroups)
+                foreach (var group in _conGroups)
                 {
-                    if (group.RemoveEntries(shortname))
+                    if (group.SongEntries.Remove(shortname))
                     {
                         YargLogger.LogFormatTrace("{0} - {1} pending rescan", group.Location, item2: shortname);
                     }
                 }
             }
 
-            lock (extractedConGroups)
+            lock (_extractedConGroups)
             {
-                foreach (var group in extractedConGroups)
+                foreach (var group in _extractedConGroups)
                 {
-                    if (group.RemoveEntries(shortname))
+                    if (group.SongEntries.Remove(shortname))
                     {
                         YargLogger.LogFormatTrace("{0} - {1} pending rescan", group.Location, item2: shortname);
                     }
@@ -255,27 +292,42 @@ namespace YARG.Core.Song.Cache
 
         protected override bool CanAddUpgrade(string shortname, DateTime lastUpdated)
         {
-            lock (upgradeGroups)
+            lock (_upgradeGroups)
             {
-                return CanAddUpgrade(upgradeGroups, shortname, lastUpdated) ?? false;
+                foreach (var group in _upgradeGroups)
+                {
+                    if (group.Upgrades.TryGetValue(shortname, out var currUpgrade) && currUpgrade.Upgrade != null)
+                    {
+                        if (currUpgrade.Upgrade.LastUpdatedTime >= lastUpdated)
+                        {
+                            return false;
+                        }
+                        group.Upgrades.Remove(shortname);
+                        return true;
+                    }
+                }
+                return false;
             }
         }
 
         protected override bool CanAddUpgrade_CONInclusive(string shortname, DateTime lastUpdated)
         {
-            lock (conGroups)
+            lock (_conGroups)
             {
-                var result = CanAddUpgrade(conGroups, shortname, lastUpdated);
-                if (result != null)
+                foreach (var group in _conGroups)
                 {
-                    return (bool) result;
+                    if (group.Upgrades.TryGetValue(shortname, out var currUpgrade) && currUpgrade.Upgrade != null)
+                    {
+                        if (currUpgrade.Upgrade.LastUpdatedTime >= lastUpdated)
+                        {
+                            return false;
+                        }
+                        group.Upgrades.Remove(shortname);
+                        return true;
+                    }
                 }
             }
-
-            lock (upgradeGroups)
-            {
-                return CanAddUpgrade(upgradeGroups, shortname, lastUpdated) ?? false;
-            }
+            return CanAddUpgrade(shortname, lastUpdated);
         }
 
         protected override Dictionary<string, Dictionary<string, FileInfo>> MapUpdateFiles(in FileCollection collection)
@@ -299,7 +351,7 @@ namespace YARG.Core.Song.Cache
 
         protected override bool FindOrMarkDirectory(string directory)
         {
-            lock (preScannedDirectories)
+            lock (_preScannedDirectories)
             {
                 return base.FindOrMarkDirectory(directory);
             }
@@ -307,7 +359,7 @@ namespace YARG.Core.Song.Cache
 
         protected override bool FindOrMarkFile(string file)
         {
-            lock (preScannedFiles)
+            lock (_preScannedFiles)
             {
                 return base.FindOrMarkFile(file);
             }
@@ -315,7 +367,7 @@ namespace YARG.Core.Song.Cache
 
         protected override void AddToBadSongs(string filePath, ScanResult err)
         {
-            lock (badSongs)
+            lock (_badSongs)
             {
                 base.AddToBadSongs(filePath, err);
             }
@@ -331,35 +383,35 @@ namespace YARG.Core.Song.Cache
 
         protected override PackedCONGroup? FindCONGroup(string filename)
         {
-            lock (conGroups)
+            lock (_conGroups)
             {
-                return conGroups.Find(node => node.Location == filename);
+                return _conGroups.Find(node => node.Location == filename);
             }
         }
 
         protected override void CleanupDuplicates()
         {
-            Parallel.ForEach(duplicatesToRemove, entry =>
+            Parallel.ForEach(_duplicatesToRemove, entry =>
             {
-                lock (iniGroups)
+                lock (_iniGroups)
                 {
-                    if (TryRemove<IniGroup, IniSubEntry>(iniGroups, entry))
+                    if (TryRemove<IniGroup, IniSubEntry>(_iniGroups, entry))
                     {
                         return;
                     }
                 }
 
-                lock (conGroups)
+                lock (_conGroups)
                 {
-                    if (TryRemove<PackedCONGroup, RBCONEntry>(conGroups, entry))
+                    if (TryRemove<PackedCONGroup, RBCONEntry>(_conGroups, entry))
                     {
                         return;
                     }
                 }
 
-                lock (extractedConGroups)
+                lock (_extractedConGroups)
                 {
-                    TryRemove<UnpackedCONGroup, RBCONEntry>(extractedConGroups, entry);
+                    TryRemove<UnpackedCONGroup, RBCONEntry>(_extractedConGroups, entry);
                 }
             });
         }
@@ -405,33 +457,6 @@ namespace YARG.Core.Song.Cache
             public override void GetObjectData(SerializationInfo info, StreamingContext context)
             {
                 _exception?.GetObjectData(info, context);
-            }
-        }
-
-        private void ScanCONGroup<TGroup>(TGroup group, ref YARGTextContainer<byte> container, Action<TGroup, string, int, YARGTextContainer<byte>> func)
-            where TGroup : CONGroup
-        {
-            try
-            {
-                var slices = new List<(string Name, int Index, YARGTextContainer<byte> Container)>();
-                Dictionary<string, int> indices = new();
-                while (YARGDTAReader.StartNode(ref container))
-                {
-                    string name = YARGDTAReader.GetNameOfNode(ref container, true);
-                    if (indices.TryGetValue(name, out int index))
-                    {
-                        ++index;
-                    }
-                    indices[name] = index;
-
-                    slices.Add((name, index, container));
-                    YARGDTAReader.EndNode(ref container);
-                }
-                Parallel.ForEach(slices, slice => func(group, slice.Name, slice.Index, slice.Container));
-            }
-            catch (Exception e)
-            {
-                YargLogger.LogException(e, $"Error while scanning CON group {group.Location}!");
             }
         }
 
@@ -538,35 +563,21 @@ namespace YARG.Core.Song.Cache
         private void ReadPackedCONGroup(UnmanagedMemoryStream stream, CategoryCacheStrings strings, ParallelExceptionTracker tracker)
         {
             var group = ReadCONGroupHeader(stream);
-            if (group != null)
+            if (group == null)
             {
-                ReadCONGroup(group, stream, strings, tracker);
+                return;
             }
-        }
 
-        private void ReadUnpackedCONGroup(UnmanagedMemoryStream stream, CategoryCacheStrings strings, ParallelExceptionTracker tracker)
-        {
-            var group = ReadExtractedCONGroupHeader(stream);
-            if (group != null)
-            {
-                ReadCONGroup(group, stream, strings, tracker);
-            }
-        }
-
-        private void ReadCONGroup<TGroup>(TGroup group, UnmanagedMemoryStream stream, CategoryCacheStrings strings, ParallelExceptionTracker tracker)
-            where TGroup : CONGroup
-        {
-            var enumerable = new CacheEnumerable<(string Name, int Index, UnmanagedMemoryStream Stream)?>(stream, tracker, () =>
+            var enumerable = new CacheEnumerable<(string Name, UnmanagedMemoryStream Stream)?>(stream, tracker, () =>
             {
                 string name = stream.ReadString();
-                int index = stream.Read<int>(Endianness.Little);
                 int length = stream.Read<int>(Endianness.Little);
                 if (invalidSongsInCache.Contains(name))
                 {
                     stream.Position += length;
                     return null;
                 }
-                return (name, index, stream.Slice(length));
+                return (name, stream.Slice(length));
             });
 
             Parallel.ForEach(enumerable, slice =>
@@ -575,7 +586,56 @@ namespace YARG.Core.Song.Cache
                 // Error catching must be done per-thread
                 try
                 {
-                    group.ReadEntry(value.Name, value.Index, upgrades, value.Stream, strings);
+                    var song = PackedRBCONEntry.TryLoadFromCache(in group.ConFile, value.Name, _upgrades, value.Stream, strings);
+                    if (song != null)
+                    {
+                        lock (group.SongEntries)
+                        {
+                            group.SongEntries.Add(value.Name, song);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    tracker.Set(ex);
+                }
+            });
+        }
+
+        private void ReadUnpackedCONGroup(UnmanagedMemoryStream stream, CategoryCacheStrings strings, ParallelExceptionTracker tracker)
+        {
+            var group = ReadExtractedCONGroupHeader(stream);
+            if (group == null)
+            {
+                return;
+            }
+
+            var enumerable = new CacheEnumerable<(string Name, UnmanagedMemoryStream Stream)?>(stream, tracker, () =>
+            {
+                string name = stream.ReadString();
+                int length = stream.Read<int>(Endianness.Little);
+                if (invalidSongsInCache.Contains(name))
+                {
+                    stream.Position += length;
+                    return null;
+                }
+                return (name, stream.Slice(length));
+            });
+
+            Parallel.ForEach(enumerable, slice =>
+            {
+                var value = slice!.Value;
+                // Error catching must be done per-thread
+                try
+                {
+                    var song = UnpackedRBCONEntry.TryLoadFromCache(group.Location, group.DTAInfo, value.Name, _upgrades, value.Stream, strings);
+                    if (song != null)
+                    {
+                        lock (group.SongEntries)
+                        {
+                            group.SongEntries.Add(value.Name, song);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -615,9 +675,6 @@ namespace YARG.Core.Song.Cache
             var enumerable = new CacheEnumerable<(string Name, UnmanagedMemoryStream Stream)>(stream, tracker, () =>
             {
                 string name = stream.ReadString();
-                // index
-                stream.Position += 4;
-
                 int length = stream.Read<int>(Endianness.Little);
                 return (name, stream.Slice(length));
             });
@@ -626,7 +683,7 @@ namespace YARG.Core.Song.Cache
             {
                 try
                 {
-                    AddEntry(PackedRBCONEntry.LoadFromCache_Quick(in group.ConFile, slice.Name, upgrades, slice.Stream, strings));
+                    AddEntry(PackedRBCONEntry.LoadFromCache_Quick(in group.ConFile, slice.Name, _upgrades, slice.Stream, strings));
                 }
                 catch (Exception ex)
                 {
@@ -643,9 +700,6 @@ namespace YARG.Core.Song.Cache
             var enumerable = new CacheEnumerable<(string Name, UnmanagedMemoryStream Stream)>(stream, tracker, () =>
             {
                 string name = stream.ReadString();
-                // index
-                stream.Position += 4;
-
                 int length = stream.Read<int>(Endianness.Little);
                 return (name, stream.Slice(length));
             });
@@ -654,7 +708,7 @@ namespace YARG.Core.Song.Cache
             {
                 try
                 {
-                    AddEntry(UnpackedRBCONEntry.LoadFromCache_Quick(directory, dta, slice.Name, upgrades, slice.Stream, strings));
+                    AddEntry(UnpackedRBCONEntry.LoadFromCache_Quick(directory, dta, slice.Name, _upgrades, slice.Stream, strings));
                 }
                 catch (Exception ex)
                 {

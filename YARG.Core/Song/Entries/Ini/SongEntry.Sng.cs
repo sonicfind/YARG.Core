@@ -20,7 +20,7 @@ namespace YARG.Core.Song
         public override string Location => _sngInfo.FullName;
         public override string DirectoryActual => Path.GetDirectoryName(_sngInfo.FullName);
         public override ChartType Type { get; }
-        public override DateTime GetAddTime() => _sngInfo.LastUpdatedTime;
+        public override DateTime GetAddDate() => _sngInfo.LastUpdatedTime.Date;
 
         public override EntryType SubType => EntryType.Sng;
 
@@ -250,6 +250,15 @@ namespace YARG.Core.Song
             _sngInfo = sngFile.Info;
             _chartName = chart.File;
             Type = chart.Type;
+
+            if (!modifiers.Contains("song_length"))
+            {
+                using var mixer = LoadAudio(0, 0);
+                if (mixer != null)
+                {
+                    _songLength = (ulong) (mixer.Length * MILLISECOND_FACTOR);
+                }
+            }
         }
 
         private SngEntry(uint version, in AbridgedFileInfo sngInfo, in IniChartNode<string> chart, UnmanagedMemoryStream stream, CategoryCacheStrings strings)
@@ -273,14 +282,6 @@ namespace YARG.Core.Song
             var node = new IniChartNode<string>(chart.File.Name, chart.Type);
             var hash = HashWrapper.Hash(file.ReadOnlySpan);
             var entry = new SngEntry(sng, in node, in parts, in hash, sng.Metadata, defaultPlaylist);
-            if (!sng.Metadata.Contains("song_length"))
-            {
-                using var mixer = entry.LoadAudio(0, 0);
-                if (mixer != null)
-                {
-                    entry.SongLengthSeconds = mixer.Length;
-                }
-            }
             return (result, entry);
         }
 

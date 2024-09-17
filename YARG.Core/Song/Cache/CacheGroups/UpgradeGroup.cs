@@ -5,24 +5,35 @@ using YARG.Core.IO;
 
 namespace YARG.Core.Song.Cache
 {
-    public interface IUpgradeGroup : IModificationGroup
+    public interface IUpgradeGroup<TUpgrade> : IModificationGroup
+        where TUpgrade : RBProUpgrade
     {
-        public Dictionary<string, RBProUpgrade> Upgrades { get; }
+        public Dictionary<string, (DTAEntry Entry, TUpgrade? Upgrade)> Upgrades { get; }
     }
 
-    public sealed class UpgradeGroup : IUpgradeGroup, IDisposable
+    public sealed class UpgradeGroup : IUpgradeGroup<UnpackedRBProUpgrade>
     {
         private readonly string _directory;
         private readonly DateTime _dtaLastUpdate;
-        private readonly FixedArray<byte> _dtaData;
 
-        public Dictionary<string, RBProUpgrade> Upgrades { get; } = new();
+        public Dictionary<string, (DTAEntry Entry, UnpackedRBProUpgrade? Upgrade)> Upgrades { get; }
 
-        public UpgradeGroup(string directory, DateTime dtaLastUpdate, in FixedArray<byte> dtaData)
+        public UpgradeGroup(in FileCollection collection, FileInfo dta)
         {
-            _directory = directory;
-            _dtaLastUpdate = dtaLastUpdate;
-            _dtaData = dtaData;
+            _directory = collection.Directory.FullName;
+            _dtaLastUpdate = dta.LastWriteTime;
+
+            Upgrades = new Dictionary<string, (DTAEntry Entry, UnpackedRBProUpgrade? Upgrade)>();
+            foreach (var (name, entry) in DTAEntry.LoadEntries(dta.FullName))
+            {
+                var upgrade = default(UnpackedRBProUpgrade);
+                if (collection.Subfiles.TryGetValue($"{name.ToLower()}_plus.mid", out var info))
+                {
+                    var abridged = new AbridgedFileInfo(info, false);
+                    upgrade = new UnpackedRBProUpgrade(abridged);
+                }
+                Upgrades.Add(name, (entry, upgrade));
+            }
         }
 
         public ReadOnlyMemory<byte> SerializeModifications()
@@ -36,14 +47,17 @@ namespace YARG.Core.Song.Cache
             foreach (var upgrade in Upgrades)
             {
                 writer.Write(upgrade.Key);
-                upgrade.Value.WriteToCache(writer);
+                if (upgrade.Value.Upgrade != null)
+                {
+                    writer.Write(true);
+                    upgrade.Value.Upgrade.WriteToCache(writer);
+                }
+                else
+                {
+                    writer.Write(false);
+                }
             }
             return new ReadOnlyMemory<byte>(ms.GetBuffer(), 0, (int)ms.Length);
-        }
-
-        public void Dispose()
-        {
-            _dtaData.Dispose();
         }
     }
 }

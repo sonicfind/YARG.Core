@@ -2,23 +2,25 @@
 using System.Collections.Generic;
 using System.IO;
 using YARG.Core.IO;
-using YARG.Core.Logging;
 
 namespace YARG.Core.Song.Cache
 {
-    public sealed class PackedCONGroup : CONGroup, IUpgradeGroup
+    public sealed class PackedCONGroup : CONGroup<PackedRBCONEntry>, IUpgradeGroup<PackedRBProUpgrade>
     {
         public readonly AbridgedFileInfo Info;
         public readonly CONFile ConFile;
         public readonly CONFileListing? SongDTA;
         public readonly CONFileListing? UpgradeDta;
-        public Stream? Stream;
 
-        private FixedArray<byte> _songDTAData = FixedArray<byte>.Null;
-        private FixedArray<byte> _upgradeDTAData = FixedArray<byte>.Null;
+        /// <summary>
+        /// A reference to a pre-loaded pre-"using"ed filestream for the CON file.<br></br>
+        /// For use with scanning new entries.
+        /// </summary>
+        public FileStream Stream;
 
         public override string Location => Info.FullName;
-        public Dictionary<string, RBProUpgrade> Upgrades { get; } = new();
+        public override Dictionary<string, DTAEntry> DTAEntries { get; }
+        public Dictionary<string, (DTAEntry Entry, PackedRBProUpgrade? Upgrade)> Upgrades { get; }
 
         public PackedCONGroup(CONFile conFile, AbridgedFileInfo info, string defaultPlaylist)
             : base(defaultPlaylist)
@@ -28,16 +30,25 @@ namespace YARG.Core.Song.Cache
 
             Info = info;
             ConFile = conFile;
-            conFile.TryGetListing(UPGRADESFILEPATH, out UpgradeDta);
-            conFile.TryGetListing(SONGSFILEPATH, out SongDTA);
-        }
+            Stream = null!;
 
-        public override void ReadEntry(string nodeName, int index, Dictionary<string, (YARGTextContainer<byte>, RBProUpgrade)> upgrades, UnmanagedMemoryStream stream, CategoryCacheStrings strings)
-        {
-            var song = PackedRBCONEntry.TryLoadFromCache(in ConFile, nodeName, upgrades, stream, strings);
-            if (song != null)
+            using var stream = File.OpenRead(info.FullName);
+            DTAEntries = conFile.TryGetListing(SONGSFILEPATH, out SongDTA)
+                ? DTAEntry.LoadEntries(stream, SongDTA)
+                : new Dictionary<string, DTAEntry>();
+
+            Upgrades = new Dictionary<string, (DTAEntry Entry, PackedRBProUpgrade? Upgrade)>();
+            if (conFile.TryGetListing(UPGRADESFILEPATH, out UpgradeDta))
             {
-                AddEntry(nodeName, index, song);
+                foreach (var (name, entry) in DTAEntry.LoadEntries(stream, UpgradeDta))
+                {
+                    var upgrade = default(PackedRBProUpgrade);
+                    if (conFile.TryGetListing(name, out var upgradeListing))
+                    {
+                        upgrade = new PackedRBProUpgrade(upgradeListing, upgradeListing.LastWrite);
+                    }
+                    Upgrades.Add(name, (entry, upgrade));
+                }
             }
         }
 
@@ -52,52 +63,6 @@ namespace YARG.Core.Song.Cache
             return new ReadOnlyMemory<byte>(ms.GetBuffer(), 0, (int)ms.Length);
         }
 
-        public void AddUpgrade(string name, RBProUpgrade upgrade) { lock (Upgrades) Upgrades[name] = upgrade; }
-
-        public bool LoadUpgrades(out YARGTextContainer<byte> container)
-        {
-            if (UpgradeDta == null)
-            {
-                container = default;
-                return false;
-            }
-
-            try
-            {
-                Stream = new FileStream(Info.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, 1);
-                _upgradeDTAData = UpgradeDta.LoadAllBytes(Stream);
-                return YARGDTAReader.TryCreate(_upgradeDTAData, out container);
-            }
-            catch (Exception ex)
-            {
-                YargLogger.LogException(ex, $"Error while loading {UpgradeDta.Filename}");
-                container = default;
-                return false;
-            }
-        }
-
-        public bool LoadSongs(out YARGTextContainer<byte> container)
-        {
-            if (SongDTA == null)
-            {
-                container = default;
-                return false;
-            }
-
-            try
-            {
-                Stream ??= new FileStream(Info.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, 1);
-                _songDTAData = SongDTA.LoadAllBytes(Stream);
-                return YARGDTAReader.TryCreate(_songDTAData, out container);
-            }
-            catch (Exception ex)
-            {
-                YargLogger.LogException(ex, $"Error while loading {SongDTA.Filename}");
-                container = default;
-                return false;
-            }
-        }
-
         public ReadOnlyMemory<byte> SerializeModifications()
         {
             using MemoryStream ms = new();
@@ -110,20 +75,17 @@ namespace YARG.Core.Song.Cache
             foreach (var upgrade in Upgrades)
             {
                 writer.Write(upgrade.Key);
-                upgrade.Value.WriteToCache(writer);
+                if (upgrade.Value.Upgrade != null)
+                {
+                    writer.Write(true);
+                    writer.Write(upgrade.Value.Upgrade.LastUpdatedTime.ToBinary());
+                }
+                else
+                {
+                    writer.Write(false);
+                }
             }
             return new ReadOnlyMemory<byte>(ms.GetBuffer(), 0, (int)ms.Length);
-        }
-
-        public void DisposeStreamAndSongDTA()
-        {
-            Stream?.Dispose();
-            _songDTAData.Dispose();
-        }
-
-        public void DisposeUpgradeDTA()
-        {
-            _upgradeDTAData.Dispose();
         }
     }
 }

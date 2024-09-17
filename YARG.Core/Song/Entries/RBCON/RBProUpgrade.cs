@@ -9,7 +9,6 @@ namespace YARG.Core.Song
     public abstract class RBProUpgrade
     {
         public abstract DateTime LastUpdatedTime { get; }
-        public abstract void WriteToCache(BinaryWriter writer);
         public abstract Stream? GetUpgradeMidiStream();
         public abstract FixedArray<byte> LoadUpgradeMidi();
     }
@@ -26,11 +25,6 @@ namespace YARG.Core.Song
         {
             _midiListing = listing;
             _lastUpdatedTime = listing?.LastWrite ?? lastWrite;
-        }
-
-        public override void WriteToCache(BinaryWriter writer)
-        {
-            writer.Write(_lastUpdatedTime.ToBinary());
         }
 
         public override Stream? GetUpgradeMidiStream()
@@ -61,12 +55,7 @@ namespace YARG.Core.Song
         public UnpackedRBProUpgrade(in AbridgedFileInfo info)
         {
             _midi = info;
-        }
-
-        public override void WriteToCache(BinaryWriter writer)
-        {
-            writer.Write(_midi.LastUpdatedTime.ToBinary());
-        }
+        } 
 
         public override Stream? GetUpgradeMidiStream()
         {
@@ -76,6 +65,11 @@ namespace YARG.Core.Song
         public override FixedArray<byte> LoadUpgradeMidi()
         {
             return _midi.IsStillValid() ? FixedArray<byte>.Load(_midi.FullName) : FixedArray<byte>.Null;
+        }
+
+        public void WriteToCache(BinaryWriter writer)
+        {
+            writer.Write(_midi.LastUpdatedTime.ToBinary());
         }
     }
 }

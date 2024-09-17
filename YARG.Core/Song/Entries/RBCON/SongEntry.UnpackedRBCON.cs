@@ -21,31 +21,48 @@ namespace YARG.Core.Song
         public override string DirectoryActual => Location;
         public override EntryType SubType => EntryType.ExCON;
 
-        public static (ScanResult, UnpackedRBCONEntry?) ProcessNewEntry(UnpackedCONGroup group, string nodename, in YARGTextContainer<byte> container, Dictionary<string, SortedList<DateTime, SongUpdate>> updates, Dictionary<string, (YARGTextContainer<byte>, RBProUpgrade)> upgrades)
+        public static (ScanResult, UnpackedRBCONEntry?) ProcessNewEntry(UnpackedCONGroup group, string nodename, DTAEntry node, SongUpdate? update, (DTAEntry? entry, RBProUpgrade? node) upgrade)
         {
-            try
+            var (dtaResult, info) = ProcessDTAs(nodename, node, update, upgrade.entry);
+            if (dtaResult != ScanResult.Success)
             {
-                var song = new UnpackedRBCONEntry(group, nodename, in container, updates, upgrades);
-                if (song._midi == null)
-                {
-                    return (ScanResult.MissingMidi, null);
-                }
+                return (dtaResult, null);
+            }
 
-                var result = song.ParseRBCONMidi(null);
-                if (result != ScanResult.Success)
-                {
-                    return (result, null);
-                }
-                return (result, song);
-            }
-            catch (Exception ex)
+            if (!info.Location!.StartsWith("songs/" + nodename))
             {
-                YargLogger.LogException(ex, null);
-                return (ScanResult.DTAError, null);
+                nodename = info.Location!.Split('/')[1];
             }
+
+            string directory = Path.Combine(group.Location, nodename);
+            if (!IsMoggValid(in info.UpdateMogg, directory, nodename))
+            {
+                return (ScanResult.MoggError, null);
+            }
+            
+            var midiInfo = new FileInfo(Path.Combine(directory, nodename + ".mid"));
+            if (!midiInfo.Exists)
+            {
+                return (ScanResult.MissingMidi, null);
+            }
+
+            using var mainMidi = FixedArray<byte>.Load(midiInfo.FullName);
+            var (midiResult, hash) = ParseRBCONMidi(in mainMidi, in info.UpdateMidi, upgrade.node, ref info.Parts);
+            if (midiResult != ScanResult.Success)
+            {
+                return (midiResult, null);
+            }
+
+            if (info.Metadata.Playlist.Length == 0)
+            {
+                info.Metadata.Playlist = group.DefaultPlaylist;
+            }
+
+            var entry = new UnpackedRBCONEntry(info, upgrade.node, in hash, directory, nodename, midiInfo, in group.DTAInfo);
+            return (ScanResult.Success, entry);
         }
 
-        public static UnpackedRBCONEntry? TryLoadFromCache(string directory, in AbridgedFileInfo dta, string nodename, Dictionary<string, (YARGTextContainer<byte>, RBProUpgrade Upgrade)> upgrades, UnmanagedMemoryStream stream, CategoryCacheStrings strings)
+        public static UnpackedRBCONEntry? TryLoadFromCache(string directory, in AbridgedFileInfo dta, string nodename, Dictionary<string, (DTAEntry? Entry, RBProUpgrade Upgrade)> upgrades, UnmanagedMemoryStream stream, CategoryCacheStrings strings)
         {
             string subname = stream.ReadString();
             string songDirectory = Path.Combine(directory, subname);
@@ -71,7 +88,7 @@ namespace YARG.Core.Song
             return new UnpackedRBCONEntry(midiInfo.Value, dta, songDirectory, subname, updateMidi, upgrade, stream, strings);
         }
 
-        public static UnpackedRBCONEntry LoadFromCache_Quick(string directory, in AbridgedFileInfo? dta, string nodename, Dictionary<string, (YARGTextContainer<byte>, RBProUpgrade Upgrade)> upgrades, UnmanagedMemoryStream stream, CategoryCacheStrings strings)
+        public static UnpackedRBCONEntry LoadFromCache_Quick(string directory, in AbridgedFileInfo? dta, string nodename, Dictionary<string, (DTAEntry? Entry, RBProUpgrade Upgrade)> upgrades, UnmanagedMemoryStream stream, CategoryCacheStrings strings)
         {
             string subname = stream.ReadString();
             string songDirectory = Path.Combine(directory, subname);
@@ -85,6 +102,18 @@ namespace YARG.Core.Song
             return new UnpackedRBCONEntry(midiInfo, dta, songDirectory, subname, updateMidi, upgrade, stream, strings);
         }
 
+        private static bool IsMoggValid(in AbridgedFileInfo? info, string directory, string nodename)
+        {
+            using var stream = LoadMoggStream(in info, directory, nodename);
+            if (stream == null)
+            {
+                return false;   
+            }
+
+            int version = stream.Read<int>(Endianness.Little);
+            return version == 0x0A || version == 0xf0;
+        }
+
         private UnpackedRBCONEntry(AbridgedFileInfo midi, AbridgedFileInfo? dta, string directory, string nodename,
             AbridgedFileInfo? updateMidi, RBProUpgrade? upgrade, UnmanagedMemoryStream stream, CategoryCacheStrings strings)
             : base(updateMidi, upgrade, stream, strings)
@@ -96,33 +125,33 @@ namespace YARG.Core.Song
             _nodename = nodename;
         }
 
-        private UnpackedRBCONEntry(UnpackedCONGroup group, string nodename, in YARGTextContainer<byte> container, Dictionary<string, SortedList<DateTime, SongUpdate>> updates, Dictionary<string, (YARGTextContainer<byte>, RBProUpgrade)> upgrades)
-            : base()
+        private UnpackedRBCONEntry(in ScanNode info, RBProUpgrade? upgrade, in HashWrapper hash
+            , string directory, string nodename, FileInfo midiInfo, in AbridgedFileInfo dtaInfo)
+            : base(in info, upgrade, in hash)
         {
-            var results = Init(nodename, in container, updates, upgrades, group.DefaultPlaylist);
-            if (!results.location.StartsWith($"songs/" + nodename))
-                nodename = results.location.Split('/')[1];
+            Location = directory;
             _nodename = nodename;
-
-            Location = Path.Combine(group.Location, nodename);
-            string midiPath = Path.Combine(Location, nodename + ".mid");
-
-            FileInfo midiInfo = new(midiPath);
-            if (!midiInfo.Exists)
-            {
-                return;
-            }
-
             _midi = new AbridgedFileInfo(midiInfo);
-            _dta = group.DTA;
+            _dta = dtaInfo;
         }
 
         public override void Serialize(BinaryWriter writer, CategoryCacheWriteNode node)
         {
             writer.Write(_nodename);
-            var info = _midi!.Value;
-            writer.Write(info.LastUpdatedTime.ToBinary());
+            writer.Write(_midi!.Value.LastUpdatedTime.ToBinary());
             base.Serialize(writer, node);
+        }
+
+        public override YARGImage? LoadAlbumData()
+        {
+            if (_updateImage != null && _updateImage.Value.Exists())
+            {
+                var update = FixedArray<byte>.Load(_updateImage.Value.FullName);
+                return new YARGImage(update);
+            }
+
+            string imgFilename = Path.Combine(Location, "gen", _nodename + "_keep.png_xbox");
+            return File.Exists(imgFilename) ? new YARGImage(FixedArray<byte>.Load(imgFilename)) : null;
         }
 
         public override BackgroundResult? LoadBackground(BackgroundType options)
@@ -179,10 +208,9 @@ namespace YARG.Core.Song
 
         public override FixedArray<byte> LoadMiloData()
         {
-            var bytes = base.LoadMiloData();
-            if (bytes.IsAllocated)
+            if (_updateMilo != null && _updateMilo.Value.Exists())
             {
-                return bytes;
+                return FixedArray<byte>.Load(_updateMilo.Value.FullName);
             }
 
             string filename = Path.Combine(Location, "gen", _nodename + ".milo_xbox");
@@ -198,57 +226,27 @@ namespace YARG.Core.Song
             return new FileStream(_midi.Value.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
         }
 
-        protected override FixedArray<byte> LoadMidiFile(Stream? file)
-        {
-            return _dta != null && _dta.Value.IsStillValid() && _midi!.Value.IsStillValid()
-                ? FixedArray<byte>.Load(_midi.Value.FullName)
-                : FixedArray<byte>.Null;
-        }
-
-        protected override FixedArray<byte> LoadRawImageData()
-        {
-            var bytes = base.LoadRawImageData();
-            if (bytes.IsAllocated)
-            {
-                return bytes;
-            }
-
-            string filename = Path.Combine(Location, "gen", _nodename + "_keep.png_xbox");
-            return File.Exists(filename) ? FixedArray<byte>.Load(filename) : FixedArray<byte>.Null;
-        }
-
         protected override Stream? GetMoggStream()
         {
-            var stream = base.GetMoggStream();
+            return LoadMoggStream(in _updateMogg, Location, _nodename);
+        }
+
+        private static Stream? LoadMoggStream(in AbridgedFileInfo? updateMogg, string directory, string nodename)
+        {
+            var stream = LoadUpdateMoggStream(in updateMogg);
             if (stream != null)
             {
                 return stream;
             }
 
-            string path = Path.Combine(Location, _nodename + ".yarg_mogg");
+            string path = Path.Combine(directory, nodename + ".yarg_mogg");
             if (File.Exists(path))
             {
                 return new YargMoggReadStream(path);
             }
 
-            path = Path.Combine(Location, _nodename + ".mogg");
-            if (!File.Exists(path))
-            {
-                return null;
-            }
-            return new FileStream(path, FileMode.Open, FileAccess.Read);
-        }
-
-        protected override bool IsMoggValid(Stream? file)
-        {
-            using var stream = GetMoggStream();
-            if (stream == null)
-            {
-                return false;
-            }
-
-            int version = stream.Read<int>(Endianness.Little);
-            return version == 0x0A || version == 0xf0;
+            path = Path.Combine(directory, nodename + ".mogg");
+            return File.Exists(path) ? File.OpenRead(path) : null;
         }
     }
 }

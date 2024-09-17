@@ -5,96 +5,34 @@ using YARG.Core.IO;
 
 namespace YARG.Core.Song.Cache
 {
-    public abstract class CONGroup : ICacheGroup<RBCONEntry>
+    public abstract class CONGroup<TEntry> : ICacheGroup<RBCONEntry>
+        where TEntry : RBCONEntry
     {
-        protected readonly Dictionary<string, SortedDictionary<int, RBCONEntry>> entries = new();
-
-        private int _count;
-        public int Count { get { lock (entries) return _count; } }
+        public readonly Dictionary<string, TEntry> SongEntries = new();
+        public int Count => SongEntries.Count;
 
         public readonly string DefaultPlaylist;
 
         public abstract string Location { get; }
+        public abstract Dictionary<string, DTAEntry> DTAEntries { get; }
 
         protected CONGroup(string defaultPlaylist)
         {
             DefaultPlaylist = defaultPlaylist;
         }
 
-        public abstract void ReadEntry(string nodeName, int index, Dictionary<string, (YARGTextContainer<byte>, RBProUpgrade)> upgrades, UnmanagedMemoryStream stream, CategoryCacheStrings strings);
         public abstract ReadOnlyMemory<byte> SerializeEntries(Dictionary<SongEntry, CategoryCacheWriteNode> nodes);
-
-        public void AddEntry(string name, int index, RBCONEntry entry)
-        {
-            SortedDictionary<int, RBCONEntry> dict;
-            lock (entries)
-            {
-                if (!entries.TryGetValue(name, out dict))
-                {
-                    entries.Add(name, dict = new SortedDictionary<int, RBCONEntry>());
-                }
-                ++_count;
-            }
-
-            lock (dict)
-            {
-                dict.Add(index, entry);
-            }
-        }
-
-        public bool RemoveEntries(string name)
-        {
-            lock (entries)
-            {
-                if (!entries.Remove(name, out var dict))
-                    return false;
-
-                _count -= dict.Count;
-            }
-            return true;
-        }
-
-        public void RemoveEntry(string name, int index)
-        {
-            lock (entries)
-            {
-                var dict = entries[name];
-                dict.Remove(index);
-                if (dict.Count == 0)
-                {
-                    entries.Remove(name);
-                }
-                --_count;
-            }
-        }
-
-        public bool TryGetEntry(string name, int index, out RBCONEntry? entry)
-        {
-            entry = null;
-            lock (entries)
-            {
-                return entries.TryGetValue(name, out var dict) && dict.TryGetValue(index, out entry);
-            }
-        }
 
         public bool TryRemoveEntry(SongEntry entryToRemove)
         {
             // No locking as the post-scan removal sequence
             // cannot be parallelized
-            foreach (var dict in entries)
+            foreach (var entry in SongEntries)
             {
-                foreach (var entry in dict.Value)
+                if (ReferenceEquals(entry.Value, entryToRemove))
                 {
-                    if (ReferenceEquals(entry.Value, entryToRemove))
-                    {
-                        dict.Value.Remove(entry.Key);
-                        if (dict.Value.Count == 0)
-                        {
-                            entries.Remove(dict.Key);
-                        }
-                        --_count;
-                        return true;
-                    }
+                    SongEntries.Remove(entry.Key);
+                    return true;
                 }
             }
             return false;
@@ -102,27 +40,19 @@ namespace YARG.Core.Song.Cache
 
         protected void Serialize(BinaryWriter writer, ref Dictionary<SongEntry, CategoryCacheWriteNode> nodes)
         {
-            writer.Write(_count);
-            foreach (var entryList in entries)
+            using var ms = new MemoryStream();
+            using var entryWriter = new BinaryWriter(ms);
+            writer.Write(SongEntries.Count);
+            foreach (var entry in SongEntries)
             {
-                foreach (var entry in entryList.Value)
-                {
-                    writer.Write(entryList.Key);
-                    writer.Write(entry.Key);
+                ms.SetLength(0);
 
-                    byte[] data = SerializeEntry(entry.Value, nodes[entry.Value]);
-                    writer.Write(data.Length);
-                    writer.Write(data);
-                }
+                writer.Write(entry.Key);
+                entry.Value.Serialize(entryWriter, nodes[entry.Value]);
+
+                writer.Write((int) ms.Length);
+                writer.Write(ms.GetBuffer(), 0, (int)ms.Length);
             }
-        }
-
-        private static byte[] SerializeEntry(RBCONEntry entry, CategoryCacheWriteNode node)
-        {
-            using MemoryStream ms = new();
-            using BinaryWriter writer = new(ms);
-            entry.Serialize(writer, node);
-            return ms.ToArray();
         }
     }
 }

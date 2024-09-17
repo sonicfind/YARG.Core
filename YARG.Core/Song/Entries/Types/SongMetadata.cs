@@ -31,7 +31,6 @@ namespace YARG.Core.Song
             PlaylistTrack = 0,
             LoadingPhrase = string.Empty,
             Year = DEFAULT_YEAR,
-            SongLength = 0,
             SongOffset = 0,
             PreviewStart = -1,
             PreviewEnd = -1,
@@ -49,7 +48,6 @@ namespace YARG.Core.Song
 
         public string Year;
 
-        public ulong SongLength;
         public long SongOffset;
         public uint SongRating;  // 1 = FF; 2 = SR; 3 = M; 4 = NR
 

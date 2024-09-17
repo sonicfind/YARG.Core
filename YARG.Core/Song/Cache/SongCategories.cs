@@ -74,7 +74,7 @@ namespace YARG.Core.Song.Cache
         public EntryComparer Comparer => _COMPARER;
         public DateTime GetKey(SongEntry entry)
         {
-            return entry.GetAddTime().Date;
+            return entry.GetAddDate();
         }
     }
 

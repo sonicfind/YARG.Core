@@ -94,10 +94,11 @@ namespace YARG.Core.Song
         private string _parsedYear;
         private int _intYear;
 
-        protected SongMetadata _metadata;
-        protected AvailableParts _parts;
-        protected ParseSettings _parseSettings;
-        protected HashWrapper _hash;
+        protected readonly SongMetadata _metadata;
+        protected readonly AvailableParts _parts;
+        protected readonly ParseSettings _parseSettings;
+        protected readonly HashWrapper _hash;
+        protected ulong _songLength;
 
         public abstract string Location { get; }
         public abstract string DirectoryActual { get; }
@@ -116,15 +117,7 @@ namespace YARG.Core.Song
 
         public string UnmodifiedYear => _metadata.Year;
 
-        public int YearAsNumber
-        {
-            get => _intYear;
-            set
-            {
-                _intYear = value;
-                _parsedYear = _metadata.Year = value.ToString();
-            }
-        }
+        public int YearAsNumber => _intYear;
 
         public bool IsMaster => _metadata.IsMaster;
 
@@ -134,77 +127,29 @@ namespace YARG.Core.Song
 
         public string LoadingPhrase => _metadata.LoadingPhrase;
 
-        public ulong SongLengthMilliseconds
-        {
-            get => _metadata.SongLength;
-            set => _metadata.SongLength = value;
-        }
+        public ulong SongLengthMilliseconds => _songLength;
 
-        public long SongOffsetMilliseconds
-        {
-            get => _metadata.SongOffset;
-            set => _metadata.SongOffset = value;
-        }
+        public long SongOffsetMilliseconds => _metadata.SongOffset;
 
-        public double SongLengthSeconds
-        {
-            get => _metadata.SongLength / MILLISECOND_FACTOR;
-            set => _metadata.SongLength = (ulong) (value * MILLISECOND_FACTOR);
-        }
+        public double SongLengthSeconds => _songLength / MILLISECOND_FACTOR;
 
-        public double SongOffsetSeconds
-        {
-            get => _metadata.SongOffset / MILLISECOND_FACTOR;
-            set => _metadata.SongOffset = (long) (value * MILLISECOND_FACTOR);
-        }
+        public double SongOffsetSeconds => _metadata.SongOffset / MILLISECOND_FACTOR;
 
-        public long PreviewStartMilliseconds
-        {
-            get => _metadata.PreviewStart;
-            set => _metadata.PreviewStart = value;
-        }
+        public long PreviewStartMilliseconds => _metadata.PreviewStart;
 
-        public long PreviewEndMilliseconds
-        {
-            get => _metadata.PreviewEnd;
-            set => _metadata.PreviewEnd = value;
-        }
+        public long PreviewEndMilliseconds => _metadata.PreviewEnd;
 
-        public double PreviewStartSeconds
-        {
-            get => _metadata.PreviewStart / MILLISECOND_FACTOR;
-            set => _metadata.PreviewStart = (long) (value * MILLISECOND_FACTOR);
-        }
+        public double PreviewStartSeconds => _metadata.PreviewStart / MILLISECOND_FACTOR;
 
-        public double PreviewEndSeconds
-        {
-            get => _metadata.PreviewEnd / MILLISECOND_FACTOR;
-            set => _metadata.PreviewEnd = (long) (value * MILLISECOND_FACTOR);
-        }
+        public double PreviewEndSeconds => _metadata.PreviewEnd / MILLISECOND_FACTOR;
 
-        public long VideoStartTimeMilliseconds
-        {
-            get => _metadata.VideoStartTime;
-            set => _metadata.VideoStartTime = value;
-        }
+        public long VideoStartTimeMilliseconds => _metadata.VideoStartTime;
 
-        public long VideoEndTimeMilliseconds
-        {
-            get => _metadata.VideoEndTime;
-            set => _metadata.VideoEndTime = value;
-        }
+        public long VideoEndTimeMilliseconds => _metadata.VideoEndTime;
 
-        public double VideoStartTimeSeconds
-        {
-            get => _metadata.VideoStartTime / MILLISECOND_FACTOR;
-            set => _metadata.VideoStartTime = (long) (value * MILLISECOND_FACTOR);
-        }
+        public double VideoStartTimeSeconds => _metadata.VideoStartTime / MILLISECOND_FACTOR;
 
-        public double VideoEndTimeSeconds
-        {
-            get => _metadata.VideoEndTime >= 0 ? _metadata.VideoEndTime / MILLISECOND_FACTOR : -1;
-            set => _metadata.VideoEndTime = value >= 0 ? (long) (value * MILLISECOND_FACTOR) : -1;
-        }
+        public double VideoEndTimeSeconds => _metadata.VideoEndTime >= 0 ? _metadata.VideoEndTime / MILLISECOND_FACTOR : -1;
 
         public HashWrapper Hash => _hash;
 
@@ -309,15 +254,6 @@ namespace YARG.Core.Song
             };
         }
 
-        protected SongEntry()
-        {
-            _metadata = SongMetadata.Default;
-            _parts = AvailableParts.Default;
-            _parseSettings = ParseSettings.Default;
-            _parsedYear = SongMetadata.DEFAULT_YEAR;
-            _intYear = int.MaxValue;
-        }
-
         private static readonly SortString DEFAULT_NAME_SORT = SortString.Convert(SongMetadata.DEFAULT_NAME);
         private static readonly SortString DEFAULT_ARTIST_SORT = SortString.Convert(SongMetadata.DEFAULT_ARTIST);
         private static readonly SortString DEFAULT_ALBUM_SORT = SortString.Convert(SongMetadata.DEFAULT_ALBUM);
@@ -379,7 +315,7 @@ namespace YARG.Core.Song
                 _metadata.AlbumTrack = -1;
             }
 
-            modifiers.TryGet("song_length", out _metadata.SongLength);
+            modifiers.TryGet("song_length", out _songLength);
             modifiers.TryGet("rating", out _metadata.SongRating);
 
             modifiers.TryGet("video_start_time", out _metadata.VideoStartTime);
@@ -464,6 +400,16 @@ namespace YARG.Core.Song
             _metadata.IsMaster = !modifiers.TryGet("tags", out string tag) || tag.ToLower() != "cover";
         }
 
+        protected SongEntry(in RBCONEntry.ScanNode info, in HashWrapper hash)
+        {
+            _metadata = info.Metadata;
+            _parts = info.Parts;
+            _parseSettings = info.Settings;
+            _parsedYear = info.Metadata.Year;
+            _intYear = info.YearAsNumber;
+            _hash = hash;
+        }
+
         protected SongEntry(UnmanagedMemoryStream stream, in CategoryCacheStrings strings)
         {
             _metadata.Name = strings.titles[stream.Read<int>(Endianness.Little)];
@@ -481,7 +427,7 @@ namespace YARG.Core.Song
             _metadata.AlbumTrack = stream.Read<int>(Endianness.Little);
             _metadata.PlaylistTrack = stream.Read<int>(Endianness.Little);
 
-            _metadata.SongLength = stream.Read<ulong>(Endianness.Little);
+            _songLength = stream.Read<ulong>(Endianness.Little);
             _metadata.SongOffset = stream.Read<long>(Endianness.Little);
             _metadata.SongRating = stream.Read<uint>(Endianness.Little);
 
@@ -531,7 +477,7 @@ namespace YARG.Core.Song
             writer.Write(_metadata.AlbumTrack);
             writer.Write(_metadata.PlaylistTrack);
 
-            writer.Write(_metadata.SongLength);
+            writer.Write(_songLength);
             writer.Write(_metadata.SongOffset);
             writer.Write(_metadata.SongRating);
 
