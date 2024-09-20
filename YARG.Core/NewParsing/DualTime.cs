@@ -24,16 +24,13 @@ namespace YARG.Core.NewParsing
         }
 
         /// <summary>
-        /// Returns a <see cref="DualTime"/> structure that abides by the current truncation limit
-        /// <br></br>If the time exceeds the limit, it returns unchanged. Otherwise, it gets proportionally scaled down to a tick value of one.
+        /// Attempts to normalize the instance to 1 tick if the current tick value lies beneath the threshold
         /// </summary>
-        /// <remarks>If the ticks provided by <see langword="time"/> is zero, the resulting seconds will be <see cref="double.NaN"/>
-        /// as there is no tickrate to base off</remarks>
-        /// <param name="time">The time to evaluate</param>
-        /// <returns>A possibly truncated time structure</returns>
-        public static DualTime Truncate(DualTime time)
+        /// <param name="time">Time instance to compare against</param>
+        /// <param name="threshold">The tick value required to dodge truncation</param>
+        public static DualTime Truncate(DualTime time, long threshold)
         {
-            if (time.Ticks < TruncationLimit)
+            if (time.Ticks < threshold)
             {
                 time.Seconds /= time.Ticks;
                 time.Ticks = 1;
