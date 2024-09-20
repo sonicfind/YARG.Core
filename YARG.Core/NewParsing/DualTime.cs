@@ -26,8 +26,6 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Attempts to normalize the instance to 1 tick if the current tick value lies beneath the threshold
         /// </summary>
-        /// <remarks>If the ticks provided by <see langword="time"/> is zero, the resulting seconds will be <see cref="double.NaN"/>
-        /// as there is no tickrate to base off</remarks>
         /// <param name="time">Time instance to compare against</param>
         /// <param name="threshold">The tick value required to dodge truncation</param>
         /// <returns>A possibly truncated time structure</returns>
