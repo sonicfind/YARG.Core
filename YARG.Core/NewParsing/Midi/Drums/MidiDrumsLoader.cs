@@ -543,7 +543,8 @@ namespace YARG.Core.NewParsing.Midi
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
             };
 
-            int numLanes = 6;
+            // Unknown_Four cannot become five lane
+            int numLanes = type != DrumsType.Unknown_Four ? 6 : 5;
             bool enableDynamics = false;
             bool flamFlag = false;
             var cymbalFlags = stackalloc bool[3] { true, true, true };
@@ -580,7 +581,7 @@ namespace YARG.Core.NewParsing.Midi
                             int noteValue = note.value - MidiLoader_Constants.DEFAULT_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
                             int lane = LANEVALUES[noteValue];
-                            // if we detect prodrums flags, this value changes to disallow the fifth pad lane
+                            // if we detect prodrums flags or if the type is Unknown_Four, this value will disallow the fifth pad lane
                             if (lane < numLanes)
                             {
                                 var diffTrack = instrumentTrack.Difficulties[diffIndex]!;
