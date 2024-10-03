@@ -23,7 +23,7 @@ namespace YARG.Core.NewParsing
         /// <param name="metadata">The Ini and/or .chart metdata info</param>
         /// <param name="settings">The settings for converting notes to their engine types</param>
         /// <param name="midiSequenceName">The name to use for a written midi file sequence</param>
-        private YARGChart(SyncTrack2 sync, SongMetadata metadata, LoaderSettings settings, string? midiSequenceName)
+        private YARGChart(SyncTrack2 sync, in SongMetadata metadata, in LoaderSettings settings, string? midiSequenceName)
         {
             Sync = sync;
             Metadata = metadata;
@@ -135,7 +135,7 @@ namespace YARG.Core.NewParsing
         {
             var midi = new YARGMidiFile(stream);
             var (sync, sequencename) = LoadSyncTrack_Midi(midi);
-            var chart = new YARGChart(sync, metadata, settings, sequencename);
+            var chart = new YARGChart(sync, in metadata, in settings, sequencename);
             MidiFiveFretLoader.SetOverdriveMidiNote(settings.OverdiveMidiNote);
 
             var encoding = Encoding.UTF8;
@@ -161,7 +161,7 @@ namespace YARG.Core.NewParsing
         {
             var midi = new YARGMidiFile(mainStream);
             var (sync, sequencename) = LoadSyncTrack_Midi(midi);
-            var chart = new YARGChart(sync, metadata, settings, sequencename);
+            var chart = new YARGChart(sync, in metadata, in settings, sequencename);
             MidiFiveFretLoader.SetOverdriveMidiNote(settings.OverdiveMidiNote);
 
             // Temporary start point. The settings variable may carry that information in the future.
