@@ -27,7 +27,7 @@ namespace YARG.Core.NewParsing
         /// <param name="metadata">The Ini and/or .chart metdata info</param>
         /// <param name="settings">The settings for converting notes to their engine types</param>
         /// <param name="miscellaneous">Container of miscellaneous modifiers from the [Song] chunk</param>
-        private YARGChart(SyncTrack2 sync, SongMetadata metadata, LoaderSettings settings, Dictionary<string, IniModifier> miscellaneous)
+        private YARGChart(SyncTrack2 sync, in SongMetadata metadata, in LoaderSettings settings, Dictionary<string, IniModifier> miscellaneous)
         {
             Sync = sync;
             Metadata = metadata;
@@ -207,7 +207,7 @@ namespace YARG.Core.NewParsing
                 }
                 FinalizeAnchors(sync);
             }
-            return new YARGChart(sync, metadata, settings, miscellaneous);
+            return new YARGChart(sync, in metadata, in settings, miscellaneous);
         }
 
         private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>>? unknownDrums)
