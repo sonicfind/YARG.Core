@@ -9,6 +9,9 @@ namespace YARG.Core.NewParsing
 {
     public partial class YARGChart : IDisposable
     {
+        private readonly long _resolution;
+        public long Resolution => _resolution;
+
         public readonly SyncTrack2 Sync;
         public readonly YARGManagedSortedList<DualTime, NonNullString> Sections = new();
         public readonly YARGManagedSortedList<DualTime, List<string>> Globals = new();
@@ -52,10 +55,11 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Constructs an empty chart with default metadata and settings
         /// </summary>
-        /// <param name="tickrate">The tick rate to initialize the sync track to</param>
-        public YARGChart(uint tickrate = 480)
+        /// <param name="resolution">The tick rate to initialize the sync track to</param>
+        public YARGChart(long resolution = 480)
         {
-            Sync = new SyncTrack2(tickrate);
+            _resolution = resolution;
+            Sync = new SyncTrack2();
             Metadata = SongMetadata.Default;
             Settings = LoaderSettings.Default;
         }
