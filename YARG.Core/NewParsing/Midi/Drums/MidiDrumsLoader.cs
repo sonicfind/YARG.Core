@@ -26,7 +26,7 @@ namespace YARG.Core.NewParsing.Midi
 
         private const int TOM_MIN_VALUE = 110;
         private const int TOM_MAX_VALUE = 112;
-        public static unsafe InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> LoadFourLane(YARGMidiTrack midiTrack, SyncTrack2 sync, bool isProDrums)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> LoadFourLane(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, bool isProDrums)
         {
             // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>();
@@ -65,8 +65,6 @@ namespace YARG.Core.NewParsing.Midi
             var position = default(DualTime);
             var note = default(MidiNote);
             var stats = default(MidiStats);
-            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
-            var tempoTracker = new TempoTracker(sync);
             // Used for snapping together notes that get accidentally misaligned during authoring
             var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent(ref stats))
@@ -344,7 +342,7 @@ namespace YARG.Core.NewParsing.Midi
             return instrumentTrack;
         }
 
-        public static unsafe InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> LoadFiveLane(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> LoadFiveLane(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker)
         {
             // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>();
@@ -378,8 +376,6 @@ namespace YARG.Core.NewParsing.Midi
             var position = default(DualTime);
             var note = default(MidiNote);
             var stats = default(MidiStats);
-            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
-            var tempoTracker = new TempoTracker(sync);
             // Used for snapping together notes that get accidentally misaligned during authoring
             var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent(ref stats))
@@ -604,7 +600,7 @@ namespace YARG.Core.NewParsing.Midi
             return instrumentTrack;
         }
 
-        public static unsafe InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> LoadUnknownDrums(YARGMidiTrack midiTrack, SyncTrack2 sync, ref DrumsType drumsType)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> LoadUnknownDrums(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ref DrumsType drumsType)
         {
             // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>>();
@@ -644,8 +640,6 @@ namespace YARG.Core.NewParsing.Midi
             var position = default(DualTime);
             var note = default(MidiNote);
             var stats = default(MidiStats);
-            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
-            var tempoTracker = new TempoTracker(sync);
             // Used for snapping together notes that get accidentally misaligned during authoring
             var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent(ref stats))

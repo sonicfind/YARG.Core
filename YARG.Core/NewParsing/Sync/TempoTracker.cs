@@ -11,18 +11,20 @@ namespace YARG.Core.NewParsing
     /// </summary>
     public unsafe struct TempoTracker
     {
-        private readonly long _tickrate;
         private readonly YARGKeyValuePair<long, Tempo2>* _end;
         private YARGKeyValuePair<long, Tempo2>* _position;
+
+        public readonly long Resolution;
 
         /// <summary>
         /// Initializes the tracker to the starting position of the given sync track
         /// </summary>
         /// <param name="sync">The sync track to traverse</param>
-        public TempoTracker(SyncTrack2 sync)
+        /// <param name="resolution">The tickrate of the chart</param>
+        public TempoTracker(SyncTrack2 sync, long resolution)
         {
             Debug.Assert(sync.TempoMarkers.Count > 0, "There must exist at least one marker in the tempo list");
-            _tickrate = sync.Tickrate;
+            Resolution = resolution;
             _position = sync.TempoMarkers.Data;
             _end = _position + sync.TempoMarkers.Count;
         }
@@ -41,7 +43,7 @@ namespace YARG.Core.NewParsing
                 ++_position;
             }
 
-            double quarters = (ticks - _position->Key) / (double) _tickrate;
+            double quarters = (ticks - _position->Key) / (double) Resolution;
             long micros = (long) (_position->Value.MicrosPerQuarter * quarters) + _position->Value.Anchor;
             return micros / (double) Tempo2.MICROS_PER_SECOND;
         }
@@ -61,7 +63,7 @@ namespace YARG.Core.NewParsing
                 ++tmp;
             }
 
-            double quarters = (ticks - tmp->Key) / (double) _tickrate;
+            double quarters = (ticks - tmp->Key) / (double) Resolution;
             long micros = (long) (tmp->Value.MicrosPerQuarter * quarters) + tmp->Value.Anchor;
             return micros / (double) Tempo2.MICROS_PER_SECOND;
         }
