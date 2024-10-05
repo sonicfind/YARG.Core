@@ -49,7 +49,7 @@ namespace YARG.Core.NewParsing.Midi
             PitchName.E, PitchName.F, PitchName.F_Sharp_Gb, PitchName.G, PitchName.G_Sharp_Ab, PitchName.A, PitchName.A_Sharp_Bb, PitchName.B, PitchName.C, PitchName.C_Sharp_Db, PitchName.D, PitchName.D_Sharp_Eb
         };
 
-        public static unsafe ProGuitarInstrumentTrack<TProFret> Load<TProFret>(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        public static unsafe ProGuitarInstrumentTrack<TProFret> Load<TProFret>(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker)
             where TProFret : unmanaged, IProFret
         {
             // Pre-load empty instances of all difficulties
@@ -93,8 +93,6 @@ namespace YARG.Core.NewParsing.Midi
 
             var position = default(DualTime);
             var note = default(MidiNote);
-            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
-            var tempoTracker = new TempoTracker(sync);
             // Used for snapping together notes that get accidentally misaligned during authoring
             var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent())

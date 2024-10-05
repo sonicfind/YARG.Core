@@ -20,14 +20,14 @@ namespace YARG.Core.NewParsing.Midi
 
         private static readonly byte[] RANGESHIFT_TEXT = Encoding.ASCII.GetBytes("[range_shift]");
 
-        public static LeadVocalsTrack LoadPartVocals(YARGMidiTrack midiTrack, SyncTrack2 sync, ref Encoding encoding)
+        public static LeadVocalsTrack LoadPartVocals(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ref Encoding encoding)
         {
             var vocalTrack = new LeadVocalsTrack();
-            Load(midiTrack, sync, vocalTrack, 0, ref encoding);
+            Load(midiTrack, ref tempoTracker, vocalTrack, 0, ref encoding);
             return vocalTrack;
         }
 
-        public static unsafe bool Load(YARGMidiTrack midiTrack, SyncTrack2 sync, VocalTrack2 vocalTrack, int trackIndex, ref Encoding encoding)
+        public static unsafe bool Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, VocalTrack2 vocalTrack, int trackIndex, ref Encoding encoding)
         {
             var part = vocalTrack[trackIndex];
             if (!part.IsEmpty())
@@ -51,8 +51,6 @@ namespace YARG.Core.NewParsing.Midi
 
             var note = default(MidiNote);
             var position = default(DualTime);
-            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
-            var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
                 position.Ticks = midiTrack.Position;
@@ -227,7 +225,7 @@ namespace YARG.Core.NewParsing.Midi
                         if (str.SequenceEqual(RANGESHIFT_TEXT))
                         {
                             var endPoint = position;
-                            endPoint.Ticks += sync.Tickrate;
+                            endPoint.Ticks += tempoTracker.Resolution;
                             endPoint.Seconds = tempoTracker.UnmovingConvert(endPoint.Ticks);
                             vocalTrack.RangeShifts.AppendOrUpdate(in position, endPoint - position);
                         }

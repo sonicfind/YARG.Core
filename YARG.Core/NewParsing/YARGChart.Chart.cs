@@ -65,7 +65,7 @@ namespace YARG.Core.NewParsing
             {
                 if (modifiers.TryGet("eighthnote_hopo", out bool eighthNoteHopo))
                 {
-                    chart.Settings.HopoThreshold = chart.Sync.Tickrate / (eighthNoteHopo ? 2 : 3);
+                    chart.Settings.HopoThreshold = chart.Resolution / (eighthNoteHopo ? 2 : 3);
                 }
                 else if (modifiers.TryGet("hopofreq", out long hopoFreq))
                 {
@@ -79,18 +79,18 @@ namespace YARG.Core.NewParsing
                         5 => 4,
                         _ => throw new NotImplementedException($"Unhandled hopofreq value {hopoFreq}!")
                     };
-                    chart.Settings.HopoThreshold = 4 * chart.Sync.Tickrate / denominator;
+                    chart.Settings.HopoThreshold = 4 * chart.Resolution / denominator;
                 }
                 else
                 {
-                    chart.Settings.HopoThreshold = chart.Sync.Tickrate / 3;
+                    chart.Settings.HopoThreshold = chart.Resolution / 3;
                 }
 
                 // With a 192 resolution, .chart has a HOPO threshold of 65 ticks, not 64,
                 // so we need to scale this factor to different resolutions (480 res = 162.5 threshold).
                 // Why?... idk, but I hate it.
                 const float DEFAULT_RESOLUTION = 192;
-                chart.Settings.HopoThreshold += (long) (chart.Sync.Tickrate / DEFAULT_RESOLUTION);
+                chart.Settings.HopoThreshold += (long) (chart.Resolution / DEFAULT_RESOLUTION);
             }
 
             // .chart defaults to no cutting off sustains whatsoever if the ini does not define the value.
@@ -164,7 +164,7 @@ namespace YARG.Core.NewParsing
         private static unsafe YARGChart LoadHeaderAndSync_Chart<TChar>(ref YARGTextContainer<TChar> container, in SongMetadata metadata, in LoaderSettings settings)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
-            long tickrate = DEFAULT_TICKRATE;
+            long resolution = DEFAULT_TICKRATE;
             var miscellaneous = new Dictionary<string, IniModifier>();
             if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.HEADERTRACK))
             {
@@ -178,12 +178,12 @@ namespace YARG.Core.NewParsing
                     var mod = node.Value[0];
                     if (mod.Buffer[0] != 0)
                     {
-                        tickrate = mod.Buffer[0];
+                        resolution = mod.Buffer[0];
                     }
                 }
             }
 
-            var sync = new SyncTrack2(tickrate);
+            var sync = new SyncTrack2();
             if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.SYNCTRACK))
             {
                 DotChartEvent ev = default;
@@ -205,7 +205,7 @@ namespace YARG.Core.NewParsing
                             break;
                     }
                 }
-                FinalizeAnchors(sync);
+                FinalizeAnchors(sync, resolution);
             }
             return new YARGChart(sync, in metadata, in settings, miscellaneous);
         }
@@ -223,6 +223,8 @@ namespace YARG.Core.NewParsing
                 return false;
             }
 
+            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
+            var tempoTracker = new TempoTracker(chart.Sync, chart.Resolution);
             // The note track label for drums will only return the
             // four lanes enum value
             //
@@ -240,13 +242,10 @@ namespace YARG.Core.NewParsing
                 }
                 else if (drumsInChart == DrumsType.Unknown && activeTracks == null)
                 {
-                    unsafe
-                    {
-                        UnknownLaneDrums.DrumType = DrumsType.Unknown;
-                        bool result = LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref unknownDrums);
-                        drumsInChart = UnknownLaneDrums.DrumType;
-                        return result;
-                    }
+                    UnknownLaneDrums.DrumType = DrumsType.Unknown;
+                    bool result = LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref unknownDrums);
+                    drumsInChart = UnknownLaneDrums.DrumType;
+                    return result;
                 }
             }
 
@@ -257,18 +256,18 @@ namespace YARG.Core.NewParsing
 
             return instrument switch
             {
-                Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretGuitar),
-                Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretBass),
-                Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretRhythm),
-                Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveFretCoopGuitar),
-                Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretGuitar),
-                Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretBass),
-                Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretRhythm),
-                Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.SixFretCoopGuitar),
+                Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FiveFretGuitar),
+                Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FiveFretBass),
+                Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FiveFretRhythm),
+                Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FiveFretCoopGuitar),
+                Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.SixFretGuitar),
+                Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.SixFretBass),
+                Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.SixFretRhythm),
+                Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.SixFretCoopGuitar),
                 Instrument.FourLaneDrums or
-                Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FourLaneDrums),
-                Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.FiveLaneDrums),
-                Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, chart.Sync, difficulty, ref chart.Keys),
+                Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FourLaneDrums),
+                Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FiveLaneDrums),
+                Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.Keys),
                 _ => false,
             };
         }
@@ -282,7 +281,8 @@ namespace YARG.Core.NewParsing
                 return false;
             }
 
-            var tempoTracker = new TempoTracker(chart.Sync);
+            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
+            var tempoTracker = new TempoTracker(chart.Sync, chart.Resolution);
             var ev = default(DotChartEvent);
             var position = default(DualTime);
             var phrase = DualTime.Inactive;
@@ -352,7 +352,7 @@ namespace YARG.Core.NewParsing
             Trill = 66,
         }
 
-        private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, SyncTrack2 sync, Difficulty difficulty, ref InstrumentTrack2<DifficultyTrack2<TNote>>? track)
+        private static unsafe bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, ref TempoTracker tempoTracker, Difficulty difficulty, ref InstrumentTrack2<DifficultyTrack2<TNote>>? track)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TNote : unmanaged, IInstrumentNote, IDotChartLoadable
         {
@@ -373,7 +373,6 @@ namespace YARG.Core.NewParsing
 
             var ev = default(DotChartEvent);
             var position = default(DualTime);
-            var tempoTracker = new TempoTracker(sync);
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
             {
                 position.Ticks = ev.Position;
