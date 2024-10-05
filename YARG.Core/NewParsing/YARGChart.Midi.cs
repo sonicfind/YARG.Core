@@ -169,14 +169,14 @@ namespace YARG.Core.NewParsing
             if (updateStream != null)
             {
                 var updateMidi = new YARGMidiFile(updateStream);
-                var (updateSync, _) = LoadSyncTrack_Midi(updateMidi);
+                using var updateSync = LoadSyncTrack_Midi(updateMidi).Sync;
                 LoadMidiTracks(chart, updateSync, updateMidi, ref encoding, ref drumsInChart, activeInstruments);
             }
 
             if (upgradeStream != null)
             {
                 var upgradeMidi = new YARGMidiFile(upgradeStream);
-                var (upgradeSync, _) = LoadSyncTrack_Midi(upgradeMidi);
+                using var upgradeSync = LoadSyncTrack_Midi(upgradeMidi).Sync;
                 LoadMidiTracks(chart, upgradeSync, upgradeMidi, ref encoding, ref drumsInChart, activeInstruments);
             }
 
