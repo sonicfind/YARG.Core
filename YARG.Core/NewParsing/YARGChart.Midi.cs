@@ -139,7 +139,7 @@ namespace YARG.Core.NewParsing
             MidiFiveFretLoader.SetOverdriveMidiNote(settings.OverdiveMidiNote);
 
             var encoding = Encoding.UTF8;
-            LoadMidiTracks(chart, sync, midi, ref encoding, drumsInChart, activeInstruments);
+            LoadMidiTracks(chart, sync, midi, ref encoding, ref drumsInChart, activeInstruments);
             FinalizeDeserialization(chart);
             return chart;
         }
@@ -170,17 +170,17 @@ namespace YARG.Core.NewParsing
             {
                 var updateMidi = new YARGMidiFile(updateStream);
                 var (updateSync, _) = LoadSyncTrack_Midi(updateMidi);
-                LoadMidiTracks(chart, updateSync, updateMidi, ref encoding, drumsInChart, activeInstruments);
+                LoadMidiTracks(chart, updateSync, updateMidi, ref encoding, ref drumsInChart, activeInstruments);
             }
 
             if (upgradeStream != null)
             {
                 var upgradeMidi = new YARGMidiFile(upgradeStream);
                 var (upgradeSync, _) = LoadSyncTrack_Midi(upgradeMidi);
-                LoadMidiTracks(chart, upgradeSync, upgradeMidi, ref encoding, drumsInChart, activeInstruments);
+                LoadMidiTracks(chart, upgradeSync, upgradeMidi, ref encoding, ref drumsInChart, activeInstruments);
             }
 
-            LoadMidiTracks(chart, sync, midi, ref encoding, drumsInChart, activeInstruments);
+            LoadMidiTracks(chart, sync, midi, ref encoding, ref drumsInChart, activeInstruments);
             FinalizeDeserialization(chart);
             return chart;
         }
@@ -236,7 +236,7 @@ namespace YARG.Core.NewParsing
         /// <param name="encoding">The encoding to use to decode midi text events to lyrics</param>
         /// <param name="drumsInChart">The type of drums parsing to apply to any drums track in the file</param>
         /// <param name="activeInstruments">Provides guidance over which instruments from the midi file to load. If null, all instruments will be loaded.</param>
-        private static void LoadMidiTracks(YARGChart chart, SyncTrack2 sync, YARGMidiFile midi, ref Encoding encoding, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
+        private static void LoadMidiTracks(YARGChart chart, SyncTrack2 sync, YARGMidiFile midi, ref Encoding encoding, ref DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
         {
             int count = 1;
             foreach (var midiTrack in midi)
