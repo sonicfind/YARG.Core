@@ -192,8 +192,8 @@ namespace YARG.Core.NewParsing
         /// The midi file should be in its default state to work properly.
         /// </remarks>
         /// <param name="midi">The untouched midi file to pull the track from</param>
-        /// <returns></returns>
-        private static unsafe (SyncTrack2 Sync, string? SequenceName) LoadSyncTrack_Midi(YARGMidiFile midi)
+        /// <returns>The resulting sync track and sequence name</returns>
+        private static unsafe (SyncTrack2 Sync, string SequenceName) LoadSyncTrack_Midi(YARGMidiFile midi)
         {
             var sync = new SyncTrack2(midi.Resolution);
 
@@ -205,6 +205,12 @@ namespace YARG.Core.NewParsing
             }
 
             string? sequenceName = midiTrack.FindTrackName(Encoding.UTF8);
+            if (sequenceName == null)
+            {
+                YargLogger.LogWarning("Could not determine the proper sequence name! Duplicate events found!");
+                sequenceName = string.Empty;
+            }
+
             while (midiTrack.ParseEvent())
             {
                 switch (midiTrack.Type)
