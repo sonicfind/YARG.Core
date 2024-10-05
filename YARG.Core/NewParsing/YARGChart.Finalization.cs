@@ -16,10 +16,9 @@ namespace YARG.Core.NewParsing
         /// This MUST be called following the deserialization of a sync track from either file format.
         /// </remarks>
         /// <param name="sync">The synctrack to finalize</param>
-        private static unsafe void FinalizeAnchors(SyncTrack2 sync)
+        private static unsafe void FinalizeAnchors(SyncTrack2 sync, double resolution)
         {
             Debug.Assert(sync.TempoMarkers.Count > 0, "A least one tempo marker must exist");
-            double tickrate = sync.Tickrate;
             var curr = sync.TempoMarkers.Data;
             var end = curr + sync.TempoMarkers.Count;
             while (true)
@@ -31,7 +30,7 @@ namespace YARG.Core.NewParsing
                     break;
                 }
 
-                double numQuarters = (curr->Key - prev->Key) / tickrate;
+                double numQuarters = (curr->Key - prev->Key) / resolution;
                 if (curr->Value.Anchor == 0)
                 {
                     curr->Value.Anchor = (long) (numQuarters * prev->Value.MicrosPerQuarter) + prev->Value.Anchor;
@@ -99,10 +98,11 @@ namespace YARG.Core.NewParsing
         /// <param name="endPosition">The position where the chart data should stop</param>
         private static unsafe void GenerateLeftoverBeats(YARGChart chart, in DualTime endPosition)
         {
-            long multipliedTickrate = 4 * chart.Sync.Tickrate;
+            long multipliedTickrate = 4 * chart.Resolution;
 
             int beatIndex = 0;
-            var tempoTracker = new TempoTracker(chart.Sync);
+            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
+            var tempoTracker = new TempoTracker(chart.Sync, chart.Resolution);
 
             DualTime buffer = default;
             var end = chart.Sync.TimeSigs.End;
@@ -165,8 +165,9 @@ namespace YARG.Core.NewParsing
         /// <param name="endPosition">The position where the chart data should stop</param>
         private static unsafe void GenerateAllBeats(YARGChart chart, in DualTime endPosition)
         {
-            long multipliedTickrate = 4 * chart.Sync.Tickrate;
-            var tempoTracker = new TempoTracker(chart.Sync);
+            long multipliedTickrate = 4 * chart.Resolution;
+            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
+            var tempoTracker = new TempoTracker(chart.Sync, chart.Resolution);
 
             DualTime buffer = default;
             var end = chart.Sync.TimeSigs.End;

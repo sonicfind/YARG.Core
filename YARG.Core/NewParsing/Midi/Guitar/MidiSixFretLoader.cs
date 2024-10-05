@@ -32,7 +32,7 @@ namespace YARG.Core.NewParsing.Midi
             0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 11,
         };
 
-        public static unsafe InstrumentTrack2<DifficultyTrack2<SixFretGuitar>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<SixFretGuitar>> Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker)
         {
             // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>();
@@ -64,8 +64,6 @@ namespace YARG.Core.NewParsing.Midi
             ReadOnlySpan<byte> SYSEXTAG = stackalloc byte[] { (byte) 'P', (byte) 'S', (byte) '\0', };
             var position = default(DualTime);
             var note = default(MidiNote);
-            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
-            var tempoTracker = new TempoTracker(sync);
             // Used for snapping together notes that get accidentally misaligned during authoring
             var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent())
