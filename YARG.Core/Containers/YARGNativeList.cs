@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -81,7 +83,7 @@ namespace YARG.Core.Containers
         /// <summary>
         /// Transfers all the data to a new instance of the list, leaving the current one in its default state.
         /// </summary>
-        /// <remarks>This is only to be used to dodge double-frees from any sort of conversions with readonly instances</remarks>
+        /// <remarks>This should only be used to dodge double-frees from any sort of conversions with readonly instances</remarks>
         public YARGNativeList(YARGNativeList<T> original)
         {
             _buffer = original._buffer;
@@ -92,6 +94,24 @@ namespace YARG.Core.Containers
             original._count = 0;
             original._capacity = 0;
             original._version = 0;
+        }
+
+        /// <summary>
+        /// Transfers all the data from the source into the current instance, leaving the source in a default state.
+        /// </summary>
+        /// <remarks>Prior data held by the current instance will get disposed before the transfer</remarks>
+        public YARGNativeList<T> StealData(YARGNativeList<T> source)
+        {
+            _Dispose();
+            _buffer = source._buffer;
+            _count = source._count;
+            _capacity = source._capacity;
+            _version = source._version;
+            source._buffer = null;
+            source._count = 0;
+            source._capacity = 0;
+            source._version = 0;
+            return this;
         }
 
         /// <summary>
