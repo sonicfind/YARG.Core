@@ -13,7 +13,7 @@ namespace YARG.Core.NewParsing.Midi
         private const int BRE_MIDI = 120;
         private const int GLISSANDO_MIDI = 126;
 
-        public static unsafe bool Load(YARGMidiTrack midiTrack, SyncTrack2 sync, InstrumentTrack2<ProKeysDifficultyTrack> instrumentTrack, int diffIndex)
+        public static unsafe bool Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, InstrumentTrack2<ProKeysDifficultyTrack> instrumentTrack, int diffIndex)
         {
             ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
             if (diffTrack != null)
@@ -44,8 +44,6 @@ namespace YARG.Core.NewParsing.Midi
 
             var position = default(DualTime);
             var note = default(MidiNote);
-            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
-            var tempoTracker = new TempoTracker(sync);
             // Used for snapping together notes that get accidentally misaligned during authoring
             var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent())

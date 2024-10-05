@@ -40,12 +40,11 @@ namespace YARG.Core.NewParsing
         /// <returns>The chart data from the midi file</returns>
         public static YARGChart LoadMidi_Single(string chartPath, HashSet<MidiTrackType>? activeInstruments)
         {
-            string iniPath = Path.Combine(Path.GetDirectoryName(chartPath), "song.ini");
-
             IniSection modifiers;
             var metadata = SongMetadata.Default;
             var settings = LoaderSettings.Default;
 
+            string iniPath = Path.Combine(Path.GetDirectoryName(chartPath), "song.ini");
             var drumType = DrumsType.UnknownPro;
             if (File.Exists(iniPath))
             {
@@ -90,7 +89,7 @@ namespace YARG.Core.NewParsing
             {
                 if (modifiers.TryGet("eighthnote_hopo", out bool eighthNoteHopo))
                 {
-                    chart.Settings.HopoThreshold = chart.Sync.Tickrate / (eighthNoteHopo ? 2 : 3);
+                    chart.Settings.HopoThreshold = chart.Resolution / (eighthNoteHopo ? 2 : 3);
                 }
                 else if (modifiers.TryGet("hopofreq", out long hopoFreq))
                 {
@@ -104,11 +103,11 @@ namespace YARG.Core.NewParsing
                         5 => 4,
                         _ => throw new NotImplementedException($"Unhandled hopofreq value {hopoFreq}!")
                     };
-                    chart.Settings.HopoThreshold = 4 * chart.Sync.Tickrate / denominator;
+                    chart.Settings.HopoThreshold = 4 * chart.Resolution / denominator;
                 }
                 else
                 {
-                    chart.Settings.HopoThreshold = chart.Sync.Tickrate / 3;
+                    chart.Settings.HopoThreshold = chart.Resolution / 3;
                 }
             }
 
@@ -116,7 +115,7 @@ namespace YARG.Core.NewParsing
             // Since a failed `TryGet` sets the value to zero, we would need no additional work outside .mid
             if (!modifiers.TryGet("sustain_cutoff_threshold", out chart.Settings.SustainCutoffThreshold))
             {
-                settings.SustainCutoffThreshold = chart.Sync.Tickrate / 3;
+                settings.SustainCutoffThreshold = chart.Resolution / 3;
             }
             return chart;
         }
@@ -195,7 +194,7 @@ namespace YARG.Core.NewParsing
         /// <returns>The resulting sync track and sequence name</returns>
         private static unsafe (SyncTrack2 Sync, string SequenceName) LoadSyncTrack_Midi(YARGMidiFile midi)
         {
-            var sync = new SyncTrack2(midi.Resolution);
+            var sync = new SyncTrack2();
 
             using var midiTrack = midi.LoadNextTrack();
             if (midiTrack == null)
@@ -223,7 +222,7 @@ namespace YARG.Core.NewParsing
                         break;
                 }
             }
-            FinalizeAnchors(sync);
+            FinalizeAnchors(sync, midi.Resolution);
             return (sync, sequenceName);
         }
 
@@ -244,17 +243,19 @@ namespace YARG.Core.NewParsing
                 string? trackname = midiTrack.FindTrackName(Encoding.UTF8);
                 if (trackname != null && YARGMidiTrack.TRACKNAMES.TryGetValue(trackname, out var type))
                 {
+                    // Provides a more algorithmically optimal route for mapping midi ticks to seconds
+                    var tempoTracker = new TempoTracker(sync, chart.Resolution);
                     if (type == MidiTrackType.Events)
                     {
-                        LoadEventsTrack_Midi(chart, sync, midiTrack);
+                        LoadEventsTrack_Midi(chart, ref tempoTracker, midiTrack);
                     }
                     else if (type == MidiTrackType.Beat)
                     {
-                        LoadBeatsTrack_Midi(chart.BeatMap, sync, midiTrack);
+                        LoadBeatsTrack_Midi(chart.BeatMap, ref tempoTracker, midiTrack);
                     }
                     else if (activeInstruments == null || activeInstruments.Contains(type))
                     {
-                        LoadInstrument_Midi(chart, ref drumsInChart, type, sync, midiTrack, ref encoding);
+                        LoadInstrument_Midi(chart, ref drumsInChart, type, ref tempoTracker, midiTrack, ref encoding);
                     }
                 }
                 else if (trackname == null)
@@ -276,7 +277,7 @@ namespace YARG.Core.NewParsing
         /// <param name="chart">The chart that'll hold the sections and globals</param>
         /// <param name="sync">The backing sync track to use for proper positioning</param>
         /// <param name="midiTrack">The midi track containing the event data</param>
-        private static void LoadEventsTrack_Midi(YARGChart chart, SyncTrack2 sync, YARGMidiTrack midiTrack)
+        private static void LoadEventsTrack_Midi(YARGChart chart, ref TempoTracker tempoTracker, YARGMidiTrack midiTrack)
         {
             if (!chart.Globals.IsEmpty() || !chart.Sections.IsEmpty())
             {
@@ -285,7 +286,6 @@ namespace YARG.Core.NewParsing
             }
 
             var position = default(DualTime);
-            var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
                 if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit && midiTrack.Type != MidiEventType.Text_TrackName)
@@ -317,7 +317,7 @@ namespace YARG.Core.NewParsing
         /// <param name="beats">The beats track to fill/param>
         /// <param name="sync">The backing sync track to use for proper positioning</param>
         /// <param name="midiTrack">The midi track containing the beat track data</param>
-        private static void LoadBeatsTrack_Midi(YARGNativeSortedList<DualTime, BeatlineType> beats, SyncTrack2 sync, YARGMidiTrack midiTrack)
+        private static void LoadBeatsTrack_Midi(YARGNativeSortedList<DualTime, BeatlineType> beats, ref TempoTracker tempoTracker, YARGMidiTrack midiTrack)
         {
             const int MEASURE_BEAT = 12;
             const int STRONG_BEAT = 13;
@@ -329,7 +329,6 @@ namespace YARG.Core.NewParsing
 
             var position = default(DualTime);
             var note = default(MidiNote);
-            var tempoTracker = new TempoTracker(sync);
             while (midiTrack.ParseEvent())
             {
                 if (midiTrack.Type == MidiEventType.Note_On)
@@ -363,37 +362,37 @@ namespace YARG.Core.NewParsing
         /// <param name="sync">The backing sync track to use for proper positioning</param>
         /// <param name="midiTrack">The track containing the instrument or vocal data</param>
         /// <param name="encoding">The encoding to use to decode midi text events to lyrics</param>
-        private static void LoadInstrument_Midi(YARGChart chart, ref DrumsType drumsInChart, MidiTrackType type, SyncTrack2 sync, YARGMidiTrack midiTrack, ref Encoding encoding) 
+        private static void LoadInstrument_Midi(YARGChart chart, ref DrumsType drumsInChart, MidiTrackType type, ref TempoTracker tempoTracker, YARGMidiTrack midiTrack, ref Encoding encoding) 
         {
             switch (type)
             {
-                case MidiTrackType.Guitar_5:      chart.FiveFretGuitar ??=     MidiFiveFretLoader.Load(midiTrack, sync); break;
-                case MidiTrackType.Bass_5:        chart.FiveFretBass ??=       MidiFiveFretLoader.Load(midiTrack, sync); break;
-                case MidiTrackType.Rhythm_5:      chart.FiveFretRhythm ??=     MidiFiveFretLoader.Load(midiTrack, sync); break;
-                case MidiTrackType.Coop_5:        chart.FiveFretCoopGuitar ??= MidiFiveFretLoader.Load(midiTrack, sync); break;
-                case MidiTrackType.Keys:          chart.Keys ??=               MidiFiveFretLoader.Load(midiTrack, sync); break;
+                case MidiTrackType.Guitar_5:      chart.FiveFretGuitar ??=     MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Bass_5:        chart.FiveFretBass ??=       MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Rhythm_5:      chart.FiveFretRhythm ??=     MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Coop_5:        chart.FiveFretCoopGuitar ??= MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Keys:          chart.Keys ??=               MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
 
-                case MidiTrackType.Guitar_6:      chart.SixFretGuitar ??=      MidiSixFretLoader. Load(midiTrack, sync); break;
-                case MidiTrackType.Bass_6:        chart.SixFretBass ??=        MidiSixFretLoader. Load(midiTrack, sync); break;
-                case MidiTrackType.Rhythm_6:      chart.SixFretRhythm ??=      MidiSixFretLoader. Load(midiTrack, sync); break;
-                case MidiTrackType.Coop_6:        chart.SixFretCoopGuitar ??=  MidiSixFretLoader. Load(midiTrack, sync); break;
+                case MidiTrackType.Guitar_6:      chart.SixFretGuitar ??=      MidiSixFretLoader. Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Bass_6:        chart.SixFretBass ??=        MidiSixFretLoader. Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Rhythm_6:      chart.SixFretRhythm ??=      MidiSixFretLoader. Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Coop_6:        chart.SixFretCoopGuitar ??=  MidiSixFretLoader. Load(midiTrack, ref tempoTracker); break;
 
                 case MidiTrackType.Drums:
                     switch (drumsInChart)
                     {
                         case DrumsType.ProDrums:
-                            chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, sync, true);
+                            chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, ref tempoTracker, true);
                             break;
                         case DrumsType.FourLane:
-                            chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, sync, false);
+                            chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, ref tempoTracker, false);
                             break;
                         case DrumsType.FiveLane:
-                            chart.FiveLaneDrums ??= MidiDrumsLoader.LoadFiveLane(midiTrack, sync);
+                            chart.FiveLaneDrums ??= MidiDrumsLoader.LoadFiveLane(midiTrack, ref tempoTracker);
                             break;
                         default:
                         {
                             // The phrases and events will be moved to the converted track, so it is safe to call dispose
-                            using var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, sync, ref drumsInChart);
+                            using var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, ref tempoTracker, ref drumsInChart);
                             switch (drumsInChart)
                             {
                                 case DrumsType.FiveLane:
@@ -417,10 +416,10 @@ namespace YARG.Core.NewParsing
                         }
                     }
                     break;
-                case MidiTrackType.Pro_Guitar_17: chart.ProGuitar_17Fret ??=   MidiProGuitarLoader.Load<ProFret_17>(midiTrack, sync); break;
-                case MidiTrackType.Pro_Guitar_22: chart.ProGuitar_22Fret ??=   MidiProGuitarLoader.Load<ProFret_22>(midiTrack, sync); break;
-                case MidiTrackType.Pro_Bass_17:   chart.ProBass_17Fret ??=     MidiProGuitarLoader.Load<ProFret_17>(midiTrack, sync); break;
-                case MidiTrackType.Pro_Bass_22:   chart.ProBass_22Fret ??=     MidiProGuitarLoader.Load<ProFret_22>(midiTrack, sync); break;
+                case MidiTrackType.Pro_Guitar_17: chart.ProGuitar_17Fret ??=   MidiProGuitarLoader.Load<ProFret_17>(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Pro_Guitar_22: chart.ProGuitar_22Fret ??=   MidiProGuitarLoader.Load<ProFret_22>(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Pro_Bass_17:   chart.ProBass_17Fret ??=     MidiProGuitarLoader.Load<ProFret_17>(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Pro_Bass_22:   chart.ProBass_22Fret ??=     MidiProGuitarLoader.Load<ProFret_22>(midiTrack, ref tempoTracker); break;
                 
                 case MidiTrackType.Pro_Keys_X:
                 case MidiTrackType.Pro_Keys_H:
@@ -429,10 +428,10 @@ namespace YARG.Core.NewParsing
                     {
                         chart.ProKeys ??= new InstrumentTrack2<ProKeysDifficultyTrack>();
                         // Handled per-difficulty, so we use 0-3 indexing
-                        MidiProKeysLoader.Load(midiTrack, sync, chart.ProKeys, type - MidiTrackType.Pro_Keys_E);
+                        MidiProKeysLoader.Load(midiTrack, ref tempoTracker, chart.ProKeys, type - MidiTrackType.Pro_Keys_E);
                         break;
                     }
-                case MidiTrackType.Vocals: chart.LeadVocals ??= MidiVocalsLoader.LoadPartVocals(midiTrack, sync, ref encoding); break;
+                case MidiTrackType.Vocals: chart.LeadVocals ??= MidiVocalsLoader.LoadPartVocals(midiTrack, ref tempoTracker, ref encoding); break;
                 case MidiTrackType.Harm1:
                 case MidiTrackType.Harm2:
                 case MidiTrackType.Harm3:
@@ -441,7 +440,7 @@ namespace YARG.Core.NewParsing
                         int index = type - MidiTrackType.Harm1;
                         if (chart.HarmonyVocals[index].IsEmpty())
                         {
-                            MidiVocalsLoader.Load(midiTrack, sync, chart.HarmonyVocals, index, ref encoding);
+                            MidiVocalsLoader.Load(midiTrack, ref tempoTracker, chart.HarmonyVocals, index, ref encoding);
                         }
                         break;
                     }

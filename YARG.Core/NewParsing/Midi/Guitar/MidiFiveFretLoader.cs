@@ -36,7 +36,7 @@ namespace YARG.Core.NewParsing.Midi
 
         private static readonly byte[][] ENHANCED_STRINGS = new byte[][] { Encoding.ASCII.GetBytes("[ENHANCED_OPENS]"), Encoding.ASCII.GetBytes("ENHANCED_OPENS") };
 
-        public static unsafe InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>> Load(YARGMidiTrack midiTrack, SyncTrack2 sync)
+        public static unsafe InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>> Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker)
         {
             // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>();
@@ -84,8 +84,6 @@ namespace YARG.Core.NewParsing.Midi
             ReadOnlySpan<byte> SYSEXTAG = stackalloc byte[] { (byte) 'P', (byte) 'S', (byte) '\0' };
             var position = default(DualTime);
             var note = default(MidiNote);
-            // Provides a more algorithmically optimal route for mapping midi ticks to seconds
-            var tempoTracker = new TempoTracker(sync);
             // Used for snapping together notes that get accidentally misaligned during authoring
             var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent())
