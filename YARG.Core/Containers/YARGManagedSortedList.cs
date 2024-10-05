@@ -66,9 +66,9 @@ namespace YARG.Core.Containers
         public YARGManagedSortedList() { }
 
         /// <summary>
-        /// Transfers all the data to a new instance of the list, leaving the current one in its default state.
+        /// Transfers all the data to a new instance of the list, leaving the current one in a default state.
         /// </summary>
-        /// <remarks>This is only to be used to dodge double-frees from any sort of conversions with readonly instances</remarks>
+        /// <remarks>This should only be used to dodge double-frees from any sort of conversions with readonly instances</remarks>
         public YARGManagedSortedList(YARGManagedSortedList<TKey, TValue> original)
         {
             _buffer = original._buffer;
@@ -77,6 +77,20 @@ namespace YARG.Core.Containers
             original._buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
             original._count = 0;
             original._version = 0;
+        }
+
+        /// <summary>
+        /// Transfers all the data from the source into the current instance, leaving the source in a default state.
+        /// </summary>
+        public YARGManagedSortedList<TKey, TValue> StealData(YARGManagedSortedList<TKey, TValue> source)
+        {
+            _buffer = source._buffer;
+            _count = source._count;
+            _version = source._version;
+            source._buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
+            source._count = 0;
+            source._version = 0;
+            return this;
         }
 
         /// <summary>
