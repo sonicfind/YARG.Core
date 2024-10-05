@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using YARG.Core.IO;
 using YARG.Core.Logging;
-using YARG.Core.Song;
 
 namespace YARG.Core.NewParsing.Midi
 {
@@ -25,6 +23,7 @@ namespace YARG.Core.NewParsing.Midi
         private const int TAP_INDEX = 9;
         private const int FACEOFF_1_INDEX = 10;
         private const int FACEOFF_2_INDEX = 11;
+        private const int OVERDIVE_DIFFICULTY_INDEX = 12;
 
         private const int SYSEX_LENGTH = 8;
         private const int SYSEX_DIFF_INDEX = 4;
@@ -55,12 +54,15 @@ namespace YARG.Core.NewParsing.Midi
             // 2. The '1'(green) in a difficulty will swap to zero and back depending on the Open note sysex state
             //
             // Note: the 13s account for the -1 offset of the minimum note value
+            //
+            // Note 2: If we're using the alternate overdrive note, then the file is most likely tailored for GH1/2.
+            // Therefore, we need to alter the index meant for soloes to the difficulty-based SP index (8->12)
             var laneIndices = stackalloc int[InstrumentTrack2.NUM_DIFFICULTIES * MidiLoader_Constants.NOTES_PER_DIFFICULTY]
             {
-                13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-                13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-                13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-                13, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                13, 1, 2, 3, 4, 5, HOPO_ON_INDEX, HOPO_OFF_INDEX, (_useAlternateOverdrive ? OVERDIVE_DIFFICULTY_INDEX : SP_SOLO_INDEX), TAP_INDEX, FACEOFF_1_INDEX, FACEOFF_2_INDEX,
+                13, 1, 2, 3, 4, 5, HOPO_ON_INDEX, HOPO_OFF_INDEX, (_useAlternateOverdrive ? OVERDIVE_DIFFICULTY_INDEX : SP_SOLO_INDEX), TAP_INDEX, FACEOFF_1_INDEX, FACEOFF_2_INDEX,
+                13, 1, 2, 3, 4, 5, HOPO_ON_INDEX, HOPO_OFF_INDEX, (_useAlternateOverdrive ? OVERDIVE_DIFFICULTY_INDEX : SP_SOLO_INDEX), TAP_INDEX, FACEOFF_1_INDEX, FACEOFF_2_INDEX,
+                13, 1, 2, 3, 4, 5, HOPO_ON_INDEX, HOPO_OFF_INDEX, (_useAlternateOverdrive ? OVERDIVE_DIFFICULTY_INDEX : SP_SOLO_INDEX), TAP_INDEX, FACEOFF_1_INDEX, FACEOFF_2_INDEX,
             };
 
             // Per-difficulty tracker of note positions
@@ -73,8 +75,9 @@ namespace YARG.Core.NewParsing.Midi
             };
 
             // Various special phrases trackers
-            var brePositions = stackalloc DualTime[5];
-            var overdrivePosition = DualTime.Inactive;
+            var brePositions = stackalloc DualTime[5] { DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, };
+            var overdriveTrackPosition = DualTime.Inactive;
+            var overdriveDiffPositions = stackalloc DualTime[4] { DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, };
             var soloPosition = DualTime.Inactive;
             var tremoloPostion = DualTime.Inactive;
             var trillPosition = DualTime.Inactive;
@@ -177,16 +180,28 @@ namespace YARG.Core.NewParsing.Midi
                                         // Accessing this value in this manner allows actual notes to parse in the fastest path
                                         if (diffIndex == 3)
                                         {
-                                            // If the alternate is active, no soloes
-                                            if (_useAlternateOverdrive)
-                                            {
-                                                overdrivePosition = position;
-                                            }
-                                            else
-                                            {
-                                                soloPosition = position;
-                                            }
+                                            soloPosition = position;
+                                            break;
                                         }
+
+                                        // If the difficulty is anything other than expert, then this means that the file uses GH1 or GH2
+                                        // difficulty-based star power phrases. So we need to...
+
+                                        // 1. convert all prior added solo phrases to expert star power phrases,
+                                        difficulties[3].Phrases.Overdrives.StealData(instrumentTrack.Phrases.Soloes);
+
+                                        // 2. remove and disallow any track-wise star power phrases (as 116 becomes invalid),
+                                        instrumentTrack.Phrases.Overdrives.Dispose();
+                                        _useAlternateOverdrive = true;
+
+                                        // 3. map Index 8 for soloes to index 12 for difficulty-based star power,
+                                        laneIndices[SP_SOLO_INDEX] = OVERDIVE_DIFFICULTY_INDEX;
+                                        laneIndices[MidiLoader_Constants.NOTES_PER_DIFFICULTY + SP_SOLO_INDEX] = OVERDIVE_DIFFICULTY_INDEX;
+                                        laneIndices[2 * MidiLoader_Constants.NOTES_PER_DIFFICULTY + SP_SOLO_INDEX] = OVERDIVE_DIFFICULTY_INDEX;
+                                        laneIndices[3 * MidiLoader_Constants.NOTES_PER_DIFFICULTY + SP_SOLO_INDEX] = OVERDIVE_DIFFICULTY_INDEX;
+
+                                        // and 4. set the current star power phrase position.
+                                        overdriveDiffPositions[diffIndex] = position;
                                         break;
                                     case TAP_INDEX:
                                         // FIVEFRET_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
@@ -213,6 +228,9 @@ namespace YARG.Core.NewParsing.Midi
                                     case FACEOFF_2_INDEX:
                                         FaceOffPosition_2 = position;
                                         break;
+                                    case OVERDIVE_DIFFICULTY_INDEX:
+                                        overdriveDiffPositions[diffIndex] = position;
+                                        break;
 
                                 }
                             }
@@ -231,7 +249,7 @@ namespace YARG.Core.NewParsing.Midi
                                     // But... to be safe
                                     if (!_useAlternateOverdrive)
                                     {
-                                        overdrivePosition = position;
+                                        overdriveTrackPosition = position;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
@@ -299,21 +317,10 @@ namespace YARG.Core.NewParsing.Midi
                                         // Accessing this value in this manner allows actual notes to parse in the fastest path
                                         if (diffIndex == 3)
                                         {
-                                            if (_useAlternateOverdrive)
+                                            if (soloPosition.Ticks > -1)
                                             {
-                                                if (overdrivePosition.Ticks > -1)
-                                                {
-                                                    instrumentTrack.Phrases.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
-                                                    overdrivePosition.Ticks = -1;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                if (soloPosition.Ticks > -1)
-                                                {
-                                                    instrumentTrack.Phrases.Soloes.Append(in soloPosition, position - soloPosition);
-                                                    soloPosition.Ticks = -1;
-                                                }
+                                                instrumentTrack.Phrases.Soloes.Append(in soloPosition, position - soloPosition);
+                                                soloPosition.Ticks = -1;
                                             }
                                         }
                                         break;
@@ -364,6 +371,16 @@ namespace YARG.Core.NewParsing.Midi
                                             FaceOffPosition_2.Ticks = -1;
                                         }
                                         break;
+                                    case OVERDIVE_DIFFICULTY_INDEX:
+                                        {
+                                            ref var diffOverdrivePosition = ref overdriveDiffPositions[diffIndex];
+                                            if (diffOverdrivePosition.Ticks > -1)
+                                            {
+                                                difficulties[diffIndex].Phrases.Overdrives.Append(in diffOverdrivePosition, position - diffOverdrivePosition);
+                                                diffOverdrivePosition.Ticks = -1;
+                                            }
+                                            break;
+                                        }
 
                                 }
                             }
@@ -389,10 +406,10 @@ namespace YARG.Core.NewParsing.Midi
                             switch (note.Value)
                             {
                                 case MidiLoader_Constants.OVERDRIVE:
-                                    if (overdrivePosition.Ticks > -1)
+                                    if (overdriveTrackPosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Phrases.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
-                                        overdrivePosition.Ticks = -1;
+                                        instrumentTrack.Phrases.Overdrives.Append(in overdriveTrackPosition, position - overdriveTrackPosition);
+                                        overdriveTrackPosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
