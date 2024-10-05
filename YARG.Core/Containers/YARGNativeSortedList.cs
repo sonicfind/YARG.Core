@@ -97,9 +97,9 @@ namespace YARG.Core.Containers
         public YARGNativeSortedList() { }
 
         /// <summary>
-        /// Transfers all the data to a new instance of the list, leaving the current one in its default state.
+        /// Transfers all the data to a new instance of the list, leaving the current one in a default state.
         /// </summary>
-        /// <remarks>This is only to be used to dodge double-frees from any sort of conversions with readonly instances</remarks>
+        /// <remarks>This should only be used to dodge double-frees from any sort of conversions with readonly instances</remarks>
         public YARGNativeSortedList(YARGNativeSortedList<TKey, TValue> original)
         {
             _buffer = original._buffer;
@@ -110,6 +110,24 @@ namespace YARG.Core.Containers
             original._count = 0;
             original._capacity = 0;
             original._version = 0;
+        }
+
+        /// <summary>
+        /// Transfers all the data from the source into the current instance, leaving the source in a default state.
+        /// </summary>
+        /// <remarks>Prior data held by the current instance will get disposed before the transfer</remarks>
+        public YARGNativeSortedList<TKey, TValue> StealData(YARGNativeSortedList<TKey, TValue> source)
+        {
+            _Dispose();
+            _buffer = source._buffer;
+            _count = source._count;
+            _capacity = source._capacity;
+            _version = source._version;
+            source._buffer = null;
+            source._count = 0;
+            source._capacity = 0;
+            source._version = 0;
+            return this;
         }
 
         /// <summary>

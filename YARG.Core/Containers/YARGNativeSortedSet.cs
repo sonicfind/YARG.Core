@@ -106,6 +106,24 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
+        /// Transfers all the data from the source into the current instance, leaving the source in a default state.
+        /// </summary>
+        /// <remarks>Prior data held by the current instance will get disposed before the transfer</remarks>
+        public YARGNativeSortedSet<TValue> StealData(YARGNativeSortedSet<TValue> source)
+        {
+            _Dispose();
+            _buffer = source._buffer;
+            _count = source._count;
+            _capacity = source._capacity;
+            _version = source._version;
+            source._buffer = null;
+            source._count = 0;
+            source._capacity = 0;
+            source._version = 0;
+            return this;
+        }
+
+        /// <summary>
         /// Returns whether count is zero
         /// </summary>
         public bool IsEmpty()
