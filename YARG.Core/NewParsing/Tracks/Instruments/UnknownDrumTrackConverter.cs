@@ -79,14 +79,14 @@ namespace YARG.Core.NewParsing
             {
                 var note = newDifficulty.Notes.Append(in curr->Key);
                 //                                          Bass + four pads = 5
-                Unsafe.CopyBlock(&note->Bass, &curr->Value.Bass, DUAL_COUNT * (uint) sizeof(DualTime));
+                Unsafe.CopyBlock(&note->Kick, &curr->Value.Kick, DUAL_COUNT * (uint) sizeof(DualTime));
                 note->Green = curr->Value.Green;
 
                 //                                                                   four pads = 4 (duh)
                 Unsafe.CopyBlock(&note->Dynamics_Snare, &curr->Value.Dynamics_Snare, DYMANICS_COUNT * (uint) sizeof(DrumDynamics));
                 note->Dynamics_Green = curr->Value.Dynamics_Green;
 
-                note->IsDoubleBass = curr->Value.IsDoubleBass;
+                note->KickState = curr->Value.KickState;
                 note->IsFlammed = curr->Value.IsFlammed;
             }
             source.Notes.Dispose();

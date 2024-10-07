@@ -10,8 +10,8 @@ namespace YARG.Core.NewParsing.Midi
     {
         private static readonly byte[] DYNAMICS_STRING = Encoding.ASCII.GetBytes("[ENABLE_CHART_DYNAMICS]");
         private const int DOUBLEBASS_VALUE = 95;
-        private const int BASS_INDEX = 0;
         private const int EXPERT_INDEX = 3;
+        private const int KICK_LANE = 0;
         private const int SNARE_LANE = 1;
         private const int YELLOW_LANE = 2;
         private const int FIFTH_LANE = 5;
@@ -38,18 +38,28 @@ namespace YARG.Core.NewParsing.Midi
                 instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new DifficultyTrack2<FourLaneDrums>(),
             };
 
-            const int NUM_LANES = 5;
+            const int NUM_LANES = 6;
+            const int DOUBLEKICK_LANE = 5;
             // Per-difficulty tracker of note positions
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_LANES]
             {
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
-                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                // Kick             Snare             Yellow             Blue               Green              Double Kick             
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
             };
 
             bool enableDynamics = false;
             bool flamFlag = false;
+            // Some authors will format their charts so that Expert & Expert+ kicks are entirely separate difficulty-wise, where non-double kicks
+            // should only show up in Expert, not Expert+.
+            // In those situations, kicks that should appear in both will have both note 95 & 96 activated on the same tick.
+            // However, the majority of charts will assume that note value 96 applies to both X & X+, thus only writing note 96.
+            // This boolean flag determines whether we need to perform the X -> X/X+ conversion on those notes.
+            // It will be flipped to false if the chart contains 95 & 96 together.
+            bool convertExpectKicksToShared = true;
+
             // By default, all non-kick notes in a four lane track are cymbals.
             // While a player may choose non-pro drums, the conversion to that state should happen after parsing.
             // The only exception is when the .ini attached the song explicitly defines the file as tom-only.
@@ -89,10 +99,9 @@ namespace YARG.Core.NewParsing.Midi
                             int noteValue = note.Value - MidiLoader_Constants.DEFAULT_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
                             int lane = LANEVALUES[noteValue];
-                            if (lane < NUM_LANES)
+                            if (lane < DOUBLEKICK_LANE)
                             {
                                 var diffTrack = difficulties[diffIndex];
-                                lanes[diffIndex * NUM_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
                                     // We do this on the commonality that most charts do exceed this number of notes.
@@ -107,8 +116,10 @@ namespace YARG.Core.NewParsing.Midi
                                     drum->IsFlammed = flamFlag;
                                 }
 
+                                lanes[diffIndex * NUM_LANES + lane] = position;
+
                                 // Kicks don't use dynamics... I hope
-                                if (lane >= SNARE_LANE)
+                                if (SNARE_LANE <= lane)
                                 {
                                     if (enableDynamics)
                                     {
@@ -139,7 +150,7 @@ namespace YARG.Core.NewParsing.Midi
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
                             else if (lane == 11 && diffIndex == 2)
                             {
-                                lanes[diffIndex * NUM_LANES + BASS_INDEX] = position;
+                                lanes[diffIndex * NUM_LANES + DOUBLEKICK_LANE] = position;
                                 difficulties[3].Notes.TryAppend(in position);
                             }
                         }
@@ -215,8 +226,22 @@ namespace YARG.Core.NewParsing.Midi
                                     // The FourLaneDrums type lays all the inner lanes adjacent to each other.
                                     // Having the pointer to an instance thus allows us to use arithmetic on the location
                                     // of the Bass lane variable to get the specific one we want.
-                                    (&difficulties[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition)->Bass)[lane] = position - colorPosition;
+                                    var drum = difficulties[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition);
+                                    (&drum->Kick)[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
+
+                                    if (lane == 0)
+                                    {
+                                        if (drum->KickState == KickState.PlusOnly)
+                                        {
+                                            convertExpectKicksToShared = false;
+                                            drum->KickState = KickState.Shared;
+                                        }
+                                        else
+                                        {
+                                            drum->KickState = KickState.NonPlusOnly;
+                                        }
+                                    }
                                 }
                             }
                             // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
@@ -226,13 +251,22 @@ namespace YARG.Core.NewParsing.Midi
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
                             else if (lane == 11 && diffIndex == 2)
                             {
-                                ref var colorPosition = ref lanes[diffIndex * NUM_LANES + BASS_INDEX];
+                                ref var colorPosition = ref lanes[diffIndex * NUM_LANES + DOUBLEKICK_LANE];
                                 if (colorPosition.Ticks != -1)
                                 {
                                     var drum = difficulties[3].Notes.TraverseBackwardsUntil(in colorPosition);
-                                    drum->Bass = position - colorPosition;
-                                    drum->IsDoubleBass = true;
+                                    drum->Kick = position - colorPosition;
                                     colorPosition.Ticks = -1;
+
+                                    if (drum->KickState == KickState.NonPlusOnly)
+                                    {
+                                        convertExpectKicksToShared = false;
+                                        drum->KickState = KickState.Shared;
+                                    }
+                                    else
+                                    {
+                                        drum->KickState = KickState.PlusOnly;
+                                    }
                                 }
                             }
                         }
@@ -339,6 +373,19 @@ namespace YARG.Core.NewParsing.Midi
                     }
                 }
             }
+
+            if (convertExpectKicksToShared)
+            {
+                var expertNotes = difficulties[3].Notes;
+                for (int i = 0; i < expertNotes.Count; ++i)
+                {
+                    ref var drum = ref expertNotes.Data[i].Value;
+                    if (drum.KickState == KickState.NonPlusOnly)
+                    {
+                        drum.KickState = KickState.Shared;
+                    }
+                }
+            }
             return instrumentTrack;
         }
 
@@ -366,6 +413,14 @@ namespace YARG.Core.NewParsing.Midi
 
             bool enableDynamics = false;
             bool flamFlag = false;
+            // Some authors will format their charts so that Expert & Expert+ kicks are entirely separate difficulty-wise, where non-double kicks
+            // should only show up in Expert, not Expert+.
+            // In those situations, kicks that should appear in both will have both note 95 & 96 activated on the same tick.
+            // However, the majority of charts will assume that note value 96 applies to both X & X+, thus only writing note 96.
+            // This boolean flag determines whether we need to perform the X -> X/X+ conversion on those notes.
+            // It will be flipped to false if the chart contains 95 & 96 together.
+            bool convertExpectKicksToShared = true;
+
             // Various special phrases trackers
             var brePositions = stackalloc DualTime[5];
             var overdrivePosition = DualTime.Inactive;
@@ -439,7 +494,7 @@ namespace YARG.Core.NewParsing.Midi
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
                             else if (lane == 11 && diffIndex == 2)
                             {
-                                lanes[diffIndex * NUM_LANES + BASS_INDEX] = position;
+                                lanes[diffIndex * NUM_LANES + KICK_LANE] = position;
                                 difficulties[3].Notes.TryAppend(in position);
                             }
                         }
@@ -494,8 +549,22 @@ namespace YARG.Core.NewParsing.Midi
                                     // The FiveLaneDrums type lays all the inner lanes adjacent to each other.
                                     // Having the pointer to an instance thus allows us to use arithmetic on the location
                                     // of the Bass lane variable to get the specific one we want.
-                                    (&difficulties[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition)->Bass)[lane] = position - colorPosition;
+                                    var drum = difficulties[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition);
+                                    (&drum->Kick)[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
+
+                                    if (lane == 0)
+                                    {
+                                        if (drum->KickState == KickState.PlusOnly)
+                                        {
+                                            convertExpectKicksToShared = false;
+                                            drum->KickState = KickState.Shared;
+                                        }
+                                        else
+                                        {
+                                            drum->KickState = KickState.NonPlusOnly;
+                                        }
+                                    }
                                 }
                             }
                             // DEFAULT_MIN + diffIndex * MidiPreparser_Constants.NOTES_PER_DIFFICULTY + lane
@@ -505,13 +574,22 @@ namespace YARG.Core.NewParsing.Midi
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
                             else if (lane == 11 && diffIndex == 2)
                             {
-                                ref var colorPosition = ref lanes[diffIndex * NUM_LANES + BASS_INDEX];
+                                ref var colorPosition = ref lanes[diffIndex * NUM_LANES + KICK_LANE];
                                 if (colorPosition.Ticks != -1)
                                 {
                                     var drum = difficulties[3].Notes.TraverseBackwardsUntil(in colorPosition);
-                                    drum->Bass = position - colorPosition;
-                                    drum->IsDoubleBass = true;
+                                    drum->Kick = position - colorPosition;
                                     colorPosition.Ticks = -1;
+
+                                    if (drum->KickState == KickState.NonPlusOnly)
+                                    {
+                                        convertExpectKicksToShared = false;
+                                        drum->KickState = KickState.Shared;
+                                    }
+                                    else
+                                    {
+                                        drum->KickState = KickState.PlusOnly;
+                                    }
                                 }
                             }
                         }
@@ -597,6 +675,19 @@ namespace YARG.Core.NewParsing.Midi
                     }
                 }
             }
+
+            if (convertExpectKicksToShared)
+            {
+                var expertNotes = difficulties[3].Notes;
+                for (int i = 0; i < expertNotes.Count; ++i)
+                {
+                    ref var drum = ref expertNotes.Data[i].Value;
+                    if (drum.KickState == KickState.NonPlusOnly)
+                    {
+                        drum.KickState = KickState.Shared;
+                    }
+                }
+            }
             return instrumentTrack;
         }
 
@@ -627,6 +718,13 @@ namespace YARG.Core.NewParsing.Midi
             // Flips to true if it finds the text string for enabling dynamics
             bool enableDynamics = false;
             bool flamFlag = false;
+            // Some authors will format their charts so that Expert & Expert+ kicks are entirely separate difficulty-wise, where non-double kicks
+            // should only show up in Expert, not Expert+.
+            // In those situations, kicks that should appear in both will have both note 95 & 96 activated on the same tick.
+            // However, the majority of charts will assume that note value 96 applies to both X & X+, thus only writing note 96.
+            // This boolean flag determines whether we need to perform the X -> X/X+ conversion on those notes.
+            // It will be flipped to false if the chart contains 95 & 96 together.
+            bool convertExpectKicksToShared = true;
             // By default, all non-kick notes are cymbals (unless the track maps to five lane).
             var cymbalFlags = stackalloc bool[3] { true, true, true };
 
@@ -731,7 +829,7 @@ namespace YARG.Core.NewParsing.Midi
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
                             else if (lane == 11 && diffIndex == 2)
                             {
-                                lanes[diffIndex * MAX_LANES + BASS_INDEX] = position;
+                                lanes[diffIndex * MAX_LANES + KICK_LANE] = position;
                                 difficulties[3].Notes.TryAppend(in position);
                             }
                         }
@@ -810,7 +908,20 @@ namespace YARG.Core.NewParsing.Midi
                                         // The UnknownLaneDrums type lays kick and the first four pad lanes adjacent to each other.
                                         // Having the pointer to an instance thus allows us to use arithmetic on the location
                                         // of the Bass lane variable to get the specific one we want.
-                                        (&drum->Bass)[lane] = duration;
+                                        (&drum->Kick)[lane] = duration;
+
+                                        if (lane == 0)
+                                        {
+                                            if (drum->KickState == KickState.PlusOnly)
+                                            {
+                                                convertExpectKicksToShared = false;
+                                                drum->KickState = KickState.Shared;
+                                            }
+                                            else
+                                            {
+                                                drum->KickState = KickState.NonPlusOnly;
+                                            }
+                                        }
                                     }
                                     else
                                     {
@@ -826,13 +937,22 @@ namespace YARG.Core.NewParsing.Midi
                             // Accessing this value in this manner allows other more common notes to parse in the fastest path
                             else if (lane == 11 && diffIndex == 2)
                             {
-                                ref var colorPosition = ref lanes[diffIndex * MAX_LANES + BASS_INDEX];
+                                ref var colorPosition = ref lanes[diffIndex * MAX_LANES + KICK_LANE];
                                 if (colorPosition.Ticks != -1)
                                 {
                                     var drum = difficulties[3].Notes.TraverseBackwardsUntil(in colorPosition);
-                                    drum->Bass = position - colorPosition;
-                                    drum->IsDoubleBass = true;
+                                    drum->Kick = position - colorPosition;
                                     colorPosition.Ticks = -1;
+
+                                    if (drum->KickState == KickState.NonPlusOnly)
+                                    {
+                                        convertExpectKicksToShared = false;
+                                        drum->KickState = KickState.Shared;
+                                    }
+                                    else
+                                    {
+                                        drum->KickState = KickState.PlusOnly;
+                                    }
                                 }
                             }
                         }
@@ -933,6 +1053,19 @@ namespace YARG.Core.NewParsing.Midi
                         instrumentTrack.Events
                             .GetLastOrAppend(position)
                             .Add(ev);
+                    }
+                }
+            }
+
+            if (convertExpectKicksToShared)
+            {
+                var expertNotes = difficulties[3].Notes;
+                for (int i = 0; i < expertNotes.Count; ++i)
+                {
+                    ref var drum = ref expertNotes.Data[i].Value;
+                    if (drum.KickState == KickState.NonPlusOnly)
+                    {
+                        drum.KickState = KickState.Shared;
                     }
                 }
             }
