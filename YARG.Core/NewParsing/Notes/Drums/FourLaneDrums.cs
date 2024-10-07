@@ -7,7 +7,7 @@ namespace YARG.Core.NewParsing
 {
     public struct FourLaneDrums : IInstrumentNote, IDotChartLoadable
     {
-        public DualTime Bass;
+        public DualTime Kick;
         public DualTime Snare;
         public DualTime Yellow;
         public DualTime Blue;
@@ -19,7 +19,7 @@ namespace YARG.Core.NewParsing
         public bool Cymbal_Yellow;
         public bool Cymbal_Blue;
         public bool Cymbal_Green;
-        public bool IsDoubleBass;
+        public KickState KickState;
         public bool IsFlammed;
 
         public readonly int NUMLANES => 5;
@@ -28,13 +28,13 @@ namespace YARG.Core.NewParsing
         {
             switch (lane)
             {
-                case 0: Bass = length; break;
+                case 0: Kick = length; break;
                 case 1: Snare = length; break;
                 case 2: Yellow = length; break;
                 case 3: Blue = length; break;
                 case 4: Green = length; break;
 
-                case 32: IsDoubleBass = true; break;
+                case 32: KickState = KickState.PlusOnly; break;
 
                 case 34: Dynamics_Snare = DrumDynamics.Accent; break;
                 case 35: Dynamics_Yellow = DrumDynamics.Accent; break;
@@ -58,7 +58,7 @@ namespace YARG.Core.NewParsing
         public readonly int GetNumActiveLanes()
         {
             int numActive = 0;
-            bool state = Bass.IsActive();
+            bool state = Kick.IsActive();
             numActive += Unsafe.As<bool, byte>(ref state);
             state = Snare.IsActive();
             numActive += Unsafe.As<bool, byte>(ref state);
@@ -73,7 +73,7 @@ namespace YARG.Core.NewParsing
 
         public readonly DualTime GetLongestSustain()
         {
-            var sustain = Bass;
+            var sustain = Kick;
             if (Snare > sustain)
             {
                 sustain = Snare;
@@ -96,15 +96,15 @@ namespace YARG.Core.NewParsing
         public readonly override string ToString()
         {
             StringBuilder builder = new();
-            if (Bass.IsActive())
+            if (Kick.IsActive())
             {
-                if (!IsDoubleBass)
+                if (KickState != KickState.PlusOnly)
                 {
-                    builder.Append($"Bass: {Bass.Ticks} | ");
+                    builder.Append($"Bass: {Kick.Ticks} | ");
                 }
                 else
                 {
-                    builder.Append($"DoubleBass: {Bass.Ticks} | ");
+                    builder.Append($"DoubleKick: {Kick.Ticks} | ");
                 }
             }
             if (Snare.IsActive())
