@@ -10,4 +10,11 @@ namespace YARG.Core.NewParsing
         Accent,
         Ghost
     }
+
+    public enum KickState
+    {
+        Shared,
+        PlusOnly,
+        NonPlusOnly
+    }
 }
