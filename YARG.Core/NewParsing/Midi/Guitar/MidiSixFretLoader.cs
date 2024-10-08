@@ -80,7 +80,9 @@ namespace YARG.Core.NewParsing.Midi
                         // the previous position will override the current one, to "chord" multiple notes together
                         if (chordSnapper.Snap(ref position) && midiTrack.Position > 0)
                         {
+#if DEBUG
                             YargLogger.LogInfo("Snap occured");
+#endif
                         }
 
                         if (SIXFRET_MIN <= note.value && note.value <= SIXFRET_MAX)
@@ -364,7 +366,9 @@ namespace YARG.Core.NewParsing.Midi
                         // While this isn't an actual NoteOn midi event, we should interpret it like one in this instance for safety.
                         if (chordSnapper.Snap(ref position) && midiTrack.Position > 0)
                         {
+#if DEBUG
                             YargLogger.LogInfo("Snap occured");
+#endif
                         }
                     }
 
