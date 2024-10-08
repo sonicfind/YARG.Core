@@ -110,7 +110,9 @@ namespace YARG.Core.NewParsing.Midi
                         // the previous position will override the current one, to "chord" multiple notes together
                         if (chordSnapper.Snap(ref position) && stats.Position > 0)
                         {
+#if DEBUG
                             YargLogger.LogInfo("Snap occured");
+#endif
                         }
 
                         if (PROGUITAR_MIN <= note.Value && note.Value <= PROGUITAR_MAX)
