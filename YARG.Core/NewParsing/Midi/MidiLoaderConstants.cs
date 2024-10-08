@@ -43,8 +43,9 @@ namespace YARG.Core.NewParsing.Midi
         {
             if (_lastOn.Ticks + MidiLoader_Constants.NOTE_SNAP_THRESHOLD > position.Ticks)
             {
+                bool same = position.Ticks == _lastOn.Ticks;
                 position = _lastOn;
-                return true;
+                return !same;
             }
             else
             {
