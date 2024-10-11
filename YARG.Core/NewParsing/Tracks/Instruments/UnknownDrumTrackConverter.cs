@@ -7,19 +7,21 @@ namespace YARG.Core.NewParsing
 {
     internal static class UnknownDrumTrackConverter
     {
-        public static InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> ConvertToFourLane(this InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> source, bool isPro)
+        public static InstrumentTrack2<FourLaneDrums> ConvertToFourLane(this InstrumentTrack2<UnknownLaneDrums> source, bool isPro)
         {
-            var newTrack = new InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>(source.Phrases, source.Events);
+            var newTrack = new InstrumentTrack2<FourLaneDrums>();
+            newTrack.Events.StealData(source.Events);
             return ConvertToFourLane(source, newTrack, isPro);
         }
 
-        public static InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> ConvertToFiveLane(this InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> source)
+        public static InstrumentTrack2<FiveLaneDrums> ConvertToFiveLane(this InstrumentTrack2<UnknownLaneDrums> source)
         {
-            var newTrack = new InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>(source.Phrases, source.Events);
+            var newTrack = new InstrumentTrack2<FiveLaneDrums>();
+            newTrack.Events.StealData(source.Events);
             return ConvertToFiveLane(source, newTrack);
         }
 
-        public static InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> ConvertToFourLane(this InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> source, InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> destination, bool isPro)
+        public static InstrumentTrack2<FourLaneDrums> ConvertToFourLane(this InstrumentTrack2<UnknownLaneDrums> source, InstrumentTrack2<FourLaneDrums> destination, bool isPro)
         {
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
@@ -33,7 +35,7 @@ namespace YARG.Core.NewParsing
             return destination;
         }
 
-        public static InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> ConvertToFiveLane(this InstrumentTrack2<DifficultyTrack2<UnknownLaneDrums>> source, InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> destination)
+        public static InstrumentTrack2<FiveLaneDrums> ConvertToFiveLane(this InstrumentTrack2<UnknownLaneDrums> source, InstrumentTrack2<FiveLaneDrums> destination)
         {
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
@@ -49,7 +51,15 @@ namespace YARG.Core.NewParsing
 
         private static unsafe DifficultyTrack2<FourLaneDrums> ConvertToFourLane(this DifficultyTrack2<UnknownLaneDrums> source, bool isPro)
         {
-            var newDifficulty = new DifficultyTrack2<FourLaneDrums>(source.Phrases, source.Events);
+            var newDifficulty = new DifficultyTrack2<FourLaneDrums>();
+            newDifficulty.Overdrives.StealData(source.Overdrives);
+            newDifficulty.Soloes.StealData(source.Soloes);
+            newDifficulty.Trills.StealData(source.Trills);
+            newDifficulty.Tremolos.StealData(source.Tremolos);
+            newDifficulty.BREs.StealData(source.BREs);
+            newDifficulty.Faceoff_Player1.StealData(source.Faceoff_Player1);
+            newDifficulty.Faceoff_Player2.StealData(source.Faceoff_Player2);
+            newDifficulty.Events.StealData(source.Events);
             newDifficulty.Notes.Capacity = source.Notes.Count;
 
             var end = source.Notes.End;
@@ -71,7 +81,15 @@ namespace YARG.Core.NewParsing
         {
             const int DUAL_COUNT = 5;
             const int DYMANICS_COUNT = 4;
-            var newDifficulty = new DifficultyTrack2<FiveLaneDrums>(source.Phrases, source.Events);
+            var newDifficulty = new DifficultyTrack2<FiveLaneDrums>();
+            newDifficulty.Overdrives.StealData(source.Overdrives);
+            newDifficulty.Soloes.StealData(source.Soloes);
+            newDifficulty.Trills.StealData(source.Trills);
+            newDifficulty.Tremolos.StealData(source.Tremolos);
+            newDifficulty.BREs.StealData(source.BREs);
+            newDifficulty.Faceoff_Player1.StealData(source.Faceoff_Player1);
+            newDifficulty.Faceoff_Player2.StealData(source.Faceoff_Player2);
+            newDifficulty.Events.StealData(source.Events);
             newDifficulty.Notes.Capacity = source.Notes.Count;
 
             var end = source.Notes.End;

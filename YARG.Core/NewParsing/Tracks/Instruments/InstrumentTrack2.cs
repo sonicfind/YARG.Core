@@ -9,27 +9,11 @@ namespace YARG.Core.NewParsing
         public const int NUM_DIFFICULTIES = 4;
     }
 
-    public class InstrumentTrack2<TDifficultyTrack> : ITrack
-        where TDifficultyTrack : class, ITrack, new()
+    public class InstrumentTrack2<TNote> : ITrack
+        where TNote : unmanaged, IInstrumentNote
     {
-        public readonly TDifficultyTrack?[] Difficulties = new TDifficultyTrack[InstrumentTrack2.NUM_DIFFICULTIES];
-        public readonly InstrumentPhrases Phrases = new();
+        public readonly DifficultyTrack2<TNote>?[] Difficulties = new DifficultyTrack2<TNote>[InstrumentTrack2.NUM_DIFFICULTIES];
         public readonly YARGManagedSortedList<DualTime, HashSet<string>> Events = new();
-
-        public InstrumentTrack2() {}
-
-        /// <summary>
-        /// Move constructor that siphons all phrases and special events from the source,
-        /// leaving it in a default state.
-        /// </summary>
-        /// <remarks>Does not effect <see cref="Difficulties"/>. Those remains unchanged and <see langword="null"/>.</remarks>
-        /// <param name="phrases">Collection of phrases to move</param>
-        /// <param name="events">Collection of text events to move</param>
-        public InstrumentTrack2(InstrumentPhrases phrases, YARGManagedSortedList<DualTime, HashSet<string>> events)
-        {
-            Phrases = new(phrases);
-            Events = new(events);
-        }
 
         /// <summary>
         /// Returns whether all active difficulties and track-scope phrases and events are empty
@@ -44,7 +28,7 @@ namespace YARG.Core.NewParsing
                     return false;
                 }
             }
-            return Phrases.IsEmpty() && Events.IsEmpty();
+            return Events.IsEmpty();
         }
 
         /// <summary>
@@ -56,7 +40,6 @@ namespace YARG.Core.NewParsing
             {
                 diff?.Clear();
             }
-            Phrases.Clear();
             Events.Clear();
         }
 
@@ -82,7 +65,6 @@ namespace YARG.Core.NewParsing
                     }
                 }
             }
-            Phrases.TrimExcess();
         }
 
         /// <summary>
@@ -95,7 +77,7 @@ namespace YARG.Core.NewParsing
         /// <param name="diff">The difficulty to grab</param>
         /// <returns>A direct ref to the appropriate track</returns>
         /// <exception cref="System.ArgumentOutOfRangeException">Some unhandled difficulty was provided</exception>
-        public ref TDifficultyTrack? this[Difficulty diff]
+        public ref DifficultyTrack2<TNote>? this[Difficulty diff]
         {
             get
             {
@@ -139,7 +121,7 @@ namespace YARG.Core.NewParsing
         }
 
         /// <summary>
-        /// Disposes all unmanaged buffer data from every active difficulty and all phrase constainers
+        /// Disposes all unmanaged buffer data from every active difficulty and all phrase containers
         /// </summary>
         public virtual void Dispose()
         {
@@ -147,7 +129,6 @@ namespace YARG.Core.NewParsing
             {
                 diff?.Dispose();
             }
-            Phrases.Dispose();
         }
     }
 }
