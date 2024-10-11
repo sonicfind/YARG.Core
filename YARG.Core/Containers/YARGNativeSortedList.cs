@@ -131,6 +131,20 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
+        /// Fills the current instance with data copied from the source
+        /// </summary>
+        public YARGNativeSortedList<TKey, TValue> CopyData(YARGNativeSortedList<TKey, TValue> source)
+        {
+            int bytes = source._count * sizeof(YARGKeyValuePair<TKey, TValue>);
+            _buffer = (YARGKeyValuePair<TKey, TValue>*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) bytes);
+            _count = source._count;
+            _capacity = source._count;
+            _version++;
+            Buffer.MemoryCopy(_buffer, source._buffer, bytes, bytes);
+            return this;
+        }
+
+        /// <summary>
         /// Returns whether count is zero
         /// </summary>
         public bool IsEmpty()

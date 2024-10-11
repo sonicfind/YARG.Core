@@ -1,9 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace YARG.Core.Containers
@@ -113,6 +110,20 @@ namespace YARG.Core.Containers
             source._version = 0;
             return this;
         }
+        
+        /// <summary>
+        /// Fills the current instance with data copied from the source
+        /// </summary>
+        public YARGNativeList<T> CopyData(YARGNativeList<T> source)
+        {
+            int bytes = source._count * sizeof(T);
+            _buffer = (T*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) bytes);
+            _count = source._count;
+            _capacity = source._count;
+            _version++;
+            Buffer.MemoryCopy(_buffer, source._buffer, bytes, bytes);
+            return this;
+        }
 
         /// <summary>
         /// Returns whether count is zero
@@ -168,7 +179,8 @@ namespace YARG.Core.Containers
                 throw new ArgumentOutOfRangeException("count");
             }
             CheckAndGrow(count);
-            Unsafe.CopyBlock(_buffer + _count, values, (uint)count * (uint) sizeof(T));
+            long size = count * sizeof(T);
+            Buffer.MemoryCopy(_buffer + _count, values, size, size);
             _count += count;
         }
 
