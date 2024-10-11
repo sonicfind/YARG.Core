@@ -22,19 +22,19 @@ namespace YARG.Core.NewParsing
         public LoaderSettings Settings;
         public string MidiSequenceName = string.Empty;
 
-        public InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>? FiveFretGuitar;
-        public InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>? FiveFretBass;
-        public InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>? FiveFretRhythm;
-        public InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>? FiveFretCoopGuitar;
-        public InstrumentTrack2<DifficultyTrack2<FiveFretGuitar>>? Keys;
+        public InstrumentTrack2<FiveFretGuitar>? FiveFretGuitar;
+        public InstrumentTrack2<FiveFretGuitar>? FiveFretBass;
+        public InstrumentTrack2<FiveFretGuitar>? FiveFretRhythm;
+        public InstrumentTrack2<FiveFretGuitar>? FiveFretCoopGuitar;
+        public InstrumentTrack2<FiveFretGuitar>? Keys;
 
-        public InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>? SixFretGuitar;
-        public InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>? SixFretBass;
-        public InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>? SixFretRhythm;
-        public InstrumentTrack2<DifficultyTrack2<SixFretGuitar>>? SixFretCoopGuitar;
+        public InstrumentTrack2<SixFretGuitar>? SixFretGuitar;
+        public InstrumentTrack2<SixFretGuitar>? SixFretBass;
+        public InstrumentTrack2<SixFretGuitar>? SixFretRhythm;
+        public InstrumentTrack2<SixFretGuitar>? SixFretCoopGuitar;
 
-        public InstrumentTrack2<DifficultyTrack2<FourLaneDrums>>? FourLaneDrums;
-        public InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>>? FiveLaneDrums;
+        public InstrumentTrack2<FourLaneDrums>? FourLaneDrums;
+        public InstrumentTrack2<FiveLaneDrums>? FiveLaneDrums;
 
         // public InstrumentTrack2<EliteDrums>? EliteDrums;
 
@@ -43,7 +43,7 @@ namespace YARG.Core.NewParsing
         public ProGuitarInstrumentTrack<ProFret_17>? ProBass_17Fret;
         public ProGuitarInstrumentTrack<ProFret_22>? ProBass_22Fret;
 
-        public InstrumentTrack2<ProKeysDifficultyTrack>? ProKeys;
+        public ProKeysInstrumentTrack? ProKeys;
 
         // public TBDTrack DJ;
 
