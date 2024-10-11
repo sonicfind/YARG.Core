@@ -336,11 +336,11 @@ namespace YARG.Core.NewParsing
         {
             switch (type)
             {
-                case MidiTrackType.Guitar_5:      chart.FiveFretGuitar ??=     MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Bass_5:        chart.FiveFretBass ??=       MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Rhythm_5:      chart.FiveFretRhythm ??=     MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Coop_5:        chart.FiveFretCoopGuitar ??= MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Keys:          chart.Keys ??=               MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Guitar_5: chart.FiveFretGuitar ??=     MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Bass_5:   chart.FiveFretBass ??=       MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Rhythm_5: chart.FiveFretRhythm ??=     MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Coop_5:   chart.FiveFretCoopGuitar ??= MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Keys:     chart.Keys ??=               MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
 
                 case MidiTrackType.Drums:
                     switch (drumsInChart)
@@ -349,26 +349,28 @@ namespace YARG.Core.NewParsing
                     case DrumsType.ProDrums: chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, ref tempoTracker, true); break;
                     case DrumsType.FiveLane: chart.FiveLaneDrums ??= MidiDrumsLoader.LoadFiveLane(midiTrack, ref tempoTracker); break;
                     default:
-                        // No `using/dipose` as events & phrases need to persist
-                        var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, ref tempoTracker, ref drumsInChart);
-                        // Only possible if pre-type was FourOrFive AND fifth lane was not found
-                        if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
                         {
-                            chart.FourLaneDrums = track.ConvertToFourLane(false);
-                            drumsInChart = DrumsType.FourLane;
+                            // No `using/dipose` as events & phrases need to persist
+                            using var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, ref tempoTracker, ref drumsInChart);
+                            // Only possible if pre-type was FourOrFive AND fifth lane was not found
+                            if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
+                            {
+                                chart.FourLaneDrums = track.ConvertToFourLane(false);
+                                drumsInChart = DrumsType.FourLane;
+                            }
+                            // Only possible if pre-type was ProOrFive AND fifth lane was not found
+                            else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
+                            {
+                                chart.FourLaneDrums = track.ConvertToFourLane(true);
+                                drumsInChart = DrumsType.ProDrums;
+                            }
+                            // Only possible if fifth lane is found
+                            else
+                            {
+                                chart.FiveLaneDrums = track.ConvertToFiveLane();
+                            }
+                            break;
                         }
-                        // Only possible if pre-type was ProOrFive AND fifth lane was not found
-                        else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
-                        {
-                            chart.FourLaneDrums = track.ConvertToFourLane(true);
-                            drumsInChart = DrumsType.ProDrums;
-                        }
-                        // Only possible if fifth lane is found
-                        else
-                        {
-                            chart.FiveLaneDrums = track.ConvertToFiveLane();
-                        }
-                        break;
                     }
                     break;
                 case MidiTrackType.Guitar_6:      chart.SixFretGuitar ??=      MidiSixFretLoader. Load(midiTrack, ref tempoTracker); break;
@@ -386,9 +388,8 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Pro_Keys_M:
                 case MidiTrackType.Pro_Keys_E:
                     {
-                        chart.ProKeys ??= new InstrumentTrack2<ProKeysDifficultyTrack>();
                         // Handled per-difficulty, so we use 0-3 indexing
-                        MidiProKeysLoader.Load(midiTrack, ref tempoTracker, chart.ProKeys, type - MidiTrackType.Pro_Keys_E);
+                        MidiProKeysLoader.Load(midiTrack, ref tempoTracker, ref chart.ProKeys, type - MidiTrackType.Pro_Keys_E);
                         break;
                     }
                 case MidiTrackType.Vocals: chart.LeadVocals ??= MidiVocalsLoader.LoadPartVocals(midiTrack, ref tempoTracker, ref encoding); break;
