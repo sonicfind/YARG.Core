@@ -9,22 +9,14 @@ namespace YARG.Core.NewParsing
         where TNote : unmanaged, IInstrumentNote
     {
         public readonly YARGNativeSortedList<DualTime, TNote> Notes = new();
-        public readonly InstrumentPhrases Phrases = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> Overdrives = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> Soloes = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> Trills = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> Tremolos = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> BREs = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> Faceoff_Player1 = new();
+        public readonly YARGNativeSortedList<DualTime, DualTime> Faceoff_Player2 = new();
         public readonly YARGManagedSortedList<DualTime, HashSet<string>> Events = new();
-
-        public DifficultyTrack2() {}
-
-        /// <summary>
-        /// Move constructor that siphons all phrases and special events from the source,
-        /// leaving it in a default state.
-        /// </summary>
-        /// <remarks>Does not effect <see cref="Notes"/>. That remains unchanged</remarks>
-        /// <param name="source">The source track to move phrases from</param>
-        public DifficultyTrack2(InstrumentPhrases phrases, YARGManagedSortedList<DualTime, HashSet<string>> events)
-        {
-            Phrases = new(phrases);
-            Events = new(events);
-        }
 
         /// <summary>
         /// Returns if no notes, phrases, or events are present
@@ -32,7 +24,15 @@ namespace YARG.Core.NewParsing
         /// <returns>Whether the track is empty</returns>
         public virtual bool IsEmpty()
         {
-            return Notes.IsEmpty() && Phrases.IsEmpty() && Events.IsEmpty();
+            return Notes.IsEmpty()
+                && Overdrives.IsEmpty()
+                && Soloes.IsEmpty()
+                && Trills.IsEmpty()
+                && Tremolos.IsEmpty()
+                && BREs.IsEmpty()
+                && Faceoff_Player1.IsEmpty()
+                && Faceoff_Player2.IsEmpty()
+                && Events.IsEmpty();
         }
 
         /// <summary>
@@ -41,7 +41,13 @@ namespace YARG.Core.NewParsing
         public virtual void Clear()
         {
             Notes.Clear();
-            Phrases.Clear();
+            Overdrives.Clear();
+            Soloes.Clear();
+            Trills.Clear();
+            Tremolos.Clear();
+            BREs.Clear();
+            Faceoff_Player1.Clear();
+            Faceoff_Player2.Clear();
             Events.Clear();
         }
 
@@ -54,7 +60,13 @@ namespace YARG.Core.NewParsing
             {
                 Notes.TrimExcess();
             }
-            Phrases.TrimExcess();
+            Overdrives.TrimExcess();
+            Soloes.TrimExcess();
+            Trills.TrimExcess();
+            Tremolos.TrimExcess();
+            BREs.TrimExcess();
+            Faceoff_Player1.TrimExcess();
+            Faceoff_Player2.TrimExcess();
         }
 
         public unsafe DualTime GetLastNoteTime()
@@ -74,7 +86,13 @@ namespace YARG.Core.NewParsing
         public virtual void Dispose()
         {
             Notes.Dispose();
-            Phrases.Dispose();
+            Overdrives.Dispose();
+            Soloes.Dispose();
+            Trills.Dispose();
+            Tremolos.Dispose();
+            BREs.Dispose();
+            Faceoff_Player1.Dispose();
+            Faceoff_Player2.Dispose();
         }
     }
 }
