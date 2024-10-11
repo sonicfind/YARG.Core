@@ -75,24 +75,6 @@ namespace YARG.Core.Containers
         /// </summary>
         public T* End => _buffer + _count;
 
-        public YARGNativeList() { }
-
-        /// <summary>
-        /// Transfers all the data to a new instance of the list, leaving the current one in its default state.
-        /// </summary>
-        /// <remarks>This should only be used to dodge double-frees from any sort of conversions with readonly instances</remarks>
-        public YARGNativeList(YARGNativeList<T> original)
-        {
-            _buffer = original._buffer;
-            _count = original._count;
-            _capacity = original._capacity;
-            _version = original._version;
-            original._buffer = null;
-            original._count = 0;
-            original._capacity = 0;
-            original._version = 0;
-        }
-
         /// <summary>
         /// Transfers all the data from the source into the current instance, leaving the source in a default state.
         /// </summary>

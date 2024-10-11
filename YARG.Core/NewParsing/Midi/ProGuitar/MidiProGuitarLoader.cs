@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using YARG.Core.Containers;
 using YARG.Core.IO;
 using YARG.Core.Logging;
 
@@ -54,13 +55,16 @@ namespace YARG.Core.NewParsing.Midi
         {
             // Pre-load empty instances of all difficulties
             var instrumentTrack = new ProGuitarInstrumentTrack<TProFret>();
-            var difficulties = new ProGuitarDifficultyTrack<TProFret>[InstrumentTrack2.NUM_DIFFICULTIES]
+            var difficulties = new DifficultyTrack2<ProGuitarNote<TProFret>>[InstrumentTrack2.NUM_DIFFICULTIES]
             {
-                instrumentTrack.Difficulties[0] = instrumentTrack[Difficulty.Easy]   = new ProGuitarDifficultyTrack<TProFret>(),
-                instrumentTrack.Difficulties[1] = instrumentTrack[Difficulty.Medium] = new ProGuitarDifficultyTrack<TProFret>(),
-                instrumentTrack.Difficulties[2] = instrumentTrack[Difficulty.Hard]   = new ProGuitarDifficultyTrack<TProFret>(),
-                instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new ProGuitarDifficultyTrack<TProFret>(),
+                instrumentTrack.Difficulties[0] = instrumentTrack[Difficulty.Easy]   = new DifficultyTrack2<ProGuitarNote<TProFret>>(),
+                instrumentTrack.Difficulties[1] = instrumentTrack[Difficulty.Medium] = new DifficultyTrack2<ProGuitarNote<TProFret>>(),
+                instrumentTrack.Difficulties[2] = instrumentTrack[Difficulty.Hard]   = new DifficultyTrack2<ProGuitarNote<TProFret>>(),
+                instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new DifficultyTrack2<ProGuitarNote<TProFret>>(),
             };
+            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
+            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
 
             var diffModifiers = stackalloc (DualTime Arpeggio, ProSlide Slide, EmphasisType Emphasis, bool Hopo)[InstrumentTrack2.NUM_DIFFICULTIES];
             // Per-difficulty tracker of note positions
@@ -264,7 +268,7 @@ namespace YARG.Core.NewParsing.Midi
                                     case ARPEGGIO_VALUE:
                                         if (diffMods.Arpeggio.Ticks != -1)
                                         {
-                                            diffTrack.Arpeggios.Append(in diffMods.Arpeggio, position - diffMods.Arpeggio);
+                                            instrumentTrack.Arpeggios[diffIndex].Append(in diffMods.Arpeggio, position - diffMods.Arpeggio);
                                             diffMods.Arpeggio.Ticks = -1;
                                         }
                                         break;
@@ -290,7 +294,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[3] == brePositions[4]
                                 && brePositions[4] == brePositions[5])
                             {
-                                instrumentTrack.Phrases.BREs.Append(in bre, position - bre);
+                                bres.Append(in bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
@@ -301,14 +305,14 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Phrases.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
+                                        overdrives.Append(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case SOLO_MIDI:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        instrumentTrack.Phrases.Soloes.Append(in soloPosition, position - soloPosition);
+                                        soloes.Append(in soloPosition, position - soloPosition);
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
@@ -316,10 +320,10 @@ namespace YARG.Core.NewParsing.Midi
                                     if (tremoloPostion.Ticks > -1)
                                     {
                                         var duration = position - tremoloPostion;
-                                        difficulties[3].Phrases.Tremolos.Append(in tremoloPostion, duration);
+                                        difficulties[3].Tremolos.Append(in tremoloPostion, duration);
                                         if (tremoloOnHard)
                                         {
-                                            difficulties[2].Phrases.Tremolos.Append(in tremoloPostion, duration);
+                                            difficulties[2].Tremolos.Append(in tremoloPostion, duration);
                                             tremoloOnHard = false;
                                         }
                                         tremoloPostion.Ticks = -1;
@@ -329,10 +333,10 @@ namespace YARG.Core.NewParsing.Midi
                                     if (trillPosition.Ticks > -1)
                                     {
                                         var duration = position - trillPosition;
-                                        difficulties[3].Phrases.Trills.Append(in trillPosition, duration);
+                                        difficulties[3].Trills.Append(in trillPosition, duration);
                                         if (trillOnHard)
                                         {
-                                            difficulties[2].Phrases.Trills.Append(in trillPosition, duration);
+                                            difficulties[2].Trills.Append(in trillPosition, duration);
                                             trillOnHard = false;
                                         }
                                         trillPosition.Ticks = -1;
@@ -379,6 +383,13 @@ namespace YARG.Core.NewParsing.Midi
                         .GetLastOrAppend(position)
                         .Add(ev);
                 }
+            }
+
+            foreach (var diff in difficulties)
+            {
+                diff.Overdrives.CopyData(overdrives);
+                diff.Soloes.CopyData(soloes);
+                diff.BREs.CopyData(bres);
             }
             return instrumentTrack;
         }
