@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Text;
+using YARG.Core.Containers;
 
 namespace YARG.Core.NewParsing
 {
@@ -9,15 +9,21 @@ namespace YARG.Core.NewParsing
     {
         public static InstrumentTrack2<FourLaneDrums> ConvertToFourLane(this InstrumentTrack2<UnknownLaneDrums> source, bool isPro)
         {
-            var newTrack = new InstrumentTrack2<FourLaneDrums>();
-            newTrack.Events.StealData(source.Events);
+            var newTrack = new InstrumentTrack2<FourLaneDrums>()
+            {
+                Events = source.Events,
+            };
+            source.Events = YARGManagedSortedList<DualTime, HashSet<string>>.Default;
             return ConvertToFourLane(source, newTrack, isPro);
         }
 
         public static InstrumentTrack2<FiveLaneDrums> ConvertToFiveLane(this InstrumentTrack2<UnknownLaneDrums> source)
         {
-            var newTrack = new InstrumentTrack2<FiveLaneDrums>();
-            newTrack.Events.StealData(source.Events);
+            var newTrack = new InstrumentTrack2<FiveLaneDrums>()
+            {
+                Events = source.Events,
+            };
+            source.Events = YARGManagedSortedList<DualTime, HashSet<string>>.Default;
             return ConvertToFiveLane(source, newTrack);
         }
 
@@ -25,11 +31,11 @@ namespace YARG.Core.NewParsing
         {
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                var diff = source.Difficulties[i];
-                if (diff != null && !diff.IsEmpty())
+                ref var diff = ref source.Difficulties[i];
+                if (!diff.IsEmpty())
                 {
                     destination.Difficulties[i] = diff.ConvertToFourLane(isPro);
-                    source.Difficulties[i] = null;
+                    diff = DifficultyTrack2<UnknownLaneDrums>.Default;
                 }
             }
             return destination;
@@ -39,11 +45,11 @@ namespace YARG.Core.NewParsing
         {
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                var diff = source.Difficulties[i];
-                if (diff != null && !diff.IsEmpty())
+                ref var diff = ref source.Difficulties[i];
+                if (!diff.IsEmpty())
                 {
                     destination.Difficulties[i] = diff.ConvertToFiveLane();
-                    source.Difficulties[i] = null;
+                    diff = DifficultyTrack2<UnknownLaneDrums>.Default;
                 }
             }
             return destination;
@@ -51,15 +57,17 @@ namespace YARG.Core.NewParsing
 
         private static unsafe DifficultyTrack2<FourLaneDrums> ConvertToFourLane(this DifficultyTrack2<UnknownLaneDrums> source, bool isPro)
         {
-            var newDifficulty = new DifficultyTrack2<FourLaneDrums>();
-            newDifficulty.Overdrives.StealData(source.Overdrives);
-            newDifficulty.Soloes.StealData(source.Soloes);
-            newDifficulty.Trills.StealData(source.Trills);
-            newDifficulty.Tremolos.StealData(source.Tremolos);
-            newDifficulty.BREs.StealData(source.BREs);
-            newDifficulty.Faceoff_Player1.StealData(source.Faceoff_Player1);
-            newDifficulty.Faceoff_Player2.StealData(source.Faceoff_Player2);
-            newDifficulty.Events.StealData(source.Events);
+            var newDifficulty = new DifficultyTrack2<FourLaneDrums>()
+            {
+                Overdrives = source.Overdrives,
+                Soloes = source.Soloes,
+                Trills = source.Trills,
+                Tremolos = source.Tremolos,
+                BREs = source.BREs,
+                Faceoff_Player1 = source.Faceoff_Player1,
+                Faceoff_Player2 = source.Faceoff_Player2,
+                Events = source.Events,
+            };
             newDifficulty.Notes.Capacity = source.Notes.Count;
 
             var end = source.Notes.End;
@@ -81,15 +89,17 @@ namespace YARG.Core.NewParsing
         {
             const int DUAL_COUNT = 5;
             const int DYMANICS_COUNT = 4;
-            var newDifficulty = new DifficultyTrack2<FiveLaneDrums>();
-            newDifficulty.Overdrives.StealData(source.Overdrives);
-            newDifficulty.Soloes.StealData(source.Soloes);
-            newDifficulty.Trills.StealData(source.Trills);
-            newDifficulty.Tremolos.StealData(source.Tremolos);
-            newDifficulty.BREs.StealData(source.BREs);
-            newDifficulty.Faceoff_Player1.StealData(source.Faceoff_Player1);
-            newDifficulty.Faceoff_Player2.StealData(source.Faceoff_Player2);
-            newDifficulty.Events.StealData(source.Events);
+            var newDifficulty = new DifficultyTrack2<FiveLaneDrums>()
+            {
+                Overdrives = source.Overdrives,
+                Soloes = source.Soloes,
+                Trills = source.Trills,
+                Tremolos = source.Tremolos,
+                BREs = source.BREs,
+                Faceoff_Player1 = source.Faceoff_Player1,
+                Faceoff_Player2 = source.Faceoff_Player2,
+                Events = source.Events,
+            };
             newDifficulty.Notes.Capacity = source.Notes.Count;
 
             var end = source.Notes.End;
