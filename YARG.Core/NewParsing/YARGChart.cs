@@ -13,9 +13,9 @@ namespace YARG.Core.NewParsing
         public long Resolution => _resolution;
 
         public readonly SyncTrack2 Sync;
-        public readonly YARGManagedSortedList<DualTime, NonNullString> Sections = new();
-        public readonly YARGManagedSortedList<DualTime, List<string>> Globals = new();
-        public readonly YARGNativeSortedList<DualTime, BeatlineType> BeatMap = new();
+        public YARGManagedSortedList<DualTime, NonNullString> Sections = YARGManagedSortedList<DualTime, NonNullString>.Default;
+        public YARGManagedSortedList<DualTime, List<string>> Globals = YARGManagedSortedList<DualTime, List<string>>.Default;
+        public YARGNativeSortedList<DualTime, BeatlineType> BeatMap = YARGNativeSortedList<DualTime, BeatlineType>.Default;
         public readonly Dictionary<string, IniModifier> Miscellaneous = new();
 
         public SongMetadata Metadata;
@@ -90,7 +90,9 @@ namespace YARG.Core.NewParsing
                 {
                     var lastTime = track.GetLastNoteTime();
                     if (lastTime > lastNoteTime)
+                    {
                         lastNoteTime = lastTime;
+                    }
                 }
             }
 

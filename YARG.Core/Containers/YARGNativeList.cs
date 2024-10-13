@@ -5,10 +5,18 @@ using System.Runtime.InteropServices;
 
 namespace YARG.Core.Containers
 {
-    public unsafe class YARGNativeList<T> : IEnumerable<T>, IDisposable
+    public unsafe struct YARGNativeList<T> : IEnumerable<T>, IDisposable
         where T : unmanaged
     {
-        private T* _buffer = null;
+        public static readonly YARGNativeList<T> Default = new()
+        {
+            _buffer = null,
+            _capacity = 0,
+            _count = 0,
+            _version = 0
+        };
+
+        private T* _buffer;
         private int _capacity;
         private int _count;
         private int _version;
@@ -16,14 +24,14 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The number of elements within the list
         /// </summary>
-        public int Count => _count;
+        public readonly int Count => _count;
 
         /// <summary>
         /// The capacity of the list where elements will reside
         /// </summary>
         public int Capacity
         {
-            get => _capacity;
+            readonly get => _capacity;
             set
             {
                 if (_version == -1)
@@ -63,54 +71,22 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The span view of the data up to <see cref="Count"/>
         /// </summary>
-        public Span<T> Span => new(_buffer, _count);
+        public readonly Span<T> Span => new(_buffer, _count);
 
         /// <summary>
         /// The direct pointer for the underlying data. Use carefully.
         /// </summary>
-        public T* Data => _buffer;
+        public readonly T* Data => _buffer;
 
         /// <summary>
         /// The direct pointer to the end position of the underlying data. Use carefully.
         /// </summary>
-        public T* End => _buffer + _count;
-
-        /// <summary>
-        /// Transfers all the data from the source into the current instance, leaving the source in a default state.
-        /// </summary>
-        /// <remarks>Prior data held by the current instance will get disposed before the transfer</remarks>
-        public YARGNativeList<T> StealData(YARGNativeList<T> source)
-        {
-            _Dispose();
-            _buffer = source._buffer;
-            _count = source._count;
-            _capacity = source._capacity;
-            _version = source._version;
-            source._buffer = null;
-            source._count = 0;
-            source._capacity = 0;
-            source._version = 0;
-            return this;
-        }
-        
-        /// <summary>
-        /// Fills the current instance with data copied from the source
-        /// </summary>
-        public YARGNativeList<T> CopyData(YARGNativeList<T> source)
-        {
-            int bytes = source._count * sizeof(T);
-            _buffer = (T*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) bytes);
-            _count = source._count;
-            _capacity = source._count;
-            _version++;
-            Buffer.MemoryCopy(_buffer, source._buffer, bytes, bytes);
-            return this;
-        }
+        public readonly T* End => _buffer + _count;
 
         /// <summary>
         /// Returns whether count is zero
         /// </summary>
-        public bool IsEmpty()
+        public readonly bool IsEmpty()
         {
             return _count == 0;
         }
@@ -248,7 +224,7 @@ namespace YARG.Core.Containers
             ++_version;
         }
 
-        private void _Dispose()
+        public void Dispose()
         {
             if (_buffer != null)
             {
@@ -260,23 +236,12 @@ namespace YARG.Core.Containers
             _count = 0;
         }
 
-        ~YARGNativeList()
-        {
-            _Dispose();
-        }
-
-        public void Dispose()
-        {
-            _Dispose();
-            GC.SuppressFinalize(this);
-        }
-
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        readonly IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             return ((IEnumerable<T>) this).GetEnumerator();
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        readonly IEnumerator IEnumerable.GetEnumerator()
         {
             return new Enumerator(this);
         }

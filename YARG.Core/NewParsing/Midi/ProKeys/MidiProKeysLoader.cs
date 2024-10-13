@@ -16,15 +16,7 @@ namespace YARG.Core.NewParsing.Midi
 
         public static unsafe bool Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ref ProKeysInstrumentTrack? instrumentTrack, int diffIndex)
         {
-            if (instrumentTrack == null)
-            {
-                instrumentTrack = new ProKeysInstrumentTrack();
-                instrumentTrack[Difficulty.Easy] = new DifficultyTrack2<ProKeyNote>();
-                instrumentTrack[Difficulty.Medium] = new DifficultyTrack2<ProKeyNote>();
-                instrumentTrack[Difficulty.Hard] = new DifficultyTrack2<ProKeyNote>();
-                instrumentTrack[Difficulty.Expert] = new DifficultyTrack2<ProKeyNote>();
-            }
-
+            instrumentTrack ??= new ProKeysInstrumentTrack();
             ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex]!;
             if (!diffTrack.IsEmpty())
             {
@@ -32,12 +24,11 @@ namespace YARG.Core.NewParsing.Midi
             }
 
             var ranges = instrumentTrack.Ranges[diffIndex];
-            using var overdrives = diffIndex == 3 ? new YARGNativeSortedList<DualTime, DualTime>() : null;
-            using var soloes = diffIndex == 3 ? new YARGNativeSortedList<DualTime, DualTime>() : null;
-            using var trills = diffIndex == 3 ? new YARGNativeSortedList<DualTime, DualTime>() : null;
-            using var bres = diffIndex == 3 ? new YARGNativeSortedList<DualTime, DualTime>() : null;
+            using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var bres = YARGNativeSortedList<DualTime, DualTime>.Default;
 
-            diffTrack = new DifficultyTrack2<ProKeyNote>();
             // We do this on the commonality that most charts do not exceed this number of notes.
             // Helps keep reallocations to a minimum.
             diffTrack.Notes.Capacity = 5000;
@@ -184,12 +175,13 @@ namespace YARG.Core.NewParsing.Midi
 
             if (diffIndex == 3)
             {
-                foreach (var diff in instrumentTrack.Difficulties)
+                for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                 {
-                    diff!.Overdrives.CopyData(overdrives!);
-                    diff!.Soloes.CopyData(soloes!);
-                    diff!.BREs.CopyData(bres!);
-                    diff!.Trills.CopyData(trills!);
+                    ref var diff = ref instrumentTrack.Difficulties[i];
+                    diff.Overdrives = overdrives.Clone();
+                    diff.Soloes = soloes.Clone();
+                    diff.BREs = bres.Clone();
+                    diff.Trills = trills.Clone();
                 }
             }
             return true;
