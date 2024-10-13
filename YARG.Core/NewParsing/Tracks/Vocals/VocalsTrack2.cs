@@ -5,21 +5,21 @@ namespace YARG.Core.NewParsing
 {
     public abstract class VocalTrack2 : ITrack
     {
-        public readonly YARGNativeSortedList<DualTime, bool> Percussion = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> VocalPhrases_1 = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> VocalPhrases_2 = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> HarmonyLines = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> RangeShifts = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> Overdrives = new();
-        public readonly YARGNativeSortedSet<DualTime> LyricShifts = new();
-        public readonly YARGManagedSortedList<DualTime, HashSet<string>> Events = new();
+        public YARGNativeSortedList<DualTime, bool> Percussion = YARGNativeSortedList<DualTime, bool>.Default;
+        public YARGNativeSortedList<DualTime, DualTime> VocalPhrases_1 = YARGNativeSortedList<DualTime, DualTime>.Default;
+        public YARGNativeSortedList<DualTime, DualTime> VocalPhrases_2 = YARGNativeSortedList<DualTime, DualTime>.Default;
+        public YARGNativeSortedList<DualTime, DualTime> HarmonyLines = YARGNativeSortedList<DualTime, DualTime>.Default;
+        public YARGNativeSortedList<DualTime, DualTime> RangeShifts = YARGNativeSortedList<DualTime, DualTime>.Default;
+        public YARGNativeSortedList<DualTime, DualTime> Overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
+        public YARGNativeSortedSet<DualTime> LyricShifts = YARGNativeSortedSet<DualTime>.Default;
+        public YARGManagedSortedList<DualTime, HashSet<string>> Events = YARGManagedSortedList<DualTime, HashSet<string>>.Default;
 
         /// <summary>
         /// Returns the vocal part (lyrics and notes) for the specified index
         /// </summary>
         /// <param name="index">The part index</param>
         /// <returns>The notes and lyrics for a specific vocal part</returns>
-        public abstract VocalPart2 this[int index] { get; }
+        public abstract ref VocalPart2 this[int index] { get; }
         public abstract int NumTracks { get; }
 
         protected VocalTrack2() { }
@@ -107,14 +107,14 @@ namespace YARG.Core.NewParsing
 
     public class LeadVocalsTrack : VocalTrack2
     {
-        private readonly VocalPart2 _part;
+        private VocalPart2 _part = VocalPart2.Default;
 
         /// <summary>
         /// Returns the lead vocal part when given index 0
         /// </summary>
         /// <param name="index">The part index</param>
         /// <returns>The notes and lyrics for lead vocals</returns>
-        public override VocalPart2 this[int index]
+        public override ref VocalPart2 this[int index]
         {
             get
             {
@@ -122,20 +122,11 @@ namespace YARG.Core.NewParsing
                 {
                     throw new System.IndexOutOfRangeException();
                 }
-                return _part;
+                return ref _part;
             }
         }
 
         public override int NumTracks => 1;
-
-        /// <summary>
-        /// Constructs a vocal track with the single lead vocals part
-        /// </summary>
-        public LeadVocalsTrack()
-        {
-            _part.Notes = new YARGNativeSortedList<DualTime, VocalNote2>();
-            _part.Lyrics = new YARGManagedSortedList<DualTime, NonNullString>();
-        }
 
         /// <summary>
         /// Returns whether lead vocal part, percussion, phrases, and events are empty
@@ -195,28 +186,21 @@ namespace YARG.Core.NewParsing
 
     public class HarmonyVocalsTrack : VocalTrack2
     {
-        private readonly VocalPart2[] _parts = new VocalPart2[3];
+        private readonly VocalPart2[] _parts = new VocalPart2[3]
+        {
+            VocalPart2.Default,
+            VocalPart2.Default,
+            VocalPart2.Default,
+        };
 
         /// <summary>
         /// Returns the vocal part (lyrics and notes) for the specified index [0,1,2]
         /// </summary>
         /// <param name="index">The part index</param>
         /// <returns>The notes and lyrics for a specific vocal part</returns>
-        public override VocalPart2 this[int index] => _parts[index];
+        public override ref VocalPart2 this[int index] => ref _parts[index];
 
         public override int NumTracks => 3;
-
-        /// <summary>
-        /// Constructs a vocals track comprising of three separate vocal parts
-        /// </summary>
-        public HarmonyVocalsTrack()
-        {
-            for (int i = 0; i < NumTracks; ++i)
-            {
-                _parts[i].Notes = new YARGNativeSortedList<DualTime, VocalNote2>();
-                _parts[i].Lyrics = new YARGManagedSortedList<DualTime, NonNullString>();
-            }
-        }
 
         /// <summary>
         /// Returns whether all parts, percussion, phrases, and events are empty

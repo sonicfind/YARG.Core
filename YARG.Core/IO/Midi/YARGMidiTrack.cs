@@ -218,7 +218,7 @@ namespace YARG.Core.IO
         private const uint VLQ_SHIFTLIMIT = 1 << (VLQ_SHIFT * MAX_SHIFTCOUNT);
         private uint ReadVLQ()
         {
-            uint value = 0;
+            uint value = 0U;
             while (true)
             {
                 if (_position >= _end)

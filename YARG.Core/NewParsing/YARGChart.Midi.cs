@@ -252,7 +252,7 @@ namespace YARG.Core.NewParsing
                     }
                     else if (type == MidiTrackType.Beat)
                     {
-                        LoadBeatsTrack_Midi(chart.BeatMap, ref tempoTracker, midiTrack);
+                        LoadBeatsTrack_Midi(chart, ref tempoTracker, midiTrack);
                     }
                     else if (activeInstruments == null || activeInstruments.Contains(type))
                     {
@@ -318,11 +318,11 @@ namespace YARG.Core.NewParsing
         /// <param name="beats">The beats track to fill/param>
         /// <param name="sync">The backing sync track to use for proper positioning</param>
         /// <param name="midiTrack">The midi track containing the beat track data</param>
-        private static void LoadBeatsTrack_Midi(YARGNativeSortedList<DualTime, BeatlineType> beats, ref TempoTracker tempoTracker, YARGMidiTrack midiTrack)
+        private static void LoadBeatsTrack_Midi(YARGChart chart, ref TempoTracker tempoTracker, YARGMidiTrack midiTrack)
         {
             const int MEASURE_BEAT = 12;
             const int STRONG_BEAT = 13;
-            if (!beats.IsEmpty())
+            if (!chart.BeatMap.IsEmpty())
             {
                 YargLogger.LogInfo("BEATS track appears multiple times. Not parsing repeats...");
                 return;
@@ -343,8 +343,8 @@ namespace YARG.Core.NewParsing
 
                         switch (note.value)
                         {
-                            case MEASURE_BEAT: beats.AppendOrUpdate(in position, BeatlineType.Measure); break;
-                            case STRONG_BEAT:  beats.AppendOrUpdate(in position, BeatlineType.Strong); break;
+                            case MEASURE_BEAT: chart.BeatMap.AppendOrUpdate(in position, BeatlineType.Measure); break;
+                            case STRONG_BEAT:  chart.BeatMap.AppendOrUpdate(in position, BeatlineType.Strong); break;
                         }
                     }
                 }

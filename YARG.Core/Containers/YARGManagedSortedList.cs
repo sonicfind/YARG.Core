@@ -17,25 +17,32 @@ namespace YARG.Core.Containers
     /// <typeparam name="TKey">The type to use for determining sorting order</typeparam>
     /// <typeparam name="TValue">The value that gets mapped to keys</typeparam>
     [DebuggerDisplay("Count: {_count}")]
-    public sealed class YARGManagedSortedList<TKey, TValue> : IEnumerable<YARGKeyValuePair<TKey, TValue>>
+    public struct YARGManagedSortedList<TKey, TValue> : IEnumerable<YARGKeyValuePair<TKey, TValue>>
         where TKey : IEquatable<TKey>, IComparable<TKey>
         where TValue : new()
     {
-        private YARGKeyValuePair<TKey, TValue>[] _buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
+        public static readonly YARGManagedSortedList<TKey, TValue> Default = new()
+        {
+            _buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>(),
+            _count = 0,
+            _version = 0
+        };
+
+        private YARGKeyValuePair<TKey, TValue>[] _buffer;
         private int _count;
         private int _version;
 
         /// <summary>
         /// The number of elements within the list
         /// </summary>
-        public int Count => _count;
+        public readonly int Count => _count;
 
         /// <summary>
         /// The capacity of the list where elements will reside
         /// </summary>
         public int Capacity
         {
-            get => _buffer.Length;
+            readonly get => _buffer.Length;
             set
             {
                 if (_count <= value && value != _buffer.Length)
@@ -56,31 +63,17 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The span view of the data up to <see cref="Count"/>
         /// </summary>
-        public Span<YARGKeyValuePair<TKey, TValue>> Span => new(_buffer, 0, _count);
+        public readonly Span<YARGKeyValuePair<TKey, TValue>> Span => new(_buffer, 0, _count);
 
         /// <summary>
         /// The direct arrau for the underlying data. Use carefully.
         /// </summary>
-        public YARGKeyValuePair<TKey, TValue>[] Data => _buffer;
-
-        /// <summary>
-        /// Transfers all the data from the source into the current instance, leaving the source in a default state.
-        /// </summary>
-        public YARGManagedSortedList<TKey, TValue> StealData(YARGManagedSortedList<TKey, TValue> source)
-        {
-            _buffer = source._buffer;
-            _count = source._count;
-            _version = source._version;
-            source._buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
-            source._count = 0;
-            source._version = 0;
-            return this;
-        }
+        public readonly YARGKeyValuePair<TKey, TValue>[] Data => _buffer;
 
         /// <summary>
         /// Returns whether count is zero
         /// </summary>
-        public bool IsEmpty()
+        public readonly bool IsEmpty()
         {
             return _count == 0;
         }
@@ -172,12 +165,12 @@ namespace YARG.Core.Containers
         /// <returns>Whether a new node was created</returns>
         public bool TryAppend(in TKey key)
         {
-            bool append = _count == 0 || !_buffer[_count - 1].Key.Equals(key);
-            if (append)
+            if (_count > 0 && _buffer[_count - 1].Key.Equals(key))
             {
-                Append(key);
+                return false;
             }
-            return append;
+            Append(key);
+            return true;
         }
 
         /// <summary>
@@ -290,7 +283,7 @@ namespace YARG.Core.Containers
         /// <param name="key">The key to query for and possibly emplace in the list</param>
         /// <param name="startIndex">The starting index bound for the binary search that is performed</param>
         /// <returns>The index of the node with the matching key. If one was not found, it returns the index where it would go, but bit-flipped.</returns>
-        public int Find(in TKey key)
+        public readonly int Find(in TKey key)
         {
             int lo = 0;
             int hi = _count - 1;
@@ -322,7 +315,7 @@ namespace YARG.Core.Containers
         /// <param name="key">The key to query for and possibly emplace in the list</param>
         /// <returns>A reference of the node with the matching key.</returns>
         /// <exception cref="KeyNotFoundException">A node with the provided key does not exist</exception>
-        public ref TValue At(in TKey key)
+        public readonly ref TValue At(in TKey key)
         {
             int index = Find(key);
             if (index < 0)
@@ -343,7 +336,7 @@ namespace YARG.Core.Containers
         /// </remarks>
         /// <param name="key">The key to linearly search for</param>
         /// <returns>The reference to the node with the matching key</returns>
-        public ref TValue TraverseBackwardsUntil(in TKey key)
+        public readonly ref TValue TraverseBackwardsUntil(in TKey key)
         {
             int index = _count - 1;
             while (index > 0 && key.CompareTo(_buffer[index].Key) < 0)
@@ -360,7 +353,7 @@ namespace YARG.Core.Containers
         /// <param name="key">The key to linearly search for</param>
         /// <param name="value">A reference to the last node, if the key matched</param>
         /// <returns>Whether the last key matched</returns>
-        public bool TryGetLastValue(in TKey key, out TValue? value)
+        public readonly bool TryGetLastValue(in TKey key, out TValue? value)
         {
             if (_count == 0 || !_buffer[_count - 1].Key.Equals(key))
             {
@@ -396,14 +389,14 @@ namespace YARG.Core.Containers
             Capacity = newcapacity;
         }
 
-        IEnumerator<YARGKeyValuePair<TKey, TValue>> IEnumerable<YARGKeyValuePair<TKey, TValue>>.GetEnumerator()
+        readonly IEnumerator<YARGKeyValuePair<TKey, TValue>> IEnumerable<YARGKeyValuePair<TKey, TValue>>.GetEnumerator()
         {
             return ((IEnumerable<YARGKeyValuePair<TKey, TValue>>) this).GetEnumerator();
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        readonly IEnumerator IEnumerable.GetEnumerator()
         {
-            return new Enumerator(this);
+            return new Enumerator(in this);
         }
 
         public struct Enumerator : IEnumerator<YARGKeyValuePair<TKey, TValue>>, IEnumerator
@@ -412,7 +405,7 @@ namespace YARG.Core.Containers
             private int _index;
             private readonly int _version;
 
-            internal Enumerator(YARGManagedSortedList<TKey, TValue> map)
+            internal Enumerator(in YARGManagedSortedList<TKey, TValue> map)
             {
                 _map = map;
                 _index = -1;

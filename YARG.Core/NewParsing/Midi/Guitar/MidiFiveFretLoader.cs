@@ -40,20 +40,13 @@ namespace YARG.Core.NewParsing.Midi
         {
             // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<FiveFretGuitar>();
-            var difficulties = new DifficultyTrack2<FiveFretGuitar>[InstrumentTrack2.NUM_DIFFICULTIES]
-            {
-                instrumentTrack.Difficulties[0] = instrumentTrack[Difficulty.Easy]   = new DifficultyTrack2<FiveFretGuitar>(),
-                instrumentTrack.Difficulties[1] = instrumentTrack[Difficulty.Medium] = new DifficultyTrack2<FiveFretGuitar>(),
-                instrumentTrack.Difficulties[2] = instrumentTrack[Difficulty.Hard]   = new DifficultyTrack2<FiveFretGuitar>(),
-                instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new DifficultyTrack2<FiveFretGuitar>(),
-            };
-            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
-            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
-            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
-            using var tremolos = new YARGNativeSortedList<DualTime, DualTime>();
-            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
-            using var faceoff_P1 = new YARGNativeSortedList<DualTime, DualTime>();
-            using var faceoff_P2 = new YARGNativeSortedList<DualTime, DualTime>();
+            using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var tremolos = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var bres = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var faceoff_P1 = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var faceoff_P2 = YARGNativeSortedList<DualTime, DualTime>.Default;
 
             var diffModifiers = stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES];
 
@@ -115,7 +108,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.value - FIVEFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            var diffTrack = difficulties[diffIndex];
+                            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
                             int lane = laneIndices[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -192,7 +185,7 @@ namespace YARG.Core.NewParsing.Midi
                                         // difficulty-based star power phrases. So we need to...
 
                                         // 1. convert all prior added solo phrases to expert star power phrases,
-                                        difficulties[3].Overdrives.StealData(soloes);
+                                        instrumentTrack.Difficulties[3].Overdrives = soloes.Clone();
 
                                         // 2. remove and disallow any track-wise star power phrases (as 116 becomes invalid),
                                         overdrives.Clear();
@@ -219,7 +212,7 @@ namespace YARG.Core.NewParsing.Midi
                                             {
                                                 diffModifiers[i].SliderNotes = true;
                                                 // If any note exists on the same tick, we must change the state to match
-                                                if (difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
+                                                if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
                                                 {
                                                     guitar->State = GuitarState.Tap;
                                                 }
@@ -271,7 +264,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.value - FIVEFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            var diffTrack = difficulties[diffIndex];
+                            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
                             int lane = laneIndices[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -343,7 +336,7 @@ namespace YARG.Core.NewParsing.Midi
                                                 // If any note exists on the same tick, we must change the state to match
                                                 // From state heirarchy rules, the state for a found note IS already set to Tap.
                                                 // We don't need to check.
-                                                if (difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
+                                                if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
                                                 {
                                                     if (diffModifier.HopoOn)
                                                     {
@@ -380,7 +373,7 @@ namespace YARG.Core.NewParsing.Midi
                                             ref var diffOverdrivePosition = ref overdriveDiffPositions[diffIndex];
                                             if (diffOverdrivePosition.Ticks > -1)
                                             {
-                                                difficulties[diffIndex].Overdrives.Append(in diffOverdrivePosition, position - diffOverdrivePosition);
+                                                instrumentTrack.Difficulties[diffIndex].Overdrives.Append(in diffOverdrivePosition, position - diffOverdrivePosition);
                                                 diffOverdrivePosition.Ticks = -1;
                                             }
                                             break;
@@ -470,7 +463,7 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     diffModifiers[diffIndex].SliderNotes = enable;
                                     // If any note exists on the same tick, we must change the state to match
-                                    if (difficulties[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
+                                    if (instrumentTrack.Difficulties[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
                                     {
                                         if (enable)
                                         {
@@ -507,7 +500,7 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     diffModifiers[diffIndex].SliderNotes = enable;
                                     // If any note exists on the same tick, we must change the state to match
-                                    if (difficulties[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
+                                    if (instrumentTrack.Difficulties[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
                                     {
                                         if (enable)
                                         {
@@ -554,18 +547,19 @@ namespace YARG.Core.NewParsing.Midi
                 }
             }
 
-            foreach (var diff in difficulties)
+            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
+                ref var diff = ref instrumentTrack.Difficulties[i];
                 if (!_useAlternateOverdrive)
                 {
-                    diff.Overdrives.CopyData(overdrives);
+                    diff.Overdrives = overdrives.Clone();
                 }
-                diff.Soloes.CopyData(soloes);
-                diff.BREs.CopyData(bres);
-                diff.Tremolos.CopyData(tremolos);
-                diff.Trills.CopyData(trills);
-                diff.Faceoff_Player1.CopyData(trills);
-                diff.Faceoff_Player2.CopyData(trills);
+                diff.Soloes = soloes.Clone();
+                diff.BREs = bres.Clone();
+                diff.Tremolos = tremolos.Clone();
+                diff.Trills = trills.Clone();
+                diff.Faceoff_Player1 = trills.Clone();
+                diff.Faceoff_Player2 = trills.Clone();
             }
             return instrumentTrack;
         }

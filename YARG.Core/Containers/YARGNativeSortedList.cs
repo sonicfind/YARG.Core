@@ -19,15 +19,23 @@ namespace YARG.Core.Containers
     /// <typeparam name="TKey">The type to use for determining sorting order</typeparam>
     /// <typeparam name="TValue">The value that gets mapped to keys</typeparam>
     [DebuggerDisplay("Count: {_count}")]
-    public sealed unsafe class YARGNativeSortedList<TKey, TValue> : IDisposable, IEnumerable<YARGKeyValuePair<TKey, TValue>>
+    public unsafe struct YARGNativeSortedList<TKey, TValue> : IDisposable, IEnumerable<YARGKeyValuePair<TKey, TValue>>
         where TKey : unmanaged, IEquatable<TKey>, IComparable<TKey>
         where TValue : unmanaged
     {
+        public static readonly YARGNativeSortedList<TKey, TValue> Default = new()
+        {
+            _buffer = null,
+            _capacity = 0,
+            _count = 0,
+            _version = 0
+        };
+
         // This pattern of copying a pre-defined value is faster than default construction
         // Note: except possibly for types of 16 bytes or less, idk
         private static readonly TValue DEFAULT_VALUE = default;
 
-        private YARGKeyValuePair<TKey, TValue>* _buffer = null;
+        private YARGKeyValuePair<TKey, TValue>* _buffer;
         private int _capacity;
         private int _count;
         private int _version;
@@ -35,14 +43,14 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The number of elements within the list
         /// </summary>
-        public int Count => _count;
+        public readonly int Count => _count;
 
         /// <summary>
         /// The capacity of the list where elements will reside
         /// </summary>
         public int Capacity
         {
-            get => _capacity;
+            readonly get => _capacity;
             set
             {
                 if (_version == -1)
@@ -82,56 +90,38 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The span view of the data up to <see cref="Count"/>
         /// </summary>
-        public Span<YARGKeyValuePair<TKey, TValue>> Span => new(_buffer, _count);
+        public readonly Span<YARGKeyValuePair<TKey, TValue>> Span => new(_buffer, _count);
 
         /// <summary>
         /// The direct pointer for the underlying data. Use carefully.
         /// </summary>
-        public YARGKeyValuePair<TKey, TValue>* Data => _buffer;
+        public readonly YARGKeyValuePair<TKey, TValue>* Data => _buffer;
 
         /// <summary>
         /// The direct pointer to the end position of the underlying data. Use carefully.
         /// </summary>
-        public YARGKeyValuePair<TKey, TValue>* End => _buffer + _count;
-
-        /// <summary>
-        /// Transfers all the data from the source into the current instance, leaving the source in a default state.
-        /// </summary>
-        /// <remarks>Prior data held by the current instance will get disposed before the transfer</remarks>
-        public YARGNativeSortedList<TKey, TValue> StealData(YARGNativeSortedList<TKey, TValue> source)
-        {
-            _Dispose();
-            _buffer = source._buffer;
-            _count = source._count;
-            _capacity = source._capacity;
-            _version = source._version;
-            source._buffer = null;
-            source._count = 0;
-            source._capacity = 0;
-            source._version = 0;
-            return this;
-        }
-
-        /// <summary>
-        /// Fills the current instance with data copied from the source
-        /// </summary>
-        public YARGNativeSortedList<TKey, TValue> CopyData(YARGNativeSortedList<TKey, TValue> source)
-        {
-            int bytes = source._count * sizeof(YARGKeyValuePair<TKey, TValue>);
-            _buffer = (YARGKeyValuePair<TKey, TValue>*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) bytes);
-            _count = source._count;
-            _capacity = source._count;
-            _version++;
-            Buffer.MemoryCopy(_buffer, source._buffer, bytes, bytes);
-            return this;
-        }
+        public readonly YARGKeyValuePair<TKey, TValue>* End => _buffer + _count;
 
         /// <summary>
         /// Returns whether count is zero
         /// </summary>
-        public bool IsEmpty()
+        public readonly bool IsEmpty()
         {
             return _count == 0;
+        }
+
+        public YARGNativeSortedList<TKey, TValue> Clone()
+        {
+            int bytes = _count * sizeof(YARGKeyValuePair<TKey, TValue>);
+            var clone = new YARGNativeSortedList<TKey, TValue>()
+            {
+                _buffer = (YARGKeyValuePair<TKey, TValue>*) Marshal.AllocHGlobal((IntPtr) bytes),
+                _count = _count,
+                _capacity = _count,
+                _version = 1,
+            };
+            Buffer.MemoryCopy(clone._buffer, _buffer, bytes, bytes);
+            return clone;
         }
 
         /// <summary>
@@ -195,11 +185,9 @@ namespace YARG.Core.Containers
         /// <returns>The pointer to the last value in the list</returns>
         public TValue* GetLastOrAppend(in TKey key)
         {
-            if (_count == 0 || _buffer[_count - 1] < key)
-            {
-                return Append(key);
-            }
-            return &_buffer[_count - 1].Value;
+            return _count == 0 || _buffer[_count - 1] < key
+                ? Append(key)
+                : &_buffer[_count - 1].Value;
         }
 
         /// <summary>
@@ -211,9 +199,18 @@ namespace YARG.Core.Containers
         /// <returns>Whether a node was appeneded to the list</returns>
         public bool GetLastOrAppend(in TKey key, out TValue* value)
         {
-            bool append = _count == 0 || !_buffer[_count - 1].Key.Equals(key);
-            value = append ? Append(key) : &_buffer[_count - 1].Value;
-            return append;
+            if (_count > 0 && _buffer[_count - 1].Key.Equals(key))
+            {
+                value = &_buffer[_count - 1].Value;
+                return false;
+            }
+
+            CheckAndGrow();
+            var node = _buffer + _count++;
+            node->Key = key;
+            node->Value = DEFAULT_VALUE;
+            value = &node->Value;
+            return true;
         }
 
         /// <summary>
@@ -370,7 +367,7 @@ namespace YARG.Core.Containers
         /// <remarks>Performs a binary search</remarks>
         /// <param name="key">The key to find</param>
         /// <returns>The index of the node with the matching key. If one was not found, the index where it would go is returned, but bit-flipped.</returns>
-        public int Find(in TKey key)
+        public readonly int Find(in TKey key)
         {
             if (_buffer == null)
             {
@@ -407,7 +404,7 @@ namespace YARG.Core.Containers
         /// <param name="key">The key to query for and possibly emplace in the list</param>
         /// <returns>The pointer of the node with the matching key.</returns>
         /// <exception cref="KeyNotFoundException">A node with the provided key does not exist</exception>
-        public TValue* At(in TKey key)
+        public readonly TValue* At(in TKey key)
         {
             int index = Find(in key);
             if (index < 0)
@@ -428,7 +425,7 @@ namespace YARG.Core.Containers
         /// </remarks>
         /// <param name="key">The key to linearly search for</param>
         /// <returns>The reference to the node with the matching key</returns>
-        public TValue* TraverseBackwardsUntil(in TKey key)
+        public readonly TValue* TraverseBackwardsUntil(in TKey key)
         {
             var curr = _buffer + _count - 1;
             while (curr > _buffer && key.CompareTo(curr->Key) < 0)
@@ -445,7 +442,7 @@ namespace YARG.Core.Containers
         /// <param name="key">The key to linearly search for</param>
         /// <param name="valuePtr">The pointer to the last node, if the key matched</param>
         /// <returns>Whether the last key matched</returns>
-        public bool TryGetLastValue(in TKey key, out TValue* valuePtr)
+        public readonly bool TryGetLastValue(in TKey key, out TValue* valuePtr)
         {
             if (_count == 0 || !_buffer[_count - 1].Key.Equals(key))
             {
@@ -481,7 +478,7 @@ namespace YARG.Core.Containers
             Capacity = newcapacity;
         }
 
-        private void _Dispose()
+        public void Dispose()
         {
             if (_buffer != null)
             {
@@ -493,26 +490,15 @@ namespace YARG.Core.Containers
             _count = 0;
         }
 
-        public void Dispose()
-        {
-            _Dispose();
-            GC.SuppressFinalize(this);
-        }
-
-        ~YARGNativeSortedList()
-        {
-            _Dispose();
-        }
-
-        IEnumerator<YARGKeyValuePair<TKey, TValue>> IEnumerable<YARGKeyValuePair<TKey, TValue>>.GetEnumerator()
+        readonly IEnumerator<YARGKeyValuePair<TKey, TValue>> IEnumerable<YARGKeyValuePair<TKey, TValue>>.GetEnumerator()
         {
             return ((IEnumerable<YARGKeyValuePair<TKey, TValue>>) this).GetEnumerator();
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        readonly IEnumerator IEnumerable.GetEnumerator()
         {
-            return new Enumerator(this);
-        }
+            return new Enumerator(in this);
+        } 
 
         public struct Enumerator : IEnumerator<YARGKeyValuePair<TKey, TValue>>, IEnumerator
         {
@@ -520,7 +506,7 @@ namespace YARG.Core.Containers
             private readonly int _version;
             private int _index;
 
-            internal Enumerator(YARGNativeSortedList<TKey, TValue> map)
+            internal Enumerator(in YARGNativeSortedList<TKey, TValue> map)
             {
                 _map = map;
                 _version = map._version;
