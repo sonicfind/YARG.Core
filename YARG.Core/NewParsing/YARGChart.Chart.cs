@@ -188,7 +188,7 @@ namespace YARG.Core.NewParsing
                 }
             }
 
-            if (unknownDrums != null && !unknownDrums.IsEmpty())
+            if (unknownDrums != null)
             {
                 if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
                 {
@@ -205,6 +205,8 @@ namespace YARG.Core.NewParsing
                     chart.FiveLaneDrums ??= new InstrumentTrack2<FiveLaneDrums>();
                     unknownDrums.ConvertToFiveLane(chart.FiveLaneDrums);
                 }
+                // There's no need to call dipose OR the finalizer as everything would've already been transferred or pre-disposed
+                GC.SuppressFinalize(unknownDrums);
             }
             FinalizeDeserialization(chart);
         }
