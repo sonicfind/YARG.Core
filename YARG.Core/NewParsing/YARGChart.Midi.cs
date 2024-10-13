@@ -350,8 +350,7 @@ namespace YARG.Core.NewParsing
                     case DrumsType.FiveLane: chart.FiveLaneDrums ??= MidiDrumsLoader.LoadFiveLane(midiTrack, ref tempoTracker); break;
                     default:
                         {
-                            // No `using/dipose` as events & phrases need to persist
-                            using var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, ref tempoTracker, ref drumsInChart);
+                            var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, ref tempoTracker, ref drumsInChart);
                             // Only possible if pre-type was FourOrFive AND fifth lane was not found
                             if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
                             {
@@ -369,6 +368,8 @@ namespace YARG.Core.NewParsing
                             {
                                 chart.FiveLaneDrums = track.ConvertToFiveLane();
                             }
+                            // There's no need to call dipose OR the finalizer as everything would've already been transferred or pre-disposed
+                            GC.SuppressFinalize(track);
                             break;
                         }
                     }
