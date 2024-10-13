@@ -49,7 +49,7 @@ namespace YARG.Core.NewParsing.Midi
             // Per-difficulty tracker of note positions
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_LANES]
             {
-                // Kick             Snare             Yellow             Blue               Green              Double Kick             
+                // Kick             Snare             Yellow             Blue               Green              Double Kick
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
                 DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
@@ -95,13 +95,7 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         // If the distance between the current NoteOn and the previous NoteOn is less than a certain threshold
                         // the previous position will override the current one, to "chord" multiple notes together
-                        if (chordSnapper.Snap(ref position) && stats.Position > 0)
-                        {
-#if DEBUG
-                            YargLogger.LogInfo("Snap occured");
-#endif
-                        }
-
+                        chordSnapper.Snap(ref position);
                         if (MidiLoader_Constants.DEFAULT_MIN <= note.Value && note.Value <= DRUMNOTE_MAX)
                         {
                             int noteValue = note.Value - MidiLoader_Constants.DEFAULT_MIN;
@@ -467,13 +461,7 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         // If the distance between the current NoteOn and the previous NoteOn is less than a certain threshold
                         // the previous position will override the current one, to "chord" multiple notes together
-                        if (chordSnapper.Snap(ref position) && stats.Position > 0)
-                        {
-#if DEBUG
-                            YargLogger.LogInfo("Snap occured");
-#endif
-                        }
-
+                        chordSnapper.Snap(ref position);
                         if (MidiLoader_Constants.DEFAULT_MIN <= note.Value && note.Value <= DRUMNOTE_MAX)
                         {
                             int noteValue = note.Value - MidiLoader_Constants.DEFAULT_MIN;
@@ -790,13 +778,7 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         // If the distance between the current NoteOn and the previous NoteOn is less than a certain threshold
                         // the previous position will override the current one, to "chord" multiple notes together
-                        if (chordSnapper.Snap(ref position) && stats.Position > 0)
-                        {
-#if DEBUG
-                            YargLogger.LogInfo("Snap occured");
-#endif
-                        }
-
+                        chordSnapper.Snap(ref position);
                         if (MidiLoader_Constants.DEFAULT_MIN <= note.Value && note.Value <= DRUMNOTE_MAX)
                         {
                             int noteValue = note.Value - MidiLoader_Constants.DEFAULT_MIN;
