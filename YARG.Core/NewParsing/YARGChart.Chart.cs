@@ -138,7 +138,7 @@ namespace YARG.Core.NewParsing
                 }
             }
 
-            if (unknownDrums != null && !unknownDrums.IsEmpty())
+            if (unknownDrums != null)
             {
                 switch (drumsInChart)
                 {
@@ -155,6 +155,8 @@ namespace YARG.Core.NewParsing
                         unknownDrums.ConvertToFourLane(chart.FourLaneDrums, false);
                         break;
                 }
+                // There's no need to call dipose OR the finalizer as everything would've already been transferred or pre-disposed
+                GC.SuppressFinalize(unknownDrums);
             }
 
             FinalizeDeserialization(chart);
