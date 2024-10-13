@@ -8,21 +8,19 @@ namespace YARG.Core.NewParsing
     public class ProGuitarInstrumentTrack<TProFret> : InstrumentTrack2<ProGuitarNote<TProFret>>, IDisposable
         where TProFret : unmanaged, IProFret
     {
-        public readonly YARGNativeSortedList<DualTime, DualTime>[] Arpeggios = new YARGNativeSortedList<DualTime, DualTime>[InstrumentTrack2.NUM_DIFFICULTIES];
-        public readonly YARGNativeSortedList<DualTime, PitchName> Roots = new();
-        public readonly YARGNativeSortedList<DualTime, TProFret> HandPositions = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> Force_ChordNumbering = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> SlashChords = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> HideChords = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> AccidentalSwitches = new();
-
-        public ProGuitarInstrumentTrack()
+        public YARGNativeSortedList<DualTime, DualTime>[] Arpeggios = new YARGNativeSortedList<DualTime, DualTime>[InstrumentTrack2.NUM_DIFFICULTIES]
         {
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; i++)
-            {
-                Arpeggios[i] = new YARGNativeSortedList<DualTime, DualTime>();
-            }
-        }
+            YARGNativeSortedList<DualTime, DualTime>.Default,
+            YARGNativeSortedList<DualTime, DualTime>.Default,
+            YARGNativeSortedList<DualTime, DualTime>.Default,
+            YARGNativeSortedList<DualTime, DualTime>.Default
+        };
+        public YARGNativeSortedList<DualTime, PitchName> Roots = YARGNativeSortedList<DualTime, PitchName>.Default;
+        public YARGNativeSortedList<DualTime, TProFret> HandPositions = YARGNativeSortedList<DualTime, TProFret>.Default;
+        public YARGNativeSortedList<DualTime, DualTime> Force_ChordNumbering = YARGNativeSortedList<DualTime, DualTime>.Default;
+        public YARGNativeSortedList<DualTime, DualTime> SlashChords = YARGNativeSortedList<DualTime, DualTime>.Default;
+        public YARGNativeSortedList<DualTime, DualTime> HideChords = YARGNativeSortedList<DualTime, DualTime>.Default;
+        public YARGNativeSortedList<DualTime, DualTime> AccidentalSwitches = YARGNativeSortedList<DualTime, DualTime>.Default;
 
         /// <summary>
         /// Returns whether all active difficulties and track-scope phrases and events are empty
