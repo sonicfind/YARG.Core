@@ -109,12 +109,7 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         // If the distance between the current NoteOn and the previous NoteOn is less than a certain threshold
                         // the previous position will override the current one, to "chord" multiple notes together
-                        if (chordSnapper.Snap(ref position) && midiTrack.Position > 0)
-                        {
-#if DEBUG
-                            YargLogger.LogInfo("Snap occured");
-#endif
-                        }
+                        chordSnapper.Snap(ref position);
 
                         if (FIVEFRET_MIN <= note.value && note.value <= FIVEFRET_MAX)
                         {
@@ -455,12 +450,7 @@ namespace YARG.Core.NewParsing.Midi
                         // the previous position will override the current one, to "chord" multiple notes together
                         //
                         // While this isn't an actual NoteOn midi event, we should interpret it like one in this instance for safety.
-                        if (chordSnapper.Snap(ref position) && midiTrack.Position > 0)
-                        {
-#if DEBUG
-                            YargLogger.LogInfo("Snap occured");
-#endif
-                        }
+                        chordSnapper.Snap(ref position);
                     }
 
                     if (sysex[SYSEX_DIFF_INDEX] == SYSEX_ALLDIFF)
