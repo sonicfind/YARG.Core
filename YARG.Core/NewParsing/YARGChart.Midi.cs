@@ -392,8 +392,7 @@ namespace YARG.Core.NewParsing
                             break;
                         default:
                         {
-                            // The phrases and events will be moved to the converted track, so it is safe to call dispose
-                            using var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, ref tempoTracker, ref drumsInChart);
+                            var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, ref tempoTracker, ref drumsInChart);
                             switch (drumsInChart)
                             {
                                 case DrumsType.FiveLane:
@@ -413,6 +412,8 @@ namespace YARG.Core.NewParsing
                                     chart.FourLaneDrums = track.ConvertToFourLane(false);
                                     break;
                             }
+                            // There's no need to call dipose OR the finalizer as everything would've already been transferred or pre-disposed
+                            GC.SuppressFinalize(track);
                             break;
                         }
                     }
