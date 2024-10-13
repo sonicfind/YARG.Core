@@ -359,12 +359,10 @@ namespace YARG.Core.NewParsing
             track ??= new InstrumentTrack2<TNote>();
 
             ref var difficultyTrack = ref track[difficulty];
-            if (difficultyTrack != null)
+            if (!difficultyTrack.IsEmpty())
             {
                 return false;
             }
-
-            difficultyTrack = new DifficultyTrack2<TNote>();
             difficultyTrack.Notes.Capacity = 5000;
 
             // Keeps tracks of soloes that start on the same tick when another solo ends
@@ -396,12 +394,12 @@ namespace YARG.Core.NewParsing
                             var (lane, duration) = YARGChartFileReader.ExtractLaneAndDuration(ref container, in position, in tempoTracker);
                             switch ((SpecialPhraseType) lane)
                             {
-                                case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(difficultyTrack.Faceoff_Player1, in position, in duration); break;
-                                case SpecialPhraseType.FaceOff_Player2: AddSpecialPhrase(difficultyTrack.Faceoff_Player2, in position, in duration); break;
-                                case SpecialPhraseType.StarPower:       AddSpecialPhrase(difficultyTrack.Overdrives,      in position, in duration); break;
-                                case SpecialPhraseType.BRE:             AddSpecialPhrase(difficultyTrack.BREs,            in position, in duration); break;
-                                case SpecialPhraseType.Tremolo:         AddSpecialPhrase(difficultyTrack.Tremolos,        in position, in duration); break;
-                                case SpecialPhraseType.Trill:           AddSpecialPhrase(difficultyTrack.Trills,          in position, in duration); break;
+                                case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(ref difficultyTrack.Faceoff_Player1, in position, in duration); break;
+                                case SpecialPhraseType.FaceOff_Player2: AddSpecialPhrase(ref difficultyTrack.Faceoff_Player2, in position, in duration); break;
+                                case SpecialPhraseType.StarPower:       AddSpecialPhrase(ref difficultyTrack.Overdrives,      in position, in duration); break;
+                                case SpecialPhraseType.BRE:             AddSpecialPhrase(ref difficultyTrack.BREs,            in position, in duration); break;
+                                case SpecialPhraseType.Tremolo:         AddSpecialPhrase(ref difficultyTrack.Tremolos,        in position, in duration); break;
+                                case SpecialPhraseType.Trill:           AddSpecialPhrase(ref difficultyTrack.Trills,          in position, in duration); break;
                             }
                             break;
                         }
@@ -452,7 +450,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static unsafe void AddSpecialPhrase(YARGNativeSortedList<DualTime, DualTime> phrases, in DualTime position, in DualTime duration)
+        private static unsafe void AddSpecialPhrase(ref YARGNativeSortedList<DualTime, DualTime> phrases, in DualTime position, in DualTime duration)
         {
             if (phrases.Count > 0)
             {

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using YARG.Core.Containers;
 
@@ -12,8 +13,14 @@ namespace YARG.Core.NewParsing
     public class InstrumentTrack2<TNote> : ITrack
         where TNote : unmanaged, IInstrumentNote
     {
-        public readonly DifficultyTrack2<TNote>?[] Difficulties = new DifficultyTrack2<TNote>[InstrumentTrack2.NUM_DIFFICULTIES];
-        public readonly YARGManagedSortedList<DualTime, HashSet<string>> Events = new();
+        public readonly DifficultyTrack2<TNote>[] Difficulties = new DifficultyTrack2<TNote>[InstrumentTrack2.NUM_DIFFICULTIES]
+        {
+            DifficultyTrack2<TNote>.Default,
+            DifficultyTrack2<TNote>.Default,
+            DifficultyTrack2<TNote>.Default,
+            DifficultyTrack2<TNote>.Default,
+        };
+        public YARGManagedSortedList<DualTime, HashSet<string>> Events = YARGManagedSortedList<DualTime, HashSet<string>>.Default;
 
         /// <summary>
         /// Returns whether all active difficulties and track-scope phrases and events are empty
@@ -23,7 +30,7 @@ namespace YARG.Core.NewParsing
         {
             foreach (var diff in Difficulties)
             {
-                if (diff != null && !diff.IsEmpty())
+                if (!diff.IsEmpty())
                 {
                     return false;
                 }
@@ -38,32 +45,19 @@ namespace YARG.Core.NewParsing
         {
             foreach (var diff in Difficulties)
             {
-                diff?.Clear();
+                diff.Clear();
             }
             Events.Clear();
         }
 
         /// <summary>
-        /// Trims excess unmanaged buffer data from all difficulties and the track's phrases.<br></br>
-        /// This will also delete any completely empty difficulties.
+        /// Trims excess unmanaged buffer data from all difficulties.<br></br>
         /// </summary>
         public virtual void TrimExcess()
         {
             for (var i = 0; i < Difficulties.Length; i++)
             {
-                var diff = Difficulties[i];
-                if (diff != null)
-                {
-                    if (diff.IsEmpty())
-                    {
-                        diff.Dispose();
-                        Difficulties[i] = null;
-                    }
-                    else
-                    {
-                        diff.TrimExcess();
-                    }
-                }
+                Difficulties[i].TrimExcess();
             }
         }
 
@@ -76,8 +70,8 @@ namespace YARG.Core.NewParsing
         /// </remarks>
         /// <param name="diff">The difficulty to grab</param>
         /// <returns>A direct ref to the appropriate track</returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">Some unhandled difficulty was provided</exception>
-        public ref DifficultyTrack2<TNote>? this[Difficulty diff]
+        /// <exception cref="ArgumentOutOfRangeException">Some unhandled difficulty was provided</exception>
+        public ref DifficultyTrack2<TNote> this[Difficulty diff]
         {
             get
             {
@@ -94,7 +88,7 @@ namespace YARG.Core.NewParsing
                     case Difficulty.ExpertPlus:
                         return ref Difficulties[3];
                     default:
-                        throw new System.ArgumentOutOfRangeException();
+                        throw new ArgumentOutOfRangeException();
                 }
             }
         }
@@ -108,27 +102,30 @@ namespace YARG.Core.NewParsing
             DualTime endTime = default;
             foreach (var diff in Difficulties)
             {
-                if (diff != null)
+                var end = diff.GetLastNoteTime();
+                if (end > endTime)
                 {
-                    var end = diff.GetLastNoteTime();
-                    if (end > endTime)
-                    {
-                        endTime = end;
-                    }
+                    endTime = end;
                 }
             }
             return endTime;
         }
 
         /// <summary>
-        /// Disposes all unmanaged buffer data from every active difficulty and all phrase containers
+        /// Disposes all unmanaged buffer data from every difficulty
         /// </summary>
         public virtual void Dispose()
         {
             foreach (var diff in Difficulties)
             {
-                diff?.Dispose();
+                diff.Dispose();
             }
+            GC.SuppressFinalize(this);
+        }
+
+        ~InstrumentTrack2()
+        {
+            Dispose();
         }
     }
 }

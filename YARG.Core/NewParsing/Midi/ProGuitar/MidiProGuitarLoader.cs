@@ -55,16 +55,9 @@ namespace YARG.Core.NewParsing.Midi
         {
             // Pre-load empty instances of all difficulties
             var instrumentTrack = new ProGuitarInstrumentTrack<TProFret>();
-            var difficulties = new DifficultyTrack2<ProGuitarNote<TProFret>>[InstrumentTrack2.NUM_DIFFICULTIES]
-            {
-                instrumentTrack.Difficulties[0] = instrumentTrack[Difficulty.Easy]   = new DifficultyTrack2<ProGuitarNote<TProFret>>(),
-                instrumentTrack.Difficulties[1] = instrumentTrack[Difficulty.Medium] = new DifficultyTrack2<ProGuitarNote<TProFret>>(),
-                instrumentTrack.Difficulties[2] = instrumentTrack[Difficulty.Hard]   = new DifficultyTrack2<ProGuitarNote<TProFret>>(),
-                instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new DifficultyTrack2<ProGuitarNote<TProFret>>(),
-            };
-            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
-            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
-            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
+            using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var bres = YARGNativeSortedList<DualTime, DualTime>.Default;
 
             var diffModifiers = stackalloc (DualTime Arpeggio, ProSlide Slide, EmphasisType Emphasis, bool Hopo)[InstrumentTrack2.NUM_DIFFICULTIES];
             // Per-difficulty tracker of note positions
@@ -117,7 +110,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - PROGUITAR_MIN;
                             int diffIndex = DIFFVALUES[noteValue];
-                            var diffTrack = difficulties[diffIndex];
+                            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
                             ref var diffMods = ref diffModifiers[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_STRINGS)
@@ -223,7 +216,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - PROGUITAR_MIN;
                             int diffIndex = DIFFVALUES[noteValue];
-                            var diffTrack = difficulties[diffIndex];
+                            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
                             ref var diffMods = ref diffModifiers[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_STRINGS)
@@ -315,10 +308,10 @@ namespace YARG.Core.NewParsing.Midi
                                     if (tremoloPostion.Ticks > -1)
                                     {
                                         var duration = position - tremoloPostion;
-                                        difficulties[3].Tremolos.Append(in tremoloPostion, duration);
+                                        instrumentTrack.Difficulties[3].Tremolos.Append(in tremoloPostion, duration);
                                         if (tremoloOnHard)
                                         {
-                                            difficulties[2].Tremolos.Append(in tremoloPostion, duration);
+                                            instrumentTrack.Difficulties[2].Tremolos.Append(in tremoloPostion, duration);
                                             tremoloOnHard = false;
                                         }
                                         tremoloPostion.Ticks = -1;
@@ -328,10 +321,10 @@ namespace YARG.Core.NewParsing.Midi
                                     if (trillPosition.Ticks > -1)
                                     {
                                         var duration = position - trillPosition;
-                                        difficulties[3].Trills.Append(in trillPosition, duration);
+                                        instrumentTrack.Difficulties[3].Trills.Append(in trillPosition, duration);
                                         if (trillOnHard)
                                         {
-                                            difficulties[2].Trills.Append(in trillPosition, duration);
+                                            instrumentTrack.Difficulties[2].Trills.Append(in trillPosition, duration);
                                             trillOnHard = false;
                                         }
                                         trillPosition.Ticks = -1;
@@ -382,11 +375,12 @@ namespace YARG.Core.NewParsing.Midi
                 }
             }
 
-            foreach (var diff in difficulties)
+            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                diff.Overdrives.CopyData(overdrives);
-                diff.Soloes.CopyData(soloes);
-                diff.BREs.CopyData(bres);
+                ref var diff = ref instrumentTrack.Difficulties[i];
+                diff.Overdrives = overdrives.Clone();
+                diff.Soloes = soloes.Clone();
+                diff.BREs = bres.Clone();
             }
             return instrumentTrack;
         }

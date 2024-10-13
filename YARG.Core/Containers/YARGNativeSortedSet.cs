@@ -17,10 +17,18 @@ namespace YARG.Core.Containers
     /// </remarks>
     /// <typeparam name="TValue">The type of sortable value to hold</typeparam>
     [DebuggerDisplay("Count: {_count}")]
-    public unsafe class YARGNativeSortedSet<TValue> : IEnumerable<TValue>, IDisposable
+    public unsafe struct YARGNativeSortedSet<TValue> : IEnumerable<TValue>, IDisposable
         where TValue : unmanaged, IEquatable<TValue>, IComparable<TValue>
     {
-        private TValue* _buffer = null;
+        public static readonly YARGNativeSortedSet<TValue> Default = new()
+        {
+            _buffer = null,
+            _capacity = 0,
+            _count = 0,
+            _version = 0
+        };
+
+        private TValue* _buffer;
         private int _capacity;
         private int _count;
         private int _version;
@@ -28,14 +36,14 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The number of values within the list
         /// </summary>
-        public int Count => _count;
+        public readonly int Count => _count;
 
         /// <summary>
         /// The capacity of the list where values will reside
         /// </summary>
         public int Capacity
         {
-            get => _capacity;
+            readonly get => _capacity;
             set
             {
                 if (_version == -1)
@@ -75,54 +83,22 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The span view of the data up to <see cref="Count"/>
         /// </summary>
-        public Span<TValue> Span => new(_buffer, _count);
+        public readonly Span<TValue> Span => new(_buffer, _count);
 
         /// <summary>
         /// The direct pointer for the underlying data. Use carefully.
         /// </summary>
-        public TValue* Data => _buffer;
+        public readonly TValue* Data => _buffer;
 
         /// <summary>
         /// The direct pointer to the end position of the underlying data. Use carefully.
         /// </summary>
-        public TValue* End => _buffer + _count;
-
-        /// <summary>
-        /// Transfers all the data from the source into the current instance, leaving the source in a default state.
-        /// </summary>
-        /// <remarks>Prior data held by the current instance will get disposed before the transfer</remarks>
-        public YARGNativeSortedSet<TValue> StealData(YARGNativeSortedSet<TValue> source)
-        {
-            _Dispose();
-            _buffer = source._buffer;
-            _count = source._count;
-            _capacity = source._capacity;
-            _version = source._version;
-            source._buffer = null;
-            source._count = 0;
-            source._capacity = 0;
-            source._version = 0;
-            return this;
-        }
-
-        /// <summary>
-        /// Fills the current instance with data copied from the source
-        /// </summary>
-        public YARGNativeSortedSet<TValue> CopyData(YARGNativeSortedSet<TValue> source)
-        {
-            int bytes = source._count * sizeof(TValue);
-            _buffer = (TValue*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) bytes);
-            _count = source._count;
-            _capacity = source._count;
-            _version++;
-            Buffer.MemoryCopy(_buffer, source._buffer, bytes, bytes);
-            return this;
-        }
+        public readonly TValue* End => _buffer + _count;
 
         /// <summary>
         /// Returns whether count is zero
         /// </summary>
-        public bool IsEmpty()
+        public readonly bool IsEmpty()
         {
             return _count == 0;
         }
@@ -261,7 +237,7 @@ namespace YARG.Core.Containers
         /// <remarks>Performs a binary search</remarks>
         /// <param name="value">The value to find</param>
         /// <returns>The index of the matching value. If it was not found, the index where it would go is returned, but bit-flipped.</returns>
-        public int Find(in TValue value)
+        public readonly int Find(in TValue value)
         {
             if (_buffer == null)
             {
@@ -295,7 +271,7 @@ namespace YARG.Core.Containers
         /// Returns whether the set contains the value
         /// </summary>
         /// <param name="value">Value to find</param>
-        public bool Contains(in TValue value)
+        public readonly bool Contains(in TValue value)
         {
             return Find(in value) >= 0;
         }
@@ -325,7 +301,7 @@ namespace YARG.Core.Containers
             Capacity = newcapacity;
         }
 
-        private void _Dispose()
+        public void Dispose()
         {
             if (_buffer != null)
             {
@@ -337,25 +313,14 @@ namespace YARG.Core.Containers
             _count = 0;
         }
 
-        ~YARGNativeSortedSet()
-        {
-            _Dispose();
-        }
-
-        public void Dispose()
-        {
-            _Dispose();
-            GC.SuppressFinalize(this);
-        }
-
-        IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
+        readonly IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
         {
             return ((IEnumerable<TValue>) this).GetEnumerator();
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        readonly IEnumerator IEnumerable.GetEnumerator()
         {
-            return new Enumerator(this);
+            return new Enumerator(in this);
         }
 
         public struct Enumerator : IEnumerator<TValue>, IEnumerator
@@ -364,7 +329,7 @@ namespace YARG.Core.Containers
             private readonly int _version;
             private int _index;
 
-            internal Enumerator(YARGNativeSortedSet<TValue> set)
+            internal Enumerator(in YARGNativeSortedSet<TValue> set)
             {
                 _set = set;
                 _version = set._version;

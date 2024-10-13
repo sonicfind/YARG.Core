@@ -226,7 +226,7 @@ namespace YARG.Core.IO
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private uint ReadVLQ()
         {
-            uint value = 0;
+            uint value = 0U;
             while (true)
             {
                 if (_trackPosition >= _length)
