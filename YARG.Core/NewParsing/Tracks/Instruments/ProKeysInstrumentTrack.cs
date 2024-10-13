@@ -17,16 +17,14 @@ namespace YARG.Core.NewParsing
 
     public class ProKeysInstrumentTrack : InstrumentTrack2<ProKeyNote>
     {
-        public readonly YARGNativeSortedList<DualTime, ProKey_Ranges>[] Ranges = new YARGNativeSortedList<DualTime, ProKey_Ranges>[InstrumentTrack2.NUM_DIFFICULTIES];
-        public readonly YARGNativeSortedList<DualTime, DualTime> Glissandos = new();
-
-        public ProKeysInstrumentTrack()
+        public readonly YARGNativeSortedList<DualTime, ProKey_Ranges>[] Ranges = new YARGNativeSortedList<DualTime, ProKey_Ranges>[InstrumentTrack2.NUM_DIFFICULTIES]
         {
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; i++)
-            {
-                Ranges[i] = new YARGNativeSortedList<DualTime, ProKey_Ranges>();
-            }
-        }
+            YARGNativeSortedList<DualTime, ProKey_Ranges>.Default,
+            YARGNativeSortedList<DualTime, ProKey_Ranges>.Default,
+            YARGNativeSortedList<DualTime, ProKey_Ranges>.Default,
+            YARGNativeSortedList<DualTime, ProKey_Ranges>.Default
+        };
+        public YARGNativeSortedList<DualTime, DualTime> Glissandos = YARGNativeSortedList<DualTime, DualTime>.Default;
 
         public override bool IsEmpty()
         {
