@@ -37,18 +37,11 @@ namespace YARG.Core.NewParsing.Midi
         {
             // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<SixFretGuitar>();
-            var difficulties = new DifficultyTrack2<SixFretGuitar>[InstrumentTrack2.NUM_DIFFICULTIES]
-            {
-                instrumentTrack.Difficulties[0] = instrumentTrack[Difficulty.Easy]   = new DifficultyTrack2<SixFretGuitar>(),
-                instrumentTrack.Difficulties[1] = instrumentTrack[Difficulty.Medium] = new DifficultyTrack2<SixFretGuitar>(),
-                instrumentTrack.Difficulties[2] = instrumentTrack[Difficulty.Hard]   = new DifficultyTrack2<SixFretGuitar>(),
-                instrumentTrack.Difficulties[3] = instrumentTrack[Difficulty.Expert] = new DifficultyTrack2<SixFretGuitar>(),
-            };
-            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
-            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
-            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
-            using var tremolos = new YARGNativeSortedList<DualTime, DualTime>();
-            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
+            using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var tremolos = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var bres = YARGNativeSortedList<DualTime, DualTime>.Default;
 
             var diffModifiers = stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES];
             // Per-difficulty tracker of note positions
@@ -90,7 +83,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.value - SIXFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            var diffTrack = difficulties[diffIndex];
+                            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -174,7 +167,7 @@ namespace YARG.Core.NewParsing.Midi
                                             {
                                                 diffModifiers[i].SliderNotes = true;
                                                 // If any note exists on the same tick, we must change the state to match
-                                                if (difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
+                                                if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
                                                 {
                                                     guitar->State = GuitarState.Tap;
                                                 }
@@ -211,7 +204,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.value - SIXFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            var diffTrack = difficulties[diffIndex];
+                            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -283,7 +276,7 @@ namespace YARG.Core.NewParsing.Midi
                                                 // If any note exists on the same tick, we must change the state to match
                                                 // From state heirarchy rules, the state for a found note IS already set to Tap.
                                                 // We don't need to check.
-                                                if (difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
+                                                if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
                                                 {
                                                     if (diffModifier.HopoOn)
                                                     {
@@ -385,7 +378,7 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         diffModifiers[diffIndex].SliderNotes = enable;
                         // If any note exists on the same tick, we must change the state to match
-                        if (difficulties[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
+                        if (instrumentTrack.Difficulties[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
                         {
                             if (enable)
                             {
@@ -419,13 +412,14 @@ namespace YARG.Core.NewParsing.Midi
                 }
             }
 
-            foreach (var diff in difficulties)
+            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                diff.Overdrives.CopyData(overdrives);
-                diff.Soloes.CopyData(soloes);
-                diff.BREs.CopyData(bres);
-                diff.Tremolos.CopyData(tremolos);
-                diff.Trills.CopyData(trills);
+                ref var diff = ref instrumentTrack.Difficulties[i];
+                diff.Overdrives = overdrives.Clone();
+                diff.Soloes = soloes.Clone();
+                diff.BREs = bres.Clone();
+                diff.Tremolos = tremolos.Clone();
+                diff.Trills = trills.Clone();
             }
             return instrumentTrack;
         }
