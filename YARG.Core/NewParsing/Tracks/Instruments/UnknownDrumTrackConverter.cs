@@ -13,7 +13,6 @@ namespace YARG.Core.NewParsing
             {
                 Events = source.Events,
             };
-            source.Events = YARGManagedSortedList<DualTime, HashSet<string>>.Default;
             return ConvertToFourLane(source, newTrack, isPro);
         }
 
@@ -23,7 +22,6 @@ namespace YARG.Core.NewParsing
             {
                 Events = source.Events,
             };
-            source.Events = YARGManagedSortedList<DualTime, HashSet<string>>.Default;
             return ConvertToFiveLane(source, newTrack);
         }
 
