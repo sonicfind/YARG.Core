@@ -95,13 +95,7 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         // If the distance between the current NoteOn and the previous NoteOn is less than a certain threshold
                         // the previous position will override the current one, to "chord" multiple notes together
-                        if (chordSnapper.Snap(ref position) && stats.Position > 0)
-                        {
-#if DEBUG
-                            YargLogger.LogInfo("Snap occured");
-#endif
-                        }
-                        
+                        chordSnapper.Snap(ref position);
                         if (MidiLoader_Constants.DEFAULT_MIN <= note.value && note.value <= DRUMNOTE_MAX)
                         {
                             int noteValue = note.value - MidiLoader_Constants.DEFAULT_MIN;
@@ -467,13 +461,7 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         // If the distance between the current NoteOn and the previous NoteOn is less than a certain threshold
                         // the previous position will override the current one, to "chord" multiple notes together
-                        if (chordSnapper.Snap(ref position) && stats.Position > 0)
-                        {
-#if DEBUG
-                            YargLogger.LogInfo("Snap occured");
-#endif
-                        }
-
+                        chordSnapper.Snap(ref position);
                         if (MidiLoader_Constants.DEFAULT_MIN <= note.value && note.value <= DRUMNOTE_MAX)
                         {
                             int noteValue = note.value - MidiLoader_Constants.DEFAULT_MIN;
@@ -790,13 +778,7 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         // If the distance between the current NoteOn and the previous NoteOn is less than a certain threshold
                         // the previous position will override the current one, to "chord" multiple notes together
-                        if (chordSnapper.Snap(ref position) && stats.Position > 0)
-                        {
-#if DEBUG
-                            YargLogger.LogInfo("Snap occured");
-#endif
-                        }
-
+                        chordSnapper.Snap(ref position);
                         if (MidiLoader_Constants.DEFAULT_MIN <= note.value && note.value <= DRUMNOTE_MAX)
                         {
                             int noteValue = note.value - MidiLoader_Constants.DEFAULT_MIN;
