@@ -8,10 +8,10 @@ namespace YARG.Core.NewParsing
 {
     public class VenueTrack2 : IDisposable
     {
-        public readonly YARGNativeSortedList<DualTime, VenueEvent2<LightingType>> Lighting = new();
-        public readonly YARGNativeSortedList<DualTime, VenueEvent2<PostProcessingType>> PostProcessing = new();
-        public readonly YARGNativeSortedList<DualTime, VenueEvent2<PerformerEvent2>> Performer = new();
-        public readonly YARGNativeSortedList<DualTime, VenueEvent2<StageEffect>> Stage = new();
+        public YARGNativeSortedList<DualTime, VenueEvent2<LightingType>> Lighting = YARGNativeSortedList<DualTime, VenueEvent2<LightingType>>.Default;
+        public YARGNativeSortedList<DualTime, VenueEvent2<PostProcessingType>> PostProcessing = YARGNativeSortedList<DualTime, VenueEvent2<PostProcessingType>>.Default;
+        public YARGNativeSortedList<DualTime, VenueEvent2<PerformerEvent2>> Performer = YARGNativeSortedList<DualTime, VenueEvent2<PerformerEvent2>>.Default;
+        public YARGNativeSortedList<DualTime, VenueEvent2<StageEffect>> Stage = YARGNativeSortedList<DualTime, VenueEvent2<StageEffect>>.Default;
 
         public void Dispose()
         {

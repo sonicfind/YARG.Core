@@ -5,24 +5,37 @@ using YARG.Core.Containers;
 
 namespace YARG.Core.NewParsing
 {
-    public class DifficultyTrack2<TNote> : ITrack
+    public struct DifficultyTrack2<TNote> : ITrack
         where TNote : unmanaged, IInstrumentNote
     {
-        public readonly YARGNativeSortedList<DualTime, TNote> Notes = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> Overdrives = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> Soloes = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> Trills = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> Tremolos = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> BREs = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> Faceoff_Player1 = new();
-        public readonly YARGNativeSortedList<DualTime, DualTime> Faceoff_Player2 = new();
-        public readonly YARGManagedSortedList<DualTime, HashSet<string>> Events = new();
+        public static readonly DifficultyTrack2<TNote> Default = new()
+        {
+            Notes = YARGNativeSortedList<DualTime, TNote>.Default,
+            Overdrives = YARGNativeSortedList<DualTime, DualTime>.Default,
+            Soloes = YARGNativeSortedList<DualTime, DualTime>.Default,
+            Trills = YARGNativeSortedList<DualTime, DualTime>.Default,
+            Tremolos = YARGNativeSortedList<DualTime, DualTime>.Default,
+            BREs = YARGNativeSortedList<DualTime, DualTime>.Default,
+            Faceoff_Player1 = YARGNativeSortedList<DualTime, DualTime>.Default,
+            Faceoff_Player2 = YARGNativeSortedList<DualTime, DualTime>.Default,
+            Events = YARGManagedSortedList<DualTime, HashSet<string>>.Default
+        };
+
+        public YARGNativeSortedList<DualTime, TNote> Notes;
+        public YARGNativeSortedList<DualTime, DualTime> Overdrives;
+        public YARGNativeSortedList<DualTime, DualTime> Soloes;
+        public YARGNativeSortedList<DualTime, DualTime> Trills;
+        public YARGNativeSortedList<DualTime, DualTime> Tremolos;
+        public YARGNativeSortedList<DualTime, DualTime> BREs;
+        public YARGNativeSortedList<DualTime, DualTime> Faceoff_Player1;
+        public YARGNativeSortedList<DualTime, DualTime> Faceoff_Player2;
+        public YARGManagedSortedList<DualTime, HashSet<string>> Events;
 
         /// <summary>
         /// Returns if no notes, phrases, or events are present
         /// </summary>
         /// <returns>Whether the track is empty</returns>
-        public virtual bool IsEmpty()
+        public readonly bool IsEmpty()
         {
             return Notes.IsEmpty()
                 && Overdrives.IsEmpty()
@@ -38,7 +51,7 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Clears all notes, phrases, and events
         /// </summary>
-        public virtual void Clear()
+        public void Clear()
         {
             Notes.Clear();
             Overdrives.Clear();
@@ -54,7 +67,7 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Trims excess unmanaged buffer data from notes and phrases
         /// </summary>
-        public virtual void TrimExcess()
+        public void TrimExcess()
         {
             if ((Notes.Count < 500 || 10000 <= Notes.Count) && Notes.Count < Notes.Capacity)
             {
@@ -69,7 +82,7 @@ namespace YARG.Core.NewParsing
             Faceoff_Player2.TrimExcess();
         }
 
-        public unsafe DualTime GetLastNoteTime()
+        public readonly unsafe DualTime GetLastNoteTime()
         {
             if (Notes.IsEmpty())
             {
@@ -83,7 +96,7 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Diposes all the unmanaged data used for notes and phrases
         /// </summary>
-        public virtual void Dispose()
+        public void Dispose()
         {
             Notes.Dispose();
             Overdrives.Dispose();
