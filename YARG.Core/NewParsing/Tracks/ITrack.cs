@@ -26,6 +26,6 @@ namespace YARG.Core.NewParsing
         /// Returns the end time for any notes present
         /// </summary>
         /// <returns>The tick and seconds position of the end time</returns>
-        public DualTime GetLastNoteTime();
+        public void UpdateLastNoteTime(ref DualTime LastNoteTime);
     }
 }
