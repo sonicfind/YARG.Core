@@ -27,10 +27,13 @@ namespace YARG.Core.NewParsing.Midi
 
         private const int TOM_MIN_VALUE = 110;
         private const int TOM_MAX_VALUE = 112;
-        public static unsafe InstrumentTrack2<FourLaneDrums> LoadFourLane(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, bool isProDrums)
+        public static unsafe void Load(YARGMidiTrack midiTrack, InstrumentTrack2<FourLaneDrums> instrumentTrack, ref TempoTracker tempoTracker, bool isProDrums)
         {
-            // Pre-load empty instances of all difficulties
-            var instrumentTrack = new InstrumentTrack2<FourLaneDrums>();
+            if (!instrumentTrack.IsEmpty())
+            {
+                return;
+            }
+
             using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
@@ -391,13 +394,15 @@ namespace YARG.Core.NewParsing.Midi
                 diff.Tremolos = tremolos.Clone();
                 diff.Trills = trills.Clone();
             }
-            return instrumentTrack;
         }
 
-        public static unsafe InstrumentTrack2<FiveLaneDrums> LoadFiveLane(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker)
+        public static unsafe void Load(YARGMidiTrack midiTrack, InstrumentTrack2<FiveLaneDrums> instrumentTrack, ref TempoTracker tempoTracker)
         {
-            // Pre-load empty instances of all difficulties
-            var instrumentTrack = new InstrumentTrack2<FiveLaneDrums>();
+            if (!instrumentTrack.IsEmpty())
+            {
+                return;
+            }
+
             using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
@@ -697,12 +702,10 @@ namespace YARG.Core.NewParsing.Midi
                 diff.Tremolos = tremolos.Clone();
                 diff.Trills = trills.Clone();
             }
-            return instrumentTrack;
         }
 
         public static unsafe InstrumentTrack2<UnknownLaneDrums> LoadUnknownDrums(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ref DrumsType drumsType)
         {
-            // Pre-load empty instances of all difficulties
             var instrumentTrack = new InstrumentTrack2<UnknownLaneDrums>();
             using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;

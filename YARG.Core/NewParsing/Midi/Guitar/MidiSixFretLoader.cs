@@ -33,10 +33,13 @@ namespace YARG.Core.NewParsing.Midi
             0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 11,
         };
 
-        public static unsafe InstrumentTrack2<SixFretGuitar> Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker)
+        public static unsafe void Load(YARGMidiTrack midiTrack, InstrumentTrack2<SixFretGuitar> instrumentTrack, ref TempoTracker tempoTracker)
         {
-            // Pre-load empty instances of all difficulties
-            var instrumentTrack = new InstrumentTrack2<SixFretGuitar>();
+            if (!instrumentTrack.IsEmpty())
+            {
+                return;
+            }
+
             using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
@@ -422,7 +425,6 @@ namespace YARG.Core.NewParsing.Midi
                 diff.Tremolos = tremolos.Clone();
                 diff.Trills = trills.Clone();
             }
-            return instrumentTrack;
         }
     }
 }

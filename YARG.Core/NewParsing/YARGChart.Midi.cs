@@ -285,8 +285,7 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Loads the beat track with measure and strong beats from the BEATS track
         /// </summary>
-        /// <param name="beats">The beats track to fill/param>
-        /// <param name="sync">The backing sync track to use for proper positioning</param>
+        /// <param name="chart">The chart containing the beat map/param>
         /// <param name="midiTrack">The midi track containing the beat track data</param>
         private static void LoadBeatsTrack_Midi(YARGChart chart, ref TempoTracker tempoTracker, YARGMidiTrack midiTrack)
         {
@@ -336,37 +335,37 @@ namespace YARG.Core.NewParsing
         {
             switch (type)
             {
-                case MidiTrackType.Guitar_5: chart.FiveFretGuitar ??=     MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Bass_5:   chart.FiveFretBass ??=       MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Rhythm_5: chart.FiveFretRhythm ??=     MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Coop_5:   chart.FiveFretCoopGuitar ??= MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Keys:     chart.Keys ??=               MidiFiveFretLoader.Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Guitar_5: MidiFiveFretLoader.Load(midiTrack, chart.FiveFretGuitar, ref tempoTracker); break;
+                case MidiTrackType.Bass_5:   MidiFiveFretLoader.Load(midiTrack, chart.FiveFretBass, ref tempoTracker); break;
+                case MidiTrackType.Rhythm_5: MidiFiveFretLoader.Load(midiTrack, chart.FiveFretRhythm, ref tempoTracker); break;
+                case MidiTrackType.Coop_5:   MidiFiveFretLoader.Load(midiTrack, chart.FiveFretCoopGuitar, ref tempoTracker); break;
+                case MidiTrackType.Keys:     MidiFiveFretLoader.Load(midiTrack, chart.Keys, ref tempoTracker); break;
 
                 case MidiTrackType.Drums:
                     switch (drumsInChart)
                     {
-                    case DrumsType.FourLane: chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, ref tempoTracker, false); break;
-                    case DrumsType.ProDrums: chart.FourLaneDrums ??= MidiDrumsLoader.LoadFourLane(midiTrack, ref tempoTracker, true); break;
-                    case DrumsType.FiveLane: chart.FiveLaneDrums ??= MidiDrumsLoader.LoadFiveLane(midiTrack, ref tempoTracker); break;
+                    case DrumsType.FourLane: MidiDrumsLoader.Load(midiTrack, chart.FourLaneDrums, ref tempoTracker, false); break;
+                    case DrumsType.ProDrums: MidiDrumsLoader.Load(midiTrack, chart.FourLaneDrums, ref tempoTracker, true); break;
+                    case DrumsType.FiveLane: MidiDrumsLoader.Load(midiTrack, chart.FiveLaneDrums, ref tempoTracker); break;
                     default:
                         {
                             var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, ref tempoTracker, ref drumsInChart);
                             // Only possible if pre-type was FourOrFive AND fifth lane was not found
                             if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
                             {
-                                chart.FourLaneDrums = track.ConvertToFourLane(false);
+                                track.ConvertTo(chart.FourLaneDrums, false);
                                 drumsInChart = DrumsType.FourLane;
                             }
                             // Only possible if pre-type was ProOrFive AND fifth lane was not found
                             else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
                             {
-                                chart.FourLaneDrums = track.ConvertToFourLane(true);
+                                track.ConvertTo(chart.FourLaneDrums, true);
                                 drumsInChart = DrumsType.ProDrums;
                             }
                             // Only possible if fifth lane is found
                             else
                             {
-                                chart.FiveLaneDrums = track.ConvertToFiveLane();
+                                track.ConvertTo(chart.FiveLaneDrums);
                             }
                             // There's no need to call dipose OR the finalizer as everything would've already been transferred or pre-disposed
                             GC.SuppressFinalize(track);
@@ -374,38 +373,25 @@ namespace YARG.Core.NewParsing
                         }
                     }
                     break;
-                case MidiTrackType.Guitar_6:      chart.SixFretGuitar ??=      MidiSixFretLoader. Load(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Bass_6:        chart.SixFretBass ??=        MidiSixFretLoader. Load(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Rhythm_6:      chart.SixFretRhythm ??=      MidiSixFretLoader. Load(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Coop_6:        chart.SixFretCoopGuitar ??=  MidiSixFretLoader. Load(midiTrack, ref tempoTracker); break;
+                case MidiTrackType.Guitar_6: MidiSixFretLoader.Load(midiTrack, chart.SixFretGuitar,     ref tempoTracker); break;
+                case MidiTrackType.Bass_6:   MidiSixFretLoader.Load(midiTrack, chart.SixFretBass,       ref tempoTracker); break;
+                case MidiTrackType.Rhythm_6: MidiSixFretLoader.Load(midiTrack, chart.SixFretRhythm,     ref tempoTracker); break;
+                case MidiTrackType.Coop_6:   MidiSixFretLoader.Load(midiTrack, chart.SixFretCoopGuitar, ref tempoTracker); break;
 
-                case MidiTrackType.Pro_Guitar_17: chart.ProGuitar_17Fret ??=   MidiProGuitarLoader.Load<ProFret_17>(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Pro_Guitar_22: chart.ProGuitar_22Fret ??=   MidiProGuitarLoader.Load<ProFret_22>(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Pro_Bass_17:   chart.ProBass_17Fret ??=     MidiProGuitarLoader.Load<ProFret_17>(midiTrack, ref tempoTracker); break;
-                case MidiTrackType.Pro_Bass_22:   chart.ProBass_22Fret ??=     MidiProGuitarLoader.Load<ProFret_22>(midiTrack, ref tempoTracker); break;
-
+                case MidiTrackType.Pro_Guitar_17: MidiProGuitarLoader.Load(midiTrack, chart.ProGuitar_17Fret, ref tempoTracker); break;
+                case MidiTrackType.Pro_Guitar_22: MidiProGuitarLoader.Load(midiTrack, chart.ProGuitar_22Fret, ref tempoTracker); break;
+                case MidiTrackType.Pro_Bass_17:   MidiProGuitarLoader.Load(midiTrack, chart.ProBass_17Fret, ref tempoTracker); break;
+                case MidiTrackType.Pro_Bass_22:   MidiProGuitarLoader.Load(midiTrack, chart.ProBass_22Fret, ref tempoTracker); break;
+                
                 case MidiTrackType.Pro_Keys_X:
                 case MidiTrackType.Pro_Keys_H:
-                case MidiTrackType.Pro_Keys_M:
-                case MidiTrackType.Pro_Keys_E:
-                    {
-                        // Handled per-difficulty, so we use 0-3 indexing
-                        MidiProKeysLoader.Load(midiTrack, ref tempoTracker, ref chart.ProKeys, type - MidiTrackType.Pro_Keys_E);
-                        break;
-                    }
-                case MidiTrackType.Vocals: chart.LeadVocals ??= MidiVocalsLoader.LoadPartVocals(midiTrack, ref tempoTracker, ref encoding); break;
+                case MidiTrackType.Pro_Keys_M: // Handled per-difficulty, so we use 0-3 indexing
+                case MidiTrackType.Pro_Keys_E: MidiProKeysLoader.Load(midiTrack, ref tempoTracker, chart.ProKeys, type - MidiTrackType.Pro_Keys_E); break;
+
+                case MidiTrackType.Vocals: MidiVocalsLoader.Load(midiTrack, chart.LeadVocals, 0, ref tempoTracker, ref encoding); break;
                 case MidiTrackType.Harm1:
-                case MidiTrackType.Harm2:
-                case MidiTrackType.Harm3:
-                    {
-                        chart.HarmonyVocals ??= new HarmonyVocalsTrack();
-                        int index = type - MidiTrackType.Harm1;
-                        if (chart.HarmonyVocals[index].IsEmpty())
-                        {
-                            MidiVocalsLoader.Load(midiTrack, ref tempoTracker, chart.HarmonyVocals, index, ref encoding);
-                        }
-                        break;
-                    }
+                case MidiTrackType.Harm2: // Handled per-vocal track, so we use 0-2 indexing
+                case MidiTrackType.Harm3: MidiVocalsLoader.Load(midiTrack, chart.HarmonyVocals, type - MidiTrackType.Harm1, ref tempoTracker, ref encoding); break;
             }
         }
     }

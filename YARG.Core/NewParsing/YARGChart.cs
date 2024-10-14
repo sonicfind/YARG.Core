@@ -22,35 +22,35 @@ namespace YARG.Core.NewParsing
         public LoaderSettings Settings;
         public string MidiSequenceName = string.Empty;
 
-        public InstrumentTrack2<FiveFretGuitar>? FiveFretGuitar;
-        public InstrumentTrack2<FiveFretGuitar>? FiveFretBass;
-        public InstrumentTrack2<FiveFretGuitar>? FiveFretRhythm;
-        public InstrumentTrack2<FiveFretGuitar>? FiveFretCoopGuitar;
-        public InstrumentTrack2<FiveFretGuitar>? Keys;
+        public readonly InstrumentTrack2<FiveFretGuitar> FiveFretGuitar = new();
+        public readonly InstrumentTrack2<FiveFretGuitar> FiveFretBass = new();
+        public readonly InstrumentTrack2<FiveFretGuitar> FiveFretRhythm = new();
+        public readonly InstrumentTrack2<FiveFretGuitar> FiveFretCoopGuitar = new();
+        public readonly InstrumentTrack2<FiveFretGuitar> Keys = new();
 
-        public InstrumentTrack2<SixFretGuitar>? SixFretGuitar;
-        public InstrumentTrack2<SixFretGuitar>? SixFretBass;
-        public InstrumentTrack2<SixFretGuitar>? SixFretRhythm;
-        public InstrumentTrack2<SixFretGuitar>? SixFretCoopGuitar;
+        public readonly InstrumentTrack2<SixFretGuitar> SixFretGuitar = new();
+        public readonly InstrumentTrack2<SixFretGuitar> SixFretBass = new();
+        public readonly InstrumentTrack2<SixFretGuitar> SixFretRhythm = new();
+        public readonly InstrumentTrack2<SixFretGuitar> SixFretCoopGuitar = new();
 
-        public InstrumentTrack2<FourLaneDrums>? FourLaneDrums;
-        public InstrumentTrack2<FiveLaneDrums>? FiveLaneDrums;
+        public readonly InstrumentTrack2<FourLaneDrums> FourLaneDrums = new();
+        public readonly InstrumentTrack2<FiveLaneDrums> FiveLaneDrums = new();
 
-        // public InstrumentTrack2<EliteDrums>? EliteDrums;
+        // public readonly InstrumentTrack2<EliteDrums> EliteDrums = new();
 
-        public ProGuitarInstrumentTrack<ProFret_17>? ProGuitar_17Fret;
-        public ProGuitarInstrumentTrack<ProFret_22>? ProGuitar_22Fret;
-        public ProGuitarInstrumentTrack<ProFret_17>? ProBass_17Fret;
-        public ProGuitarInstrumentTrack<ProFret_22>? ProBass_22Fret;
+        public readonly ProGuitarInstrumentTrack<ProFret_17> ProGuitar_17Fret = new();
+        public readonly ProGuitarInstrumentTrack<ProFret_22> ProGuitar_22Fret = new();
+        public readonly ProGuitarInstrumentTrack<ProFret_17> ProBass_17Fret = new();
+        public readonly ProGuitarInstrumentTrack<ProFret_22> ProBass_22Fret = new();
 
-        public ProKeysInstrumentTrack? ProKeys;
+        public readonly ProKeysInstrumentTrack ProKeys = new();
 
         // public TBDTrack DJ;
 
-        public LeadVocalsTrack? LeadVocals;
-        public HarmonyVocalsTrack? HarmonyVocals;
+        public readonly LeadVocalsTrack LeadVocals = new();
+        public readonly HarmonyVocalsTrack HarmonyVocals = new();
 
-        public VenueTrack2? Venue;
+        public readonly VenueTrack2 Venue = new();
 
         /// <summary>
         /// Constructs an empty chart with default metadata and settings
@@ -91,16 +91,13 @@ namespace YARG.Core.NewParsing
                 }
             }
 
-            static void Test<TTrack>(TTrack? track, ref DualTime lastNoteTime)
+            static void Test<TTrack>(TTrack track, ref DualTime lastNoteTime)
                 where TTrack : class, ITrack
             {
-                if (track != null)
+                var lastTime = track.GetLastNoteTime();
+                if (lastTime > lastNoteTime)
                 {
-                    var lastTime = track.GetLastNoteTime();
-                    if (lastTime > lastNoteTime)
-                    {
-                        lastNoteTime = lastTime;
-                    }
+                    lastNoteTime = lastTime;
                 }
             }
 
@@ -146,34 +143,36 @@ namespace YARG.Core.NewParsing
             BeatMap.Dispose();
             Miscellaneous?.Clear();
 
-            FiveFretGuitar?.Dispose();
-            FiveFretBass?.Dispose();
-            FiveFretRhythm?.Dispose();
-            FiveFretCoopGuitar?.Dispose();
+            FiveFretGuitar.Dispose();
+            FiveFretBass.Dispose();
+            FiveFretRhythm.Dispose();
+            FiveFretCoopGuitar.Dispose();
 
-            SixFretGuitar?.Dispose();
-            SixFretBass?.Dispose();
-            SixFretRhythm?.Dispose();
-            SixFretCoopGuitar?.Dispose();
+            SixFretGuitar.Dispose();
+            SixFretBass.Dispose();
+            SixFretRhythm.Dispose();
+            SixFretCoopGuitar.Dispose();
 
-            Keys?.Dispose();
+            Keys.Dispose();
 
-            FourLaneDrums?.Dispose();
-            FiveLaneDrums?.Dispose();
+            FourLaneDrums.Dispose();
+            FiveLaneDrums.Dispose();
 
             // TrueDrums?.Dispose();
 
-            ProGuitar_17Fret?.Dispose();
-            ProGuitar_22Fret?.Dispose();
-            ProBass_17Fret?.Dispose();
-            ProBass_22Fret?.Dispose();
+            ProGuitar_17Fret.Dispose();
+            ProGuitar_22Fret.Dispose();
+            ProBass_17Fret.Dispose();
+            ProBass_22Fret.Dispose();
 
-            ProKeys?.Dispose();
+            ProKeys.Dispose();
 
             // DJ?.Dispose();
 
-            LeadVocals?.Dispose();
-            HarmonyVocals?.Dispose();
+            LeadVocals.Dispose();
+            HarmonyVocals.Dispose();
+
+            Venue.Dispose();
         }
     }
 }

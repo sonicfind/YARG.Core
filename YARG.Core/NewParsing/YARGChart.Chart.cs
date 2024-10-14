@@ -174,11 +174,6 @@ namespace YARG.Core.NewParsing
         private static void LoadTracks_Chart<TChar>(YARGChart chart, ref YARGTextContainer<TChar> container, DrumsType drumsInChart, HashSet<Instrument>? activeTracks)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
-            if (activeTracks == null || activeTracks.Contains(Instrument.Vocals))
-            {
-                chart.LeadVocals = new LeadVocalsTrack();
-            }
-
             InstrumentTrack2<UnknownLaneDrums>? unknownDrums = null;
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
@@ -192,18 +187,15 @@ namespace YARG.Core.NewParsing
             {
                 if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
                 {
-                    chart.FourLaneDrums ??= new InstrumentTrack2<FourLaneDrums>();
-                    unknownDrums.ConvertToFourLane(chart.FourLaneDrums, false);
+                    unknownDrums.ConvertTo(chart.FourLaneDrums, false);
                 }
                 else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
                 {
-                    chart.FourLaneDrums ??= new InstrumentTrack2<FourLaneDrums>();
-                    unknownDrums.ConvertToFourLane(chart.FourLaneDrums, true);
+                    unknownDrums.ConvertTo(chart.FourLaneDrums, true);
                 }
                 else
                 {
-                    chart.FiveLaneDrums ??= new InstrumentTrack2<FiveLaneDrums>();
-                    unknownDrums.ConvertToFiveLane(chart.FiveLaneDrums);
+                    unknownDrums.ConvertTo(chart.FiveLaneDrums);
                 }
                 // There's no need to call dipose OR the finalizer as everything would've already been transferred or pre-disposed
                 GC.SuppressFinalize(unknownDrums);
@@ -214,7 +206,7 @@ namespace YARG.Core.NewParsing
         private static unsafe bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
-            if (!chart.Globals.IsEmpty() || !chart.Sections.IsEmpty() || (chart.LeadVocals != null && !chart.LeadVocals.IsEmpty()))
+            if (!chart.Globals.IsEmpty() || !chart.Sections.IsEmpty() || !chart.LeadVocals.IsEmpty())
             {
                 YargLogger.LogInfo("[Events] track appears multiple times. Not parsing repeats...");
                 return false;
@@ -239,25 +231,18 @@ namespace YARG.Core.NewParsing
                     }
                     else if (str.StartsWith(LYRIC))
                     {
-                        if (chart.LeadVocals != null)
-                        {
-                            chart.LeadVocals[0].Lyrics.AppendOrUpdate(in position, str[LYRIC.Length..]);
-                        }
+                        chart.LeadVocals[0].Lyrics.AppendOrUpdate(in position, str[LYRIC.Length..]);
                     }
                     else if (str == PHRASE_START)
                     {
-                        if (chart.LeadVocals != null)
+                        if (phrase.Ticks >= 0 && position.Ticks > phrase.Ticks)
                         {
-                            if (phrase.Ticks >= 0 && position.Ticks > phrase.Ticks)
-                            {
-                                chart.LeadVocals.VocalPhrases_1.Append(in phrase, position - phrase);
-                            }
-                            phrase = position;
+                            chart.LeadVocals.VocalPhrases_1.Append(in phrase, position - phrase);
                         }
+                        phrase = position;
                     }
                     else if (str == PHRASE_END)
                     {
-                        // No need for LeadVocals null check
                         if (phrase.Ticks >= 0)
                         {
                             if (position.Ticks > phrase.Ticks)
@@ -272,11 +257,6 @@ namespace YARG.Core.NewParsing
                         chart.Globals.GetLastOrAppend(in position).Add(str);
                     }
                 }
-            }
-
-            if (chart.LeadVocals != null && chart.LeadVocals.IsEmpty())
-            {
-                chart.LeadVocals = null;
             }
             return true;
         }
@@ -313,7 +293,8 @@ namespace YARG.Core.NewParsing
                     if (activeTracks == null)
                     {
                         UnknownLaneDrums.DrumType = drumsInChart;
-                        bool result = LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref unknownDrums);
+                        unknownDrums ??= new InstrumentTrack2<UnknownLaneDrums>();
+                        bool result = LoadInstrumentTrack_Chart(ref container, ref unknownDrums[difficulty], ref tempoTracker);
                         drumsInChart = UnknownLaneDrums.DrumType;
                         return result;
                     }
@@ -328,18 +309,18 @@ namespace YARG.Core.NewParsing
 
             return instrument switch
                 {
-                    Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FiveFretGuitar),
-                    Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FiveFretBass),
-                    Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FiveFretRhythm),
-                    Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FiveFretCoopGuitar),
-                    Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.SixFretGuitar),
-                    Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.SixFretBass),
-                    Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.SixFretRhythm),
-                    Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.SixFretCoopGuitar),
+                    Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretGuitar    [difficulty], ref tempoTracker),
+                    Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretBass      [difficulty], ref tempoTracker),
+                    Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretRhythm    [difficulty], ref tempoTracker),
+                    Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretCoopGuitar[difficulty], ref tempoTracker),
+                    Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretGuitar     [difficulty], ref tempoTracker),
+                    Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, ref chart.SixFretBass       [difficulty], ref tempoTracker),
+                    Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretRhythm     [difficulty], ref tempoTracker),
+                    Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, ref chart.SixFretCoopGuitar [difficulty], ref tempoTracker),
                     Instrument.FourLaneDrums or
-                    Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FourLaneDrums),
-                    Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.FiveLaneDrums),
-                    Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, ref tempoTracker, difficulty, ref chart.Keys),
+                    Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, ref chart.FourLaneDrums     [difficulty], ref tempoTracker),
+                    Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, ref chart.FiveLaneDrums     [difficulty], ref tempoTracker),
+                    Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, ref chart.Keys              [difficulty], ref tempoTracker),
                     _ => false,
                 };
         }
@@ -354,13 +335,10 @@ namespace YARG.Core.NewParsing
             Trill = 66,
         }
 
-        private static bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, ref TempoTracker tempoTracker, Difficulty difficulty, ref InstrumentTrack2<TNote>? track)
+        private static bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, ref DifficultyTrack2<TNote> difficultyTrack, ref TempoTracker tempoTracker)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TNote : unmanaged, IInstrumentNote, IDotChartLoadable
         {
-            track ??= new InstrumentTrack2<TNote>();
-
-            ref var difficultyTrack = ref track[difficulty];
             if (!difficultyTrack.IsEmpty())
             {
                 return false;
