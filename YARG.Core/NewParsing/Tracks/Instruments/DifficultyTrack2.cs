@@ -100,10 +100,8 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        /// <summary>
-        /// Diposes all the unmanaged data used for notes and phrases
-        /// </summary>
-        public void Dispose()
+        
+        public void Dispose(bool dispose)
         {
             Notes.Dispose();
             Overdrives.Dispose();
@@ -113,6 +111,18 @@ namespace YARG.Core.NewParsing
             BREs.Dispose();
             Faceoff_Player1.Dispose();
             Faceoff_Player2.Dispose();
+            if (dispose)
+            {
+                Events.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Diposes all the data used for notes, phrases, and events
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
         }
     }
 }

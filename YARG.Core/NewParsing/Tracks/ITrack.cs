@@ -27,5 +27,7 @@ namespace YARG.Core.NewParsing
         /// </summary>
         /// <returns>The tick and seconds position of the end time</returns>
         public void UpdateLastNoteTime(ref DualTime LastNoteTime);
+
+        public void Dispose(bool dispose);
     }
 }

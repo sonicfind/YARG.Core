@@ -8,7 +8,7 @@ namespace YARG.Core.NewParsing
     /// <summary>
     /// Holds the notes and lyrics for a specific vocal line
     /// </summary>
-    public struct VocalPart2 : IDisposable
+    public struct VocalPart2
     {
         public static readonly VocalPart2 Default = new()
         {
@@ -35,12 +35,6 @@ namespace YARG.Core.NewParsing
         public readonly void Clear()
         {
             Notes.Clear();
-            Lyrics.Clear();
-        }
-
-        public readonly void Dispose()
-        {
-            Notes.Dispose();
             Lyrics.Clear();
         }
 
