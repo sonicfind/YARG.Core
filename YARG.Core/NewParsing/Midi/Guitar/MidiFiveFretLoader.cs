@@ -111,7 +111,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - FIVEFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
+                            ref var diffTrack = ref instrumentTrack[diffIndex];
                             int lane = laneIndices[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -188,7 +188,7 @@ namespace YARG.Core.NewParsing.Midi
                                         // difficulty-based star power phrases. So we need to...
 
                                         // 1. convert all prior added solo phrases to expert star power phrases,
-                                        instrumentTrack.Difficulties[3].Overdrives = soloes.Clone();
+                                        instrumentTrack.Expert.Overdrives = soloes.Clone();
 
                                         // 2. remove and disallow any track-wise star power phrases (as 116 becomes invalid),
                                         overdrives.Clear();
@@ -215,7 +215,7 @@ namespace YARG.Core.NewParsing.Midi
                                             {
                                                 diffModifiers[i].SliderNotes = true;
                                                 // If any note exists on the same tick, we must change the state to match
-                                                if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
+                                                if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var guitar))
                                                 {
                                                     guitar->State = GuitarState.Tap;
                                                 }
@@ -267,7 +267,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - FIVEFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
+                            ref var diffTrack = ref instrumentTrack[diffIndex];
                             int lane = laneIndices[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -339,7 +339,7 @@ namespace YARG.Core.NewParsing.Midi
                                                 // If any note exists on the same tick, we must change the state to match
                                                 // From state heirarchy rules, the state for a found note IS already set to Tap.
                                                 // We don't need to check.
-                                                if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
+                                                if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var guitar))
                                                 {
                                                     if (diffModifier.HopoOn)
                                                     {
@@ -376,7 +376,7 @@ namespace YARG.Core.NewParsing.Midi
                                             ref var diffOverdrivePosition = ref overdriveDiffPositions[diffIndex];
                                             if (diffOverdrivePosition.Ticks > -1)
                                             {
-                                                instrumentTrack.Difficulties[diffIndex].Overdrives.Append(in diffOverdrivePosition, position - diffOverdrivePosition);
+                                                instrumentTrack[diffIndex].Overdrives.Append(in diffOverdrivePosition, position - diffOverdrivePosition);
                                                 diffOverdrivePosition.Ticks = -1;
                                             }
                                             break;
@@ -466,7 +466,7 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     diffModifiers[diffIndex].SliderNotes = enable;
                                     // If any note exists on the same tick, we must change the state to match
-                                    if (instrumentTrack.Difficulties[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
+                                    if (instrumentTrack[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
                                     {
                                         if (enable)
                                         {
@@ -503,7 +503,7 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     diffModifiers[diffIndex].SliderNotes = enable;
                                     // If any note exists on the same tick, we must change the state to match
-                                    if (instrumentTrack.Difficulties[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
+                                    if (instrumentTrack[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
                                     {
                                         if (enable)
                                         {
@@ -552,7 +552,7 @@ namespace YARG.Core.NewParsing.Midi
 
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                ref var diff = ref instrumentTrack.Difficulties[i];
+                ref var diff = ref instrumentTrack[i];
                 if (!_useAlternateOverdrive)
                 {
                     diff.Overdrives = overdrives.Clone();

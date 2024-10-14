@@ -91,44 +91,34 @@ namespace YARG.Core.NewParsing
                 }
             }
 
-            static void Test<TTrack>(TTrack track, ref DualTime lastNoteTime)
-                where TTrack : class, ITrack
-            {
-                var lastTime = track.GetLastNoteTime();
-                if (lastTime > lastNoteTime)
-                {
-                    lastNoteTime = lastTime;
-                }
-            }
+            var lastNoteTime = default(DualTime);
+            FiveFretGuitar.UpdateLastNoteTime(ref lastNoteTime);
+            FiveFretBass.UpdateLastNoteTime(ref lastNoteTime);
+            FiveFretRhythm.UpdateLastNoteTime(ref lastNoteTime);
+            FiveFretCoopGuitar.UpdateLastNoteTime(ref lastNoteTime);
+            SixFretGuitar.UpdateLastNoteTime(ref lastNoteTime);
+            SixFretBass.UpdateLastNoteTime(ref lastNoteTime);
+            SixFretRhythm.UpdateLastNoteTime(ref lastNoteTime);
+            SixFretCoopGuitar.UpdateLastNoteTime(ref lastNoteTime);
 
-            DualTime lastNoteTime = default;
-            Test(FiveFretGuitar, ref lastNoteTime);
-            Test(FiveFretBass, ref lastNoteTime);
-            Test(FiveFretRhythm, ref lastNoteTime);
-            Test(FiveFretCoopGuitar, ref lastNoteTime);
-            Test(SixFretGuitar, ref lastNoteTime);
-            Test(SixFretBass, ref lastNoteTime);
-            Test(SixFretRhythm, ref lastNoteTime);
-            Test(SixFretCoopGuitar, ref lastNoteTime);
+            Keys.UpdateLastNoteTime(ref lastNoteTime);
 
-            Test(Keys, ref lastNoteTime);
+            FourLaneDrums.UpdateLastNoteTime(ref lastNoteTime);
+            FiveLaneDrums.UpdateLastNoteTime(ref lastNoteTime);
 
-            Test(FourLaneDrums, ref lastNoteTime);
-            Test(FiveLaneDrums, ref lastNoteTime);
+            // TrueDrums.UpdateLastNoteTime(ref lastNoteTime);
 
-            // Test(TrueDrums, ref lastNoteTime);
+            ProGuitar_17Fret.UpdateLastNoteTime(ref lastNoteTime);
+            ProGuitar_22Fret.UpdateLastNoteTime(ref lastNoteTime);
+            ProBass_17Fret.UpdateLastNoteTime(ref lastNoteTime);
+            ProBass_22Fret.UpdateLastNoteTime(ref lastNoteTime);
 
-            Test(ProGuitar_17Fret, ref lastNoteTime);
-            Test(ProGuitar_22Fret, ref lastNoteTime);
-            Test(ProBass_17Fret, ref lastNoteTime);
-            Test(ProBass_22Fret, ref lastNoteTime);
+            ProKeys.UpdateLastNoteTime(ref lastNoteTime);
 
-            Test(ProKeys, ref lastNoteTime);
+            // Dj.UpdateLastNoteTime(ref lastNoteTime);
 
-            // Test(Dj, ref lastNoteTime);
-
-            Test(LeadVocals, ref lastNoteTime);
-            Test(HarmonyVocals, ref lastNoteTime);
+            LeadVocals.UpdateLastNoteTime(ref lastNoteTime);
+            HarmonyVocals.UpdateLastNoteTime(ref lastNoteTime);
             return lastNoteTime;
         }
 

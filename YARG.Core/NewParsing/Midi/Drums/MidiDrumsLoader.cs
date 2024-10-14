@@ -99,7 +99,7 @@ namespace YARG.Core.NewParsing.Midi
                             int lane = LANEVALUES[noteValue];
                             if (lane < DOUBLEKICK_LANE)
                             {
-                                ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
+                                ref var diffTrack = ref instrumentTrack[diffIndex];
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
                                     // We do this on the commonality that most charts do not exceed this number of notes.
@@ -149,7 +149,7 @@ namespace YARG.Core.NewParsing.Midi
                             else if (lane == 11 && diffIndex == 2)
                             {
                                 lanes[diffIndex * NUM_LANES + DOUBLEKICK_LANE] = position;
-                                instrumentTrack.Difficulties[3].Notes.TryAppend(in position);
+                                instrumentTrack.Expert.Notes.TryAppend(in position);
                             }
                         }
                         else if (TOM_MIN_VALUE <= note.Value && note.Value <= TOM_MAX_VALUE)
@@ -166,7 +166,7 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 // If a flag flips on the same tick of any notes,
                                 // we MUST flip the applicable cymbal marker for those notes to match
-                                if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var drum))
+                                if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
                                 {
                                     // Blah blah: pointer arithmetic
                                     (&drum->Cymbal_Yellow)[index] = false;
@@ -199,7 +199,7 @@ namespace YARG.Core.NewParsing.Midi
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -224,7 +224,7 @@ namespace YARG.Core.NewParsing.Midi
                                     // The FourLaneDrums type lays all the inner lanes adjacent to each other.
                                     // Having the pointer to an instance thus allows us to use arithmetic on the location
                                     // of the Bass lane variable to get the specific one we want.
-                                    var drum = instrumentTrack.Difficulties[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition);
+                                    var drum = instrumentTrack[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition);
                                     (&drum->Kick)[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
 
@@ -252,7 +252,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + DOUBLEKICK_LANE];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    var drum = instrumentTrack.Difficulties[3].Notes.TraverseBackwardsUntil(in colorPosition);
+                                    var drum = instrumentTrack.Expert.Notes.TraverseBackwardsUntil(in colorPosition);
                                     drum->Kick = position - colorPosition;
                                     colorPosition.Ticks = -1;
 
@@ -282,7 +282,7 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 // If a flag flips on the same tick of any notes,
                                 // we MUST flip the applicable cymbal marker for those notes to match
-                                if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var drum))
+                                if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
                                 {
                                     // Blah blah: pointer arithmetic
                                     (&drum->Cymbal_Yellow)[index] = true;
@@ -342,7 +342,7 @@ namespace YARG.Core.NewParsing.Midi
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = false;
                                         }
@@ -374,7 +374,7 @@ namespace YARG.Core.NewParsing.Midi
 
             if (convertExpectKicksToShared)
             {
-                ref var expertNotes = ref instrumentTrack.Difficulties[3].Notes;
+                ref var expertNotes = ref instrumentTrack.Expert.Notes;
                 for (int i = 0; i < expertNotes.Count; ++i)
                 {
                     ref var drum = ref expertNotes.Data[i].Value;
@@ -387,7 +387,7 @@ namespace YARG.Core.NewParsing.Midi
 
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                ref var diff = ref instrumentTrack.Difficulties[i];
+                ref var diff = ref instrumentTrack[i];
                 diff.Overdrives = overdrives.Clone();
                 diff.Soloes = soloes.Clone();
                 diff.BREs = bres.Clone();
@@ -461,7 +461,7 @@ namespace YARG.Core.NewParsing.Midi
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
-                                ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
+                                ref var diffTrack = ref instrumentTrack[diffIndex];
                                 lanes[diffIndex * NUM_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
@@ -499,7 +499,7 @@ namespace YARG.Core.NewParsing.Midi
                             else if (lane == 11 && diffIndex == 2)
                             {
                                 lanes[diffIndex * NUM_LANES + KICK_LANE] = position;
-                                instrumentTrack.Difficulties[3].Notes.TryAppend(in position);
+                                instrumentTrack.Expert.Notes.TryAppend(in position);
                             }
                         }
                         else if (MidiLoader_Constants.BRE_MIN <= note.Value && note.Value <= MidiLoader_Constants.BRE_MAX)
@@ -528,7 +528,7 @@ namespace YARG.Core.NewParsing.Midi
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -553,7 +553,7 @@ namespace YARG.Core.NewParsing.Midi
                                     // The FiveLaneDrums type lays all the inner lanes adjacent to each other.
                                     // Having the pointer to an instance thus allows us to use arithmetic on the location
                                     // of the Bass lane variable to get the specific one we want.
-                                    var drum = instrumentTrack.Difficulties[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition);
+                                    var drum = instrumentTrack[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition);
                                     (&drum->Kick)[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
 
@@ -581,7 +581,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * NUM_LANES + KICK_LANE];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    var drum = instrumentTrack.Difficulties[3].Notes.TraverseBackwardsUntil(in colorPosition);
+                                    var drum = instrumentTrack.Expert.Notes.TraverseBackwardsUntil(in colorPosition);
                                     drum->Kick = position - colorPosition;
                                     colorPosition.Ticks = -1;
 
@@ -650,7 +650,7 @@ namespace YARG.Core.NewParsing.Midi
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = false;
                                         }
@@ -682,7 +682,7 @@ namespace YARG.Core.NewParsing.Midi
 
             if (convertExpectKicksToShared)
             {
-                ref var expertNotes = ref instrumentTrack.Difficulties[3].Notes;
+                ref var expertNotes = ref instrumentTrack.Expert.Notes;
                 for (int i = 0; i < expertNotes.Count; ++i)
                 {
                     ref var drum = ref expertNotes.Data[i].Value;
@@ -695,7 +695,7 @@ namespace YARG.Core.NewParsing.Midi
 
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                ref var diff = ref instrumentTrack.Difficulties[i];
+                ref var diff = ref instrumentTrack[i];
                 diff.Overdrives = overdrives.Clone();
                 diff.Soloes = soloes.Clone();
                 diff.BREs = bres.Clone();
@@ -771,7 +771,7 @@ namespace YARG.Core.NewParsing.Midi
                             // if we detect prodrums flags, this value changes to disallow the fifth pad lane
                             if (lane < numLanes)
                             {
-                                ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
+                                ref var diffTrack = ref instrumentTrack[diffIndex];
                                 lanes[diffIndex * MAX_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
@@ -836,7 +836,7 @@ namespace YARG.Core.NewParsing.Midi
                             else if (lane == 11 && diffIndex == 2)
                             {
                                 lanes[diffIndex * MAX_LANES + KICK_LANE] = position;
-                                instrumentTrack.Difficulties[3].Notes.TryAppend(in position);
+                                instrumentTrack.Expert.Notes.TryAppend(in position);
                             }
                         }
                         else if (TOM_MIN_VALUE <= note.Value && note.Value <= TOM_MAX_VALUE)
@@ -849,7 +849,7 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     // If a flag flips on the same tick of any notes,
                                     // we MUST flip the applicable cymbal marker for those notes to match
-                                    if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var drum))
+                                    if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
                                     {
                                         // Blah blah: pointer arithmetic
                                         (&drum->Cymbal_Yellow)[index] = false;
@@ -885,7 +885,7 @@ namespace YARG.Core.NewParsing.Midi
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -907,7 +907,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * MAX_LANES + lane];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    var drum = instrumentTrack.Difficulties[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition);
+                                    var drum = instrumentTrack[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition);
                                     var duration = position - colorPosition;
                                     if (lane < FIFTH_LANE)
                                     {
@@ -946,7 +946,7 @@ namespace YARG.Core.NewParsing.Midi
                                 ref var colorPosition = ref lanes[diffIndex * MAX_LANES + KICK_LANE];
                                 if (colorPosition.Ticks != -1)
                                 {
-                                    var drum = instrumentTrack.Difficulties[3].Notes.TraverseBackwardsUntil(in colorPosition);
+                                    var drum = instrumentTrack.Expert.Notes.TraverseBackwardsUntil(in colorPosition);
                                     drum->Kick = position - colorPosition;
                                     colorPosition.Ticks = -1;
 
@@ -972,7 +972,7 @@ namespace YARG.Core.NewParsing.Midi
                                 {
                                     // If a flag flips on the same tick of any notes,
                                     // we MUST flip the applicable cymbal marker for those notes to match
-                                    if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var drum))
+                                    if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
                                     {
                                         // Blah blah: pointer arithmetic
                                         (&drum->Cymbal_Yellow)[index] = true;
@@ -1033,7 +1033,7 @@ namespace YARG.Core.NewParsing.Midi
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = false;
                                         }
@@ -1065,7 +1065,7 @@ namespace YARG.Core.NewParsing.Midi
 
             if (convertExpectKicksToShared)
             {
-                ref var expertNotes = ref instrumentTrack.Difficulties[3].Notes;
+                ref var expertNotes = ref instrumentTrack.Expert.Notes;
                 for (int i = 0; i < expertNotes.Count; ++i)
                 {
                     ref var drum = ref expertNotes.Data[i].Value;
@@ -1078,7 +1078,7 @@ namespace YARG.Core.NewParsing.Midi
 
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                ref var diff = ref instrumentTrack.Difficulties[i];
+                ref var diff = ref instrumentTrack[i];
                 diff.Overdrives = overdrives.Clone();
                 diff.Soloes = soloes.Clone();
                 diff.BREs = bres.Clone();
