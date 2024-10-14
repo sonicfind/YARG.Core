@@ -77,14 +77,10 @@ namespace YARG.Core.NewLoading.Drums
         private const int ORANGE = 4;
         private const int GREEN = 5;
 
-        public static unsafe InstrumentPlayer<Note, FourLaneSubNote> LoadFourLane(InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
+        public static unsafe InstrumentPlayer<Note, FourLaneSubNote> LoadFourLane(InstrumentTrack2<FourLaneDrums> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
         {
-            var diff = track[profile.CurrentDifficulty];
-            Debug.Assert(diff != null, "This function should only be used with a valid difficulty");
+            ref readonly var diff = ref track[profile.CurrentDifficulty];
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
-
-            var overdriveRanges = diff.Phrases.Overdrives.Count > 0 ? diff.Phrases.Overdrives : track.Phrases.Overdrives;
-            var soloRanges = diff.Phrases.Soloes.Count > 0 ? diff.Phrases.Soloes : track.Phrases.Soloes;
 
             var curr = diff.Notes.Data;
             var end = curr + diff.Notes.Count;
@@ -99,8 +95,8 @@ namespace YARG.Core.NewLoading.Drums
                 Capacity = diff.Notes.Count * 2,
             };
 
-            var overdrives = FixedArray<OverdrivePhrase>.Alloc(overdriveRanges.Count);
-            var soloes = FixedArray<SoloPhrase>.Alloc(soloRanges.Count);
+            var overdrives = FixedArray<OverdrivePhrase>.Alloc(diff.Overdrives.Count);
+            var soloes = FixedArray<SoloPhrase>.Alloc(diff.Soloes.Count);
 
             int currOverdrive = 0;
             int overdriveNoteCount = 0;
@@ -114,9 +110,9 @@ namespace YARG.Core.NewLoading.Drums
             var buffer = stackalloc FourLaneSubNote[FOURLANECOUNT];
             while (curr < end)
             {
-                while (currOverdrive < overdriveRanges.Count)
+                while (currOverdrive < overdrives.Length)
                 {
-                    ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
+                    ref readonly var ovd = ref diff.Overdrives.Data[currOverdrive];
                     if (curr->Key < ovd.Key + ovd.Value)
                     {
                         break;
@@ -125,9 +121,9 @@ namespace YARG.Core.NewLoading.Drums
                     overdriveNoteCount = 0;
                 }
 
-                while (currSolo < soloRanges.Count)
+                while (currSolo < soloes.Length)
                 {
-                    ref readonly var solo = ref soloRanges.Data[currSolo];
+                    ref readonly var solo = ref diff.Soloes.Data[currSolo];
                     var soloEnd = solo.Key + solo.Value;
                     if (curr->Key < soloEnd)
                     {
@@ -155,14 +151,14 @@ namespace YARG.Core.NewLoading.Drums
                 if (laneCount > 0)
                 {
                     int ovdIndex = -1;
-                    if (currOverdrive < overdriveRanges.Count && curr->Key >= overdriveRanges.Data[currOverdrive].Key)
+                    if (currOverdrive < overdrives.Length && curr->Key >= diff.Overdrives.Data[currOverdrive].Key)
                     {
                         overdriveNoteCount++;
                         ovdIndex = currOverdrive;
                     }
 
                     int soloIndex = -1;
-                    if (currSolo < soloRanges.Count && curr->Key >= soloRanges.Data[currSolo].Key)
+                    if (currSolo < soloes.Length && curr->Key >= diff.Soloes.Data[currSolo].Key)
                     {
                         soloNoteCount++;
                         soloIndex = currSolo;
@@ -175,17 +171,17 @@ namespace YARG.Core.NewLoading.Drums
                 ++curr;
             }
 
-            while (currOverdrive < overdriveRanges.Count)
+            while (currOverdrive < overdrives.Length)
             {
-                ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
+                ref readonly var ovd = ref diff.Overdrives.Data[currOverdrive];
                 overdrives[currOverdrive] = new OverdrivePhrase(ovd.Key, overdriveNoteCount);
                 ++currOverdrive;
                 overdriveNoteCount = 0;
             }
 
-            while (currSolo < soloRanges.Count)
+            while (currSolo < soloes.Length)
             {
-                ref readonly var solo = ref soloRanges.Data[currSolo];
+                ref readonly var solo = ref diff.Soloes.Data[currSolo];
                 soloes[currSolo] = new SoloPhrase(solo.Key, solo.Key + solo.Value, soloNoteCount);
                 ++currSolo;
                 soloNoteCount = 0;
@@ -195,14 +191,10 @@ namespace YARG.Core.NewLoading.Drums
             return new InstrumentPlayer<Note, FourLaneSubNote>(notes, subNotes, soloes, overdrives, sync, profile);
         }
 
-        public static unsafe InstrumentPlayer<Note, FourLaneSubNote> LoadFourLane(InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
+        public static unsafe InstrumentPlayer<Note, FourLaneSubNote> LoadFourLane(InstrumentTrack2<FiveLaneDrums> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
         {
-            var diff = track[profile.CurrentDifficulty];
-            Debug.Assert(diff != null, "This function should only be used with a valid difficulty");
+            ref readonly var diff = ref track[profile.CurrentDifficulty];
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
-
-            var overdriveRanges = diff.Phrases.Overdrives.Count > 0 ? diff.Phrases.Overdrives : track.Phrases.Overdrives;
-            var soloRanges = diff.Phrases.Soloes.Count > 0 ? diff.Phrases.Soloes : track.Phrases.Soloes;
 
             var curr = diff.Notes.Data;
             var end = curr + diff.Notes.Count;
@@ -217,8 +209,8 @@ namespace YARG.Core.NewLoading.Drums
                 Capacity = diff.Notes.Count * 2,
             };
 
-            var overdrives = FixedArray<OverdrivePhrase>.Alloc(overdriveRanges.Count);
-            var soloes = FixedArray<SoloPhrase>.Alloc(soloRanges.Count);
+            var overdrives = FixedArray<OverdrivePhrase>.Alloc(diff.Overdrives.Count);
+            var soloes = FixedArray<SoloPhrase>.Alloc(diff.Soloes.Count);
 
             int currOverdrive = 0;
             int overdriveNoteCount = 0;
@@ -232,9 +224,9 @@ namespace YARG.Core.NewLoading.Drums
             var buffer = stackalloc FourLaneSubNote[FOURLANECOUNT];
             while (curr < end)
             {
-                while (currOverdrive < overdriveRanges.Count)
+                while (currOverdrive < overdrives.Length)
                 {
-                    ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
+                    ref readonly var ovd = ref diff.Overdrives.Data[currOverdrive];
                     if (curr->Key < ovd.Key + ovd.Value)
                     {
                         break;
@@ -243,9 +235,9 @@ namespace YARG.Core.NewLoading.Drums
                     overdriveNoteCount = 0;
                 }
 
-                while (currSolo < soloRanges.Count)
+                while (currSolo < soloes.Length)
                 {
-                    ref readonly var solo = ref soloRanges.Data[currSolo];
+                    ref readonly var solo = ref diff.Soloes.Data[currSolo];
                     var soloEnd = solo.Key + solo.Value;
                     if (curr->Key < soloEnd)
                     {
@@ -285,14 +277,14 @@ namespace YARG.Core.NewLoading.Drums
                 if (laneCount > 0)
                 {
                     int ovdIndex = -1;
-                    if (currOverdrive < overdriveRanges.Count && curr->Key >= overdriveRanges.Data[currOverdrive].Key)
+                    if (currOverdrive < overdrives.Length && curr->Key >= diff.Overdrives.Data[currOverdrive].Key)
                     {
                         overdriveNoteCount++;
                         ovdIndex = currOverdrive;
                     }
 
                     int soloIndex = -1;
-                    if (currSolo < soloRanges.Count && curr->Key >= soloRanges.Data[currSolo].Key)
+                    if (currSolo < soloes.Length && curr->Key >= diff.Soloes.Data[currSolo].Key)
                     {
                         soloNoteCount++;
                         soloIndex = currSolo;
@@ -304,17 +296,17 @@ namespace YARG.Core.NewLoading.Drums
                 ++curr;
             }
 
-            while (currOverdrive < overdriveRanges.Count)
+            while (currOverdrive < overdrives.Length)
             {
-                ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
+                ref readonly var ovd = ref diff.Overdrives.Data[currOverdrive];
                 overdrives[currOverdrive] = new OverdrivePhrase(ovd.Key, overdriveNoteCount);
                 ++currOverdrive;
                 overdriveNoteCount = 0;
             }
 
-            while (currSolo < soloRanges.Count)
+            while (currSolo < soloes.Length)
             {
-                ref readonly var solo = ref soloRanges.Data[currSolo];
+                ref readonly var solo = ref diff.Soloes.Data[currSolo];
                 soloes[currSolo] = new SoloPhrase(solo.Key, solo.Key + solo.Value, soloNoteCount);
                 ++currSolo;
                 soloNoteCount = 0;
@@ -324,14 +316,10 @@ namespace YARG.Core.NewLoading.Drums
             return new InstrumentPlayer<Note, FourLaneSubNote>(notes, subNotes, soloes, overdrives, sync, profile);
         }
 
-        public static unsafe InstrumentPlayer<Note, FiveLaneSubNote> LoadFiveLane(InstrumentTrack2<DifficultyTrack2<FiveLaneDrums>> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
+        public static unsafe InstrumentPlayer<Note, FiveLaneSubNote> LoadFiveLane(InstrumentTrack2<FiveLaneDrums> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
         {
-            var diff = track[profile.CurrentDifficulty];
-            Debug.Assert(diff != null, "This function should only be used with a valid difficulty");
+            ref readonly var diff = ref track[profile.CurrentDifficulty];
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
-
-            var overdriveRanges = diff.Phrases.Overdrives.Count > 0 ? diff.Phrases.Overdrives : track.Phrases.Overdrives;
-            var soloRanges = diff.Phrases.Soloes.Count > 0 ? diff.Phrases.Soloes : track.Phrases.Soloes;
 
             var curr = diff.Notes.Data;
             var end = curr + diff.Notes.Count;
@@ -346,8 +334,8 @@ namespace YARG.Core.NewLoading.Drums
                 Capacity = diff.Notes.Count * 2,
             };
 
-            var overdrives = FixedArray<OverdrivePhrase>.Alloc(overdriveRanges.Count);
-            var soloes = FixedArray<SoloPhrase>.Alloc(soloRanges.Count);
+            var overdrives = FixedArray<OverdrivePhrase>.Alloc(diff.Overdrives.Count);
+            var soloes = FixedArray<SoloPhrase>.Alloc(diff.Soloes.Count);
 
             int currOverdrive = 0;
             int overdriveNoteCount = 0;
@@ -361,9 +349,9 @@ namespace YARG.Core.NewLoading.Drums
             var buffer = stackalloc FiveLaneSubNote[FIVELANECOUNT];
             while (curr < end)
             {
-                while (currOverdrive < overdriveRanges.Count)
+                while (currOverdrive < overdrives.Length)
                 {
-                    ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
+                    ref readonly var ovd = ref diff.Overdrives.Data[currOverdrive];
                     if (curr->Key < ovd.Key + ovd.Value)
                     {
                         break;
@@ -372,9 +360,9 @@ namespace YARG.Core.NewLoading.Drums
                     overdriveNoteCount = 0;
                 }
 
-                while (currSolo < soloRanges.Count)
+                while (currSolo < soloes.Length)
                 {
-                    ref readonly var solo = ref soloRanges.Data[currSolo];
+                    ref readonly var solo = ref diff.Soloes.Data[currSolo];
                     var soloEnd = solo.Key + solo.Value;
                     if (curr->Key < soloEnd)
                     {
@@ -399,14 +387,14 @@ namespace YARG.Core.NewLoading.Drums
                 if (laneCount > 0)
                 {
                     int ovdIndex = -1;
-                    if (currOverdrive < overdriveRanges.Count && curr->Key >= overdriveRanges.Data[currOverdrive].Key)
+                    if (currOverdrive < overdrives.Length && curr->Key >= diff.Overdrives.Data[currOverdrive].Key)
                     {
                         overdriveNoteCount++;
                         ovdIndex = currOverdrive;
                     }
 
                     int soloIndex = -1;
-                    if (currSolo < soloRanges.Count && curr->Key >= soloRanges.Data[currSolo].Key)
+                    if (currSolo < soloes.Length && curr->Key >= diff.Soloes.Data[currSolo].Key)
                     {
                         soloNoteCount++;
                         soloIndex = currSolo;
@@ -418,17 +406,17 @@ namespace YARG.Core.NewLoading.Drums
                 ++curr;
             }
 
-            while (currOverdrive < overdriveRanges.Count)
+            while (currOverdrive < overdrives.Length)
             {
-                ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
+                ref readonly var ovd = ref diff.Overdrives.Data[currOverdrive];
                 overdrives[currOverdrive] = new OverdrivePhrase(ovd.Key, overdriveNoteCount);
                 ++currOverdrive;
                 overdriveNoteCount = 0;
             }
 
-            while (currSolo < soloRanges.Count)
+            while (currSolo < soloes.Length)
             {
-                ref readonly var solo = ref soloRanges.Data[currSolo];
+                ref readonly var solo = ref diff.Soloes.Data[currSolo];
                 soloes[currSolo] = new SoloPhrase(solo.Key, solo.Key + solo.Value, soloNoteCount);
                 ++currSolo;
                 soloNoteCount = 0;
@@ -438,16 +426,12 @@ namespace YARG.Core.NewLoading.Drums
             return new InstrumentPlayer<Note, FiveLaneSubNote>(notes, subNotes, soloes, overdrives, sync, profile);
         }
 
-        public static unsafe InstrumentPlayer<Note, FiveLaneSubNote> LoadFiveLane(InstrumentTrack2<DifficultyTrack2<FourLaneDrums>> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
+        public static unsafe InstrumentPlayer<Note, FiveLaneSubNote> LoadFiveLane(InstrumentTrack2<FourLaneDrums> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
         {
             const int FOURLANECOUNT = 5;
 
-            var diff = track[profile.CurrentDifficulty];
-            Debug.Assert(diff != null, "This function should only be used with a valid difficulty");
+            ref readonly var diff = ref track[profile.CurrentDifficulty];
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
-
-            var overdriveRanges = diff.Phrases.Overdrives.Count > 0 ? diff.Phrases.Overdrives : track.Phrases.Overdrives;
-            var soloRanges = diff.Phrases.Soloes.Count > 0 ? diff.Phrases.Soloes : track.Phrases.Soloes;
 
             var curr = diff.Notes.Data;
             var end = curr + diff.Notes.Count;
@@ -462,8 +446,8 @@ namespace YARG.Core.NewLoading.Drums
                 Capacity = diff.Notes.Count * 2,
             };
 
-            var overdrives = FixedArray<OverdrivePhrase>.Alloc(overdriveRanges.Count);
-            var soloes = FixedArray<SoloPhrase>.Alloc(soloRanges.Count);
+            var overdrives = FixedArray<OverdrivePhrase>.Alloc(diff.Overdrives.Count);
+            var soloes = FixedArray<SoloPhrase>.Alloc(diff.Soloes.Count);
 
             int currOverdrive = 0;
             int overdriveNoteCount = 0;
@@ -477,9 +461,9 @@ namespace YARG.Core.NewLoading.Drums
             var buffer = stackalloc FiveLaneSubNote[FIVELANECOUNT];
             while (curr < end)
             {
-                while (currOverdrive < overdriveRanges.Count)
+                while (currOverdrive < overdrives.Length)
                 {
-                    ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
+                    ref readonly var ovd = ref diff.Overdrives.Data[currOverdrive];
                     if (curr->Key < ovd.Key + ovd.Value)
                     {
                         break;
@@ -488,9 +472,9 @@ namespace YARG.Core.NewLoading.Drums
                     overdriveNoteCount = 0;
                 }
 
-                while (currSolo < soloRanges.Count)
+                while (currSolo < soloes.Length)
                 {
-                    ref readonly var solo = ref soloRanges.Data[currSolo];
+                    ref readonly var solo = ref diff.Soloes.Data[currSolo];
                     var soloEnd = solo.Key + solo.Value;
                     if (curr->Key < soloEnd)
                     {
@@ -543,14 +527,14 @@ namespace YARG.Core.NewLoading.Drums
                 if (laneCount > 0)
                 {
                     int ovdIndex = -1;
-                    if (currOverdrive < overdriveRanges.Count && curr->Key >= overdriveRanges.Data[currOverdrive].Key)
+                    if (currOverdrive < overdrives.Length && curr->Key >= diff.Overdrives.Data[currOverdrive].Key)
                     {
                         overdriveNoteCount++;
                         ovdIndex = currOverdrive;
                     }
 
                     int soloIndex = -1;
-                    if (currSolo < soloRanges.Count && curr->Key >= soloRanges.Data[currSolo].Key)
+                    if (currSolo < soloes.Length && curr->Key >= diff.Soloes.Data[currSolo].Key)
                     {
                         soloNoteCount++;
                         soloIndex = currSolo;
@@ -563,17 +547,17 @@ namespace YARG.Core.NewLoading.Drums
                 ++curr;
             }
 
-            while (currOverdrive < overdriveRanges.Count)
+            while (currOverdrive < overdrives.Length)
             {
-                ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
+                ref readonly var ovd = ref diff.Overdrives.Data[currOverdrive];
                 overdrives[currOverdrive] = new OverdrivePhrase(ovd.Key, overdriveNoteCount);
                 ++currOverdrive;
                 overdriveNoteCount = 0;
             }
 
-            while (currSolo < soloRanges.Count)
+            while (currSolo < soloes.Length)
             {
-                ref readonly var solo = ref soloRanges.Data[currSolo];
+                ref readonly var solo = ref diff.Soloes.Data[currSolo];
                 soloes[currSolo] = new SoloPhrase(solo.Key, solo.Key + solo.Value, soloNoteCount);
                 ++currSolo;
                 soloNoteCount = 0;
