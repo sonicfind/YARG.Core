@@ -148,7 +148,7 @@ namespace YARG.Core.NewLoading.Guitar
             }
             notes.TrimExcess();
             subNotes.TrimExcess();
-            return new InstrumentPlayer<Note, SubNote>(notes, subNotes, soloes, overdrives, sync, profile);
+            return new InstrumentPlayer<Note, SubNote>(in notes, in subNotes, in soloes, in overdrives, sync, profile);
         }
 
         private static unsafe GuitarState ParseGuitarState<TNote>(YARGKeyValuePair<DualTime, TNote>* curr, YARGKeyValuePair<DualTime, TNote>* prev, GuitarState state, Modifier modifiers, long hopoThreshold, bool allowHopoAfterChord)

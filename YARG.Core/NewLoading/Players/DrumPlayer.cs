@@ -188,7 +188,7 @@ namespace YARG.Core.NewLoading.Drums
             }
             notes.TrimExcess();
             subNotes.TrimExcess();
-            return new InstrumentPlayer<Note, FourLaneSubNote>(notes, subNotes, soloes, overdrives, sync, profile);
+            return new InstrumentPlayer<Note, FourLaneSubNote>(in notes, in subNotes, in soloes, in overdrives, sync, profile);
         }
 
         public static unsafe InstrumentPlayer<Note, FourLaneSubNote> LoadFourLane(InstrumentTrack2<FiveLaneDrums> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
@@ -313,7 +313,7 @@ namespace YARG.Core.NewLoading.Drums
             }
             notes.TrimExcess();
             subNotes.TrimExcess();
-            return new InstrumentPlayer<Note, FourLaneSubNote>(notes, subNotes, soloes, overdrives, sync, profile);
+            return new InstrumentPlayer<Note, FourLaneSubNote>(in notes, in subNotes, in soloes, in overdrives, sync, profile);
         }
 
         public static unsafe InstrumentPlayer<Note, FiveLaneSubNote> LoadFiveLane(InstrumentTrack2<FiveLaneDrums> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
@@ -423,7 +423,7 @@ namespace YARG.Core.NewLoading.Drums
             }
             notes.TrimExcess();
             subNotes.TrimExcess();
-            return new InstrumentPlayer<Note, FiveLaneSubNote>(notes, subNotes, soloes, overdrives, sync, profile);
+            return new InstrumentPlayer<Note, FiveLaneSubNote>(in notes, in subNotes, in soloes, in overdrives, sync, profile);
         }
 
         public static unsafe InstrumentPlayer<Note, FiveLaneSubNote> LoadFiveLane(InstrumentTrack2<FourLaneDrums> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
@@ -564,7 +564,7 @@ namespace YARG.Core.NewLoading.Drums
             }
             notes.TrimExcess();
             subNotes.TrimExcess();
-            return new InstrumentPlayer<Note, FiveLaneSubNote>(notes, subNotes, soloes, overdrives, sync, profile);
+            return new InstrumentPlayer<Note, FiveLaneSubNote>(in notes, in subNotes, in soloes, in overdrives, sync, profile);
         }
     }
 }
