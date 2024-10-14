@@ -485,7 +485,7 @@ namespace YARG.Core.Containers
                 Marshal.FreeHGlobal((IntPtr) _buffer);
             }
             _buffer = null;
-            _version = -1;
+            _version = 0;
             _capacity = 0;
             _count = 0;
         }
