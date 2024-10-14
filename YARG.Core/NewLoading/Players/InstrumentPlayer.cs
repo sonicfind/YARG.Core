@@ -21,12 +21,12 @@ namespace YARG.Core.NewLoading.Players
             _soloes = soloes;
         }
 
-        public override void Dispose()
+        protected override void _Dispose()
         {
             _subNoteBuffer.Dispose();
             _notes.Dispose();
             _soloes.Dispose();
-            base.Dispose();
+            base._Dispose();
         }
     }
 }

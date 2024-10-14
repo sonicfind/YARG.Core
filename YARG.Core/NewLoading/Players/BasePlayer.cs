@@ -21,9 +21,20 @@ namespace YARG.Core.NewLoading
             _overdrives = overdrives;
         }
 
-        public virtual void Dispose()
+        protected virtual void _Dispose()
         {
             _overdrives.Dispose();
+        }
+
+        public void Dispose()
+        {
+            _Dispose();
+            GC.SuppressFinalize(this);
+        }
+
+        ~BasePlayer()
+        {
+            _Dispose();
         }
     }
 }
