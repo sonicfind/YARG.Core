@@ -10,28 +10,56 @@ namespace YARG.Core.NewParsing
         public static void ConvertTo(this InstrumentTrack2<UnknownLaneDrums> source, InstrumentTrack2<FourLaneDrums> destination, bool isPro)
         {
             destination.Events = source.Events;
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+            if (destination.Easy.IsEmpty())
             {
-                ref var diff = ref source.Difficulties[i];
-                if (!diff.IsEmpty())
-                {
-                    diff.ConvertTo(ref destination.Difficulties[i], isPro);
-                    diff = DifficultyTrack2<UnknownLaneDrums>.Default;
-                }
+                source.Easy.ConvertTo(ref destination.Easy, isPro);
+                source.Easy = DifficultyTrack2<UnknownLaneDrums>.Default;
+            }
+
+            if (destination.Medium.IsEmpty())
+            {
+                source.Medium.ConvertTo(ref destination.Medium, isPro);
+                source.Medium = DifficultyTrack2<UnknownLaneDrums>.Default;
+            }
+
+            if (destination.Hard.IsEmpty())
+            {
+                source.Hard.ConvertTo(ref destination.Hard, isPro);
+                source.Hard = DifficultyTrack2<UnknownLaneDrums>.Default;
+            }
+
+            if (destination.Expert.IsEmpty())
+            {
+                source.Expert.ConvertTo(ref destination.Expert, isPro);
+                source.Expert = DifficultyTrack2<UnknownLaneDrums>.Default;
             }
         }
 
         public static void ConvertTo(this InstrumentTrack2<UnknownLaneDrums> source, InstrumentTrack2<FiveLaneDrums> destination)
         {
             destination.Events = source.Events;
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+            if (destination.Easy.IsEmpty())
             {
-                ref var diff = ref source.Difficulties[i];
-                if (!diff.IsEmpty())
-                {
-                    diff.ConvertTo(ref destination.Difficulties[i]);
-                    diff = DifficultyTrack2<UnknownLaneDrums>.Default;
-                }
+                source.Easy.ConvertTo(ref destination.Easy);
+                source.Easy = DifficultyTrack2<UnknownLaneDrums>.Default;
+            }
+
+            if (destination.Medium.IsEmpty())
+            {
+                source.Medium.ConvertTo(ref destination.Medium);
+                source.Medium = DifficultyTrack2<UnknownLaneDrums>.Default;
+            }
+
+            if (destination.Hard.IsEmpty())
+            {
+                source.Hard.ConvertTo(ref destination.Hard);
+                source.Hard = DifficultyTrack2<UnknownLaneDrums>.Default;
+            }
+
+            if (destination.Expert.IsEmpty())
+            {
+                source.Expert.ConvertTo(ref destination.Expert);
+                source.Expert = DifficultyTrack2<UnknownLaneDrums>.Default;
             }
         }
 

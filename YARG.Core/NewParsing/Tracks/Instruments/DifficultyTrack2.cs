@@ -82,15 +82,22 @@ namespace YARG.Core.NewParsing
             Faceoff_Player2.TrimExcess();
         }
 
-        public readonly unsafe DualTime GetLastNoteTime()
+        public readonly void UpdateLastNoteTime(ref DualTime lastNoteTime)
         {
             if (Notes.IsEmpty())
             {
-                return default;
+                return;
             }
 
-            ref var note = ref Notes.Data[Notes.Count - 1];
-            return note.Key + note.Value.GetLongestSustain();
+            unsafe
+            {
+                ref readonly var note = ref Notes.Data[Notes.Count - 1];
+                var tmp = note.Key + note.Value.GetLongestSustain();
+                if (tmp > lastNoteTime)
+                {
+                    lastNoteTime = tmp;
+                }
+            }
         }
 
         /// <summary>

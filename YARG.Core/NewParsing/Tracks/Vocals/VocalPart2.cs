@@ -8,7 +8,7 @@ namespace YARG.Core.NewParsing
     /// <summary>
     /// Holds the notes and lyrics for a specific vocal line
     /// </summary>
-    public struct VocalPart2
+    public struct VocalPart2 : IDisposable
     {
         public static readonly VocalPart2 Default = new()
         {
@@ -18,6 +18,11 @@ namespace YARG.Core.NewParsing
 
         public YARGNativeSortedList<DualTime, VocalNote2> Notes;
         public YARGManagedSortedList<DualTime, NonNullString> Lyrics;
+
+        public readonly bool IsEmpty()
+        {
+            return Notes.IsEmpty() && Lyrics.IsEmpty();
+        }
 
         public readonly void TrimExcess()
         {
@@ -33,9 +38,28 @@ namespace YARG.Core.NewParsing
             Lyrics.Clear();
         }
 
-        public readonly bool IsEmpty()
+        public readonly void Dispose()
         {
-            return Notes.IsEmpty() && Lyrics.IsEmpty();
+            Notes.Dispose();
+            Lyrics.Clear();
+        }
+
+        public readonly void UpdateLastNoteTime(ref DualTime lastNoteTime)
+        {
+            if (Notes.IsEmpty())
+            {
+                return;
+            }
+
+            unsafe
+            {
+                ref readonly var vocal = ref Notes.Data[Notes.Count - 1];
+                var end = vocal.Key + vocal.Value.Duration;
+                if (end > lastNoteTime)
+                {
+                    lastNoteTime = end;
+                }
+            }
         }
     }
 }
