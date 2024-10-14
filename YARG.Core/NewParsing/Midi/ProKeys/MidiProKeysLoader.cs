@@ -16,13 +16,13 @@ namespace YARG.Core.NewParsing.Midi
 
         public static unsafe bool Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ProKeysInstrumentTrack instrumentTrack, int diffIndex)
         {
-            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex]!;
+            ref var diffTrack = ref instrumentTrack[diffIndex];
             if (!diffTrack.IsEmpty())
             {
                 return false;
             }
 
-            ref var ranges = ref instrumentTrack.Ranges[diffIndex];
+            ref var ranges = ref instrumentTrack.GetRanges(diffIndex);
             using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
@@ -176,7 +176,7 @@ namespace YARG.Core.NewParsing.Midi
             {
                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                 {
-                    ref var diff = ref instrumentTrack.Difficulties[i];
+                    ref var diff = ref instrumentTrack[i];
                     diff.Overdrives = overdrives.Clone();
                     diff.Soloes = soloes.Clone();
                     diff.BREs = bres.Clone();

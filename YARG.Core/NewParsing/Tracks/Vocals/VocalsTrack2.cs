@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using YARG.Core.Containers;
 
 namespace YARG.Core.NewParsing
@@ -76,24 +77,27 @@ namespace YARG.Core.NewParsing
         /// Returns the latest time when any part (or percussion) ends
         /// </summary>
         /// <returns>The latest end time of the track</returns>
-        public virtual unsafe DualTime GetLastNoteTime()
+        public virtual void UpdateLastNoteTime(ref DualTime lastNoteTime)
         {
-            DualTime endTime = default;
-            if (!Percussion.IsEmpty())
+            if (Percussion.IsEmpty())
             {
-                ref var perc = ref Percussion.Data[Percussion.Count - 1];
-                if (perc.Key > endTime)
+                return;
+            }
+
+            unsafe
+            {
+                ref readonly var perc = ref Percussion.Data[Percussion.Count - 1];
+                if (perc.Key > lastNoteTime)
                 {
-                    endTime = perc.Key;
+                    lastNoteTime = perc.Key;
                 }
             }
-            return endTime;
         }
 
         /// <summary>
         /// Disposes all unmanaged buffer data for each part, percussion, and phrases
         /// </summary>
-        public virtual void Dispose()
+        protected virtual void _Dispose()
         {
             Percussion.Dispose();
             VocalPhrases_1.Dispose();
@@ -102,6 +106,20 @@ namespace YARG.Core.NewParsing
             RangeShifts.Dispose();
             Overdrives.Dispose();
             LyricShifts.Dispose();
+        }
+
+        /// <summary>
+        /// Disposes all unmanaged buffer data for each part, percussion, and phrases
+        /// </summary>
+        public void Dispose()
+        {
+            _Dispose();
+            GC.SuppressFinalize(this);
+        }
+
+        ~VocalTrack2()
+        {
+            _Dispose();
         }
     }
 
@@ -158,47 +176,47 @@ namespace YARG.Core.NewParsing
         /// Returns the latest time when lead vocals or percussion ends
         /// </summary>
         /// <returns>The latest end time of the track</returns>
-        public override unsafe DualTime GetLastNoteTime()
+        public override void UpdateLastNoteTime(ref DualTime lastNoteTime)
         {
-            var endTime = base.GetLastNoteTime();
-            if (!_part.Notes.IsEmpty())
-            {
-                ref var vocal = ref _part.Notes.Data[_part.Notes.Count - 1];
-                var end = vocal.Key + vocal.Value.Duration;
-                if (end > endTime)
-                {
-                    endTime = end;
-                }
-            }
-            return endTime;
+            base.UpdateLastNoteTime(ref lastNoteTime);
+            _part.UpdateLastNoteTime(ref lastNoteTime);
         }
 
         /// <summary>
         /// Disposes all unmanaged buffer data for lead's notes and lyrics, percussion, and phrases
         /// </summary>
-        public override void Dispose()
+        protected override void _Dispose()
         {
             _part.Notes.Dispose();
             _part.Lyrics.Clear();
-            base.Dispose();
+            base._Dispose();
         }
     }
 
     public class HarmonyVocalsTrack : VocalTrack2
     {
-        private readonly VocalPart2[] _parts = new VocalPart2[3]
-        {
-            VocalPart2.Default,
-            VocalPart2.Default,
-            VocalPart2.Default,
-        };
+        public VocalPart2 Harm_1 = VocalPart2.Default;
+        public VocalPart2 Harm_2 = VocalPart2.Default;
+        public VocalPart2 Harm_3 = VocalPart2.Default;
 
         /// <summary>
         /// Returns the vocal part (lyrics and notes) for the specified index [0,1,2]
         /// </summary>
         /// <param name="index">The part index</param>
         /// <returns>The notes and lyrics for a specific vocal part</returns>
-        public override ref VocalPart2 this[int index] => ref _parts[index];
+        public override ref VocalPart2 this[int index]
+        {
+            get
+            {
+                switch (index)
+                {
+                    case 0: return ref Harm_1;
+                    case 1: return ref Harm_2;
+                    case 2: return ref Harm_3;
+                    default: throw new IndexOutOfRangeException();
+                }
+            }
+        }
 
         public override int NumTracks => 3;
 
@@ -208,14 +226,10 @@ namespace YARG.Core.NewParsing
         /// <returns>If all containers are empty, return true</returns>
         public override bool IsEmpty()
         {
-            for (int i = 0; i < NumTracks; ++i)
-            {
-                if (!_parts[i].IsEmpty())
-                {
-                    return false;
-                }
-            }
-            return base.IsEmpty();
+            return Harm_1.IsEmpty()
+                && Harm_2.IsEmpty()
+                && Harm_3.IsEmpty()
+                && base.IsEmpty();
         }
 
         /// <summary>
@@ -223,10 +237,9 @@ namespace YARG.Core.NewParsing
         /// </summary>
         public override void Clear()
         {
-            for (int i = 0; i < NumTracks; ++i)
-            {
-                _parts[i].Clear();
-            }
+            Harm_1.Clear();
+            Harm_2.Clear();
+            Harm_3.Clear();
             base.Clear();
         }
 
@@ -235,47 +248,32 @@ namespace YARG.Core.NewParsing
         /// </summary>
         public override void TrimExcess()
         {
-            for (int i = 0; i < NumTracks; ++i)
-            {
-                _parts[i].TrimExcess();
-            }
+            Harm_1.TrimExcess();
+            Harm_2.TrimExcess();
+            Harm_3.TrimExcess();
         }
 
         /// <summary>
         /// Returns the latest time when any part (or percussion) ends
         /// </summary>
         /// <returns>The latest end time of the track</returns>
-        public override unsafe DualTime GetLastNoteTime()
+        public override void UpdateLastNoteTime(ref DualTime lastNoteTime)
         {
-            var endTime = base.GetLastNoteTime();
-            for (int i = 0; i < NumTracks; ++i)
-            {
-                var notes = _parts[i].Notes;
-                if (!notes.IsEmpty())
-                {
-                    ref var vocal = ref notes.Data[notes.Count - 1];
-                    var end = vocal.Key + vocal.Value.Duration;
-                    if (end > endTime)
-                    {
-                        endTime = end;
-                    }
-                }
-            }
-            
-            return endTime;
+            base.UpdateLastNoteTime(ref lastNoteTime);
+            Harm_1.UpdateLastNoteTime(ref lastNoteTime);
+            Harm_2.UpdateLastNoteTime(ref lastNoteTime);
+            Harm_3.UpdateLastNoteTime(ref lastNoteTime);
         }
 
         /// <summary>
         /// Disposes all unmanaged buffer data for each part, percussion, and phrases
         /// </summary>
-        public override void Dispose()
+        protected override void _Dispose()
         {
-            for (int i = 0; i < NumTracks; ++i)
-            {
-                _parts[i].Notes.Dispose();
-                _parts[i].Lyrics.Clear();
-            }
-            base.Dispose();
+            Harm_1.Dispose();
+            Harm_2.Dispose();
+            Harm_3.Dispose();
+            base._Dispose();
         }
     }
 }
