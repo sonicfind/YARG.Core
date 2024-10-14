@@ -7,67 +7,46 @@ namespace YARG.Core.NewParsing
 {
     internal static class UnknownDrumTrackConverter
     {
-        public static InstrumentTrack2<FourLaneDrums> ConvertToFourLane(this InstrumentTrack2<UnknownLaneDrums> source, bool isPro)
+        public static void ConvertTo(this InstrumentTrack2<UnknownLaneDrums> source, InstrumentTrack2<FourLaneDrums> destination, bool isPro)
         {
-            var newTrack = new InstrumentTrack2<FourLaneDrums>()
-            {
-                Events = source.Events,
-            };
-            return ConvertToFourLane(source, newTrack, isPro);
-        }
-
-        public static InstrumentTrack2<FiveLaneDrums> ConvertToFiveLane(this InstrumentTrack2<UnknownLaneDrums> source)
-        {
-            var newTrack = new InstrumentTrack2<FiveLaneDrums>()
-            {
-                Events = source.Events,
-            };
-            return ConvertToFiveLane(source, newTrack);
-        }
-
-        public static InstrumentTrack2<FourLaneDrums> ConvertToFourLane(this InstrumentTrack2<UnknownLaneDrums> source, InstrumentTrack2<FourLaneDrums> destination, bool isPro)
-        {
+            destination.Events = source.Events;
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
                 ref var diff = ref source.Difficulties[i];
                 if (!diff.IsEmpty())
                 {
-                    destination.Difficulties[i] = diff.ConvertToFourLane(isPro);
+                    diff.ConvertTo(ref destination.Difficulties[i], isPro);
                     diff = DifficultyTrack2<UnknownLaneDrums>.Default;
                 }
             }
-            return destination;
         }
 
-        public static InstrumentTrack2<FiveLaneDrums> ConvertToFiveLane(this InstrumentTrack2<UnknownLaneDrums> source, InstrumentTrack2<FiveLaneDrums> destination)
+        public static void ConvertTo(this InstrumentTrack2<UnknownLaneDrums> source, InstrumentTrack2<FiveLaneDrums> destination)
         {
+            destination.Events = source.Events;
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
                 ref var diff = ref source.Difficulties[i];
                 if (!diff.IsEmpty())
                 {
-                    destination.Difficulties[i] = diff.ConvertToFiveLane();
+                    diff.ConvertTo(ref destination.Difficulties[i]);
                     diff = DifficultyTrack2<UnknownLaneDrums>.Default;
                 }
             }
-            return destination;
         }
 
-        private static unsafe DifficultyTrack2<FourLaneDrums> ConvertToFourLane(this DifficultyTrack2<UnknownLaneDrums> source, bool isPro)
+        private static unsafe void ConvertTo(this DifficultyTrack2<UnknownLaneDrums> source, ref DifficultyTrack2<FourLaneDrums> destination, bool isPro)
         {
-            var newDifficulty = new DifficultyTrack2<FourLaneDrums>()
-            {
-                Overdrives = source.Overdrives,
-                Soloes = source.Soloes,
-                Trills = source.Trills,
-                Tremolos = source.Tremolos,
-                BREs = source.BREs,
-                Faceoff_Player1 = source.Faceoff_Player1,
-                Faceoff_Player2 = source.Faceoff_Player2,
-                Events = source.Events,
-            };
-            newDifficulty.Notes.Capacity = source.Notes.Count;
+            destination.Overdrives = source.Overdrives;
+            destination.Soloes = source.Soloes;
+            destination.Trills = source.Trills;
+            destination.Tremolos = source.Tremolos;
+            destination.BREs = source.BREs;
+            destination.Faceoff_Player1 = source.Faceoff_Player1;
+            destination.Faceoff_Player2 = source.Faceoff_Player2;
+            destination.Events = source.Events;
 
+            destination.Notes.Capacity = source.Notes.Count;
             var end = source.Notes.End;
             for (var curr = source.Notes.Data; curr < end; ++curr)
             {
@@ -77,33 +56,29 @@ namespace YARG.Core.NewParsing
                     curr->Value.Cymbal_Blue = false;
                     curr->Value.Cymbal_Orange = false;
                 }
-                newDifficulty.Notes.Append(in curr->Key, in *(FourLaneDrums*) &curr->Value);
+                destination.Notes.Append(in curr->Key, in *(FourLaneDrums*) &curr->Value);
             }
             source.Notes.Dispose();
-            return newDifficulty;
         }
 
-        private static unsafe DifficultyTrack2<FiveLaneDrums> ConvertToFiveLane(this DifficultyTrack2<UnknownLaneDrums> source)
+        private static unsafe void ConvertTo(this DifficultyTrack2<UnknownLaneDrums> source, ref DifficultyTrack2<FiveLaneDrums> destination)
         {
             const int DUAL_COUNT = 5;
             const int DYMANICS_COUNT = 4;
-            var newDifficulty = new DifficultyTrack2<FiveLaneDrums>()
-            {
-                Overdrives = source.Overdrives,
-                Soloes = source.Soloes,
-                Trills = source.Trills,
-                Tremolos = source.Tremolos,
-                BREs = source.BREs,
-                Faceoff_Player1 = source.Faceoff_Player1,
-                Faceoff_Player2 = source.Faceoff_Player2,
-                Events = source.Events,
-            };
-            newDifficulty.Notes.Capacity = source.Notes.Count;
+            destination.Overdrives = source.Overdrives;
+            destination.Soloes = source.Soloes;
+            destination.Trills = source.Trills;
+            destination.Tremolos = source.Tremolos;
+            destination.BREs = source.BREs;
+            destination.Faceoff_Player1 = source.Faceoff_Player1;
+            destination.Faceoff_Player2 = source.Faceoff_Player2;
+            destination.Events = source.Events;
 
+            destination.Notes.Capacity = source.Notes.Count;
             var end = source.Notes.End;
             for (var curr = source.Notes.Data; curr < end; ++curr)
             {
-                var note = newDifficulty.Notes.Append(in curr->Key);
+                var note = destination.Notes.Append(in curr->Key);
                 //                                          Bass + four pads = 5
                 Unsafe.CopyBlock(&note->Kick, &curr->Value.Kick, DUAL_COUNT * (uint) sizeof(DualTime));
                 note->Green = curr->Value.Green;
@@ -116,7 +91,6 @@ namespace YARG.Core.NewParsing
                 note->IsFlammed = curr->Value.IsFlammed;
             }
             source.Notes.Dispose();
-            return newDifficulty;
         }
     }
 }
