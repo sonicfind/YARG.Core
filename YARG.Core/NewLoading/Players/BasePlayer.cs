@@ -14,7 +14,7 @@ namespace YARG.Core.NewLoading
         public readonly SyncTrack2 Sync;
         public string Name;
 
-        protected BasePlayer(FixedArray<OverdrivePhrase> overdrives, SyncTrack2 sync, YargProfile profile)
+        protected BasePlayer(in FixedArray<OverdrivePhrase> overdrives, SyncTrack2 sync, YargProfile profile)
         {
             Sync = sync;
             Profile = profile;
