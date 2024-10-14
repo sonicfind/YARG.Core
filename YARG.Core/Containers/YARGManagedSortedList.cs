@@ -17,7 +17,7 @@ namespace YARG.Core.Containers
     /// <typeparam name="TKey">The type to use for determining sorting order</typeparam>
     /// <typeparam name="TValue">The value that gets mapped to keys</typeparam>
     [DebuggerDisplay("Count: {_count}")]
-    public struct YARGManagedSortedList<TKey, TValue> : IEnumerable<YARGKeyValuePair<TKey, TValue>>
+    public struct YARGManagedSortedList<TKey, TValue> : IEnumerable<YARGKeyValuePair<TKey, TValue>>, IDisposable
         where TKey : IEquatable<TKey>, IComparable<TKey>
         where TValue : new()
     {
@@ -387,6 +387,13 @@ namespace YARG.Core.Containers
                 newcapacity = int.MaxValue;
             }
             Capacity = newcapacity;
+        }
+
+        public void Dispose()
+        {
+            _buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
+            _version = 0;
+            _count = 0;
         }
 
         readonly IEnumerator<YARGKeyValuePair<TKey, TValue>> IEnumerable<YARGKeyValuePair<TKey, TValue>>.GetEnumerator()
