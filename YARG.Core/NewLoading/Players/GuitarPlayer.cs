@@ -42,16 +42,11 @@ namespace YARG.Core.NewLoading.Guitar
 
     public static class GuitarPlayer
     {
-        public static unsafe InstrumentPlayer<Note, SubNote> Load<TNote>(InstrumentTrack2<DifficultyTrack2<TNote>> track, SyncTrack2 sync, YargProfile profile, in LoaderSettings settings)
+        public static unsafe InstrumentPlayer<Note, SubNote> Load<TNote>(InstrumentTrack2<TNote> track, SyncTrack2 sync, YargProfile profile, in LoaderSettings settings)
             where TNote : unmanaged, IGuitarNote
         {
-            var diff = track[profile.CurrentDifficulty];
-            Debug.Assert(diff != null, "This function should only be used with a valid difficulty");
+            ref readonly var diff = ref track[profile.CurrentDifficulty];
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
-
-            var modifiers = profile.CurrentModifiers;
-            var overdriveRanges = diff.Phrases.Overdrives.Count > 0 ? diff.Phrases.Overdrives : track.Phrases.Overdrives;
-            var soloRanges = diff.Phrases.Soloes.Count > 0 ? diff.Phrases.Soloes : track.Phrases.Soloes;
 
             var curr = diff.Notes.Data;
             var end = curr + diff.Notes.Count;
@@ -66,8 +61,8 @@ namespace YARG.Core.NewLoading.Guitar
                 Capacity = diff.Notes.Count * 2,
             };
 
-            var overdrives = FixedArray<OverdrivePhrase>.Alloc(overdriveRanges.Count);
-            var soloes = FixedArray<SoloPhrase>.Alloc(soloRanges.Count);
+            var overdrives = FixedArray<OverdrivePhrase>.Alloc(diff.Overdrives.Count);
+            var soloes = FixedArray<SoloPhrase>.Alloc(diff.Soloes.Count);
 
             int currOverdrive = 0;
             int overdriveNoteCount = 0;
@@ -78,9 +73,9 @@ namespace YARG.Core.NewLoading.Guitar
             var buffer = stackalloc SubNote[6];
             while (curr < end)
             {
-                while (currOverdrive < overdriveRanges.Count)
+                while (currOverdrive < overdrives.Length)
                 {
-                    ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
+                    ref readonly var ovd = ref diff.Overdrives.Data[currOverdrive];
                     if (curr->Key < ovd.Key + ovd.Value)
                     {
                         break;
@@ -89,9 +84,9 @@ namespace YARG.Core.NewLoading.Guitar
                     overdriveNoteCount = 0;
                 }
 
-                while (currSolo < soloRanges.Count)
+                while (currSolo < soloes.Length)
                 {
-                    ref readonly var solo = ref soloRanges.Data[currSolo];
+                    ref readonly var solo = ref diff.Soloes.Data[currSolo];
                     var soloEnd = solo.Key + solo.Value;
                     if (curr->Key < soloEnd)
                     {
@@ -115,16 +110,16 @@ namespace YARG.Core.NewLoading.Guitar
 
                 if (laneCount > 0)
                 {
-                    var state = ParseGuitarState(curr, prev, curr->Value.State, modifiers, settings.HopoThreshold, settings.AllowHopoAfterChord);
+                    var state = ParseGuitarState(curr, prev, curr->Value.State, profile.CurrentModifiers, settings.HopoThreshold, settings.AllowHopoAfterChord);
                     int ovdIndex = -1;
-                    if (currOverdrive < overdriveRanges.Count && curr->Key >= overdriveRanges.Data[currOverdrive].Key)
+                    if (currOverdrive < overdrives.Length && curr->Key >= diff.Overdrives.Data[currOverdrive].Key)
                     {
                         overdriveNoteCount++;
                         ovdIndex = currOverdrive;
                     }
 
                     int soloIndex = -1;
-                    if (currSolo < soloRanges.Count && curr->Key >= soloRanges.Data[currSolo].Key)
+                    if (currSolo < soloes.Length && curr->Key >= diff.Soloes.Data[currSolo].Key)
                     {
                         soloNoteCount++;
                         soloIndex = currSolo;
@@ -136,17 +131,17 @@ namespace YARG.Core.NewLoading.Guitar
                 ++curr;
             }
 
-            while (currOverdrive < overdriveRanges.Count)
+            while (currOverdrive < overdrives.Length)
             {
-                ref readonly var ovd = ref overdriveRanges.Data[currOverdrive];
+                ref readonly var ovd = ref diff.Overdrives.Data[currOverdrive];
                 overdrives[currOverdrive] = new OverdrivePhrase(ovd.Key, overdriveNoteCount);
                 ++currOverdrive;
                 overdriveNoteCount = 0;
             }
 
-            while (currSolo < soloRanges.Count)
+            while (currSolo < soloes.Length)
             {
-                ref readonly var solo = ref soloRanges.Data[currSolo];
+                ref readonly var solo = ref diff.Soloes.Data[currSolo];
                 soloes[currSolo] = new SoloPhrase(solo.Key, solo.Key + solo.Value, soloNoteCount);
                 ++currSolo;
                 soloNoteCount = 0;
