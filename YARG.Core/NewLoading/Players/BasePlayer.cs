@@ -8,7 +8,6 @@ namespace YARG.Core.NewLoading
     public abstract class BasePlayer : IDisposable
     {
         protected readonly FixedArray<OverdrivePhrase> _overdrives;
-        protected int _overdriveIndex = 0;
 
         public readonly YargProfile Profile;
         public readonly SyncTrack2 Sync;

@@ -11,10 +11,7 @@ namespace YARG.Core.NewLoading.Players
     {
         private readonly YARGNativeList<TSubNote> _subNoteBuffer;
         private readonly YARGNativeSortedList<DualTime, TNote> _notes;
-        private int _noteIndex = 0;
-
         private readonly FixedArray<SoloPhrase> _soloes;
-        private int _soloIndex = 0;
 
         public InstrumentPlayer(in YARGNativeSortedList<DualTime, TNote> notes, in YARGNativeList<TSubNote> subNotes, in FixedArray<SoloPhrase> soloes, in FixedArray<OverdrivePhrase> overdrives, SyncTrack2 sync, YargProfile profile)
             : base(in overdrives, sync, profile)
