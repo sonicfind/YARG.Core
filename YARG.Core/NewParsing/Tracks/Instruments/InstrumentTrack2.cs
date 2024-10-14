@@ -128,23 +128,27 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Disposes all unmanaged buffer data from every difficulty
         /// </summary>
-        protected virtual void _Dispose()
+        public virtual void Dispose(bool dispose)
         {
-            Easy.Dispose();
-            Medium.Dispose();
-            Hard.Dispose();
-            Expert.Dispose();
+            Easy.Dispose(dispose);
+            Medium.Dispose(dispose);
+            Hard.Dispose(dispose);
+            Expert.Dispose(dispose);
+            if (dispose)
+            {
+                Events.Dispose();
+            }
         }
 
         public void Dispose()
         {
-            _Dispose();
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         ~InstrumentTrack2()
         {
-            _Dispose();
+            Dispose(false);
         }
     }
 }

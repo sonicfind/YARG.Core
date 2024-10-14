@@ -83,14 +83,14 @@ namespace YARG.Core.NewParsing
             base.Clear();
         }
 
-        protected override void _Dispose()
+        public override void Dispose(bool dispose)
         {
             Ranges_Easy.Dispose();
             Ranges_Medium.Dispose();
             Ranges_Hard.Dispose();
             Ranges_Expert.Dispose();
             Glissandos.Dispose();
-            base._Dispose();
+            base.Dispose(dispose);
         }
     }
 }
