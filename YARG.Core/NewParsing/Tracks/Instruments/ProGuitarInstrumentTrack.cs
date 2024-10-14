@@ -107,7 +107,7 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Disposes all unmanaged buffer data from every active difficulty and all phrase containers
         /// </summary>
-        protected override void _Dispose()
+        public override void Dispose(bool dispose)
         {
             Roots.Dispose();
             HandPositions.Dispose();
@@ -119,7 +119,7 @@ namespace YARG.Core.NewParsing
             SlashChords.Dispose();
             HideChords.Dispose();
             AccidentalSwitches.Dispose();
-            base._Dispose();
+            base.Dispose(dispose);
         }
     }
 }

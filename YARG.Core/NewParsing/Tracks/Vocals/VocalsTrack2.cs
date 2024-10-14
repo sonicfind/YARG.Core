@@ -97,7 +97,7 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Disposes all unmanaged buffer data for each part, percussion, and phrases
         /// </summary>
-        protected virtual void _Dispose()
+        public virtual void Dispose(bool dispose)
         {
             Percussion.Dispose();
             VocalPhrases_1.Dispose();
@@ -106,6 +106,10 @@ namespace YARG.Core.NewParsing
             RangeShifts.Dispose();
             Overdrives.Dispose();
             LyricShifts.Dispose();
+            if (dispose)
+            {
+                Events.Dispose();
+            }
         }
 
         /// <summary>
@@ -113,13 +117,13 @@ namespace YARG.Core.NewParsing
         /// </summary>
         public void Dispose()
         {
-            _Dispose();
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         ~VocalTrack2()
         {
-            _Dispose();
+            Dispose(false);
         }
     }
 
@@ -185,11 +189,14 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Disposes all unmanaged buffer data for lead's notes and lyrics, percussion, and phrases
         /// </summary>
-        protected override void _Dispose()
+        public override void Dispose(bool dispose)
         {
             _part.Notes.Dispose();
-            _part.Lyrics.Clear();
-            base._Dispose();
+            if (dispose)
+            {
+                _part.Lyrics.Dispose();
+            }
+            base.Dispose(dispose);
         }
     }
 
@@ -268,12 +275,18 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Disposes all unmanaged buffer data for each part, percussion, and phrases
         /// </summary>
-        protected override void _Dispose()
+        public override void Dispose(bool dispose)
         {
-            Harm_1.Dispose();
-            Harm_2.Dispose();
-            Harm_3.Dispose();
-            base._Dispose();
+            Harm_1.Notes.Dispose();
+            Harm_2.Notes.Dispose();
+            Harm_3.Notes.Dispose();
+            if (dispose)
+            {
+                Harm_1.Lyrics.Dispose();
+                Harm_2.Lyrics.Dispose();
+                Harm_3.Lyrics.Dispose();
+            }
+            base.Dispose(dispose);
         }
     }
 }

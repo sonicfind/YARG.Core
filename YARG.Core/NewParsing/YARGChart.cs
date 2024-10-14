@@ -125,44 +125,59 @@ namespace YARG.Core.NewParsing
         /// <summary>
         /// Disposes of all unmanaged data present in any of the chart's tracks or containers
         /// </summary>
-        public void Dispose()
+        private void _Dispose(bool dispose)
         {
+            if (dispose)
+            {
+                Globals.Dispose();
+                Sections.Dispose();
+                Miscellaneous?.Clear();
+            }
+
             Sync.Dispose();
-            Sections.Clear();
-            Globals.Clear();
             BeatMap.Dispose();
-            Miscellaneous?.Clear();
 
-            FiveFretGuitar.Dispose();
-            FiveFretBass.Dispose();
-            FiveFretRhythm.Dispose();
-            FiveFretCoopGuitar.Dispose();
+            FiveFretGuitar.Dispose(dispose);
+            FiveFretBass.Dispose(dispose);
+            FiveFretRhythm.Dispose(dispose);
+            FiveFretCoopGuitar.Dispose(dispose);
 
-            SixFretGuitar.Dispose();
-            SixFretBass.Dispose();
-            SixFretRhythm.Dispose();
-            SixFretCoopGuitar.Dispose();
+            SixFretGuitar.Dispose(dispose);
+            SixFretBass.Dispose(dispose);
+            SixFretRhythm.Dispose(dispose);
+            SixFretCoopGuitar.Dispose(dispose);
 
-            Keys.Dispose();
+            Keys.Dispose(dispose);
 
-            FourLaneDrums.Dispose();
-            FiveLaneDrums.Dispose();
+            FourLaneDrums.Dispose(dispose);
+            FiveLaneDrums.Dispose(dispose);
 
-            // TrueDrums?.Dispose();
+            // TrueDrums.Dispose(dispose);
 
-            ProGuitar_17Fret.Dispose();
-            ProGuitar_22Fret.Dispose();
-            ProBass_17Fret.Dispose();
-            ProBass_22Fret.Dispose();
+            ProGuitar_17Fret.Dispose(dispose);
+            ProGuitar_22Fret.Dispose(dispose);
+            ProBass_17Fret.Dispose(dispose);
+            ProBass_22Fret.Dispose(dispose);
 
-            ProKeys.Dispose();
+            ProKeys.Dispose(dispose);
 
-            // DJ?.Dispose();
+            // DJ.Dispose(dispose);
 
-            LeadVocals.Dispose();
-            HarmonyVocals.Dispose();
+            LeadVocals.Dispose(dispose);
+            HarmonyVocals.Dispose(dispose);
 
             Venue.Dispose();
+        }
+
+        public void Dispose()
+        {
+            _Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        ~YARGChart()
+        {
+            _Dispose(false);
         }
     }
 }
