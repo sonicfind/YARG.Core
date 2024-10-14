@@ -36,10 +36,13 @@ namespace YARG.Core.NewParsing.Midi
 
         private static readonly byte[][] ENHANCED_STRINGS = new byte[][] { Encoding.ASCII.GetBytes("[ENHANCED_OPENS]"), Encoding.ASCII.GetBytes("ENHANCED_OPENS") };
 
-        public static unsafe InstrumentTrack2<FiveFretGuitar> Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker)
+        public static unsafe void Load(YARGMidiTrack midiTrack, InstrumentTrack2<FiveFretGuitar> instrumentTrack, ref TempoTracker tempoTracker)
         {
-            // Pre-load empty instances of all difficulties
-            var instrumentTrack = new InstrumentTrack2<FiveFretGuitar>();
+            if (!instrumentTrack.IsEmpty())
+            {
+                return;
+            }
+
             using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
@@ -561,7 +564,6 @@ namespace YARG.Core.NewParsing.Midi
                 diff.Faceoff_Player1 = trills.Clone();
                 diff.Faceoff_Player2 = trills.Clone();
             }
-            return instrumentTrack;
         }
     }
 }

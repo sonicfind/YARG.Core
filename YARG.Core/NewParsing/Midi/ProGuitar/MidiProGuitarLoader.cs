@@ -50,11 +50,14 @@ namespace YARG.Core.NewParsing.Midi
             PitchName.E, PitchName.F, PitchName.F_Sharp_Gb, PitchName.G, PitchName.G_Sharp_Ab, PitchName.A, PitchName.A_Sharp_Bb, PitchName.B, PitchName.C, PitchName.C_Sharp_Db, PitchName.D, PitchName.D_Sharp_Eb
         };
 
-        public static unsafe ProGuitarInstrumentTrack<TProFret> Load<TProFret>(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker)
+        public static unsafe void Load<TProFret>(YARGMidiTrack midiTrack, ProGuitarInstrumentTrack<TProFret> instrumentTrack, ref TempoTracker tempoTracker)
             where TProFret : unmanaged, IProFret
         {
-            // Pre-load empty instances of all difficulties
-            var instrumentTrack = new ProGuitarInstrumentTrack<TProFret>();
+            if (!instrumentTrack.IsEmpty())
+            {
+                return;
+            }
+
             using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var bres = YARGNativeSortedList<DualTime, DualTime>.Default;
@@ -380,7 +383,6 @@ namespace YARG.Core.NewParsing.Midi
                 diff.Soloes = soloes.Clone();
                 diff.BREs = bres.Clone();
             }
-            return instrumentTrack;
         }
     }
 }

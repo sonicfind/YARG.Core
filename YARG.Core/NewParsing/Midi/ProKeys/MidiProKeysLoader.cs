@@ -14,16 +14,15 @@ namespace YARG.Core.NewParsing.Midi
         private const int BRE_MIDI = 120;
         private const int GLISSANDO_MIDI = 126;
 
-        public static unsafe bool Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ref ProKeysInstrumentTrack? instrumentTrack, int diffIndex)
+        public static unsafe bool Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ProKeysInstrumentTrack instrumentTrack, int diffIndex)
         {
-            instrumentTrack ??= new ProKeysInstrumentTrack();
             ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex]!;
             if (!diffTrack.IsEmpty())
             {
                 return false;
             }
 
-            var ranges = instrumentTrack.Ranges[diffIndex];
+            ref var ranges = ref instrumentTrack.Ranges[diffIndex];
             using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
