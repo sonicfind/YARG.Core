@@ -17,12 +17,12 @@ namespace YARG.Core.NewParsing.Midi
         public static unsafe bool Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ProKeysInstrumentTrack instrumentTrack, int diffIndex)
         {
             ref var diffTrack = ref instrumentTrack[diffIndex];
-            if (!diffTrack.IsEmpty())
+            ref var ranges = ref instrumentTrack.Ranges[diffIndex];
+            if (!diffTrack.Notes.IsEmpty() || !ranges.IsEmpty())
             {
                 return false;
             }
 
-            ref var ranges = ref instrumentTrack.Ranges[diffIndex];
             using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
