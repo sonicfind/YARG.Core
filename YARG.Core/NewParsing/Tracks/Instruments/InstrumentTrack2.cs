@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Melanchall.DryWetMidi.MusicTheory;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using YARG.Core.Containers;
@@ -18,6 +19,12 @@ namespace YARG.Core.NewParsing
         public DifficultyTrack2<TNote> Hard   = DifficultyTrack2<TNote>.Default;
         public DifficultyTrack2<TNote> Expert = DifficultyTrack2<TNote>.Default;
         public YARGManagedSortedList<DualTime, HashSet<string>> Events = YARGManagedSortedList<DualTime, HashSet<string>>.Default;
+
+        public virtual long NativeMemoryUsage =>
+            Easy.NativeMemoryUsage
+            + Medium.NativeMemoryUsage
+            + Hard.NativeMemoryUsage
+            + Expert.NativeMemoryUsage;
 
         /// <summary>
         /// Returns whether all active difficulties and track-scope phrases and events are empty

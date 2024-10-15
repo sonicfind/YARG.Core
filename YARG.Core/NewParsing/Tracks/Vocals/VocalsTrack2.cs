@@ -23,6 +23,15 @@ namespace YARG.Core.NewParsing
         public abstract ref VocalPart2 this[int index] { get; }
         public abstract int NumTracks { get; }
 
+        public virtual long NativeMemoryUsage =>
+            Percussion.MemoryUsage
+            + VocalPhrases_1.MemoryUsage
+            + VocalPhrases_2.MemoryUsage
+            + HarmonyLines.MemoryUsage
+            + RangeShifts.MemoryUsage
+            + Overdrives.MemoryUsage
+            + LyricShifts.MemoryUsage;
+
         protected VocalTrack2() { }
 
         /// <summary>
@@ -150,6 +159,8 @@ namespace YARG.Core.NewParsing
 
         public override int NumTracks => 1;
 
+        public override long NativeMemoryUsage => base.NativeMemoryUsage + _part.Notes.MemoryUsage;
+
         /// <summary>
         /// Returns whether lead vocal part, percussion, phrases, and events are empty
         /// </summary>
@@ -226,6 +237,12 @@ namespace YARG.Core.NewParsing
         }
 
         public override int NumTracks => 3;
+
+        public override long NativeMemoryUsage =>
+            base.NativeMemoryUsage
+            + Harm_1.Notes.MemoryUsage
+            + Harm_2.Notes.MemoryUsage
+            + Harm_3.Notes.MemoryUsage;
 
         /// <summary>
         /// Returns whether all parts, percussion, phrases, and events are empty

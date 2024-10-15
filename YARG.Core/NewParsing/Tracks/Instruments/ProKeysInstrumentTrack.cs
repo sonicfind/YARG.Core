@@ -23,6 +23,14 @@ namespace YARG.Core.NewParsing
         public YARGNativeSortedList<DualTime, ProKey_Ranges> Ranges_Expert = YARGNativeSortedList<DualTime, ProKey_Ranges>.Default;
         public YARGNativeSortedList<DualTime, DualTime>      Glissandos    = YARGNativeSortedList<DualTime, DualTime>.Default;
 
+        public override long NativeMemoryUsage =>
+            base.NativeMemoryUsage
+            + Ranges_Easy.MemoryUsage
+            + Ranges_Medium.MemoryUsage
+            + Ranges_Hard.MemoryUsage
+            + Ranges_Expert.MemoryUsage
+            + Glissandos.MemoryUsage;
+
         public ref YARGNativeSortedList<DualTime, ProKey_Ranges> GetRanges(Difficulty difficulty)
         {
             switch (difficulty)

@@ -114,6 +114,33 @@ namespace YARG.Core.NewParsing
             return lastNoteTime;
         }
 
+        public long GetNativeMemoryUsage()
+        {
+            return Sync.NativeMemoryUsage
+                + BeatMap.MemoryUsage
+                + FiveFretGuitar.NativeMemoryUsage
+                + FiveFretBass.NativeMemoryUsage
+                + FiveFretRhythm.NativeMemoryUsage
+                + FiveFretCoopGuitar.NativeMemoryUsage
+                + SixFretGuitar.NativeMemoryUsage
+                + SixFretBass.NativeMemoryUsage
+                + SixFretRhythm.NativeMemoryUsage
+                + SixFretCoopGuitar.NativeMemoryUsage
+                + Keys.NativeMemoryUsage
+                + FourLaneDrums.NativeMemoryUsage
+                + FiveLaneDrums.NativeMemoryUsage
+                // + TrueDrums.NativeMemoryUsage
+                + ProGuitar_17Fret.NativeMemoryUsage
+                + ProGuitar_22Fret.NativeMemoryUsage
+                + ProBass_17Fret.NativeMemoryUsage
+                + ProBass_22Fret.NativeMemoryUsage
+                + ProKeys.NativeMemoryUsage
+                // + DJ.NativeMemoryUsage
+                + LeadVocals.NativeMemoryUsage
+                + HarmonyVocals.NativeMemoryUsage
+                + Venue.NativeMemoryUsage;
+        }
+
         /// <summary>
         /// Disposes of all unmanaged data present in any of the chart's tracks or containers
         /// </summary>

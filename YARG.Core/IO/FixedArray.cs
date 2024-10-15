@@ -137,6 +137,8 @@ namespace YARG.Core.IO
 
         public readonly Span<T> Span => new(Ptr, (int) Length);
 
+        public readonly long ByteCount => Length * sizeof(T);
+
         private FixedArray(T* ptr, long length)
         {
             Ptr = ptr;

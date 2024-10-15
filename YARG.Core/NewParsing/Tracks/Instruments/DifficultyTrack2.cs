@@ -31,6 +31,16 @@ namespace YARG.Core.NewParsing
         public YARGNativeSortedList<DualTime, DualTime> Faceoff_Player2;
         public YARGManagedSortedList<DualTime, HashSet<string>> Events;
 
+        public readonly long NativeMemoryUsage =>
+            Notes.MemoryUsage
+            + Overdrives.MemoryUsage
+            + Soloes.MemoryUsage
+            + Trills.MemoryUsage
+            + Tremolos.MemoryUsage
+            + BREs.MemoryUsage
+            + Faceoff_Player1.MemoryUsage
+            + Faceoff_Player2.MemoryUsage;
+
         /// <summary>
         /// Returns if no notes, phrases, or events are present
         /// </summary>

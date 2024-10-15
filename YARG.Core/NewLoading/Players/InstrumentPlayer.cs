@@ -13,6 +13,12 @@ namespace YARG.Core.NewLoading.Players
         private readonly YARGNativeSortedList<DualTime, TNote> _notes;
         private readonly FixedArray<SoloPhrase> _soloes;
 
+        public override long NativeMemoryUsage =>
+            base.NativeMemoryUsage
+            + _subNoteBuffer.MemoryUsage
+            + _notes.MemoryUsage
+            + _soloes.ByteCount;
+
         public InstrumentPlayer(in YARGNativeSortedList<DualTime, TNote> notes, in YARGNativeList<TSubNote> subNotes, in FixedArray<SoloPhrase> soloes, in FixedArray<OverdrivePhrase> overdrives, SyncTrack2 sync, YargProfile profile)
             : base(in overdrives, sync, profile)
         {

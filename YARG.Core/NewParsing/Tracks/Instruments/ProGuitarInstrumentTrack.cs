@@ -19,6 +19,19 @@ namespace YARG.Core.NewParsing
         public YARGNativeSortedList<DualTime, DualTime>  HideChords           = YARGNativeSortedList<DualTime, DualTime>.Default;
         public YARGNativeSortedList<DualTime, DualTime>  AccidentalSwitches   = YARGNativeSortedList<DualTime, DualTime>.Default;
 
+        public override long NativeMemoryUsage =>
+            base.NativeMemoryUsage
+            + Roots.MemoryUsage
+            + HandPositions.MemoryUsage
+            + Arpeggios_Easy.MemoryUsage
+            + Arpeggios_Medium.MemoryUsage
+            + Arpeggios_Hard.MemoryUsage
+            + Arpeggios_Expert.MemoryUsage
+            + Force_ChordNumbering.MemoryUsage
+            + SlashChords.MemoryUsage
+            + HideChords.MemoryUsage
+            + AccidentalSwitches.MemoryUsage;
+
         public ref YARGNativeSortedList<DualTime, DualTime> GetArpeggios(Difficulty difficulty)
         {
             switch (difficulty)

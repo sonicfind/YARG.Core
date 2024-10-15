@@ -13,6 +13,8 @@ namespace YARG.Core.NewLoading
         public readonly SyncTrack2 Sync;
         public string Name;
 
+        public virtual long NativeMemoryUsage => _overdrives.ByteCount;
+
         protected BasePlayer(in FixedArray<OverdrivePhrase> overdrives, SyncTrack2 sync, YargProfile profile)
         {
             Sync = sync;
