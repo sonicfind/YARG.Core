@@ -259,7 +259,7 @@ namespace YARG.Core.NewParsing.Midi
                                     case ARPEGGIO_VALUE:
                                         if (diffMods.Arpeggio.Ticks != -1)
                                         {
-                                            instrumentTrack.GetArpeggios(diffIndex).Append(in diffMods.Arpeggio, position - diffMods.Arpeggio);
+                                            instrumentTrack.Arpeggios[diffIndex].Append(in diffMods.Arpeggio, position - diffMods.Arpeggio);
                                             diffMods.Arpeggio.Ticks = -1;
                                         }
                                         break;
