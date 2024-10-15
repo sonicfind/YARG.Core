@@ -21,13 +21,5 @@ namespace YARG.Core.NewParsing
         /// Shrinks unmanaged data buffers to solely cover actual data
         /// </summary>
         public void TrimExcess();
-
-        /// <summary>
-        /// Returns the end time for any notes present
-        /// </summary>
-        /// <returns>The tick and seconds position of the end time</returns>
-        public void UpdateLastNoteTime(ref DualTime LastNoteTime);
-
-        public void Dispose(bool dispose);
     }
 }
