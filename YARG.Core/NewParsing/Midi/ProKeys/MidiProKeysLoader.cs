@@ -22,7 +22,7 @@ namespace YARG.Core.NewParsing.Midi
                 return false;
             }
 
-            ref var ranges = ref instrumentTrack.GetRanges(diffIndex);
+            ref var ranges = ref instrumentTrack.Ranges[diffIndex];
             using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
             using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
