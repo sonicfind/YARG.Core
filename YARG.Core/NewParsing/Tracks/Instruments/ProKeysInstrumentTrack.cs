@@ -29,6 +29,11 @@ namespace YARG.Core.NewParsing
         public DifficultyExtensions<ProKey_Ranges>      Ranges;
         public YARGNativeSortedList<DualTime, DualTime> Glissandos;
         public YARGManagedSortedList<DualTime, HashSet<string>> Events;
+        
+        public readonly long NativeMemoryUsage =>
+            Difficulties.NativeMemoryUsage
+            + Ranges.NativeMemoryUsage
+            + Glissandos.MemoryUsage;
 
         /// <summary>
         /// Returns whether all active difficulties and track-scope phrases (and events) are empty

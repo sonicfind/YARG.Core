@@ -80,6 +80,12 @@ namespace YARG.Core.NewParsing
             }
         }
 
+        public readonly long NativeMemoryUsage =>
+            Easy.NativeMemoryUsage
+            + Medium.NativeMemoryUsage
+            + Hard.NativeMemoryUsage
+            + Expert.NativeMemoryUsage;
+
         /// <summary>
         /// Returns whether all active difficulties and track-scope phrases and events are empty
         /// </summary>

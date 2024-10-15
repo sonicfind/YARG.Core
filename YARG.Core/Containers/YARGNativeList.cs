@@ -68,6 +68,8 @@ namespace YARG.Core.Containers
             }
         }
 
+        public readonly long MemoryUsage => _capacity * sizeof(T);
+
         /// <summary>
         /// The span view of the data up to <see cref="Count"/>
         /// </summary>

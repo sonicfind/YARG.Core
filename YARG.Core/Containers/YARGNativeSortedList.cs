@@ -87,6 +87,8 @@ namespace YARG.Core.Containers
             }
         }
 
+        public readonly long MemoryUsage => _capacity * sizeof(YARGNativeSortedList<TKey, TValue>);
+
         /// <summary>
         /// The span view of the data up to <see cref="Count"/>
         /// </summary>

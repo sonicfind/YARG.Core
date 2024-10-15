@@ -30,6 +30,16 @@ namespace YARG.Core.NewParsing
         public YARGNativeSortedList<DualTime, DualTime>           HideChords;
         public YARGNativeSortedList<DualTime, DualTime>           AccidentalSwitches;
         public YARGManagedSortedList<DualTime, HashSet<string>>   Events;
+        
+        public long NativeMemoryUsage =>
+            Difficulties.NativeMemoryUsage
+            + Roots.MemoryUsage
+            + HandPositions.MemoryUsage
+            + Arpeggios.NativeMemoryUsage
+            + Force_ChordNumbering.MemoryUsage
+            + SlashChords.MemoryUsage
+            + HideChords.MemoryUsage
+            + AccidentalSwitches.MemoryUsage;
 
         /// <summary>
         /// Returns whether all active difficulties and track-scope phrases and events are empty

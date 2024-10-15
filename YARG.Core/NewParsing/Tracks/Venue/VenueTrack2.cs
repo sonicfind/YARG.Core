@@ -13,6 +13,12 @@ namespace YARG.Core.NewParsing
         public YARGNativeSortedList<DualTime, VenueEvent2<PerformerEvent2>> Performer = YARGNativeSortedList<DualTime, VenueEvent2<PerformerEvent2>>.Default;
         public YARGNativeSortedList<DualTime, VenueEvent2<StageEffect>> Stage = YARGNativeSortedList<DualTime, VenueEvent2<StageEffect>>.Default;
 
+        public long NativeMemoryUsage =>
+            Lighting.MemoryUsage
+            + PostProcessing.MemoryUsage
+            + Performer.MemoryUsage
+            + Stage.MemoryUsage;
+            
         public bool IsEmpty()
         {
             return Lighting.IsEmpty()

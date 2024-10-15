@@ -6,6 +6,8 @@ namespace YARG.Core.NewParsing
 {
     public interface ITrack
     {
+        public long NativeMemoryUsage { get; }
+
         /// <summary>
         /// Returns whether the track contains no data
         /// </summary>

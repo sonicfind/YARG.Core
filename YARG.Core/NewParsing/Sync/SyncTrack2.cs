@@ -11,6 +11,8 @@ namespace YARG.Core.NewParsing
         public YARGNativeSortedList<long, Tempo2> TempoMarkers = YARGNativeSortedList<long, Tempo2>.Default;
         public YARGNativeSortedList<long, TimeSig2> TimeSigs = YARGNativeSortedList<long, TimeSig2>.Default;
 
+        public long NativeMemoryUsage => TempoMarkers.MemoryUsage + TimeSigs.MemoryUsage;
+
         /// <summary>
         /// Initializes the synctrack with the given tickrate, a default timesig of 4/4, and a default bpm of 120
         /// </summary>
