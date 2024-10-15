@@ -7,25 +7,24 @@ namespace YARG.Core.NewLoading
 {
     public abstract class BasePlayer : IDisposable
     {
-        protected readonly FixedArray<OverdrivePhrase> _overdrives;
-
         public readonly YargProfile Profile;
         public readonly SyncTrack2 Sync;
+        public readonly FixedArray<OverdrivePhrase> Overdrives;
         public string Name;
 
-        public virtual long NativeMemoryUsage => _overdrives.ByteCount;
+        public virtual long NativeMemoryUsage => Overdrives.ByteCount;
 
         protected BasePlayer(in FixedArray<OverdrivePhrase> overdrives, SyncTrack2 sync, YargProfile profile)
         {
             Sync = sync;
             Profile = profile;
             Name = profile.Name;
-            _overdrives = overdrives;
+            Overdrives = overdrives;
         }
 
         protected virtual void _Dispose()
         {
-            _overdrives.Dispose();
+            Overdrives.Dispose();
         }
 
         public void Dispose()
