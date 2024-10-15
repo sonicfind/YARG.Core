@@ -5,7 +5,7 @@ using YARG.Core.Containers;
 
 namespace YARG.Core.NewParsing
 {
-    public struct DifficultyExtensions<T>
+    public struct DifficultyExtensions<T> : ITrack
         where T : unmanaged
     {
         public static readonly DifficultyExtensions<T> Default = new()
