@@ -8,45 +8,13 @@ namespace YARG.Core.NewParsing
     public class ProGuitarInstrumentTrack<TProFret> : InstrumentTrack2<ProGuitarNote<TProFret>>, IDisposable
         where TProFret : unmanaged, IProFret
     {
+        public DifficultyExtensions<DualTime> Arpeggios = DifficultyExtensions<DualTime>.Default;
         public YARGNativeSortedList<DualTime, PitchName> Roots                = YARGNativeSortedList<DualTime, PitchName>.Default;
         public YARGNativeSortedList<DualTime, TProFret>  HandPositions        = YARGNativeSortedList<DualTime, TProFret>.Default;
-        public YARGNativeSortedList<DualTime, DualTime>  Arpeggios_Easy       = YARGNativeSortedList<DualTime, DualTime>.Default;
-        public YARGNativeSortedList<DualTime, DualTime>  Arpeggios_Medium     = YARGNativeSortedList<DualTime, DualTime>.Default;
-        public YARGNativeSortedList<DualTime, DualTime>  Arpeggios_Hard       = YARGNativeSortedList<DualTime, DualTime>.Default;
-        public YARGNativeSortedList<DualTime, DualTime>  Arpeggios_Expert     = YARGNativeSortedList<DualTime, DualTime>.Default;
         public YARGNativeSortedList<DualTime, DualTime>  Force_ChordNumbering = YARGNativeSortedList<DualTime, DualTime>.Default;
         public YARGNativeSortedList<DualTime, DualTime>  SlashChords          = YARGNativeSortedList<DualTime, DualTime>.Default;
         public YARGNativeSortedList<DualTime, DualTime>  HideChords           = YARGNativeSortedList<DualTime, DualTime>.Default;
         public YARGNativeSortedList<DualTime, DualTime>  AccidentalSwitches   = YARGNativeSortedList<DualTime, DualTime>.Default;
-
-        public ref YARGNativeSortedList<DualTime, DualTime> GetArpeggios(Difficulty difficulty)
-        {
-            switch (difficulty)
-            {
-                case Difficulty.Beginner:
-                case Difficulty.Easy:
-                    return ref Arpeggios_Easy;
-                case Difficulty.Medium:
-                    return ref Arpeggios_Medium;
-                case Difficulty.Hard:
-                    return ref Arpeggios_Hard;
-                case Difficulty.Expert:
-                    return ref Arpeggios_Expert;
-                default: throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        public ref YARGNativeSortedList<DualTime, DualTime> GetArpeggios(int index)
-        {
-            switch (index)
-            {
-                case 0: return ref Arpeggios_Easy;
-                case 1: return ref Arpeggios_Medium;
-                case 2: return ref Arpeggios_Hard;
-                case 3: return ref Arpeggios_Expert;
-                default: throw new ArgumentOutOfRangeException();
-            }
-        }
 
         /// <summary>
         /// Returns whether all active difficulties and track-scope phrases and events are empty
@@ -56,10 +24,7 @@ namespace YARG.Core.NewParsing
         {
             return Roots.IsEmpty()
                 && HandPositions.IsEmpty()
-                && Arpeggios_Easy.IsEmpty()
-                && Arpeggios_Medium.IsEmpty()
-                && Arpeggios_Hard.IsEmpty()
-                && Arpeggios_Expert.IsEmpty()
+                && Arpeggios.IsEmpty()
                 && Force_ChordNumbering.IsEmpty()
                 && SlashChords.IsEmpty()
                 && HideChords.IsEmpty()
@@ -74,10 +39,7 @@ namespace YARG.Core.NewParsing
         {
             Roots.Clear();
             HandPositions.Clear();
-            Arpeggios_Easy.Clear();
-            Arpeggios_Medium.Clear();
-            Arpeggios_Hard.Clear();
-            Arpeggios_Expert.Clear();
+            Arpeggios.Clear();
             Force_ChordNumbering.Clear();
             SlashChords.Clear();
             HideChords.Clear();
@@ -93,10 +55,7 @@ namespace YARG.Core.NewParsing
         {
             Roots.TrimExcess();
             HandPositions.TrimExcess();
-            Arpeggios_Easy.TrimExcess();
-            Arpeggios_Medium.TrimExcess();
-            Arpeggios_Hard.TrimExcess();
-            Arpeggios_Expert.TrimExcess();
+            Arpeggios.TrimExcess();
             Force_ChordNumbering.TrimExcess();
             SlashChords.TrimExcess();
             HideChords.TrimExcess();
@@ -111,10 +70,7 @@ namespace YARG.Core.NewParsing
         {
             Roots.Dispose();
             HandPositions.Dispose();
-            Arpeggios_Easy.Dispose();
-            Arpeggios_Medium.Dispose();
-            Arpeggios_Hard.Dispose();
-            Arpeggios_Expert.Dispose();
+            Arpeggios.Dispose();
             Force_ChordNumbering.Dispose();
             SlashChords.Dispose();
             HideChords.Dispose();
