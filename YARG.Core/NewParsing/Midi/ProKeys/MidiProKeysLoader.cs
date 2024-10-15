@@ -161,7 +161,7 @@ namespace YARG.Core.NewParsing.Midi
                         }
                     }
                 }
-                else if (MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit && midiTrack.Type != MidiEventType.Text_TrackName)
+                else if (diffIndex == 3 && MidiEventType.Text <= midiTrack.Type && midiTrack.Type <= MidiEventType.Text_EnumLimit && midiTrack.Type != MidiEventType.Text_TrackName)
                 {
                     // Unless, for some stupid-ass reason, this track contains lyrics,
                     // all actually useful events will utilize ASCII encoding for state
