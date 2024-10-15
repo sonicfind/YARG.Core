@@ -9,29 +9,29 @@ namespace YARG.Core.NewLoading.Players
         where TNote : unmanaged
         where TSubNote : unmanaged
     {
-        private readonly YARGNativeList<TSubNote> _subNoteBuffer;
-        private readonly YARGNativeSortedList<DualTime, TNote> _notes;
-        private readonly FixedArray<SoloPhrase> _soloes;
+        public readonly YARGNativeList<TSubNote> SubNoteBuffer;
+        public readonly YARGNativeSortedList<DualTime, TNote> Notes;
+        public readonly FixedArray<SoloPhrase> Soloes;
 
         public override long NativeMemoryUsage =>
             base.NativeMemoryUsage
-            + _subNoteBuffer.MemoryUsage
-            + _notes.MemoryUsage
-            + _soloes.ByteCount;
+            + SubNoteBuffer.MemoryUsage
+            + Notes.MemoryUsage
+            + Soloes.ByteCount;
 
         public InstrumentPlayer(in YARGNativeSortedList<DualTime, TNote> notes, in YARGNativeList<TSubNote> subNotes, in FixedArray<SoloPhrase> soloes, in FixedArray<OverdrivePhrase> overdrives, SyncTrack2 sync, YargProfile profile)
             : base(in overdrives, sync, profile)
         {
-            _notes = notes;
-            _subNoteBuffer = subNotes;
-            _soloes = soloes;
+            Notes = notes;
+            SubNoteBuffer = subNotes;
+            Soloes = soloes;
         }
 
         protected override void _Dispose()
         {
-            _subNoteBuffer.Dispose();
-            _notes.Dispose();
-            _soloes.Dispose();
+            SubNoteBuffer.Dispose();
+            Notes.Dispose();
+            Soloes.Dispose();
             base._Dispose();
         }
     }
