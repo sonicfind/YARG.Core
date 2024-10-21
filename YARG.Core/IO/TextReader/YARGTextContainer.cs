@@ -28,8 +28,6 @@ namespace YARG.Core.IO
             }
         }
 
-        public readonly bool IsActive => End != null;
-
         public YARGTextContainer(in FixedArray<TChar> buffer, Encoding encoding)
         {
             Position = buffer.Ptr;

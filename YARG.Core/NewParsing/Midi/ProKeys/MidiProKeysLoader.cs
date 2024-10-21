@@ -16,7 +16,7 @@ namespace YARG.Core.NewParsing.Midi
 
         public static unsafe bool Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ProKeysInstrumentTrack instrumentTrack, int diffIndex)
         {
-            ref var diffTrack = ref instrumentTrack[diffIndex];
+            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
             ref var ranges = ref instrumentTrack.Ranges[diffIndex];
             if (!diffTrack.Notes.IsEmpty() || !ranges.IsEmpty())
             {
@@ -176,7 +176,7 @@ namespace YARG.Core.NewParsing.Midi
             {
                 for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
                 {
-                    ref var diff = ref instrumentTrack[i];
+                    ref var diff = ref instrumentTrack.Difficulties[i];
                     diff.Overdrives = overdrives.Clone();
                     diff.Soloes = soloes.Clone();
                     diff.BREs = bres.Clone();

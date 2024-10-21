@@ -80,22 +80,22 @@ namespace YARG.Core.NewParsing
             BREs.TrimExcess();
             Faceoff_Player1.TrimExcess();
             Faceoff_Player2.TrimExcess();
+            // Trimming managed lists just generates a new array for GC to handle.
+            // The exact opposite of what we want.
         }
 
         public readonly void UpdateLastNoteTime(ref DualTime lastNoteTime)
         {
-            if (Notes.IsEmpty())
+            if (!Notes.IsEmpty())
             {
-                return;
-            }
-
-            unsafe
-            {
-                ref readonly var note = ref Notes.Data[Notes.Count - 1];
-                var tmp = note.Key + note.Value.GetLongestSustain();
-                if (tmp > lastNoteTime)
+                unsafe
                 {
-                    lastNoteTime = tmp;
+                    var note = Notes.Data + Notes.Count - 1;
+                    var tmp = note->Key + note->Value.GetLongestSustain();
+                    if (tmp > lastNoteTime)
+                    {
+                        lastNoteTime = tmp;
+                    }
                 }
             }
         }
@@ -115,14 +115,6 @@ namespace YARG.Core.NewParsing
             {
                 Events.Dispose();
             }
-        }
-
-        /// <summary>
-        /// Diposes all the data used for notes, phrases, and events
-        /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
         }
     }
 }

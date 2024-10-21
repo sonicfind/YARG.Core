@@ -41,7 +41,7 @@ namespace YARG.Core.Song
                 return (ScanResult.MissingCONMidi, null);
             }
 
-            using var mainMidi = midiListing.LoadAllBytes(group.Stream);
+            using var mainMidi = group.Load(midiListing);
             var (midiResult, hash) = ParseRBCONMidi(in mainMidi, modification, ref info);
             if (midiResult != ScanResult.Success)
             {

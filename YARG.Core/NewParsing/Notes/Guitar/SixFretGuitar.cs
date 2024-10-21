@@ -22,8 +22,6 @@ namespace YARG.Core.NewParsing
             set => _state = value;
         }
 
-        public readonly int NUMLANES => 7;
-
         public bool SetFromDotChart(int lane, in DualTime length)
         {
             switch (lane)

@@ -48,18 +48,15 @@ namespace YARG.Core.IO
             return new CONFileStream(ConFile.FullName, IsContiguous(), Size, FirstBlock, _shift);
         }
 
-        // This overload should only be called during scanning
-        public FixedArray<byte> LoadAllBytes(Stream stream)
-        {
-            lock (stream)
-            {
-                return CONFileStream.LoadFile(stream, IsContiguous(), Size, FirstBlock, _shift);
-            }
-        }
-
         public FixedArray<byte> LoadAllBytes()
         {
-            return CONFileStream.LoadFile(ConFile.FullName, IsContiguous(), Size, FirstBlock, _shift);
+            using FileStream filestream = new(ConFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, 1);
+            return CONFileStream.LoadFile(filestream, IsContiguous(), Size, FirstBlock, _shift);
+        }
+
+        public FixedArray<byte> LoadAllBytes(Stream stream)
+        {
+            return CONFileStream.LoadFile(stream, IsContiguous(), Size, FirstBlock, _shift);
         }
 
         public static int GetMoggVersion(CONFileListing listing, Stream stream)

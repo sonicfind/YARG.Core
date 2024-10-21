@@ -4,7 +4,7 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public interface ITrack : IDisposable
+    public interface ITrack
     {
         /// <summary>
         /// Returns whether the track contains no data

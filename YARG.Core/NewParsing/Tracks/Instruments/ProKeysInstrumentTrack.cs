@@ -15,37 +15,66 @@ namespace YARG.Core.NewParsing
         A1_C3,
     };
 
-    public class ProKeysInstrumentTrack : InstrumentTrack2<ProKeyNote>
+    public struct ProKeysInstrumentTrack : ITrack
     {
-        public DifficultyExtensions<ProKey_Ranges> Ranges = DifficultyExtensions<ProKey_Ranges>.Default;
-        public YARGNativeSortedList<DualTime, DualTime> Glissandos = YARGNativeSortedList<DualTime, DualTime>.Default;
-
-        public override bool IsEmpty()
+        public static readonly ProKeysInstrumentTrack Default = new()
         {
-            return Ranges.IsEmpty()
+            Difficulties = DifficultyTrackCollection<ProKeyNote>.Default,
+            Ranges = DifficultyExtensions<ProKey_Ranges>.Default,
+            Glissandos = YARGNativeSortedList<DualTime, DualTime>.Default,
+            Events = YARGManagedSortedList<DualTime, HashSet<string>>.Default,
+        };
+
+        public DifficultyTrackCollection<ProKeyNote>    Difficulties;
+        public DifficultyExtensions<ProKey_Ranges>      Ranges;
+        public YARGNativeSortedList<DualTime, DualTime> Glissandos;
+        public YARGManagedSortedList<DualTime, HashSet<string>> Events;
+
+        /// <summary>
+        /// Returns whether all active difficulties and track-scope phrases (and events) are empty
+        /// </summary>
+        /// <returns>Whether the instrument contains no data</returns>
+        public readonly bool IsEmpty()
+        {
+            return Difficulties.IsEmpty()
+                && Ranges.IsEmpty()
                 && Glissandos.IsEmpty()
-                && base.IsEmpty();
+                && Events.IsEmpty();
         }
 
-        public override void TrimExcess()
+        public void TrimExcess()
         {
+            Difficulties.TrimExcess();
             Ranges.TrimExcess();
             Glissandos.TrimExcess();
-            base.TrimExcess();
         }
 
-        public override void Clear()
+        public void Clear()
         {
+            Difficulties.Clear();
             Ranges.Clear();
             Glissandos.Clear();
-            base.Clear();
+            Events.Clear();
         }
 
-        public override void Dispose(bool dispose)
+        /// <summary>
+        /// Checks all difficulties to determine the end point of the track
+        /// </summary>
+        /// <returns>The end point of the track</returns>
+        public readonly void UpdateLastNoteTime(ref DualTime lastNoteTime)
         {
+            Difficulties.UpdateLastNoteTime(ref lastNoteTime);
+        }
+
+        public void Dispose(bool dispose)
+        {
+            Difficulties.Dispose(dispose);
             Ranges.Dispose();
             Glissandos.Dispose();
-            base.Dispose(dispose);
+            if (dispose)
+            {
+                Events.Dispose();
+            }
         }
     }
 }

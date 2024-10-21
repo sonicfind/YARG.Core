@@ -121,7 +121,7 @@ namespace YARG.Core.NewParsing
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             var chart = LoadHeaderAndSync_Chart(ref container, in metadata, in settings);
-            InstrumentTrack2<UnknownLaneDrums>? unknownDrums = null;
+            var unknownDrums = InstrumentTrack2<UnknownLaneDrums>.Default;
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
                 if (!SelectTrack_Chart(ref container, chart, ref drumsInChart, activeTracks, ref unknownDrums))
@@ -133,7 +133,7 @@ namespace YARG.Core.NewParsing
                 }
             }
 
-            if (unknownDrums != null)
+            if (!unknownDrums.IsEmpty())
             {
                 switch (drumsInChart)
                 {
@@ -147,8 +147,6 @@ namespace YARG.Core.NewParsing
                         unknownDrums.ConvertTo(chart.FourLaneDrums, false);
                         break;
                 }
-                // There's no need to call dipose OR the finalizer as everything would've already been transferred or pre-disposed
-                GC.SuppressFinalize(unknownDrums);
             }
 
             FinalizeDeserialization(chart);
@@ -205,7 +203,7 @@ namespace YARG.Core.NewParsing
             return new YARGChart(resolution, sync, in metadata, in settings, miscellaneous);
         }
 
-        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref InstrumentTrack2<UnknownLaneDrums>? unknownDrums)
+        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref InstrumentTrack2<UnknownLaneDrums> unknownDrums)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK))
@@ -238,8 +236,7 @@ namespace YARG.Core.NewParsing
                 else if (drumsInChart == DrumsType.Unknown && activeTracks == null)
                 {
                     UnknownLaneDrums.DrumType = DrumsType.Unknown;
-                    unknownDrums ??= new InstrumentTrack2<UnknownLaneDrums>();
-                    bool result = LoadInstrumentTrack_Chart(ref container, ref unknownDrums[difficulty], ref tempoTracker);
+                    bool result = LoadInstrumentTrack_Chart(ref container, ref unknownDrums.Difficulties[difficulty], ref tempoTracker);
                     drumsInChart = UnknownLaneDrums.DrumType;
                     return result;
                 }
@@ -252,18 +249,18 @@ namespace YARG.Core.NewParsing
 
             return instrument switch
             {
-                Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretGuitar[difficulty],     ref tempoTracker),
-                Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretBass[difficulty],       ref tempoTracker),
-                Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretRhythm[difficulty],     ref tempoTracker),
-                Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretCoopGuitar[difficulty], ref tempoTracker),
-                Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretGuitar[difficulty],      ref tempoTracker),
-                Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, ref chart.SixFretBass[difficulty],        ref tempoTracker),
-                Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretRhythm[difficulty],      ref tempoTracker),
-                Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, ref chart.SixFretCoopGuitar[difficulty],  ref tempoTracker),
+                Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretGuitar.Difficulties[difficulty],     ref tempoTracker),
+                Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretBass.Difficulties[difficulty],       ref tempoTracker),
+                Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretRhythm.Difficulties[difficulty],     ref tempoTracker),
+                Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretCoopGuitar.Difficulties[difficulty], ref tempoTracker),
+                Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretGuitar.Difficulties[difficulty],      ref tempoTracker),
+                Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, ref chart.SixFretBass.Difficulties[difficulty],        ref tempoTracker),
+                Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretRhythm.Difficulties[difficulty],      ref tempoTracker),
+                Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, ref chart.SixFretCoopGuitar.Difficulties[difficulty],  ref tempoTracker),
                 Instrument.FourLaneDrums or
-                Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, ref chart.FourLaneDrums[difficulty],      ref tempoTracker),
-                Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, ref chart.FiveLaneDrums[difficulty],      ref tempoTracker),
-                Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, ref chart.Keys[difficulty],               ref tempoTracker),
+                Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, ref chart.FourLaneDrums.Difficulties[difficulty],      ref tempoTracker),
+                Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, ref chart.FiveLaneDrums.Difficulties[difficulty],      ref tempoTracker),
+                Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, ref chart.Keys.Difficulties[difficulty],               ref tempoTracker),
                 _ => false,
             };
         }

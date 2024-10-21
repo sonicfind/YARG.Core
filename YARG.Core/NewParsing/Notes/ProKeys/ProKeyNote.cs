@@ -15,8 +15,6 @@ namespace YARG.Core.NewParsing
 #pragma warning restore CS0649
         private int _numActive;
 
-        public readonly int NUMLANES => 25;
-
         public readonly int GetNumActiveLanes()
         {
             return _numActive;
@@ -127,7 +125,7 @@ namespace YARG.Core.NewParsing
                     }
                 }
             }
-            return true;
+            return false;
         }
 
         private static void AddNote(ProKeyNote* note, int binary, in DualTime length)
