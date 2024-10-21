@@ -132,7 +132,7 @@ namespace YARG.Core.IO
                 ++_position;
                 if (type < MidiEventType.SysEx)
                 {
-                    _event.Channel = _running.Channel = (byte) (tmp & CHANNEL_MASK);
+                    _event.Channel = _running.Channel = tmp & CHANNEL_MASK;
                     _event.Type    = _running.Type    = (MidiEventType) (tmp & EVENTTYPE_MASK);
                     _event.Length  = _running.Length  = _running.Type switch
                     {

@@ -86,7 +86,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.value - SIXFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            ref var diffTrack = ref instrumentTrack[diffIndex];
+                            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -170,7 +170,7 @@ namespace YARG.Core.NewParsing.Midi
                                             {
                                                 diffModifiers[i].SliderNotes = true;
                                                 // If any note exists on the same tick, we must change the state to match
-                                                if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var guitar))
+                                                if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
                                                 {
                                                     guitar->State = GuitarState.Tap;
                                                 }
@@ -207,7 +207,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.value - SIXFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            ref var diffTrack = ref instrumentTrack[diffIndex];
+                            ref var diffTrack = ref instrumentTrack.Difficulties[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -279,7 +279,7 @@ namespace YARG.Core.NewParsing.Midi
                                                 // If any note exists on the same tick, we must change the state to match
                                                 // From state heirarchy rules, the state for a found note IS already set to Tap.
                                                 // We don't need to check.
-                                                if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var guitar))
+                                                if (instrumentTrack.Difficulties[i].Notes.TryGetLastValue(in position, out var guitar))
                                                 {
                                                     if (diffModifier.HopoOn)
                                                     {
@@ -381,7 +381,7 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         diffModifiers[diffIndex].SliderNotes = enable;
                         // If any note exists on the same tick, we must change the state to match
-                        if (instrumentTrack[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
+                        if (instrumentTrack.Difficulties[diffIndex].Notes.TryGetLastValue(in position, out var guitar))
                         {
                             if (enable)
                             {
@@ -417,7 +417,7 @@ namespace YARG.Core.NewParsing.Midi
 
             for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
             {
-                ref var diff = ref instrumentTrack[i];
+                ref var diff = ref instrumentTrack.Difficulties[i];
                 diff.Overdrives = overdrives.Clone();
                 diff.Soloes = soloes.Clone();
                 diff.BREs = bres.Clone();

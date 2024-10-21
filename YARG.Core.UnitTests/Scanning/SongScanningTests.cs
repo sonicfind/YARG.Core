@@ -18,7 +18,7 @@ namespace YARG.Core.UnitTests.Scanning
         {
             songDirectories = new()
             {
-                
+                "E:\\Documents\\My Games\\Clone Hero\\CH Songs"
             };
             Assert.That(songDirectories, Is.Not.Empty, "Add directories to scan for the test");
         }

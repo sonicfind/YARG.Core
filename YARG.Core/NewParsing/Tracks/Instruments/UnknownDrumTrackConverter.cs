@@ -10,56 +10,56 @@ namespace YARG.Core.NewParsing
         public static void ConvertTo(this InstrumentTrack2<UnknownLaneDrums> source, InstrumentTrack2<FourLaneDrums> destination, bool isPro)
         {
             destination.Events = source.Events;
-            if (destination.Easy.IsEmpty())
+            if (destination.Difficulties.Easy.IsEmpty())
             {
-                source.Easy.ConvertTo(ref destination.Easy, isPro);
-                source.Easy = DifficultyTrack2<UnknownLaneDrums>.Default;
+                source.Difficulties.Easy.ConvertTo(ref destination.Difficulties.Easy, isPro);
+                source.Difficulties.Easy = DifficultyTrack2<UnknownLaneDrums>.Default;
             }
 
-            if (destination.Medium.IsEmpty())
+            if (destination.Difficulties.Medium.IsEmpty())
             {
-                source.Medium.ConvertTo(ref destination.Medium, isPro);
-                source.Medium = DifficultyTrack2<UnknownLaneDrums>.Default;
+                source.Difficulties.Medium.ConvertTo(ref destination.Difficulties.Medium, isPro);
+                source.Difficulties.Medium = DifficultyTrack2<UnknownLaneDrums>.Default;
             }
 
-            if (destination.Hard.IsEmpty())
+            if (destination.Difficulties.Hard.IsEmpty())
             {
-                source.Hard.ConvertTo(ref destination.Hard, isPro);
-                source.Hard = DifficultyTrack2<UnknownLaneDrums>.Default;
+                source.Difficulties.Hard.ConvertTo(ref destination.Difficulties.Hard, isPro);
+                source.Difficulties.Hard = DifficultyTrack2<UnknownLaneDrums>.Default;
             }
 
-            if (destination.Expert.IsEmpty())
+            if (destination.Difficulties.Expert.IsEmpty())
             {
-                source.Expert.ConvertTo(ref destination.Expert, isPro);
-                source.Expert = DifficultyTrack2<UnknownLaneDrums>.Default;
+                source.Difficulties.Expert.ConvertTo(ref destination.Difficulties.Expert, isPro);
+                source.Difficulties.Expert = DifficultyTrack2<UnknownLaneDrums>.Default;
             }
         }
 
         public static void ConvertTo(this InstrumentTrack2<UnknownLaneDrums> source, InstrumentTrack2<FiveLaneDrums> destination)
         {
             destination.Events = source.Events;
-            if (destination.Easy.IsEmpty())
+            if (destination.Difficulties.Easy.IsEmpty())
             {
-                source.Easy.ConvertTo(ref destination.Easy);
-                source.Easy = DifficultyTrack2<UnknownLaneDrums>.Default;
+                source.Difficulties.Easy.ConvertTo(ref destination.Difficulties.Easy);
+                source.Difficulties.Easy = DifficultyTrack2<UnknownLaneDrums>.Default;
             }
 
-            if (destination.Medium.IsEmpty())
+            if (destination.Difficulties.Medium.IsEmpty())
             {
-                source.Medium.ConvertTo(ref destination.Medium);
-                source.Medium = DifficultyTrack2<UnknownLaneDrums>.Default;
+                source.Difficulties.Medium.ConvertTo(ref destination.Difficulties.Medium);
+                source.Difficulties.Medium = DifficultyTrack2<UnknownLaneDrums>.Default;
             }
 
-            if (destination.Hard.IsEmpty())
+            if (destination.Difficulties.Hard.IsEmpty())
             {
-                source.Hard.ConvertTo(ref destination.Hard);
-                source.Hard = DifficultyTrack2<UnknownLaneDrums>.Default;
+                source.Difficulties.Hard.ConvertTo(ref destination.Difficulties.Hard);
+                source.Difficulties.Hard = DifficultyTrack2<UnknownLaneDrums>.Default;
             }
 
-            if (destination.Expert.IsEmpty())
+            if (destination.Difficulties.Expert.IsEmpty())
             {
-                source.Expert.ConvertTo(ref destination.Expert);
-                source.Expert = DifficultyTrack2<UnknownLaneDrums>.Default;
+                source.Difficulties.Expert.ConvertTo(ref destination.Difficulties.Expert);
+                source.Difficulties.Expert = DifficultyTrack2<UnknownLaneDrums>.Default;
             }
         }
 

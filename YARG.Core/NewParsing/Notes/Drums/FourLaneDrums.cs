@@ -22,8 +22,6 @@ namespace YARG.Core.NewParsing
         public KickState KickState;
         public bool IsFlammed;
 
-        public readonly int NUMLANES => 5;
-
         public bool SetFromDotChart(int lane, in DualTime length)
         {
             switch (lane)

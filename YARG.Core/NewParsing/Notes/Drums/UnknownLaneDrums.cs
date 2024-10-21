@@ -24,12 +24,10 @@ namespace YARG.Core.NewParsing
         public bool Cymbal_Orange;
         public KickState KickState;
         public bool IsFlammed;
-        // Placed at the bottom to allowed best blittability with FourLane
+        // Placed at the bottom to allow best blittability with FourLane
         // as that will be the most common conversion
         public DualTime Green;
         public DrumDynamics Dynamics_Green;
-
-        public readonly int NUMLANES => 6;
 
         public bool SetFromDotChart(int lane, in DualTime length)
         {
@@ -63,25 +61,25 @@ namespace YARG.Core.NewParsing
                 case 44: Dynamics_Green = DrumDynamics.Ghost; break;
 
                 case 66:
-                    if (DrumType != DrumsType.FiveLane) unsafe
-                        {
-                            Cymbal_Yellow = true;
-                            DrumType = DrumsType.ProDrums;
-                        }
+                    if (DrumType != DrumsType.FiveLane)
+                    {
+                        Cymbal_Yellow = true;
+                        DrumType = DrumsType.ProDrums;
+                    }
                     break;
                 case 67:
-                    if (DrumType != DrumsType.FiveLane) unsafe
-                        {
-                            Cymbal_Blue = true;
-                            DrumType = DrumsType.ProDrums;
-                        }
+                    if (DrumType != DrumsType.FiveLane)
+                    {
+                        Cymbal_Blue = true;
+                        DrumType = DrumsType.ProDrums;
+                    }
                     break;
                 case 68:
-                    if (DrumType != DrumsType.FiveLane) unsafe
-                        {
-                            Cymbal_Orange = true;
-                            DrumType = DrumsType.ProDrums;
-                        }
+                    if (DrumType != DrumsType.FiveLane)
+                    {
+                        Cymbal_Orange = true;
+                        DrumType = DrumsType.ProDrums;
+                    }
                     break;
                 default:
                     return false;

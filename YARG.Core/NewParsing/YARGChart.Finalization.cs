@@ -61,34 +61,34 @@ namespace YARG.Core.NewParsing
             chart.Sync.TempoMarkers.TrimExcess();
             chart.Sync.TimeSigs.TrimExcess();
             chart.BeatMap.TrimExcess();
-            chart.FiveFretGuitar?.TrimExcess();
-            chart.FiveFretBass?.TrimExcess();
-            chart.FiveFretRhythm?.TrimExcess();
-            chart.FiveFretCoopGuitar?.TrimExcess();
+            chart.FiveFretGuitar.TrimExcess();
+            chart.FiveFretBass.TrimExcess();
+            chart.FiveFretRhythm.TrimExcess();
+            chart.FiveFretCoopGuitar.TrimExcess();
 
-            chart.SixFretGuitar?.TrimExcess();
-            chart.SixFretBass?.TrimExcess();
-            chart.SixFretRhythm?.TrimExcess();
-            chart.SixFretCoopGuitar?.TrimExcess();
+            chart.SixFretGuitar.TrimExcess();
+            chart.SixFretBass.TrimExcess();
+            chart.SixFretRhythm.TrimExcess();
+            chart.SixFretCoopGuitar.TrimExcess();
 
-            chart.Keys?.TrimExcess();
+            chart.Keys.TrimExcess();
 
-            chart.FourLaneDrums?.TrimExcess();
-            chart.FiveLaneDrums?.TrimExcess();
+            chart.FourLaneDrums.TrimExcess();
+            chart.FiveLaneDrums.TrimExcess();
 
-            // chart.TrueDrums?.TrimExcess();
+            // chart.TrueDrums.TrimExcess();
 
-            chart.ProGuitar_17Fret?.TrimExcess();
-            chart.ProGuitar_22Fret?.TrimExcess();
-            chart.ProBass_17Fret?.TrimExcess();
-            chart.ProBass_22Fret?.TrimExcess();
+            chart.ProGuitar_17Fret.TrimExcess();
+            chart.ProGuitar_22Fret.TrimExcess();
+            chart.ProBass_17Fret.TrimExcess();
+            chart.ProBass_22Fret.TrimExcess();
 
-            chart.ProKeys?.TrimExcess();
+            chart.ProKeys.TrimExcess();
 
-            // chart.DJ?.Dispose();
+            // chart.DJ.Dispose();
 
-            chart.LeadVocals?.TrimExcess();
-            chart.HarmonyVocals?.TrimExcess();
+            chart.LeadVocals.TrimExcess();
+            chart.HarmonyVocals.TrimExcess();
         }
 
         /// <summary>

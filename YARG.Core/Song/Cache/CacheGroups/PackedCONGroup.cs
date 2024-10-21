@@ -45,5 +45,13 @@ namespace YARG.Core.Song.Cache
                 node.Value.Upgrade.WriteToCache(stream);
             }
         }
+
+        public FixedArray<byte> Load(CONFileListing listing)
+        {
+            lock (Stream)
+            {
+                return listing.LoadAllBytes(Stream);
+            }
+        }
     }
 }

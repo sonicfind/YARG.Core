@@ -62,7 +62,7 @@ namespace YARG.Core.IO
                 // We have to swap the endian of the data so string conversion works properly
                 // but we can't just use the original buffer as we create a hash off it.
                 buffer = FixedArray<char>.Alloc(length);
-                for (int i = 0, j = UTF16BOM_OFFSET; i < buffer.Length; ++i, j += sizeof(char))
+                for (int i = 0, j = UTF16BOM_OFFSET; i < length; ++i, j += sizeof(char))
                 {
                     buffer.Ptr[i] = (char) (data.Ptr[j] << 8 | data.Ptr[j + 1]);
                 }
@@ -71,7 +71,7 @@ namespace YARG.Core.IO
             {
                 buffer = FixedArray<char>.Cast(in data, UTF16BOM_OFFSET, length);
             }
-            container = new YARGTextContainer<char>(in buffer, data[0] == 0xFF ? Encoding.Unicode : Encoding.BigEndianUnicode);
+            container = new YARGTextContainer<char>(in buffer, BitConverter.IsLittleEndian ? Encoding.Unicode : Encoding.BigEndianUnicode);
             SkipPureWhitespace(ref container);
             return buffer;
         }
@@ -86,7 +86,7 @@ namespace YARG.Core.IO
                 // We have to swap the endian of the data so string conversion works properly
                 // but we can't just use the original buffer as we create a hash off it.
                 buffer = FixedArray<int>.Alloc(length);
-                for (int i = 0, j = UTF32BOM_OFFSET; i < buffer.Length; ++i, j += sizeof(int))
+                for (int i = 0, j = UTF32BOM_OFFSET; i < length; ++i, j += sizeof(int))
                 {
                     buffer.Ptr[i] = data.Ptr[j] << 24 |
                                     data.Ptr[j + 1] << 16 |
@@ -98,7 +98,7 @@ namespace YARG.Core.IO
             {
                 buffer = FixedArray<int>.Cast(in data, UTF32BOM_OFFSET, length);
             }
-            container = new YARGTextContainer<int>(in buffer, data[0] == 0xFF ? Encoding.UTF32 : UTF32BE);
+            container = new YARGTextContainer<int>(in buffer, BitConverter.IsLittleEndian ? Encoding.UTF32 : UTF32BE);
             SkipPureWhitespace(ref container);
             return buffer;
         }

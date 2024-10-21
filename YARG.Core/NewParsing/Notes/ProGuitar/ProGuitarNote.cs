@@ -34,8 +34,6 @@ namespace YARG.Core.NewParsing
         public ProSlide Slide;
         public EmphasisType Emphasis;
 
-        public readonly int NUMLANES => 6;
-
         public ProSlide WheelSlide()
         {
             Slide = Slide switch
