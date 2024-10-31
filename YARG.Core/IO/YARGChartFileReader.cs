@@ -233,9 +233,11 @@ namespace YARG.Core.IO
             if (YARGTextReader.TryExtractUInt64(ref container, out ulong value))
             {
                 timeSig.Denominator = (byte) value;
+                YARGTextReader.SkipWhitespace(ref container);
                 if (YARGTextReader.TryExtractUInt64(ref container, out value))
                 {
                     timeSig.Metronome = (byte) value;
+                    YARGTextReader.SkipWhitespace(ref container);
                     if (YARGTextReader.TryExtractUInt64(ref container, out value))
                     {
                         timeSig.Num32nds = (byte) value;
