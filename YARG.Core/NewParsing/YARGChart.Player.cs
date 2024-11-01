@@ -22,38 +22,38 @@ namespace YARG.Core.NewParsing
                         Instrument.FiveFretCoopGuitar => FiveFretCoopGuitar!,
                         Instrument.Keys =>               Keys!,
                         _ => throw new InvalidOperationException(),
-                    }, Sync, profile, in Settings);
+                    }, Sync, profile, in Settings, 5);
                 case GameMode.SixFretGuitar:
                     return profile.CurrentInstrument switch
                     {
-                        Instrument.SixFretGuitar =>      NewLoading.Guitar.GuitarPlayer.Load(SixFretGuitar!,      Sync, profile, in Settings),
-                        Instrument.SixFretBass =>        NewLoading.Guitar.GuitarPlayer.Load(SixFretBass!,        Sync, profile, in Settings),
-                        Instrument.SixFretRhythm =>      NewLoading.Guitar.GuitarPlayer.Load(SixFretRhythm!,      Sync, profile, in Settings),
-                        Instrument.SixFretCoopGuitar =>  NewLoading.Guitar.GuitarPlayer.Load(SixFretCoopGuitar!,  Sync, profile, in Settings),
+                        Instrument.SixFretGuitar =>      NewLoading.Guitar.GuitarPlayer.Load(SixFretGuitar!,      Sync, profile, in Settings, 6),
+                        Instrument.SixFretBass =>        NewLoading.Guitar.GuitarPlayer.Load(SixFretBass!,        Sync, profile, in Settings, 6),
+                        Instrument.SixFretRhythm =>      NewLoading.Guitar.GuitarPlayer.Load(SixFretRhythm!,      Sync, profile, in Settings, 6),
+                        Instrument.SixFretCoopGuitar =>  NewLoading.Guitar.GuitarPlayer.Load(SixFretCoopGuitar!,  Sync, profile, in Settings, 6),
 
-                        Instrument.FiveFretGuitar =>     NewLoading.Guitar.GuitarPlayer.Load(FiveFretGuitar!,     Sync, profile, in Settings),
-                        Instrument.FiveFretBass =>       NewLoading.Guitar.GuitarPlayer.Load(FiveFretBass!,       Sync, profile, in Settings),
-                        Instrument.FiveFretRhythm =>     NewLoading.Guitar.GuitarPlayer.Load(FiveFretRhythm!,     Sync, profile, in Settings),
-                        Instrument.FiveFretCoopGuitar => NewLoading.Guitar.GuitarPlayer.Load(FiveFretCoopGuitar!, Sync, profile, in Settings),
-                        Instrument.Keys =>               NewLoading.Guitar.GuitarPlayer.Load(Keys!,               Sync, profile, in Settings),
+                        Instrument.FiveFretGuitar =>     NewLoading.Guitar.GuitarPlayer.Load(FiveFretGuitar!,     Sync, profile, in Settings, 5),
+                        Instrument.FiveFretBass =>       NewLoading.Guitar.GuitarPlayer.Load(FiveFretBass!,       Sync, profile, in Settings, 5),
+                        Instrument.FiveFretRhythm =>     NewLoading.Guitar.GuitarPlayer.Load(FiveFretRhythm!,     Sync, profile, in Settings, 5),
+                        Instrument.FiveFretCoopGuitar => NewLoading.Guitar.GuitarPlayer.Load(FiveFretCoopGuitar!, Sync, profile, in Settings, 5),
+                        Instrument.Keys =>               NewLoading.Guitar.GuitarPlayer.Load(Keys!,               Sync, profile, in Settings, 5),
                         _ => throw new InvalidOperationException(),
                     };
                 case GameMode.FourLaneDrums:
-                    if (FourLaneDrums != null)
+                    if (!FourLaneDrums.IsEmpty())
                     {
                         return NewLoading.Drums.DrumPlayer.LoadFourLane(FourLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
                     }
-                    if (FiveLaneDrums != null)
+                    if (!FiveLaneDrums.IsEmpty())
                     {
                         return NewLoading.Drums.DrumPlayer.LoadFourLane(FiveLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
                     }
                     throw new InvalidOperationException();
                 case GameMode.FiveLaneDrums:
-                    if (FiveLaneDrums != null)
+                    if (!FiveLaneDrums.IsEmpty())
                     {
                         return NewLoading.Drums.DrumPlayer.LoadFiveLane(FiveLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
                     }
-                    if (FourLaneDrums != null)
+                    if (!FourLaneDrums.IsEmpty())
                     {
                         return NewLoading.Drums.DrumPlayer.LoadFiveLane(FourLaneDrums, Sync, profile, Settings.SustainCutoffThreshold);
                     }

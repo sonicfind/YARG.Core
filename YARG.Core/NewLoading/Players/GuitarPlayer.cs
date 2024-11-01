@@ -42,10 +42,10 @@ namespace YARG.Core.NewLoading.Guitar
 
     public static class GuitarPlayer
     {
-        public static unsafe InstrumentPlayer<Note, SubNote> Load<TNote>(InstrumentTrack2<TNote> track, SyncTrack2 sync, YargProfile profile, in LoaderSettings settings)
+        public static unsafe InstrumentPlayer<Note, SubNote> Load<TNote>(InstrumentTrack2<TNote> track, SyncTrack2 sync, YargProfile profile, in LoaderSettings settings, int numLanes)
             where TNote : unmanaged, IGuitarNote
         {
-            ref readonly var diff = ref track[profile.CurrentDifficulty];
+            ref readonly var diff = ref track.Difficulties[profile.CurrentDifficulty];
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
 
             var curr = diff.Notes.Data;
@@ -99,18 +99,18 @@ namespace YARG.Core.NewLoading.Guitar
                 const int OPEN_NOTE = 0;
                 var frets = (DualTime*) &curr->Value;
                 int laneCount = 0;
-                for (int i = 0; i < curr->Value.NUMLANES; ++i)
+                for (int i = 0; i < numLanes; ++i)
                 {
                     if (frets[i].IsActive())
                     {
-                        int index = !profile.LeftyFlip || i == OPEN_NOTE ? i : curr->Value.NUMLANES - i;
+                        int index = !profile.LeftyFlip || i == OPEN_NOTE ? i : numLanes - i;
                         buffer[laneCount++] = new SubNote(index, DualTime.Truncate(frets[i], settings.SustainCutoffThreshold) + curr->Key);
                     }
                 }
 
                 if (laneCount > 0)
                 {
-                    var state = ParseGuitarState(curr, prev, curr->Value.State, profile.CurrentModifiers, settings.HopoThreshold, settings.AllowHopoAfterChord);
+                    var state = ParseGuitarState(curr, prev, curr->Value.State, profile.CurrentModifiers, settings.HopoThreshold, settings.AllowHopoAfterChord, numLanes);
                     int ovdIndex = -1;
                     if (currOverdrive < overdrives.Length && curr->Key >= diff.Overdrives.Data[currOverdrive].Key)
                     {
@@ -151,7 +151,7 @@ namespace YARG.Core.NewLoading.Guitar
             return new InstrumentPlayer<Note, SubNote>(in notes, in subNotes, in soloes, in overdrives, sync, profile);
         }
 
-        private static unsafe GuitarState ParseGuitarState<TNote>(YARGKeyValuePair<DualTime, TNote>* curr, YARGKeyValuePair<DualTime, TNote>* prev, GuitarState state, Modifier modifiers, long hopoThreshold, bool allowHopoAfterChord)
+        private static unsafe GuitarState ParseGuitarState<TNote>(YARGKeyValuePair<DualTime, TNote>* curr, YARGKeyValuePair<DualTime, TNote>* prev, GuitarState state, Modifier modifiers, long hopoThreshold, bool allowHopoAfterChord, int numLanes)
             where TNote : unmanaged, IGuitarNote
         {
             if ((modifiers & Modifier.AllStrums) > 0)
@@ -180,7 +180,7 @@ namespace YARG.Core.NewLoading.Guitar
             {
                 var naturalState = prev != null
                     && curr->Value.GetNumActiveLanes() == 1
-                    && !Contains((DualTime*) &curr->Value, (DualTime*) &prev->Value, curr->Value.NUMLANES, allowHopoAfterChord)
+                    && !Contains((DualTime*) &curr->Value, (DualTime*) &prev->Value, numLanes, allowHopoAfterChord)
                     && curr->Key.Ticks <= prev->Key.Ticks + hopoThreshold
                     ? GuitarState.Strum
                     : GuitarState.Hopo;

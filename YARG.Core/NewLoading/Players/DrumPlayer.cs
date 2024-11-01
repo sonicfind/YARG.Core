@@ -79,7 +79,7 @@ namespace YARG.Core.NewLoading.Drums
 
         public static unsafe InstrumentPlayer<Note, FourLaneSubNote> LoadFourLane(InstrumentTrack2<FourLaneDrums> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
         {
-            ref readonly var diff = ref track[profile.CurrentDifficulty];
+            ref readonly var diff = ref track.Difficulties[profile.CurrentDifficulty];
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
 
             var curr = diff.Notes.Data;
@@ -193,7 +193,7 @@ namespace YARG.Core.NewLoading.Drums
 
         public static unsafe InstrumentPlayer<Note, FourLaneSubNote> LoadFourLane(InstrumentTrack2<FiveLaneDrums> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
         {
-            ref readonly var diff = ref track[profile.CurrentDifficulty];
+            ref readonly var diff = ref track.Difficulties[profile.CurrentDifficulty];
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
 
             var curr = diff.Notes.Data;
@@ -318,7 +318,7 @@ namespace YARG.Core.NewLoading.Drums
 
         public static unsafe InstrumentPlayer<Note, FiveLaneSubNote> LoadFiveLane(InstrumentTrack2<FiveLaneDrums> track, SyncTrack2 sync, YargProfile profile, long sustainCutoff)
         {
-            ref readonly var diff = ref track[profile.CurrentDifficulty];
+            ref readonly var diff = ref track.Difficulties[profile.CurrentDifficulty];
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
 
             var curr = diff.Notes.Data;
@@ -430,7 +430,7 @@ namespace YARG.Core.NewLoading.Drums
         {
             const int FOURLANECOUNT = 5;
 
-            ref readonly var diff = ref track[profile.CurrentDifficulty];
+            ref readonly var diff = ref track.Difficulties[profile.CurrentDifficulty];
             Debug.Assert(diff.Notes.Count > 0, "This function should only be used when notes are present");
 
             var curr = diff.Notes.Data;
