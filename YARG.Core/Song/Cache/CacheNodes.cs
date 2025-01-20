@@ -5,7 +5,7 @@ using YARG.Core.Extensions;
 
 namespace YARG.Core.Song.Cache
 {
-    public sealed class CategoryCacheWriteNode
+    public sealed class CacheWriteIndices
     {
         public int title;
         public int artist;

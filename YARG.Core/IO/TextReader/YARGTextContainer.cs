@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace YARG.Core.IO
@@ -6,39 +7,43 @@ namespace YARG.Core.IO
     public unsafe struct YARGTextContainer<TChar>
         where TChar : unmanaged, IConvertible
     {
-        public readonly TChar* End;
-        public Encoding Encoding;
-        public TChar* Position;
+        private FixedArray<TChar>* _data;
+        private Encoding _encoding;
+        private long _position;
 
-        public readonly TChar CurrentValue
+        public long Position
         {
-            get
-            {
-                if (Position < End)
-                {
-                    return *Position;
-                }
-                throw new InvalidOperationException("End of file reached");
-            }
+            readonly get { return _position; }
+            set { _position = value; }
         }
 
-        public readonly bool IsActive => End != null;
+        public ref Encoding Encoding => ref _encoding;
 
-        public YARGTextContainer(in FixedArray<TChar> buffer, Encoding encoding)
-        {
-            Position = buffer.Ptr;
-            End = buffer.Ptr + buffer.Length;
-            Encoding = encoding;
-        }
+        public readonly long Length => _data->Length;
 
-        public readonly bool IsCurrentCharacter(int cmp)
-        {
-            return Position->ToInt32(null).Equals(cmp);
-        }
+        public readonly TChar* PositionPointer => _data->Ptr + _position;
 
-        public readonly bool IsAtEnd()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly TChar* GetBuffer() { return _data->Ptr; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly int GetCurrentCharacter() { return _data->At(_position).ToInt32(null); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly int Get() { return (*_data)[_position].ToInt32(null); }
+
+        public readonly int this[long index] => (*_data)[_position + index].ToInt32(null);
+
+        public readonly int At(long index) => _data->At(_position + index).ToInt32(null);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly bool IsAtEnd() { return _position >= _data->Length; }
+
+        public YARGTextContainer(FixedArray<TChar>* data, Encoding encoding)
         {
-            return Position >= End;
+            _data = data;
+            _encoding = encoding;
+            _position = 0;
         }
     }
 }

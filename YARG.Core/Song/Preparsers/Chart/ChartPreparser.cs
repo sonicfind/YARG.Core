@@ -17,11 +17,11 @@ namespace YARG.Core.Song
             {
                 if (ev.Type == ChartEventType.Note)
                 {
-                    int lane = YARGTextReader.ExtractInt32AndWhitespace(ref container);
-                    long _ = YARGTextReader.ExtractInt64AndWhitespace(ref container);
+                    int lane = YARGChartFileReader.ExtractWithWhitespace<TChar, int>(ref container);
+                    long _ = YARGChartFileReader.ExtractWithWhitespace<TChar, long>(ref container);
                     if (func(lane))
                     {
-                        scan.SetDifficulty(difficulty);
+                        scan.ActivateDifficulty(difficulty);
                         return false;
                     }
                 }

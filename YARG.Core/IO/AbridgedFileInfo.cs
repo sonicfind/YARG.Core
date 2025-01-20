@@ -85,29 +85,26 @@ namespace YARG.Core.IO
         /// <summary>
         /// Used for cache validation
         /// </summary>
-        public static AbridgedFileInfo? TryParseInfo(UnmanagedMemoryStream stream, bool checkCreationTime = true)
+        public static bool TryParseInfo(UnmanagedMemoryStream stream, out AbridgedFileInfo abridged, bool checkCreationTime = true)
         {
-            return TryParseInfo(stream.ReadString(), stream, checkCreationTime);
+            return TryParseInfo(stream.ReadString(), stream, out abridged, checkCreationTime);
         }
 
         /// <summary>
         /// Used for cache validation
         /// </summary>
-        public static AbridgedFileInfo? TryParseInfo(string file, UnmanagedMemoryStream stream, bool checkCreationTime = true)
+        public static bool TryParseInfo(string file, UnmanagedMemoryStream stream, out AbridgedFileInfo abridged, bool checkCreationTime = true)
         {
             var info = new FileInfo(file);
             if (!info.Exists)
             {
                 stream.Position += sizeof(long);
-                return null;
+                abridged = default;
+                return false;
             }
 
-            var abridged = new AbridgedFileInfo(info, checkCreationTime);
-            if (abridged.LastUpdatedTime != DateTime.FromBinary(stream.Read<long>(Endianness.Little)))
-            {
-                return null;
-            }
-            return abridged;
+            abridged = new AbridgedFileInfo(info, checkCreationTime);
+            return abridged.LastUpdatedTime == DateTime.FromBinary(stream.Read<long>(Endianness.Little));
         }
     }
 }

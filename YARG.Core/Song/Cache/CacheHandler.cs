@@ -346,7 +346,7 @@ namespace YARG.Core.Song.Cache
         /// <returns>Whether the song was accepted into the list</returns>
         protected virtual bool AddEntry(SongEntry entry)
         {
-            var hash = entry.Hash;
+            var hash = entry._hash;
             if (cache.Entries.TryGetValue(hash, out var list) && !allowDuplicates)
             {
                 if (list[0].IsPreferedOver(entry))
@@ -1000,7 +1000,7 @@ namespace YARG.Core.Song.Cache
         private void Serialize(string cacheLocation)
         {
             using var filestream = new FileStream(cacheLocation, FileMode.Create, FileAccess.Write);
-            Dictionary<SongEntry, CategoryCacheWriteNode> nodes = new();
+            Dictionary<SongEntry, CacheWriteIndices> nodes = new();
 
             filestream.Write(CACHE_VERSION, Endianness.Little);
             filestream.Write(fullDirectoryPlaylists);
@@ -1385,7 +1385,7 @@ namespace YARG.Core.Song.Cache
                 string name = stream.ReadString();
                 var lastWrite = DateTime.FromBinary(stream.Read<long>(Endianness.Little));
                 var listing = default(CONFileListing);
-                listings?.TryGetListing($"songs_upgrades/{name}_plus.mid", out listing);
+                listings?.FindListing($"songs_upgrades/{name}_plus.mid", out listing);
                 // Upgrade nodes need to exist before adding CON entries, so we must have a separate list for
                 // all upgrade nodes processed from cache
                 AddCacheUpgrade(name, new PackedRBProUpgrade(listing, lastWrite));
@@ -1462,7 +1462,7 @@ namespace YARG.Core.Song.Cache
             try
             {
                 // We call `using` to ensure the proper disposal of data if an error occurs
-                using var data = FixedArray<byte>.Load(dta.FullName);
+                using var data = FixedArray.LoadFile(dta.FullName);
                 var container = YARGDTAReader.Create(data);
                 var updates = new Dictionary<string, SongUpdate>();
                 while (YARGDTAReader.StartNode(ref container))
@@ -1541,7 +1541,7 @@ namespace YARG.Core.Song.Cache
             try
             {
                 // We call `using` to ensure the proper disposal of data if an error occurs
-                using var data = FixedArray<byte>.Load(dta.FullName);
+                using var data = FixedArray.LoadFile(dta.FullName);
                 var container = YARGDTAReader.Create(data);
                 var upgrades = new Dictionary<string, (YARGTextContainer<byte> Container, UnpackedRBProUpgrade Upgrade)>();
                 while (YARGDTAReader.StartNode(ref container))
@@ -1618,7 +1618,7 @@ namespace YARG.Core.Song.Cache
 
                 var songNodes = new Dictionary<string, List<YARGTextContainer<byte>>>();
                 // We call `using` to ensure the proper disposal of data if an error occurs
-                using var songDTAData = listings.TryGetListing(SONGSFILEPATH, out var songDTA) ? songDTA.LoadAllBytes(stream) : FixedArray<byte>.Null;
+                using var songDTAData = listings.FindListing(SONGSFILEPATH, out var songDTA) ? songDTA.LoadAllBytes(stream) : FixedArray<byte>.Null;
                 if (songDTAData.IsAllocated)
                 {
                     errorFile = SONGSFILEPATH;
@@ -1637,7 +1637,7 @@ namespace YARG.Core.Song.Cache
 
                 var upgrades = new Dictionary<string, (YARGTextContainer<byte> Container, PackedRBProUpgrade Upgrade)>();
                 // We call `using` to ensure the proper disposal of data if an error occurs
-                using var upgradeDTAData = listings.TryGetListing(UPGRADESFILEPATH, out var upgradeDta) ? upgradeDta.LoadAllBytes(stream) : FixedArray<byte>.Null;
+                using var upgradeDTAData = listings.FindListing(UPGRADESFILEPATH, out var upgradeDta) ? upgradeDta.LoadAllBytes(stream) : FixedArray<byte>.Null;
                 if (upgradeDTAData.IsAllocated)
                 {
                     errorFile = UPGRADESFILEPATH;
@@ -1645,7 +1645,7 @@ namespace YARG.Core.Song.Cache
                     while (YARGDTAReader.StartNode(ref container))
                     {
                         string name = YARGDTAReader.GetNameOfNode(ref container, true);
-                        if (listings.TryGetListing($"songs_upgrades/{name}_plus.mid", out var listing))
+                        if (listings.FindListing($"songs_upgrades/{name}_plus.mid", out var listing))
                         {
                             var upgrade = new PackedRBProUpgrade(listing, listing.LastWrite);
                             upgrades[name] = (container, upgrade);
@@ -1680,7 +1680,7 @@ namespace YARG.Core.Song.Cache
         {
             try
             {
-                using var songDTAData = FixedArray<byte>.Load(dta.FullName);
+                using var songDTAData = FixedArray.LoadFile(dta.FullName);
 
                 var songNodes = new Dictionary<string, List<YARGTextContainer<byte>>>();
                 if (songDTAData.IsAllocated)

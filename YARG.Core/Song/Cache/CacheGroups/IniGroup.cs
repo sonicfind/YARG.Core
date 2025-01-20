@@ -29,7 +29,7 @@ namespace YARG.Core.Song.Cache
 
         public void AddEntry(IniSubEntry entry)
         {
-            var hash = entry.Hash;
+            var hash = entry._hash;
             List<IniSubEntry> list;
             lock (entries)
             {
@@ -49,13 +49,13 @@ namespace YARG.Core.Song.Cache
         {
             // No locking as the post-scan removal sequence
             // cannot be parallelized
-            if (entries.TryGetValue(entryToRemove.Hash, out var list))
+            if (entries.TryGetValue(entryToRemove._hash, out var list))
             {
                 if (list.RemoveAll(entry => ReferenceEquals(entry, entryToRemove)) > 0)
                 {
                     if (list.Count == 0)
                     {
-                        entries.Remove(entryToRemove.Hash);
+                        entries.Remove(entryToRemove._hash);
                     }
                     return true;
                 }
@@ -63,7 +63,7 @@ namespace YARG.Core.Song.Cache
             return false;
         }
 
-        public void SerializeEntries(MemoryStream groupStream, Dictionary<SongEntry, CategoryCacheWriteNode> nodes)
+        public void SerializeEntries(MemoryStream groupStream, Dictionary<SongEntry, CacheWriteIndices> nodes)
         {
             groupStream.Write(Directory);
             groupStream.Write(Count, Endianness.Little);

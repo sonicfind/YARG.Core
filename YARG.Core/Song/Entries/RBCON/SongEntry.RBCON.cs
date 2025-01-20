@@ -30,11 +30,6 @@ namespace YARG.Core.Song
         public string RBSongId => RBMetadata.SongID;
         public int RBBandDiff => RBDifficulties.Band;
 
-        public override string Year { get; }
-        public override int YearAsNumber { get; }
-        public override ulong SongLengthMilliseconds { get; }
-        public override bool LoopVideo => false;
-
         protected abstract DateTime MidiLastUpdate { get; }
 
         protected RBCONEntry(in ScanNode info, CONModification modification, in HashWrapper hash)
@@ -71,10 +66,10 @@ namespace YARG.Core.Song
             }
             RBMetadata = new RBMetadata(stream);
 
-            Year = YearAsNumber != int.MaxValue ? YearAsNumber.ToString("D4") : Metadata.Year;
+            Year = YearAsNumber != int.MaxValue ? YearAsNumber.ToString("D4") : _metadata.Year;
         }
 
-        public override void Serialize(MemoryStream stream, CategoryCacheWriteNode node)
+        public override void Serialize(MemoryStream stream, CacheWriteIndices node)
         {
             base.Serialize(stream, node);
             stream.Write(YearAsNumber, Endianness.Little);
@@ -155,9 +150,9 @@ namespace YARG.Core.Song
 
             var parseSettings = new ParseSettings()
             {
-                HopoThreshold = Settings.HopoThreshold,
-                SustainCutoffThreshold = Settings.SustainCutoffThreshold,
-                StarPowerNote = Settings.OverdiveMidiNote,
+                HopoThreshold = _settings.HopoThreshold,
+                SustainCutoffThreshold = _settings.SustainCutoffThreshold,
+                StarPowerNote = _settings.OverdiveMidiNote,
                 DrumsType = DrumsType.FourLane,
                 ChordHopoCancellation = true
             };
@@ -183,7 +178,7 @@ namespace YARG.Core.Song
             int start = stream.Read<int>(Endianness.Little);
             stream.Seek(start, SeekOrigin.Begin);
 
-            bool clampStemVolume = Metadata.Source.Str.ToLowerInvariant() == "yarg";
+            bool clampStemVolume = _metadata.Source.Str.ToLowerInvariant() == "yarg";
             var mixer = GlobalAudioHandler.CreateMixer(ToString(), stream, speed, volume, clampStemVolume);
             if (mixer == null)
             {
@@ -546,7 +541,7 @@ namespace YARG.Core.Song
                     Type = DrumsType.ProDrums
                 };
 
-                using var updateMidi = modification.Midi.HasValue ? FixedArray<byte>.Load(modification.Midi.Value.FullName) : FixedArray<byte>.Null;
+                using var updateMidi = modification.Midi.HasValue ? FixedArray.LoadFile(modification.Midi.Value.FullName) : FixedArray<byte>.Null;
                 using var upgradeMidi = modification.UpgradeNode != null ? modification.UpgradeNode.LoadUpgradeMidi() : FixedArray<byte>.Null;
                 if (modification.UpgradeNode != null && !upgradeMidi.IsAllocated)
                 {

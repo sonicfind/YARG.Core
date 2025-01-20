@@ -44,7 +44,7 @@ namespace YARG.Core.Song
                 return (ScanResult.MissingCONMidi, null);
             }
 
-            using var mainMidi = FixedArray<byte>.Load(midiInfo.FullName);
+            using var mainMidi = FixedArray.LoadFile(midiInfo.FullName);
             var (midiResult, hash) = ParseRBCONMidi(in mainMidi, modification, ref info);
             if (midiResult != ScanResult.Success)
             {
@@ -129,7 +129,7 @@ namespace YARG.Core.Song
             _dta = dtaInfo;
         }
 
-        public override void Serialize(MemoryStream stream, CategoryCacheWriteNode node)
+        public override void Serialize(MemoryStream stream, CacheWriteIndices node)
         {
             stream.Write(_nodename);
             stream.Write(_midi!.Value.LastUpdatedTime.ToBinary(), Endianness.Little);
@@ -142,12 +142,12 @@ namespace YARG.Core.Song
         {
             if (UpdateImage != null && UpdateImage.Value.Exists())
             {
-                var update = FixedArray<byte>.Load(UpdateImage.Value.FullName);
+                var update = FixedArray.LoadFile(UpdateImage.Value.FullName);
                 return new YARGImage(update);
             }
 
             string imgFilename = Path.Combine(Location, "gen", _nodename + "_keep.png_xbox");
-            return File.Exists(imgFilename) ? new YARGImage(FixedArray<byte>.Load(imgFilename)) : null;
+            return File.Exists(imgFilename) ? new YARGImage(FixedArray.LoadFile(imgFilename)) : null;
         }
 
         public override BackgroundResult? LoadBackground(BackgroundType options)
@@ -206,11 +206,11 @@ namespace YARG.Core.Song
         {
             if (UpdateMilo != null && UpdateMilo.Value.Exists())
             {
-                return FixedArray<byte>.Load(UpdateMilo.Value.FullName);
+                return FixedArray.LoadFile(UpdateMilo.Value.FullName);
             }
 
             string filename = Path.Combine(Location, "gen", _nodename + ".milo_xbox");
-            return File.Exists(filename) ? FixedArray<byte>.Load(filename) : FixedArray<byte>.Null;
+            return File.Exists(filename) ? FixedArray.LoadFile(filename) : FixedArray<byte>.Null;
         }
 
         protected override Stream? GetMidiStream()

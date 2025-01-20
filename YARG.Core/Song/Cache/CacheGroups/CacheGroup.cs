@@ -8,10 +8,10 @@ namespace YARG.Core.Song.Cache
     {
         public int Count { get; }
 
-        public void SerializeEntries(MemoryStream stream, Dictionary<SongEntry, CategoryCacheWriteNode> nodes);
+        public void SerializeEntries(MemoryStream stream, Dictionary<SongEntry, CacheWriteIndices> nodes);
         public bool TryRemoveEntry(SongEntry entryToRemove);
 
-        public static void SerializeGroups<TGroup>(List<TGroup> groups, FileStream fileStream, Dictionary<SongEntry, CategoryCacheWriteNode> nodes)
+        public static void SerializeGroups<TGroup>(List<TGroup> groups, FileStream fileStream, Dictionary<SongEntry, CacheWriteIndices> nodes)
             where TGroup : ICacheGroup
         {
             var streams = new MemoryStream[groups.Count];

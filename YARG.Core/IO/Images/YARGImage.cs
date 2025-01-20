@@ -27,17 +27,11 @@ namespace YARG.Core.IO
 
         public static YARGImage? Load(FileInfo file)
         {
-            using var bytes = FixedArray<byte>.Load(file.FullName);
+            using var bytes = FixedArray.LoadFile(file.FullName);
             return bytes.IsAllocated ? Load(in bytes) : null;
         }
 
-        public static YARGImage? Load(in SngFileListing listing, SngFile sngFile)
-        {
-            using var bytes = listing.LoadAllBytes(sngFile);
-            return bytes.IsAllocated ? Load(in bytes) : null;
-        }
-
-        private static YARGImage? Load(in FixedArray<byte> file)
+        public static YARGImage? Load(in FixedArray<byte> file)
         {
             var result = LoadNative(file.Ptr, (int)file.Length, out int width, out int height, out int components);
             return result != null ? new YARGImage(result, width, height, components) : null;

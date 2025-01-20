@@ -6,6 +6,22 @@ using YARG.Core.Extensions;
 
 namespace YARG.Core.IO
 {
+    public static class CharacterCodes
+    {
+        public const int FOUR_COUNT = 4;
+        public const int EIGHT_COUNT = 8;
+        public static uint ConvertToInt32(char a, char b, char c, char d)
+        {
+            return ((uint) d << 24) | ((uint) c << 16) | ((uint) b << 8) | a;
+        }
+
+        public static ulong ConvertToInt64(char a, char b, char c, char d, char e, char f, char g, char h)
+        {
+            return ((ulong) h << 56) | ((ulong) g << 48) | ((ulong) f << 40) | ((ulong) e << 32) |
+                   ((ulong) d << 24) | ((ulong) c << 16) | ((ulong) b <<  8) | a;
+        }
+    }
+
     /// <summary>
     /// A four-byte identifier ("four-character code") used to identify data formats.
     /// </summary>

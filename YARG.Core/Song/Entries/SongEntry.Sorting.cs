@@ -33,8 +33,6 @@ namespace YARG.Core.Song
             return strCmp;
         }
 
-        public abstract DateTime GetAddDate();
-
         public bool IsPreferedOver(SongEntry other)
         {
             if (SubType != other.SubType)

@@ -74,7 +74,7 @@ namespace YARG.Core.Song
 
         public override FixedArray<byte> LoadUpgradeMidi()
         {
-            return _midi.IsStillValid() ? FixedArray<byte>.Load(_midi.FullName) : FixedArray<byte>.Null;
+            return _midi.IsStillValid() ? FixedArray.LoadFile(_midi.FullName) : FixedArray<byte>.Null;
         }
     }
 }

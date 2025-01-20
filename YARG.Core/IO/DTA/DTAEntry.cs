@@ -82,13 +82,20 @@ namespace YARG.Core.IO
                     case "context":
                         unsafe
                         {
-                            int scopeLevel = 0;
-                            while (container.Position < container.End && *container.Position != ')')
+                            int scopeLevel = 1;
+                            while (!container.IsAtEnd())
                             {
-                                switch (*container.Position++)
+                                int ch = container.Get();
+                                if (ch == ')')
                                 {
-                                    case (byte)'{': ++scopeLevel; break;
-                                    case (byte)'}': --scopeLevel; break;
+                                    break;
+                                }
+                                ++container.Position;
+
+                                switch (ch)
+                                {
+                                    case '{': ++scopeLevel; break;
+                                    case '}': --scopeLevel; break;
                                 }
                             }
 
@@ -114,11 +121,11 @@ namespace YARG.Core.IO
                                             {
                                                 switch (YARGDTAReader.GetNameOfNode(ref container, false))
                                                 {
-                                                    case "drum": indices.Drums = YARGDTAReader.ExtractArray_Int(ref container); break;
-                                                    case "bass": indices.Bass = YARGDTAReader.ExtractArray_Int(ref container); break;
-                                                    case "guitar": indices.Guitar = YARGDTAReader.ExtractArray_Int(ref container); break;
-                                                    case "keys": indices.Keys = YARGDTAReader.ExtractArray_Int(ref container); break;
-                                                    case "vocals": indices.Vocals = YARGDTAReader.ExtractArray_Int(ref container); break;
+                                                    case "drum":   indices.Drums  = YARGDTAReader.ExtractArray<int>(ref container); break;
+                                                    case "bass":   indices.Bass   = YARGDTAReader.ExtractArray<int>(ref container); break;
+                                                    case "guitar": indices.Guitar = YARGDTAReader.ExtractArray<int>(ref container); break;
+                                                    case "keys":   indices.Keys   = YARGDTAReader.ExtractArray<int>(ref container); break;
+                                                    case "vocals": indices.Vocals = YARGDTAReader.ExtractArray<int>(ref container); break;
                                                 }
                                                 YARGDTAReader.EndNode(ref container);
                                             }
@@ -127,19 +134,19 @@ namespace YARG.Core.IO
                                         Indices = indices;
                                         break;
                                     }
-                                case "crowd_channels": CrowdChannels = YARGDTAReader.ExtractArray_Int(ref container); break;
+                                case "crowd_channels": CrowdChannels = YARGDTAReader.ExtractArray<int>(ref container); break;
                                 //case "vocal_parts": VocalParts = YARGDTAReader.ExtractUInt16(ref container); break;
-                                case "pans": Pans = YARGDTAReader.ExtractArray_Float(ref container); break;
-                                case "vols": Volumes = YARGDTAReader.ExtractArray_Float(ref container); break;
-                                case "cores": Cores = YARGDTAReader.ExtractArray_Float(ref container); break;
-                                case "hopo_threshold": HopoThreshold = YARGDTAReader.ExtractInt64(ref container); break;
+                                case "pans":  Pans    = YARGDTAReader.ExtractArray<float>(ref container); break;
+                                case "vols":  Volumes = YARGDTAReader.ExtractArray<float>(ref container); break;
+                                case "cores": Cores   = YARGDTAReader.ExtractArray<float>(ref container); break;
+                                case "hopo_threshold": HopoThreshold = YARGDTAReader.Extract<long>(ref container); break;
                             }
                             YARGDTAReader.EndNode(ref container);
                         }
                         break;
                     case "song_vocals": while (YARGDTAReader.StartNode(ref container)) YARGDTAReader.EndNode(ref container); break;
-                    case "song_scroll_speed": VocalSongScrollSpeed = YARGDTAReader.ExtractUInt32(ref container); break;
-                    case "tuning_offset_cents": TuningOffsetCents = YARGDTAReader.ExtractInt32(ref container); break;
+                    case "song_scroll_speed": VocalSongScrollSpeed = YARGDTAReader.Extract<uint>(ref container); break;
+                    case "tuning_offset_cents": TuningOffsetCents = YARGDTAReader.Extract<int>(ref container); break;
                     case "bank": VocalPercussionBank = YARGDTAReader.ExtractText(ref container); break;
                     case "anim_tempo":
                         {
@@ -154,14 +161,14 @@ namespace YARG.Core.IO
                             break;
                         }
                     case "preview":
-                        PreviewStart = YARGDTAReader.ExtractInt64(ref container);
-                        PreviewEnd = YARGDTAReader.ExtractInt64(ref container);
+                        PreviewStart = YARGDTAReader.Extract<long>(ref container);
+                        PreviewEnd = YARGDTAReader.Extract<long>(ref container);
                         break;
                     case "rank":
                         while (YARGDTAReader.StartNode(ref container))
                         {
                             string descriptor = YARGDTAReader.GetNameOfNode(ref container, false);
-                            int diff = YARGDTAReader.ExtractInt32(ref container);
+                            int diff = YARGDTAReader.Extract<int>(ref container);
                             switch (descriptor)
                             {
                                 case "drum":
@@ -196,8 +203,8 @@ namespace YARG.Core.IO
                     case "genre": Genre = YARGDTAReader.ExtractText(ref container); break;
                     case "decade": /*Decade = YARGDTAReader.ExtractText(ref container);*/ break;
                     case "vocal_gender": VocalGender = YARGDTAReader.ExtractText(ref container) == "male"; break;
-                    case "format": /*Format = YARGDTAReader.ExtractUInt32(ref container);*/ break;
-                    case "version": VenueVersion = YARGDTAReader.ExtractUInt32(ref container); break;
+                    case "format": /*Format = YARGDTAReader.Extract<uint>(ref container);*/ break;
+                    case "version": VenueVersion = YARGDTAReader.Extract<uint>(ref container); break;
                     case "fake": /*IsFake = YARGDTAReader.ExtractText(ref container);*/ break;
                     case "downloaded": /*Downloaded = YARGDTAReader.ExtractText(ref container);*/ break;
                     case "game_origin":
@@ -237,21 +244,21 @@ namespace YARG.Core.IO
                             break;
                         }
                     case "song_id": SongID = YARGDTAReader.ExtractText(ref container); break;
-                    case "rating": SongRating = YARGDTAReader.ExtractUInt32(ref container); break;
-                    case "short_version": /*ShortVersion = YARGDTAReader.ExtractUInt32(ref container);*/ break;
+                    case "rating": SongRating = YARGDTAReader.Extract<uint>(ref container); break;
+                    case "short_version": /*ShortVersion = YARGDTAReader.Extract<uint>(ref container);*/ break;
                     case "album_art": /*HasAlbumArt = YARGDTAReader.ExtractBoolean(ref container);*/ break;
                     case "year_released":
-                    case "year_recorded": YearAsNumber = YARGDTAReader.ExtractInt32(ref container); break;
+                    case "year_recorded": YearAsNumber = YARGDTAReader.Extract<int>(ref container); break;
                     case "album_name": Album = YARGDTAReader.ExtractText(ref container); break;
-                    case "album_track_number": AlbumTrack = YARGDTAReader.ExtractInt32(ref container); break;
+                    case "album_track_number": AlbumTrack = YARGDTAReader.Extract<int>(ref container); break;
                     case "pack_name": Playlist = YARGDTAReader.ExtractText(ref container); break;
-                    case "base_points": /*BasePoints = YARGDTAReader.ExtractUInt32(ref container);*/ break;
+                    case "base_points": /*BasePoints = YARGDTAReader.Extract<uint>(ref container);*/ break;
                     case "band_fail_cue": /*BandFailCue = YARGDTAReader.ExtractText(ref container);*/ break;
                     case "drum_bank": DrumBank = YARGDTAReader.ExtractText(ref container); break;
-                    case "song_length": SongLength = YARGDTAReader.ExtractUInt64(ref container); break;
+                    case "song_length": SongLength = YARGDTAReader.Extract<ulong>(ref container); break;
                     case "sub_genre": /*Subgenre = YARGDTAReader.ExtractText(ref container);*/ break;
                     case "author": Charter = YARGDTAReader.ExtractText(ref container); break;
-                    case "guide_pitch_volume": /*GuidePitchVolume = YARGDTAReader.ExtractFloat(ref container);*/ break;
+                    case "guide_pitch_volume": /*GuidePitchVolume = YARGDTAReader.Extract<float>(ref container);*/ break;
                     case "encoding":
                         Encoding = YARGDTAReader.ExtractText(ref container).ToLower() switch
                         {
@@ -289,11 +296,11 @@ namespace YARG.Core.IO
                         }
 
                         break;
-                    case "vocal_tonic_note": VocalTonicNote = YARGDTAReader.ExtractUInt32(ref container); break;
+                    case "vocal_tonic_note": VocalTonicNote = YARGDTAReader.Extract<uint>(ref container); break;
                     case "song_tonality": SongTonality = YARGDTAReader.ExtractBoolean(ref container); break;
                     case "alternate_path": /*AlternatePath = YARGDTAReader.ExtractBoolean(ref container);*/ break;
-                    case "real_guitar_tuning": RealGuitarTuning = YARGDTAReader.ExtractArray_Int(ref container); break;
-                    case "real_bass_tuning": RealBassTuning = YARGDTAReader.ExtractArray_Int(ref container); break;
+                    case "real_guitar_tuning": RealGuitarTuning = YARGDTAReader.ExtractArray<int>(ref container); break;
+                    case "real_bass_tuning": RealBassTuning = YARGDTAReader.ExtractArray<int>(ref container); break;
                     case "video_venues": VideoVenues = YARGDTAReader.ExtractArray_String(ref container); break;
                     case "extra_authoring":
                         {

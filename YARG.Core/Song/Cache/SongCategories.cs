@@ -189,7 +189,7 @@ namespace YARG.Core.Song.Cache
 
     public static class CategoryWriter
     {
-        public static void WriteToCache<TKey>(FileStream filestream, SortedDictionary<TKey, List<SongEntry>> sections, SongAttribute attribute, ref Dictionary<SongEntry, CategoryCacheWriteNode> nodes)
+        public static void WriteToCache<TKey>(FileStream filestream, SortedDictionary<TKey, List<SongEntry>> sections, SongAttribute attribute, ref Dictionary<SongEntry, CacheWriteIndices> nodes)
         {
             List<string> strings = new();
             foreach (var element in sections)
@@ -216,7 +216,7 @@ namespace YARG.Core.Song.Cache
                         strings.Add(str);
                     }
 
-                    CategoryCacheWriteNode node;
+                    CacheWriteIndices node;
                     if (attribute == SongAttribute.Name)
                         nodes[entry] = node = new();
                     else

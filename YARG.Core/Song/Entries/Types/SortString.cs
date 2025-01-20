@@ -22,30 +22,17 @@ namespace YARG.Core.Song
             ("Æ", "AE") // Tool - Ænema
         };
 
-        public static readonly SortString Empty = new(string.Empty, string.Empty, string.Empty);
-
-        public static SortString Convert(string str)
-        {
-            string searchStr = RemoveUnwantedWhitespace(RemoveDiacritics(RichTextUtils.StripRichTextTags(str)));
-            string sortStr = RemoveArticle(searchStr);
-            return new SortString(str, searchStr, sortStr);
-        }
-
-        public readonly string Str;
-        public readonly string SearchStr;
+        public readonly string Original;
         public readonly string SortStr;
         public readonly int HashCode;
         public readonly CharacterGroup Group;
 
-        public int Length => Str.Length;
-
-        private SortString(string str, string searchStr, string sortStr)
+        private SortString(string original, string searchStr)
         {
-            Str = str;
-            SearchStr = searchStr;
-            SortStr = sortStr;
-            HashCode = sortStr.GetHashCode();
-            Group = sortStr.Length > 0 ? GetCharacterGrouping(SortStr[0]) : CharacterGroup.Empty;
+            Original = original;
+            SortStr = RemoveArticle(searchStr);
+            HashCode = SortStr.GetHashCode();
+            Group = SortStr.Length > 0 ? GetCharacterGrouping(SortStr[0]) : CharacterGroup.Empty;
         }
 
         public int CompareTo(SortString other)
@@ -69,14 +56,7 @@ namespace YARG.Core.Song
 
         public override string ToString()
         {
-            return Str;
-        }
-
-        public static SortString Combine(in SortString a, in SortString b)
-        {
-            string str = a.Str + " - " + b.Str;
-            string sortStr = a.SortStr + b.SortStr;
-            return new SortString(str, string.Empty, sortStr);
+            return Original;
         }
 
         private static CharacterGroup GetCharacterGrouping(char character)
@@ -92,8 +72,7 @@ namespace YARG.Core.Song
             return character > 127 ? CharacterGroup.NonAscii : CharacterGroup.AsciiSymbol;
         }
 
-        public static implicit operator SortString(string str) => Convert(str);
-        public static implicit operator string(SortString str) => str.Str;
+        public static implicit operator string(SortString str) => str.Original;
 
         private static readonly string[] Articles =
         {
@@ -209,6 +188,11 @@ namespace YARG.Core.Song
                 }
             }
             return length == arg.Length ? arg : new string(buffer, 0, length);
+        }
+
+        public static string ConvertToSearchable(string str)
+        {
+            return RemoveUnwantedWhitespace(RemoveDiacritics(RichTextUtils.StripRichTextTags(str)));
         }
     }
 }

@@ -185,10 +185,7 @@ namespace YARG.Core.IO
                 long location = CalculateBlockLocation(firstBlock, shift);
                 for (int i = 0; i < numBlocks; i++)
                 {
-                    unsafe
-                    {
-                        blockLocations.Ptr[i] = location;
-                    }
+                    blockLocations[i] = location;
 
                     if (i < numBlocks - 1)
                     {
@@ -222,18 +219,16 @@ namespace YARG.Core.IO
                 _initialOffset = 0;
                 for (int i = 0; i < numBlocks; i++)
                 {
-                    unsafe
+                    long location = blockLocations[i] = CalculateBlockLocation(block, shift);
+                    if (i < numBlocks - 1)
                     {
-                        long location = blockLocations.Ptr[i] = CalculateBlockLocation(block, shift);
-                        if (i < numBlocks - 1)
+                        long hashlocation = location - ((long) (block % BLOCKS_PER_SECTION) * DIST_PER_HASH + HASHBLOCK_OFFSET);
+                        _filestream.Seek(hashlocation, SeekOrigin.Begin);
+                        if (_filestream.Read(buffer) != 3)
                         {
-                            long hashlocation = location - ((long) (block % BLOCKS_PER_SECTION) * DIST_PER_HASH + HASHBLOCK_OFFSET);
-                            _filestream.Seek(hashlocation, SeekOrigin.Begin);
-                            if (_filestream.Read(buffer) != 3)
-                                throw new Exception("Hashblock Read error in CON subfile");
-
-                            block = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
+                            throw new Exception("Hashblock Read error in CON subfile");
                         }
+                        block = buffer[0] << 16 | buffer[1] << 8 | buffer[2];
                     }
                 }
                 _blockLocations = blockLocations.TransferOwnership();

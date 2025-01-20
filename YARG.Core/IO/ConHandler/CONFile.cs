@@ -22,7 +22,7 @@ namespace YARG.Core.IO
         private const int BYTES_PER_BLOCK = 0x1000;
         private const int SIZEOF_FILELISTING = 0x40;
 
-        public static bool TryGetListing(this List<CONFileListing> listings, string name, out CONFileListing listing)
+        public static bool FindListing(this List<CONFileListing> listings, string name, out CONFileListing listing)
         {
             foreach (var file in listings)
             {
@@ -40,32 +40,44 @@ namespace YARG.Core.IO
         {
             Span<byte> int32Buffer = stackalloc byte[BYTES_32BIT];
             if (filestream.Read(int32Buffer) != BYTES_32BIT)
+            {
                 return null;
+            }
 
             var tag = new FourCC(int32Buffer);
             if (tag != CON_TAG && tag != LIVE_TAG && tag != PIRS_TAG)
+            {
                 return null;
+            }
 
             filestream.Seek(METADATA_POSITION, SeekOrigin.Begin);
             if (filestream.Read(int32Buffer) != BYTES_32BIT)
+            {
                 return null;
+            }
 
             byte shift = 0;
             int entryID = int32Buffer[0] << 24 | int32Buffer[1] << 16 | int32Buffer[2] << 8 | int32Buffer[3];
 
             // Docs: "If bit 12, 13 and 15 of the Entry ID are on, there are 2 hash tables every 0xAA (170) blocks"
             if ((entryID + 0xFFF & 0xF000) >> 0xC != 0xB)
+            {
                 shift = 1;
+            }
 
             filestream.Seek(FILETABLEBLOCKCOUNT_POSITION, SeekOrigin.Begin);
             if (filestream.Read(int32Buffer[..BYTES_16BIT]) != BYTES_16BIT)
+            {
                 return null;
+            }
 
             int length = BYTES_PER_BLOCK * (int32Buffer[0] | int32Buffer[1] << 8);
 
             filestream.Seek(FILETABLEFIRSTBLOCK_POSITION, SeekOrigin.Begin);
             if (filestream.Read(int32Buffer[..BYTES_24BIT]) != BYTES_24BIT)
+            {
                 return null;
+            }
 
             int firstBlock = int32Buffer[0] << 16 | int32Buffer[1] << 8 | int32Buffer[2];
             try

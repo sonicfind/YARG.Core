@@ -2,9 +2,11 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using YARG.Core.Audio;
 using YARG.Core.Chart;
 using YARG.Core.Extensions;
+using YARG.Core.Game;
 using YARG.Core.IO;
 using YARG.Core.IO.Ini;
 using YARG.Core.Logging;
@@ -15,43 +17,36 @@ namespace YARG.Core.Song
 {
     public sealed class SngEntry : IniSubEntry
     {
-        private readonly uint _version;
         private readonly AbridgedFileInfo _sngInfo;
-        private readonly ChartFormat _chartFormat;
+        private readonly uint _version;
 
-        public override string Location => _sngInfo.FullName;
-        public override string DirectoryActual => Path.GetDirectoryName(_sngInfo.FullName);
-        public override DateTime GetAddDate() => _sngInfo.LastUpdatedTime.Date;
         public override EntryType SubType => EntryType.Sng;
-        public override ulong SongLengthMilliseconds { get; }
+        public override string SortBasedLocation => _sngInfo.FullName;
+        public override string ActualLocation => Path.GetDirectoryName(_sngInfo.FullName);
+        public override DateTime LastWriteTime => _sngInfo.LastUpdatedTime.Date;
 
-        private SngEntry(SngFile sngFile, ChartFormat format, IniSection modifiers, in AvailableParts parts, in HashWrapper hash, in SongMetadata metadata, in LoaderSettings settings)
-            : base(in metadata, in parts, in hash, in settings, modifiers)
+        protected override FixedArray<byte> GetChartData(string filename)
         {
-            _version = sngFile.Version;
-            _sngInfo = sngFile.Info;
-            _chartFormat = format;
-            if (!modifiers.TryGet("song_length", out ulong songLength))
+            var data = FixedArray<byte>.Null;
+            if (_sngInfo.IsStillValid())
             {
-                using var mixer = LoadAudio(0, 0);
-                if (mixer != null)
+                using var sng = SngFile.TryLoadFromFile(_sngInfo.FullName, false);
+                if (sng.IsLoaded)
                 {
-                    songLength = (ulong) (mixer.Length * SongMetadata.MILLISECOND_FACTOR);
+                    data = sng.LoadAllBytes(filename);
                 }
             }
-            SongLengthMilliseconds = songLength;
+            return data;
         }
 
-        private SngEntry(uint version, in AbridgedFileInfo sngInfo, ChartFormat format, UnmanagedMemoryStream stream, CategoryCacheStrings strings)
-            : base(stream, strings)
+        private SngEntry(in AbridgedFileInfo sngInfo, uint version, ChartFormat format)
+            : base(format)
         {
             _version = version;
             _sngInfo = sngInfo;
-            _chartFormat = format;
-            SongLengthMilliseconds = stream.Read<ulong>(Endianness.Little);
         }
 
-        public override void Serialize(MemoryStream stream, CategoryCacheWriteNode node)
+        public override void Serialize(MemoryStream stream, CacheWriteIndices indices)
         {
             // Validation block
             stream.Write(_sngInfo.LastUpdatedTime.ToBinary(), Endianness.Little);
@@ -59,8 +54,7 @@ namespace YARG.Core.Song
             stream.WriteByte((byte) _chartFormat);
 
             // Metadata block
-            base.Serialize(stream, node);
-            stream.Write(SongLengthMilliseconds, Endianness.Little);
+            base.Serialize(stream, indices);
         }
 
         public override SongChart? LoadChart()
@@ -70,18 +64,18 @@ namespace YARG.Core.Song
                 return null;
             }
 
-            var sngFile = SngFile.TryLoadFromFile(_sngInfo);
-            if (sngFile == null)
+            using var sng = SngFile.TryLoadFromFile(_sngInfo.FullName, false);
+            if (!sng.IsLoaded)
             {
                 return null;
             }
 
             var parseSettings = new ParseSettings()
             {
-                HopoThreshold = Settings.HopoThreshold,
-                SustainCutoffThreshold = Settings.SustainCutoffThreshold,
-                StarPowerNote = Settings.OverdiveMidiNote,
-                DrumsType = ParseDrumsType(in Parts),
+                HopoThreshold = _settings.HopoThreshold,
+                SustainCutoffThreshold = _settings.SustainCutoffThreshold,
+                StarPowerNote = _settings.OverdiveMidiNote,
+                DrumsType = ParseDrumsType(in _parts),
                 ChordHopoCancellation = _chartFormat != ChartFormat.Chart
             };
 
@@ -98,19 +92,20 @@ namespace YARG.Core.Song
 
         public override StemMixer? LoadAudio(float speed, double volume, params SongStem[] ignoreStems)
         {
-            var sngFile = SngFile.TryLoadFromFile(_sngInfo);
-            if (sngFile == null)
+            using var sngFile = SngFile.TryLoadFromFile(_sngInfo.FullName, false);
+            if (!sngFile.IsLoaded)
             {
                 YargLogger.LogFormatError("Failed to load sng file {0}", _sngInfo.FullName);
                 return null;
             }
+
             return CreateAudioMixer(speed, volume, sngFile, ignoreStems);
         }
 
         public override StemMixer? LoadPreviewAudio(float speed)
         {
-            var sngFile = SngFile.TryLoadFromFile(_sngInfo);
-            if (sngFile == null)
+            using var sngFile = SngFile.TryLoadFromFile(_sngInfo.FullName, false);
+            if (!sngFile.IsLoaded)
             {
                 YargLogger.LogFormatError("Failed to load sng file {0}", _sngInfo.FullName);
                 return null;
@@ -118,10 +113,10 @@ namespace YARG.Core.Song
 
             foreach (var filename in PREVIEW_FILES)
             {
-                if (sngFile.TryGetValue(filename, out var listing))
+                var stream = sngFile.CreateStream(filename);
+                if (stream != null)
                 {
                     string fakename = Path.Combine(_sngInfo.FullName, filename);
-                    var stream = listing.CreateStream(sngFile);
                     var mixer = GlobalAudioHandler.LoadCustomFile(fakename, stream, speed, 0, SongStem.Preview);
                     if (mixer == null)
                     {
@@ -138,64 +133,68 @@ namespace YARG.Core.Song
 
         public override YARGImage? LoadAlbumData()
         {
-            var sngFile = SngFile.TryLoadFromFile(_sngInfo);
-            if (sngFile == null)
-                return null;
-
-            if (sngFile.TryGetValue(Cover, out var cover))
+            using var sngFile = SngFile.TryLoadFromFile(_sngInfo.FullName, false);
+            if (!sngFile.IsLoaded)
             {
-                var image = YARGImage.Load(in cover, sngFile);
+                return null;
+            }
+
+            string filename = _cover;
+            var file = sngFile.LoadAllBytes(filename);
+            if (!file.IsAllocated)
+            {
+                foreach (string albumFile in ALBUMART_FILES)
+                {
+                    file = sngFile.LoadAllBytes(albumFile);
+                    if (file.IsAllocated)
+                    {
+                        filename = albumFile;
+                        break;
+                    }
+                }
+            }
+
+            if (file.IsAllocated)
+            {
+                var image = YARGImage.Load(in file);
+                file.Dispose();
                 if (image != null)
                 {
                     return image;
                 }
-                YargLogger.LogFormatError("SNG Image mapped to {0} failed to load", Cover);
-            }
-
-            foreach (string albumFile in ALBUMART_FILES)
-            {
-                if (sngFile.TryGetValue(albumFile, out var listing))
-                {
-                    var image = YARGImage.Load(in listing, sngFile);
-                    if (image != null)
-                    {
-                        return image;
-                    }
-                    YargLogger.LogFormatError("SNG Image mapped to {0} failed to load", albumFile);
-                }
+                YargLogger.LogFormatError("SNG Image mapped to {0} failed to load", filename);
             }
             return null;
         }
 
         public override BackgroundResult? LoadBackground(BackgroundType options)
         {
-            var sngFile = SngFile.TryLoadFromFile(_sngInfo);
-            if (sngFile == null)
+            using var sngFile = SngFile.TryLoadFromFile(_sngInfo.FullName, false);
+            if (!sngFile.IsLoaded)
             {
                 return null;
             }
 
             if ((options & BackgroundType.Yarground) > 0)
             {
-                if (sngFile.TryGetValue(YARGROUND_FULLNAME, out var listing))
+                var stream = sngFile.CreateStream(YARGROUND_FULLNAME);
+                if (stream != null)
                 {
-                    var stream = listing.CreateStream(sngFile);
                     return new BackgroundResult(BackgroundType.Yarground, stream);
                 }
 
                 string file = Path.ChangeExtension(_sngInfo.FullName, YARGROUND_EXTENSION);
                 if (File.Exists(file))
                 {
-                    var stream = File.OpenRead(file);
-                    return new BackgroundResult(BackgroundType.Yarground, stream);
+                    return new BackgroundResult(BackgroundType.Yarground, File.OpenRead(file));
                 }
             }
 
             if ((options & BackgroundType.Video) > 0)
             {
-                if (sngFile.TryGetValue(Video, out var video))
+                var stream = sngFile.CreateStream(_video);
+                if (stream != null)
                 {
-                    var stream = video.CreateStream(sngFile);
                     return new BackgroundResult(BackgroundType.Video, stream);
                 }
 
@@ -203,10 +202,9 @@ namespace YARG.Core.Song
                 {
                     foreach (var format in VIDEO_EXTENSIONS)
                     {
-                        string name = stem + format;
-                        if (sngFile.TryGetValue(name, out var listing))
+                        stream = sngFile.CreateStream(stem + format);
+                        if (stream != null)
                         {
-                            var stream = listing.CreateStream(sngFile);
                             return new BackgroundResult(BackgroundType.Video, stream);
                         }
                     }
@@ -217,34 +215,42 @@ namespace YARG.Core.Song
                     string file = Path.ChangeExtension(_sngInfo.FullName, format);
                     if (File.Exists(file))
                     {
-                        var stream = File.OpenRead(file);
-                        return new BackgroundResult(BackgroundType.Video, stream);
+                        return new BackgroundResult(BackgroundType.Video, File.OpenRead(file));
                     }
                 }
             }
 
             if ((options & BackgroundType.Image) > 0)
             {
-                if (sngFile.TryGetValue(Background, out var listing) || TryGetRandomBackgroundImage(sngFile, out listing))
+                var file = sngFile.LoadAllBytes(_background);
+                if (!file.IsAllocated)
                 {
-                    var image = YARGImage.Load(in listing, sngFile);
-                    if (image != null)
+                    if (TryGetRandomBackgroundImage(in sngFile, out SngFileListing listing))
                     {
-                        return new BackgroundResult(image);
+                        file = sngFile.LoadAllBytes(in listing);
+                    }
+                    else
+                    {
+                        // Fallback to a potential external image mapped specifically to the sng
+                        foreach (var format in IMAGE_EXTENSIONS)
+                        {
+                            string path = Path.ChangeExtension(_sngInfo.FullName, format);
+                            if (File.Exists(path))
+                            {
+                                file = FixedArray.LoadFile(path);
+                                break;
+                            }
+                        }
                     }
                 }
 
-                // Fallback to a potential external image mapped specifically to the sng
-                foreach (var format in IMAGE_EXTENSIONS)
+                if (file.IsAllocated)
                 {
-                    var file = new FileInfo(Path.ChangeExtension(_sngInfo.FullName, format));
-                    if (file.Exists)
+                    var image = YARGImage.Load(in file);
+                    file.Dispose();
+                    if (image != null)
                     {
-                        var image = YARGImage.Load(file);
-                        if (image != null)
-                        {
-                            return new BackgroundResult(image);
-                        }
+                        return new BackgroundResult(image);
                     }
                 }
             }
@@ -257,9 +263,9 @@ namespace YARG.Core.Song
             return FixedArray<byte>.Null;
         }
 
-        private StemMixer? CreateAudioMixer(float speed, double volume, SngFile sngFile, params SongStem[] ignoreStems)
+        private StemMixer? CreateAudioMixer(float speed, double volume, in SngFile sngFile, params SongStem[] ignoreStems)
         {
-            bool clampStemVolume = Metadata.Source.Str.ToLowerInvariant() == "yarg";
+            bool clampStemVolume = _metadata.Source.ToLowerInvariant() == "yarg";
             var mixer = GlobalAudioHandler.CreateMixer(ToString(), speed, volume, clampStemVolume);
             if (mixer == null)
             {
@@ -271,14 +277,16 @@ namespace YARG.Core.Song
             {
                 var stemEnum = AudioHelpers.SupportedStems[stem];
                 if (ignoreStems.Contains(stemEnum))
+                {
                     continue;
+                }
 
                 foreach (var format in IniAudio.SupportedFormats)
                 {
                     var file = stem + format;
-                    if (sngFile.TryGetValue(file, out var listing))
+                    var stream = sngFile.CreateStream(file);
+                    if (stream != null)
                     {
-                        var stream = listing.CreateStream(sngFile);
                         if (mixer.AddChannel(stemEnum, stream))
                         {
                             // No duplicates
@@ -304,47 +312,43 @@ namespace YARG.Core.Song
             return mixer;
         }
 
-        public static (ScanResult, SngEntry?) ProcessNewEntry(SngFile sng, in SngFileListing listing, ChartFormat format, string defaultPlaylist)
+        public static unsafe (ScanResult, SngEntry?) ProcessNewEntry(FileInfo sngInfo, IniModifierCollection modifiers, uint sngVersion, FixedArray<byte>* file, ChartFormat format, string defaultPlaylist)
         {
-            using var file = listing.LoadAllBytes(sng);
-            var (result, parts, settings) = ProcessChartFile(file, format, sng.Metadata);
-            if (result != ScanResult.Success)
-            {
-                return (result, null);
-            }
+            var entry = new SngEntry(new AbridgedFileInfo(sngInfo), sngVersion, format);
+            entry._metadata.Playlist = defaultPlaylist;
 
-            var hash = HashWrapper.Hash(file.ReadOnlySpan);
-            var metadata = new SongMetadata(sng.Metadata, defaultPlaylist);
-            var entry = new SngEntry(sng, format, sng.Metadata, in parts, in hash, in metadata, in settings);
-            return (result, entry);
+            var result = ScanChart(entry, file, modifiers);
+            return (result, result == ScanResult.Success ? entry : null);
         }
 
         public static SngEntry? TryLoadFromCache(string filename, UnmanagedMemoryStream stream, CategoryCacheStrings strings)
         {
-            var sngInfo = AbridgedFileInfo.TryParseInfo(filename, stream);
-            if (sngInfo == null)
+            if (!AbridgedFileInfo.TryParseInfo(filename, stream, out var sngInfo))
             {
                 return null;
             }
 
             uint version = stream.Read<uint>(Endianness.Little);
-            var sngFile = SngFile.TryLoadFromFile(sngInfo.Value);
-            if (sngFile == null || sngFile.Version != version)
+            if (!SngFile.TryLoadFromFile(sngInfo.FullName, false, out var sngFile) || sngFile.Version != version)
             {
                 // TODO: Implement Update-in-place functionality
                 return null;
             }
 
-            byte chartTypeIndex = (byte) stream.ReadByte();
-            return chartTypeIndex < CHART_FILE_TYPES.Length ? new SngEntry(sngFile.Version, sngInfo.Value, (ChartFormat) chartTypeIndex, stream, strings) : null;
+            var format = CHART_FILE_TYPES[stream.ReadByte()].Format;
+            var entry = new SngEntry(sngInfo, version, format);
+            entry.Deserialize(stream, strings);
+            return entry;
         }
 
         public static SngEntry? LoadFromCache_Quick(string filename, UnmanagedMemoryStream stream, CategoryCacheStrings strings)
         {
             var sngInfo = new AbridgedFileInfo(filename, stream);
             uint version = stream.Read<uint>(Endianness.Little);
-            byte chartTypeIndex = (byte) stream.ReadByte();
-            return chartTypeIndex < CHART_FILE_TYPES.Length ? new SngEntry(version, sngInfo, (ChartFormat) chartTypeIndex, stream, strings) : null;
+            var format = CHART_FILE_TYPES[stream.ReadByte()].Format;
+            var entry = new SngEntry(sngInfo, version, format);
+            entry.Deserialize(stream, strings);
+            return entry;
         }
     }
 }

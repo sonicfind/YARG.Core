@@ -26,7 +26,7 @@ namespace YARG.Core.Song
         public override EntryType SubType => EntryType.Ini;
         public override ulong SongLengthMilliseconds { get; }
 
-        private UnpackedIniEntry(string directory, FileInfo chartInfo, ChartFormat format, in AbridgedFileInfo? iniFile, IniSection modifiers, in AvailableParts parts, in HashWrapper hash, in SongMetadata metadata, in LoaderSettings settings)
+        private UnpackedIniEntry(string directory, FileInfo chartInfo, ChartFormat format, in AbridgedFileInfo? iniFile, IniModifierCollection modifiers, in AvailableParts parts, in HashWrapper hash, in SongMetadata metadata, in LoaderSettings settings)
             : base(in metadata, in parts, in hash, in settings, modifiers)
         {
             Location = directory;
@@ -34,7 +34,7 @@ namespace YARG.Core.Song
             _chartFormat = format;
             _iniFile = iniFile;
 
-            if (!modifiers.TryGet("song_length", out ulong songLength))
+            if (!modifiers.Extract("song_length", out ulong songLength))
             {
                 using var mixer = LoadAudio(0, 0);
                 if (mixer != null)
@@ -55,7 +55,7 @@ namespace YARG.Core.Song
             SongLengthMilliseconds = stream.Read<ulong>(Endianness.Little);
         }
 
-        public override void Serialize(MemoryStream stream, CategoryCacheWriteNode node)
+        public override void Serialize(MemoryStream stream, CacheWriteIndices node)
         {
             // Validation block
             stream.WriteByte((byte) _chartFormat);
@@ -85,10 +85,10 @@ namespace YARG.Core.Song
 
             var parseSettings = new ParseSettings()
             {
-                HopoThreshold = Settings.HopoThreshold,
-                SustainCutoffThreshold = Settings.SustainCutoffThreshold,
-                StarPowerNote = Settings.OverdiveMidiNote,
-                DrumsType = ParseDrumsType(in Parts),
+                HopoThreshold = _settings.HopoThreshold,
+                SustainCutoffThreshold = _settings.SustainCutoffThreshold,
+                StarPowerNote = _settings.OverdiveMidiNote,
+                DrumsType = ParseDrumsType(in _parts),
                 ChordHopoCancellation = _chartFormat != ChartFormat.Chart
             };
 
@@ -104,7 +104,7 @@ namespace YARG.Core.Song
 
         public override StemMixer? LoadAudio(float speed, double volume, params SongStem[] ignoreStems)
         {
-            bool clampStemVolume = Metadata.Source.Str.ToLowerInvariant() == "yarg";
+            bool clampStemVolume = _metadata.Source.Str.ToLowerInvariant() == "yarg";
             var mixer = GlobalAudioHandler.CreateMixer(ToString(), speed, volume, clampStemVolume);
             if (mixer == null)
             {
@@ -257,9 +257,9 @@ namespace YARG.Core.Song
             return files;
         }
 
-        public static (ScanResult, UnpackedIniEntry?) ProcessNewEntry(string chartDirectory, FileInfo chartInfo, ChartFormat format, FileInfo? iniFile, string defaultPlaylist)
+        public static unsafe (ScanResult, UnpackedIniEntry?) ProcessNewEntry(string chartDirectory, FileInfo chartInfo, ChartFormat format, FileInfo? iniFile, string defaultPlaylist)
         {
-            IniSection iniModifiers;
+            IniModifierCollection iniModifiers;
             AbridgedFileInfo? iniFileInfo = null;
             if (iniFile != null)
             {
@@ -281,8 +281,8 @@ namespace YARG.Core.Song
                 return (ScanResult.ChartNotDownloaded, null);
             }
 
-            using var file = FixedArray<byte>.Load(chartInfo.FullName);
-            var (result, parts, settings) = ProcessChartFile(file, format, iniModifiers);
+            using var file = FixedArray.LoadFile(chartInfo.FullName);
+            var (result, parts, settings) = ScanChart(&file, format, iniModifiers);
             if (result != ScanResult.Success)
             {
                 return (result, null);

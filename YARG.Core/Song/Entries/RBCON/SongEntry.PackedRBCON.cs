@@ -30,13 +30,13 @@ namespace YARG.Core.Song
                 return (dtaResult, null);
             }
 
-            group.Listings.TryGetListing(info.Location + ".mogg", out var moggListing);
+            group.Listings.FindListing(info.Location + ".mogg", out var moggListing);
             if (!IsMoggValid(in modification.Mogg, moggListing, group.Stream))
             {
                 return (ScanResult.MoggError, null);
             }
 
-            if (!group.Listings.TryGetListing(info.Location + ".mid", out var midiListing))
+            if (!group.Listings.FindListing(info.Location + ".mid", out var midiListing))
             {
                 return (ScanResult.MissingCONMidi, null);
             }
@@ -54,8 +54,8 @@ namespace YARG.Core.Song
             }
 
             string genPath = $"songs/{nodename}/gen/{nodename}";
-            group.Listings.TryGetListing(genPath + ".milo_xbox", out var miloListing);
-            group.Listings.TryGetListing(genPath + "_keep.png_xbox", out var imgListing);
+            group.Listings.FindListing(genPath + ".milo_xbox", out var miloListing);
+            group.Listings.FindListing(genPath + "_keep.png_xbox", out var imgListing);
 
             if (info.Metadata.Playlist.Length == 0)
             {
@@ -72,7 +72,7 @@ namespace YARG.Core.Song
             var psuedoDirectory = stream.ReadString();
 
             string midiFilename = stream.ReadString();
-            if (!listings.TryGetListing(midiFilename, out var midiListing))
+            if (!listings.FindListing(midiFilename, out var midiListing))
             {
                 return null;
             }
@@ -93,7 +93,7 @@ namespace YARG.Core.Song
                 }
             }
 
-            listings.TryGetListing(Path.ChangeExtension(midiFilename, ".mogg"), out var moggListing);
+            listings.FindListing(Path.ChangeExtension(midiFilename, ".mogg"), out var moggListing);
 
             if (!midiFilename.StartsWith($"songs/{nodename}"))
             {
@@ -101,8 +101,8 @@ namespace YARG.Core.Song
             }
 
             string genPath = $"songs/{nodename}/gen/{nodename}";
-            listings.TryGetListing(genPath + ".milo_xbox", out var miloListing);
-            listings.TryGetListing(genPath + "_keep.png_xbox", out var imgListing);
+            listings.FindListing(genPath + ".milo_xbox", out var miloListing);
+            listings.FindListing(genPath + "_keep.png_xbox", out var imgListing);
             return new PackedRBCONEntry(midiListing, lastMidiWrite, moggListing, miloListing, imgListing, psuedoDirectory, updateMidi, upgrade, stream, strings);
         }
 
@@ -113,14 +113,14 @@ namespace YARG.Core.Song
             string midiFilename = stream.ReadString();
 
             var midiListing = default(CONFileListing);
-            listings?.TryGetListing(midiFilename, out midiListing);
+            listings?.FindListing(midiFilename, out midiListing);
 
             var lastMidiWrite = DateTime.FromBinary(stream.Read<long>(Endianness.Little));
 
             AbridgedFileInfo? updateMidi = stream.ReadBoolean() ? new AbridgedFileInfo(stream) : null;
 
             var moggListing = default(CONFileListing);
-            listings?.TryGetListing(Path.ChangeExtension(midiFilename, ".mogg"), out moggListing);
+            listings?.FindListing(Path.ChangeExtension(midiFilename, ".mogg"), out moggListing);
 
             if (!midiFilename.StartsWith($"songs/{nodename}"))
             {
@@ -130,10 +130,10 @@ namespace YARG.Core.Song
             string genPath = $"songs/{nodename}/gen/{nodename}";
 
             var miloListing = default(CONFileListing);
-            listings?.TryGetListing(genPath + ".milo_xbox", out miloListing);
+            listings?.FindListing(genPath + ".milo_xbox", out miloListing);
 
             var imgListing = default(CONFileListing);
-            listings?.TryGetListing(genPath + "_keep.png_xbox", out imgListing);
+            listings?.FindListing(genPath + "_keep.png_xbox", out imgListing);
             return new PackedRBCONEntry(midiListing, lastMidiWrite, moggListing, miloListing, imgListing, psuedoDirectory, updateMidi, upgrade, stream, strings);
         }
 
@@ -174,7 +174,7 @@ namespace YARG.Core.Song
             Location = psuedoDirectory;
         }
 
-        public override void Serialize(MemoryStream stream, CategoryCacheWriteNode node)
+        public override void Serialize(MemoryStream stream, CacheWriteIndices node)
         {
             stream.Write(Location);
             stream.Write(_midiListing!.Filename);
@@ -189,7 +189,7 @@ namespace YARG.Core.Song
             var bytes = FixedArray<byte>.Null;
             if (UpdateImage != null && UpdateImage.Value.Exists())
             {
-                bytes = FixedArray<byte>.Load(UpdateImage.Value.FullName);
+                bytes = FixedArray.LoadFile(UpdateImage.Value.FullName);
             }
             else if (_imgListing != null)
             {
@@ -280,7 +280,7 @@ namespace YARG.Core.Song
         {
             if (UpdateMilo != null && UpdateMilo.Value.Exists())
             {
-                return FixedArray<byte>.Load(UpdateMilo.Value.FullName);
+                return FixedArray.LoadFile(UpdateMilo.Value.FullName);
             }
             return _miloListing != null ? _miloListing.LoadAllBytes() : FixedArray<byte>.Null;
         }

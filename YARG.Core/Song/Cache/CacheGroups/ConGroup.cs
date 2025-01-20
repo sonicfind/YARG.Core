@@ -38,7 +38,7 @@ namespace YARG.Core.Song.Cache
 
         public abstract void ReadEntry(string nodeName, int index, RBProUpgrade upgrade, UnmanagedMemoryStream stream, CategoryCacheStrings strings);
 
-        public void SerializeEntries(MemoryStream groupStream, Dictionary<SongEntry, CategoryCacheWriteNode> nodes)
+        public void SerializeEntries(MemoryStream groupStream, Dictionary<SongEntry, CacheWriteIndices> nodes)
         {
             groupStream.Write(Location);
             groupStream.Write(Info.LastUpdatedTime.ToBinary(), Endianness.Little);

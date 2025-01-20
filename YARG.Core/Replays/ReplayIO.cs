@@ -52,7 +52,7 @@ namespace YARG.Core.Replays
 
                 var headerHash = HashWrapper.Deserialize(fstream);
                 int headerLength = fstream.Read<int>(Endianness.Little);
-                using var headerArray = FixedArray<byte>.Read(fstream, headerLength);
+                using var headerArray = FixedArray.Read(fstream, headerLength);
                 if (!headerHash.Equals(HashWrapper.Hash(headerArray.ReadOnlySpan)))
                 {
                     return (ReplayReadResult.Corrupted, null!, null!);
@@ -71,7 +71,7 @@ namespace YARG.Core.Replays
                     return (ReplayReadResult.MetadataOnly, info, null!);
                 }
 
-                using var data = FixedArray<byte>.ReadRemainder(fstream);
+                using var data = FixedArray.ReadRemainder(fstream);
                 if (!info.ReplayChecksum.Equals(HashWrapper.Hash(data.ReadOnlySpan)))
                 {
                     return (ReplayReadResult.Corrupted, null!, null!);
@@ -109,7 +109,7 @@ namespace YARG.Core.Replays
 
                 var headerHash = HashWrapper.Deserialize(fstream);
                 int headerLength = fstream.Read<int>(Endianness.Little);
-                using var headerArray = FixedArray<byte>.Read(fstream, headerLength);
+                using var headerArray = FixedArray.Read(fstream, headerLength);
                 if (!headerHash.Equals(HashWrapper.Hash(headerArray.ReadOnlySpan)))
                 {
                     return (ReplayReadResult.Corrupted, null!);
@@ -184,7 +184,7 @@ namespace YARG.Core.Replays
 
                 var headerHash = HashWrapper.Deserialize(fstream);
                 int headerLength = fstream.Read<int>(Endianness.Little);
-                using var headerArray = FixedArray<byte>.Read(fstream, headerLength);
+                using var headerArray = FixedArray.Read(fstream, headerLength);
                 if (!headerHash.Equals(HashWrapper.Hash(headerArray.ReadOnlySpan)))
                 {
                     return (ReplayReadResult.Corrupted, null!);
@@ -229,7 +229,7 @@ namespace YARG.Core.Replays
                 var replayName = ReplayInfo.ConstructReplayName(song.Name, song.Artist, song.Charter, in date);
 
                 var path = Path.Combine(directory, replayName + ".replay");
-                var info = new ReplayInfo(path, replayName, REPLAY_VERSIONS.CURRENT, ENGINE_VERSION, in replayChecksum, song.Name, song.Artist, song.Charter, song.Hash, in date, speed, length, score, stars, stats);
+                var info = new ReplayInfo(path, replayName, REPLAY_VERSIONS.CURRENT, ENGINE_VERSION, in replayChecksum, song.Name, song.Artist, song.Charter, song._hash, in date, speed, length, score, stars, stats);
 
                 // Write all the data for the header hash
                 using var headerStream = new MemoryStream();
@@ -270,7 +270,7 @@ namespace YARG.Core.Replays
             int engineVersion = fstream.Read<int>(Endianness.Little);
             var replayChecksum = HashWrapper.Deserialize(fstream);
 
-            using var data = FixedArray<byte>.ReadRemainder(fstream);
+            using var data = FixedArray.ReadRemainder(fstream);
             if (!replayChecksum.Equals(HashWrapper.Hash(data.ReadOnlySpan)))
             {
                 return (ReplayReadResult.Corrupted, null!);
