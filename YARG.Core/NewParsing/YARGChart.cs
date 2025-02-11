@@ -12,7 +12,7 @@ namespace YARG.Core.NewParsing
         public readonly SyncTrack2 Sync;
         public readonly TextEvents2 Events = new();
         public readonly YARGNativeSortedList<DualTime, BeatlineType> BeatMap = new();
-        public readonly IniModifierCollection Miscellaneous = new();
+        public readonly IniModifierCollection? Miscellaneous;
 
         public SongMetadata Metadata;
         public LoaderSettings Settings;
@@ -52,13 +52,15 @@ namespace YARG.Core.NewParsing
             Sync = new SyncTrack2(tickrate);
             Metadata = SongMetadata.Default;
             Settings = LoaderSettings.Default;
+            Miscellaneous = new();
         }
 
-        public YARGChart(long tickrate, in SongMetadata metadata, in LoaderSettings settings)
+        public YARGChart(long tickrate, in SongMetadata metadata, in LoaderSettings settings, IniModifierCollection? modifiers)
         {
             Sync = new SyncTrack2(tickrate);
             Metadata = metadata;
             Settings = settings;
+            Miscellaneous = modifiers;
         }
 
         public void Dispose()
@@ -68,7 +70,7 @@ namespace YARG.Core.NewParsing
                 Sync.Dispose();
                 Events.Dispose();
                 BeatMap.Dispose();
-                Miscellaneous.Clear();
+                Miscellaneous?.Clear();
 
                 FiveFretGuitar?.Dispose();
                 FiveFretBass?.Dispose();

@@ -20,6 +20,14 @@ namespace YARG.Core.NewParsing
             TimeSigs.Append(0, TimeSig2.DEFAULT);
         }
 
+        public void Reset()
+        {
+            TempoMarkers.Clear();
+            TimeSigs.Clear();
+            TempoMarkers.Append(0, Tempo2.DEFAULT);
+            TimeSigs.Append(0, TimeSig2.DEFAULT);
+        }
+
         public double ConvertToSeconds(long ticks, int startIndex = 0)
         {
             return ConvertToSeconds(ticks, ref startIndex);
