@@ -44,17 +44,15 @@ namespace YARG.Core.NewParsing
 
             long tickrate = ParseTickrate(ref container);
             DualTime.SetTruncationLimit(settings, 1);
-
-            var sync = new SyncTrack2(tickrate);
-            if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.SYNCTRACK))
-            {
-                FillSynctrack(ref container, sync);
-            }
-
-            var chart = new YARGChart(sync, metadata, settings);
+            var chart = new YARGChart(tickrate, metadata, settings);
             if (activeTracks.Contains(Instrument.Vocals))
             {
                 chart.LeadVocals = new VocalTrack2(1);
+            }
+
+            if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.SYNCTRACK))
+            {
+                FillSynctrack(ref container, chart.Sync);
             }
 
             while (YARGChartFileReader.IsStartOfTrack(in container))
