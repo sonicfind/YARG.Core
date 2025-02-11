@@ -50,9 +50,58 @@ namespace YARG.Core.IO
             return ptr != null ? encoding.GetString(ptr, (int)length) : string.Empty;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly string GetString(Encoding encoding, long offset, long length)
+        {
+            if (offset < 0 || offset + length > this.length)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+            return ptr != null ? encoding.GetString(ptr + offset, (int)length) : string.Empty;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly string GetValidatedString(ref Encoding encoding)
+        {
+            return GetValidatedString(ref encoding, 0, length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly string GetValidatedString(ref Encoding encoding, long offset, long length)
+        {
+            if (offset < 0 || offset + length > this.length)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            if (ptr == null)
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                return encoding.GetString(ptr + offset, (int)length);
+            }
+            catch
+            {
+                if (encoding != YARGTextReader.UTF8Strict)
+                {
+                    throw;
+                }
+                encoding = YARGTextReader.Latin1;
+                return encoding.GetString(ptr + offset, (int)length);
+            }
+        }
+
         public readonly bool StartsWith(in ReadOnlySpan<byte> str)
         {
             return Span.StartsWith(str);
+        }
+
+        public readonly override string ToString()
+        {
+            return GetString(Encoding.ASCII);
         }
     }
 }
