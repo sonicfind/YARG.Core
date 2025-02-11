@@ -123,7 +123,7 @@ namespace YARG.Core.Song
                     }
                 default:
                     {
-                        return YARGDotChartLoader.Load(data, in _metadata, in _settings, drums, activeInstruments);
+                        return YARGDotChartLoader.Load(data, in _metadata, in _settings, null, drums, activeInstruments);
                     }
             }
         }
@@ -342,7 +342,7 @@ namespace YARG.Core.Song
         {
             if (drumsType != DrumsType.FiveLane && modifiers.Extract("pro_drums", out bool proDrums))
             {
-                // We don't want to just immediately set the value to one of the other
+                // We don't want to just immediately set the value to one or the other
                 // on the chance that we still need to test for FiveLane.
                 // We just know what the .ini explicitly tells us it *isn't*
                 if (proDrums)
