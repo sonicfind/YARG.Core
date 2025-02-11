@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using YARG.Core.Chart;
 using YARG.Core.IO;
@@ -11,11 +13,85 @@ namespace YARG.Core.NewParsing
 {
     public class DotMidiLoader
     {
-        public static YARGChart LoadSingle(string filename, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
+        public static YARGChart LoadSingle(string filename, HashSet<MidiTrackType>? activeInstruments)
         {
+            var iniPath = Path.Combine(Path.GetDirectoryName(filename), "song.ini");
+
+            IniModifierCollection modifiers;
+            var metadata = SongMetadata.Default;
+            var settings = LoaderSettings.Default;
+            var drumsType = DrumsType.Any;
+            if (File.Exists(iniPath))
+            {
+                modifiers = SongIniHandler.ReadSongIniFile(iniPath);
+                if (modifiers.Extract("five_lane_drums", out bool fiveLane))
+                {
+                    drumsType = fiveLane ? DrumsType.FiveLane : DrumsType.FourOrPro;
+                }
+
+                if (drumsType != DrumsType.FiveLane)
+                {
+                    // We don't want to just immediately set the value to one of the other
+                    // on the chance that we still need to test for FiveLane.
+                    // We just know what the .ini explicitly tells us it *isn't*.
+                    //
+                    // That being said, .chart differs from .mid in that FourLane is the default state.
+                    // .mid's default is ProDrums, which is why we account for when the .ini does
+                    // not contain the flag.
+                    if (!modifiers.Extract("pro_drums", out bool proDrums) || proDrums)
+                    {
+                        drumsType -= DrumsType.FourLane;
+                    }
+                    else
+                    {
+                        drumsType -= DrumsType.ProDrums;
+                    }
+                }
+
+                if (!modifiers.Extract("multiplier_note", out settings.OverdiveMidiNote) || settings.OverdiveMidiNote != 103)
+                {
+                    settings.OverdiveMidiNote = 116;
+                }
+                SongMetadata.FillFromIni(ref metadata, modifiers);
+            }
+            else
+            {
+                modifiers = new IniModifierCollection();
+            }
+
             using var data = FixedArray.LoadFile(filename);
-            var modifiers = new IniModifierCollection();
-            return LoadSingle(data, in metadata, in settings, modifiers, drumsInChart, activeInstruments);
+            var chart = LoadSingle(data, in metadata, in settings, modifiers, drumsType, activeInstruments);
+            if (!modifiers.Extract("hopo_frequency", out chart.Settings.HopoThreshold) || chart.Settings.HopoThreshold <= 0)
+            {
+                if (modifiers.Extract("eighthnote_hopo", out bool eighthNoteHopo))
+                {
+                    chart.Settings.HopoThreshold = chart.Sync.Tickrate / (eighthNoteHopo ? 2 : 3);
+                }
+                else if (modifiers.Extract("hopofreq", out long hopoFreq))
+                {
+                    int denominator = hopoFreq switch
+                    {
+                        0 => 24,
+                        1 => 16,
+                        2 => 12,
+                        3 => 8,
+                        4 => 6,
+                        5 => 4,
+                        _ => throw new NotImplementedException($"Unhandled hopofreq value {hopoFreq}!")
+                    };
+                    chart.Settings.HopoThreshold = 4 * chart.Sync.Tickrate / denominator;
+                }
+                else
+                {
+                    chart.Settings.HopoThreshold = chart.Sync.Tickrate / 3;
+                }
+            }
+
+            if (!modifiers.Extract("sustain_cutoff_threshold", out chart.Settings.SustainCutoffThreshold))
+            {
+                chart.Settings.SustainCutoffThreshold = chart.Sync.Tickrate / 3;
+            }
+            return chart;
         }
 
         public static YARGChart LoadSingle(FixedArray<byte> data, in SongMetadata metadata, in LoaderSettings settings, IniModifierCollection? modifiers, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
