@@ -15,7 +15,7 @@ namespace YARG.Core.NewParsing
         private const string PHRASE_START = "phrase_start";
         private const string PHRASE_END = "phrase_end ";
 
-        public static YARGChart Load(in FixedArray<byte> file, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument> activeTracks)
+        public static YARGChart Load(FixedArray<byte> file, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<Instrument> activeTracks)
         {
             if (YARGTextReader.TryUTF8(file, out var byteContainer))
             {
