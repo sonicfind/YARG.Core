@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using YARG.Core.Chart;
 using YARG.Core.Containers;
 using YARG.Core.IO;
@@ -177,9 +178,12 @@ namespace YARG.Core.NewParsing
             InstrumentTrack2<UnknownLaneDrums>? unknownDrums = null;
             while (YARGChartFileReader.IsStartOfTrack(in container))
             {
-                if (!SelectTrack_Chart(ref container, chart, ref drumsInChart, activeTracks, ref unknownDrums))
+                unsafe
                 {
-                    YARGChartFileReader.SkipToNextTrack(ref container);
+                    if (!SelectTrack_Chart(ref container, chart, &drumsInChart, activeTracks, ref unknownDrums))
+                    {
+                        YARGChartFileReader.SkipToNextTrack(ref container);
+                    }
                 }
             }
 
@@ -203,7 +207,7 @@ namespace YARG.Core.NewParsing
             FinalizeDeserialization(chart);
         }
 
-        private static unsafe bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
+        private static bool LoadEventsTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (!chart.Globals.IsEmpty() || !chart.Sections.IsEmpty() || !chart.LeadVocals.IsEmpty())
@@ -261,7 +265,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, ref DrumsType drumsInChart, HashSet<Instrument>? activeTracks, ref InstrumentTrack2<UnknownLaneDrums>? unknownDrums)
+        private static unsafe bool SelectTrack_Chart<TChar>(ref YARGTextContainer<TChar> container, YARGChart chart, DrumsType* drumsInChart, HashSet<Instrument>? activeTracks, ref InstrumentTrack2<UnknownLaneDrums>? unknownDrums)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             if (YARGChartFileReader.ValidateTrack(ref container, YARGChartFileReader.EVENTTRACK))
@@ -284,21 +288,18 @@ namespace YARG.Core.NewParsing
             // drums instrument value to `drumsInChart` if drums are active
             if (instrument == Instrument.FourLaneDrums)
             {
-                switch (drumsInChart)
+                switch (*drumsInChart)
                 {
                 case DrumsType.ProDrums: instrument = Instrument.ProDrums; break;
                 case DrumsType.FiveLane: instrument = Instrument.FiveLaneDrums; break;
                 case DrumsType.FourLane: break;
                 default:
-                    if (activeTracks == null)
+                    if (activeTracks != null)
                     {
-                        UnknownLaneDrums.DrumType = drumsInChart;
-                        unknownDrums ??= new InstrumentTrack2<UnknownLaneDrums>();
-                        bool result = LoadInstrumentTrack_Chart(ref container, ref unknownDrums[difficulty], ref tempoTracker);
-                        drumsInChart = UnknownLaneDrums.DrumType;
-                        return result;
+                        return false;
                     }
-                    break;
+                    unknownDrums ??= new InstrumentTrack2<UnknownLaneDrums>();
+                    return LoadInstrumentTrack_Chart(ref container, ref unknownDrums[difficulty], ref tempoTracker, new UnknownLaneSetter(drumsInChart));
                 }
             }
 
@@ -309,18 +310,18 @@ namespace YARG.Core.NewParsing
 
             return instrument switch
                 {
-                    Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretGuitar    [difficulty], ref tempoTracker),
-                    Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretBass      [difficulty], ref tempoTracker),
-                    Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretRhythm    [difficulty], ref tempoTracker),
-                    Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretCoopGuitar[difficulty], ref tempoTracker),
-                    Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretGuitar     [difficulty], ref tempoTracker),
-                    Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, ref chart.SixFretBass       [difficulty], ref tempoTracker),
-                    Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretRhythm     [difficulty], ref tempoTracker),
-                    Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, ref chart.SixFretCoopGuitar [difficulty], ref tempoTracker),
-                    Instrument.FourLaneDrums or
-                    Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, ref chart.FourLaneDrums     [difficulty], ref tempoTracker),
-                    Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, ref chart.FiveLaneDrums     [difficulty], ref tempoTracker),
-                    Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, ref chart.Keys              [difficulty], ref tempoTracker),
+                    Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretGuitar    [difficulty], ref tempoTracker, new FiveFretSetter()),
+                    Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretBass      [difficulty], ref tempoTracker, new FiveFretSetter()),
+                    Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretRhythm    [difficulty], ref tempoTracker, new FiveFretSetter()),
+                    Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretCoopGuitar[difficulty], ref tempoTracker, new FiveFretSetter()),
+                    Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, ref chart.Keys              [difficulty], ref tempoTracker, new FiveFretSetter()),
+                    Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretGuitar     [difficulty], ref tempoTracker, new SixFretSetter()),
+                    Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, ref chart.SixFretBass       [difficulty], ref tempoTracker, new SixFretSetter()),
+                    Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretRhythm     [difficulty], ref tempoTracker, new SixFretSetter()),
+                    Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, ref chart.SixFretCoopGuitar [difficulty], ref tempoTracker, new SixFretSetter()),
+                    Instrument.FourLaneDrums =>      LoadInstrumentTrack_Chart(ref container, ref chart.FourLaneDrums     [difficulty], ref tempoTracker, new FourLaneSetter()),
+                    Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, ref chart.FourLaneDrums     [difficulty], ref tempoTracker, new ProDrumsSetter()),
+                    Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, ref chart.FiveLaneDrums     [difficulty], ref tempoTracker, new FiveLaneSetter()),
                     _ => false,
                 };
         }
@@ -335,9 +336,10 @@ namespace YARG.Core.NewParsing
             Trill = 66,
         }
 
-        private static bool LoadInstrumentTrack_Chart<TChar, TNote>(ref YARGTextContainer<TChar> container, ref DifficultyTrack2<TNote> difficultyTrack, ref TempoTracker tempoTracker)
+        private static bool LoadInstrumentTrack_Chart<TChar, TNote, TSetter>(ref YARGTextContainer<TChar> container, ref DifficultyTrack2<TNote> difficultyTrack, ref TempoTracker tempoTracker, TSetter setter)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
-            where TNote : unmanaged, IInstrumentNote, IDotChartLoadable
+            where TNote : unmanaged, IInstrumentNote
+            where TSetter : unmanaged, IChartLoadable<TNote>
         {
             if (!difficultyTrack.IsEmpty())
             {
@@ -363,7 +365,7 @@ namespace YARG.Core.NewParsing
                         {
                             var (lane, duration) = YARGChartFileReader.ExtractLaneAndDuration(ref container, in position, in tempoTracker);
                             var note = difficultyTrack.Notes.GetLastOrAppend(in position);
-                            if (!note->SetFromDotChart(lane, in duration) && note->GetNumActiveLanes() == 0)
+                            if (!setter.Set(note, lane, in duration) && note->GetNumActiveLanes() == 0)
                             {
                                 difficultyTrack.Notes.Pop();
                             }
@@ -441,6 +443,237 @@ namespace YARG.Core.NewParsing
                 }
             }
             phrases.Append(in position, duration);
+        }
+
+        private interface IChartLoadable<TNote>
+            where TNote : unmanaged, IInstrumentNote
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public unsafe bool Set(TNote* note, int lane, in DualTime length);
+        }
+
+        private readonly struct FiveFretSetter : IChartLoadable<FiveFretGuitar>
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public unsafe bool Set(FiveFretGuitar* note, int lane, in DualTime length)
+            {
+                switch (lane)
+                {
+                    case 0: note->Green = length; break;
+                    case 1: note->Red = length; break;
+                    case 2: note->Yellow = length; break;
+                    case 3: note->Blue = length; break;
+                    case 4: note->Orange = length; break;
+                    case 5:
+                        if (note->State == GuitarState.Natural)
+                        {
+                            note->State = GuitarState.Forced;
+                        }
+                        break;
+                    case 6: note->State = GuitarState.Tap; break;
+                    case 7: note->Open = length; break;
+                    default:
+                        return false;
+                }
+                return true;
+            }
+        }
+
+        private readonly struct SixFretSetter : IChartLoadable<SixFretGuitar>
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public unsafe bool Set(SixFretGuitar* note, int lane, in DualTime length)
+            {
+                switch (lane)
+                {
+                    case 0: note->White1 = length; break;
+                    case 1: note->White2 = length; break;
+                    case 2: note->White3 = length; break;
+                    case 3: note->Black1 = length; break;
+                    case 4: note->Black2 = length; break;
+                    case 5:
+                        if (note->State == GuitarState.Natural)
+                        {
+                            note->State = GuitarState.Forced;
+                        }
+                        break;
+                    case 6: note->State = GuitarState.Tap; break;
+                    case 7: note->Open = length; break;
+                    case 8: note->Black3 = length; break;
+                    default:
+                        return false;
+                }
+                return true;
+            }
+        }
+
+        private readonly struct FourLaneSetter : IChartLoadable<FourLaneDrums>
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public unsafe bool Set(FourLaneDrums* note, int lane, in DualTime length)
+            {
+                switch (lane)
+                {
+                    case 0: note->Kick = length; break;
+                    case 1: note->Snare = length; break;
+                    case 2: note->Yellow = length; break;
+                    case 3: note->Blue = length; break;
+                    case 4: note->Green = length; break;
+
+                    case 32: note->KickState = KickState.PlusOnly; break;
+
+                    case 34: note->Dynamics_Snare = DrumDynamics.Accent; break;
+                    case 35: note->Dynamics_Yellow = DrumDynamics.Accent; break;
+                    case 36: note->Dynamics_Blue = DrumDynamics.Accent; break;
+                    case 37: note->Dynamics_Green = DrumDynamics.Accent; break;
+
+                    case 40: note->Dynamics_Snare = DrumDynamics.Ghost; break;
+                    case 41: note->Dynamics_Yellow = DrumDynamics.Ghost; break;
+                    case 42: note->Dynamics_Blue = DrumDynamics.Ghost; break;
+                    case 43: note->Dynamics_Green = DrumDynamics.Ghost; break;
+                    default:
+                        return false;
+                }
+                return true;
+            }
+        }
+
+        private readonly struct ProDrumsSetter : IChartLoadable<FourLaneDrums>
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public unsafe bool Set(FourLaneDrums* note, int lane, in DualTime length)
+            {
+                switch (lane)
+                {
+                    case 0: note->Kick = length; break;
+                    case 1: note->Snare = length; break;
+                    case 2: note->Yellow = length; break;
+                    case 3: note->Blue = length; break;
+                    case 4: note->Green = length; break;
+
+                    case 32: note->KickState = KickState.PlusOnly; break;
+
+                    case 34: note->Dynamics_Snare = DrumDynamics.Accent; break;
+                    case 35: note->Dynamics_Yellow = DrumDynamics.Accent; break;
+                    case 36: note->Dynamics_Blue = DrumDynamics.Accent; break;
+                    case 37: note->Dynamics_Green = DrumDynamics.Accent; break;
+
+                    case 40: note->Dynamics_Snare = DrumDynamics.Ghost; break;
+                    case 41: note->Dynamics_Yellow = DrumDynamics.Ghost; break;
+                    case 42: note->Dynamics_Blue = DrumDynamics.Ghost; break;
+                    case 43: note->Dynamics_Green = DrumDynamics.Ghost; break;
+
+                    case 66: note->Cymbal_Yellow = true; break;
+                    case 67: note->Cymbal_Blue = true; break;
+                    case 68: note->Cymbal_Green = true; break;
+                    default:
+                        return false;
+                }
+                return true;
+            }
+        }
+
+        private readonly struct FiveLaneSetter : IChartLoadable<FiveLaneDrums>
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public unsafe bool Set(FiveLaneDrums* note, int lane, in DualTime length)
+            {
+                switch (lane)
+                {
+                    case 0: note->Kick = length; break;
+                    case 1: note->Snare = length; break;
+                    case 2: note->Yellow = length; break;
+                    case 3: note->Blue = length; break;
+                    case 4: note->Orange = length; break;
+                    case 5: note->Green = length; break;
+
+                    case 32: note->KickState = KickState.PlusOnly; break;
+
+                    case 34: note->Dynamics_Snare = DrumDynamics.Accent; break;
+                    case 35: note->Dynamics_Yellow = DrumDynamics.Accent; break;
+                    case 36: note->Dynamics_Blue = DrumDynamics.Accent; break;
+                    case 37: note->Dynamics_Orange = DrumDynamics.Accent; break;
+                    case 38: note->Dynamics_Green = DrumDynamics.Accent; break;
+
+                    case 40: note->Dynamics_Snare = DrumDynamics.Ghost; break;
+                    case 41: note->Dynamics_Yellow = DrumDynamics.Ghost; break;
+                    case 42: note->Dynamics_Blue = DrumDynamics.Ghost; break;
+                    case 43: note->Dynamics_Orange = DrumDynamics.Ghost; break;
+                    case 44: note->Dynamics_Green = DrumDynamics.Ghost; break;
+                    default:
+                        return false;
+                }
+                return true;
+            }
+        }
+
+        private readonly struct UnknownLaneSetter : IChartLoadable<UnknownLaneDrums>
+        {
+            private readonly unsafe DrumsType* _type;
+
+            public unsafe UnknownLaneSetter(DrumsType* type)
+            {
+                _type = type;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public unsafe bool Set(UnknownLaneDrums* note, int lane, in DualTime length)
+            {
+                switch (lane)
+                {
+                    case 0: note->Kick = length; break;
+                    case 1: note->Snare = length; break;
+                    case 2: note->Yellow = length; break;
+                    case 3: note->Blue = length; break;
+                    case 4: note->Orange = length; break;
+                    case 5:
+                        if ((*_type & DrumsType.FiveLane) != DrumsType.FiveLane)
+                        {
+                            return false;
+                        }
+                        note->Green = length;
+                        *_type = DrumsType.FiveLane;
+                        break;
+                    case 32: note->KickState = KickState.PlusOnly; break;
+
+                    case 34: note->Dynamics_Snare = DrumDynamics.Accent; break;
+                    case 35: note->Dynamics_Yellow = DrumDynamics.Accent; break;
+                    case 36: note->Dynamics_Blue = DrumDynamics.Accent; break;
+                    case 37: note->Dynamics_Orange = DrumDynamics.Accent; break;
+                    case 38: note->Dynamics_Green = DrumDynamics.Accent; break;
+
+                    case 40: note->Dynamics_Snare = DrumDynamics.Ghost; break;
+                    case 41: note->Dynamics_Yellow = DrumDynamics.Ghost; break;
+                    case 42: note->Dynamics_Blue = DrumDynamics.Ghost; break;
+                    case 43: note->Dynamics_Orange = DrumDynamics.Ghost; break;
+                    case 44: note->Dynamics_Green = DrumDynamics.Ghost; break;
+
+                    case 66:
+                        if ((*_type & DrumsType.ProDrums) == DrumsType.ProDrums)
+                        {
+                            note->Cymbal_Yellow = true;
+                            *_type = DrumsType.ProDrums;
+                        }
+                        break;
+                    case 67:
+                        if ((*_type & DrumsType.ProDrums) == DrumsType.ProDrums)
+                        {
+                            note->Cymbal_Blue = true;
+                            *_type = DrumsType.ProDrums;
+                        }
+                        break;
+                    case 68:
+                        if ((*_type & DrumsType.ProDrums) == DrumsType.ProDrums)
+                        {
+                            note->Cymbal_Orange = true;
+                            *_type = DrumsType.ProDrums;
+                        }
+                        break;
+                    default:
+                        return false;
+                }
+                return true;
+            }
         }
     }
 }

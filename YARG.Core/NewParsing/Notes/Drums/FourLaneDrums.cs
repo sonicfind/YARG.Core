@@ -5,7 +5,7 @@ using YARG.Core.Chart;
 
 namespace YARG.Core.NewParsing
 {
-    public struct FourLaneDrums : IInstrumentNote, IDotChartLoadable
+    public struct FourLaneDrums : IInstrumentNote
     {
         public DualTime Kick;
         public DualTime Snare;
@@ -23,37 +23,6 @@ namespace YARG.Core.NewParsing
         public bool IsFlammed;
 
         public readonly int NUMLANES => 5;
-
-        public bool SetFromDotChart(int lane, in DualTime length)
-        {
-            switch (lane)
-            {
-                case 0: Kick = length; break;
-                case 1: Snare = length; break;
-                case 2: Yellow = length; break;
-                case 3: Blue = length; break;
-                case 4: Green = length; break;
-
-                case 32: KickState = KickState.PlusOnly; break;
-
-                case 34: Dynamics_Snare = DrumDynamics.Accent; break;
-                case 35: Dynamics_Yellow = DrumDynamics.Accent; break;
-                case 36: Dynamics_Blue = DrumDynamics.Accent; break;
-                case 37: Dynamics_Green = DrumDynamics.Accent; break;
-
-                case 40: Dynamics_Snare = DrumDynamics.Ghost; break;
-                case 41: Dynamics_Yellow = DrumDynamics.Ghost; break;
-                case 42: Dynamics_Blue = DrumDynamics.Ghost; break;
-                case 43: Dynamics_Green = DrumDynamics.Ghost; break;
-
-                case 66: Cymbal_Yellow = true; break;
-                case 67: Cymbal_Blue = true; break;
-                case 68: Cymbal_Green = true; break;
-                default:
-                    return false;
-            }
-            return true;
-        }
 
         public readonly int GetNumActiveLanes()
         {
