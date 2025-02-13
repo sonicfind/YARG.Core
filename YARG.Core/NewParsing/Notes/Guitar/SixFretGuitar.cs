@@ -5,7 +5,7 @@ using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public struct SixFretGuitar : IGuitarNote, IDotChartLoadable
+    public struct SixFretGuitar : IGuitarNote
     {
         public DualTime Open;
         public DualTime Black1;
@@ -23,30 +23,6 @@ namespace YARG.Core.NewParsing
         }
 
         public readonly int NUMLANES => 7;
-
-        public bool SetFromDotChart(int lane, in DualTime length)
-        {
-            switch (lane)
-            {
-                case 0: White1 = length; break;
-                case 1: White2 = length; break;
-                case 2: White3 = length; break;
-                case 3: Black1 = length; break;
-                case 4: Black2 = length; break;
-                case 5:
-                    if (_state == GuitarState.Natural)
-                    {
-                        _state = GuitarState.Forced;
-                    }
-                    break;
-                case 6: _state = GuitarState.Tap; break;
-                case 7: Open = length; break;
-                case 8: Black3 = length; break;
-                default:
-                    return false;
-            }
-            return true;
-        }
 
         public readonly int GetNumActiveLanes()
         {
