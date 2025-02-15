@@ -351,13 +351,13 @@ namespace YARG.Core.NewParsing
                         {
                             var track = MidiDrumsLoader.LoadUnknownDrums(midiTrack, ref tempoTracker, ref drumsInChart);
                             // Only possible if pre-type was FourOrFive AND fifth lane was not found
-                            if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
+                            if (drumsInChart.Has(DrumsType.FourLane))
                             {
                                 track.ConvertTo(chart.FourLaneDrums, false);
                                 drumsInChart = DrumsType.FourLane;
                             }
                             // Only possible if pre-type was ProOrFive AND fifth lane was not found
-                            else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
+                            else if (drumsInChart.Has(DrumsType.ProDrums))
                             {
                                 track.ConvertTo(chart.FourLaneDrums, true);
                                 drumsInChart = DrumsType.ProDrums;

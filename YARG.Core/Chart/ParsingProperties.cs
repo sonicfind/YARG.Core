@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace YARG.Core.Chart
 {
@@ -17,6 +18,15 @@ namespace YARG.Core.Chart
         FourOrFive = FourLane | FiveLane,
         ProOrFive = ProDrums | FiveLane,
         Any = FourOrFive | FiveLane | ProDrums,
+    }
+
+    public static class DrumsTypeQuery
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Has(this DrumsType type, DrumsType value)
+        {
+            return (type & value) == value;
+        }
     }
 
     /// <summary>
