@@ -143,14 +143,11 @@ namespace YARG.Core.IO
         public static FixedArray<T> Cast<U>(in FixedArray<U> source, long offset, long numElements)
             where U : unmanaged
         {
-            if (offset < 0)
+            if (offset < 0
+            || numElements < 0
+            || (source.Length - offset) * sizeof(U) < numElements * sizeof(T))
             {
-                throw new IndexOutOfRangeException();
-            }
-
-            if ((source.Length - offset) * sizeof(U) < numElements * sizeof(T))
-            {
-                throw new ArgumentOutOfRangeException(nameof(numElements));
+                throw new ArgumentOutOfRangeException();
             }
 
             return new FixedArray<T>()
