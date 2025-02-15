@@ -94,7 +94,7 @@ namespace YARG.Core.Song
                         validations |= diffMask;
                     }
                 }
-                else if (YELLOW_FLAG <= note.value && note.value <= GREEN_FLAG && (drumsType & DrumsType.ProDrums) == DrumsType.ProDrums)
+                else if (YELLOW_FLAG <= note.value && note.value <= GREEN_FLAG && drumsType.Has(DrumsType.ProDrums))
                 {
                     drumsType = DrumsType.ProDrums;
                 }
