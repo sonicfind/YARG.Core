@@ -153,15 +153,12 @@ namespace YARG.Core.IO
             {
                 throw new InvalidOperationException("Do not cast from a vectorized source");
             }
-
-            if (offset < 0)
+            
+            if (offset < 0
+            || numElements < 0
+            || (source.Length - offset) * sizeof(U) < numElements * sizeof(T))
             {
-                throw new IndexOutOfRangeException();
-            }
-
-            if ((source.Length - offset) * sizeof(U) < numElements * sizeof(T))
-            {
-                throw new ArgumentOutOfRangeException(nameof(numElements));
+                throw new ArgumentOutOfRangeException();
             }
 
             return new FixedArray<T>
