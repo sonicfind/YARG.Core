@@ -523,7 +523,7 @@ namespace YARG.Core.Song
                     }
                     else if (YELLOW_CYMBAL <= lane && lane <= GREEN_CYMBAL)
                     {
-                        if ((drumsType & DrumsType.ProDrums) == DrumsType.ProDrums)
+                        if (drumsType.Has(DrumsType.ProDrums))
                         {
                             drumsType = DrumsType.ProDrums;
                         }
