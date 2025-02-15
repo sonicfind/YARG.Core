@@ -736,7 +736,9 @@ namespace YARG.Core.NewParsing.Midi
             // It will be flipped to false if the chart contains 95 & 96 together.
             bool convertExpectKicksToShared = true;
             // By default, all non-kick notes are cymbals (unless the track maps to five lane).
-            var cymbalFlags = stackalloc bool[3] { true, true, true };
+            var cymbalFlags = drumsType.Has(DrumsType.ProDrums)
+                ? stackalloc bool[3] { true, true, true }
+                : stackalloc bool[3] { false, false, false };
 
             // Various special phrases trackers
             var brePositions = stackalloc DualTime[5];
@@ -806,7 +808,7 @@ namespace YARG.Core.NewParsing.Midi
                                         }
 
                                         // Only Yellow, Blue, and Green can be cymbals
-                                        if ((drumsType & DrumsType.ProDrums) == DrumsType.ProDrums && lane >= YELLOW_LANE)
+                                        if (drumsType.Has(DrumsType.ProDrums) && lane >= YELLOW_LANE)
                                         {
                                             // Same idea as the drum dynamics above.
                                             int cymbalIndex = lane - YELLOW_LANE;
@@ -841,7 +843,7 @@ namespace YARG.Core.NewParsing.Midi
                         }
                         else if (TOM_MIN_VALUE <= note.Value && note.Value <= TOM_MAX_VALUE)
                         {
-                            if ((drumsType & DrumsType.ProDrums) == DrumsType.ProDrums)
+                            if (drumsType.Has(DrumsType.ProDrums))
                             {
                                 int index = note.Value - TOM_MIN_VALUE;
                                 cymbalFlags[index] = false;
@@ -964,7 +966,7 @@ namespace YARG.Core.NewParsing.Midi
                         }
                         else if (TOM_MIN_VALUE <= note.Value && note.Value <= TOM_MAX_VALUE)
                         {
-                            if ((drumsType & DrumsType.ProDrums) == DrumsType.ProDrums)
+                            if (drumsType.Has(DrumsType.ProDrums))
                             {
                                 int index = note.Value - TOM_MIN_VALUE;
                                 cymbalFlags[index] = true;
