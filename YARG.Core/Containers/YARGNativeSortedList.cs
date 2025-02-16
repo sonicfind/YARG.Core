@@ -71,7 +71,7 @@ namespace YARG.Core.Containers
             if (_count > 0)
             {
                 var node = _buffer + _count - 1;
-                if (node->Key.CompareTo(key) < 0)
+                if (node->Key.CompareTo(key) >= 0)
                 {
                     return &node->Value;
                 }
@@ -91,7 +91,7 @@ namespace YARG.Core.Containers
             if (_count > 0)
             {
                 var node = _buffer + _count - 1;
-                if (node->Key.CompareTo(key) < 0)
+                if (node->Key.CompareTo(key) >= 0)
                 {
                     value = &node->Value;
                     return false;
