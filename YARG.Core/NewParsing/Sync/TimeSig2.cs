@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace YARG.Core.NewParsing
+﻿namespace YARG.Core.NewParsing
 {
     /// <summary>
     /// Holds all time signature information (abiding by .midi's structure)

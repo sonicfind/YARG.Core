@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using YARG.Core.Chart;
+﻿using YARG.Core.Chart;
 using YARG.Core.Containers;
 
 namespace YARG.Core.NewParsing
 {
     public class VenueTrack2 : ITrack
     {
-        public YARGNativeSortedList<DualTime, VenueEvent2<LightingType>> Lighting = YARGNativeSortedList<DualTime, VenueEvent2<LightingType>>.Default;
-        public YARGNativeSortedList<DualTime, VenueEvent2<PostProcessingType>> PostProcessing = YARGNativeSortedList<DualTime, VenueEvent2<PostProcessingType>>.Default;
-        public YARGNativeSortedList<DualTime, VenueEvent2<PerformerEvent2>> Performer = YARGNativeSortedList<DualTime, VenueEvent2<PerformerEvent2>>.Default;
-        public YARGNativeSortedList<DualTime, VenueEvent2<StageEffect>> Stage = YARGNativeSortedList<DualTime, VenueEvent2<StageEffect>>.Default;
+        public YARGNativeSortedList<DualTime, VenueEvent2<LightingType>> Lighting { get; } = new();
+        public YARGNativeSortedList<DualTime, VenueEvent2<PostProcessingType>> PostProcessing { get; } = new();
+        public YARGNativeSortedList<DualTime, VenueEvent2<PerformerEvent2>> Performer { get; } = new();
+        public YARGNativeSortedList<DualTime, VenueEvent2<StageEffect>> Stage { get; } = new();
 
         public bool IsEmpty()
         {

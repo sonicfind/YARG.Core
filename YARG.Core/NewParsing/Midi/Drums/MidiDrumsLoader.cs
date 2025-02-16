@@ -1,9 +1,7 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using YARG.Core.Chart;
 using YARG.Core.Containers;
 using YARG.Core.IO;
-using YARG.Core.Logging;
 
 namespace YARG.Core.NewParsing.Midi
 {
@@ -34,11 +32,11 @@ namespace YARG.Core.NewParsing.Midi
                 return;
             }
 
-            using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var tremolos = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var bres = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
+            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
+            using var tremolos = new YARGNativeSortedList<DualTime, DualTime>();
+            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
 
             const int NUM_LANES = 6;
             const int DOUBLEKICK_LANE = 5;
@@ -99,7 +97,7 @@ namespace YARG.Core.NewParsing.Midi
                             int lane = LANEVALUES[noteValue];
                             if (lane < DOUBLEKICK_LANE)
                             {
-                                ref var diffTrack = ref instrumentTrack[diffIndex];
+                                var diffTrack = instrumentTrack[diffIndex];
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
                                     // We do this on the commonality that most charts do not exceed this number of notes.
@@ -109,7 +107,7 @@ namespace YARG.Core.NewParsing.Midi
 
                                 // We only need to touch the flam flag when we add a new note.
                                 // Any changes to the flag after this point will automatically occur from a separate scope.
-                                if (diffTrack.Notes.GetLastOrAppend(in position, out var drum))
+                                if (diffTrack.Notes.GetLastOrAdd(in position, out var drum))
                                 {
                                     drum->IsFlammed = flamFlag;
                                 }
@@ -149,7 +147,7 @@ namespace YARG.Core.NewParsing.Midi
                             else if (lane == 11 && diffIndex == 2)
                             {
                                 lanes[diffIndex * NUM_LANES + DOUBLEKICK_LANE] = position;
-                                instrumentTrack.Expert.Notes.TryAppend(in position);
+                                instrumentTrack.Expert.Notes.TryAdd(in position);
                             }
                         }
                         else if (TOM_MIN_VALUE <= note.Value && note.Value <= TOM_MAX_VALUE)
@@ -162,11 +160,11 @@ namespace YARG.Core.NewParsing.Midi
 
                             int index = note.Value - TOM_MIN_VALUE;
                             cymbalFlags[index] = false;
-                            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+                            foreach (var diff in instrumentTrack)
                             {
                                 // If a flag flips on the same tick of any notes,
                                 // we MUST flip the applicable cymbal marker for those notes to match
-                                if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
+                                if (diff.Notes.TryGetLastValue(in position, out var drum))
                                 {
                                     // Blah blah: pointer arithmetic
                                     (&drum->Cymbal_Yellow)[index] = false;
@@ -195,11 +193,11 @@ namespace YARG.Core.NewParsing.Midi
                                     break;
                                 case FLAM_VALUE:
                                     flamFlag = true;
-                                    for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+                                    foreach (var diff in instrumentTrack)
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (diff.Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -278,11 +276,11 @@ namespace YARG.Core.NewParsing.Midi
 
                             int index = note.Value - TOM_MIN_VALUE;
                             cymbalFlags[index] = true;
-                            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+                            foreach (var diff in instrumentTrack)
                             {
                                 // If a flag flips on the same tick of any notes,
                                 // we MUST flip the applicable cymbal marker for those notes to match
-                                if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
+                                if (diff.Notes.TryGetLastValue(in position, out var drum))
                                 {
                                     // Blah blah: pointer arithmetic
                                     (&drum->Cymbal_Yellow)[index] = true;
@@ -300,7 +298,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                bres.Append(in bre, position - bre);
+                                bres.Add(in bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
@@ -311,38 +309,38 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        overdrives.Append(in overdrivePosition, position - overdrivePosition);
+                                        overdrives.Add(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.SOLO:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        soloes.Append(in soloPosition, position - soloPosition);
+                                        soloes.Add(in soloPosition, position - soloPosition);
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        tremolos.Append(in tremoloPostion, position - tremoloPostion);
+                                        tremolos.Add(in tremoloPostion, position - tremoloPostion);
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        trills.Append(in trillPosition, position - trillPosition);
+                                        trills.Add(in trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
                                 case FLAM_VALUE:
                                     flamFlag = false;
-                                    for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+                                    foreach (var diff in instrumentTrack)
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (diff.Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = false;
                                         }
@@ -366,7 +364,7 @@ namespace YARG.Core.NewParsing.Midi
                         // all actually useful events will utilize ASCII encoding for state
                         var ev = str.GetString(Encoding.ASCII);
                         instrumentTrack.Events
-                            .GetLastOrAppend(position)
+                            .GetLastOrAdd(position)
                             .Add(ev);
                     }
                 }
@@ -374,7 +372,7 @@ namespace YARG.Core.NewParsing.Midi
 
             if (convertExpectKicksToShared)
             {
-                ref var expertNotes = ref instrumentTrack.Expert.Notes;
+                var expertNotes = instrumentTrack.Expert.Notes;
                 for (int i = 0; i < expertNotes.Count; ++i)
                 {
                     ref var drum = ref expertNotes.Data[i].Value;
@@ -385,14 +383,13 @@ namespace YARG.Core.NewParsing.Midi
                 }
             }
 
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+            foreach (var diff in instrumentTrack)
             {
-                ref var diff = ref instrumentTrack[i];
-                diff.Overdrives = overdrives.Clone();
-                diff.Soloes = soloes.Clone();
-                diff.BREs = bres.Clone();
-                diff.Tremolos = tremolos.Clone();
-                diff.Trills = trills.Clone();
+                diff.Overdrives.CopyFrom(overdrives);
+                diff.Soloes.CopyFrom(soloes);
+                diff.BREs.CopyFrom(bres);
+                diff.Tremolos.CopyFrom(tremolos);
+                diff.Trills.CopyFrom(trills);
             }
         }
 
@@ -403,11 +400,11 @@ namespace YARG.Core.NewParsing.Midi
                 return;
             }
 
-            using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var tremolos = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var bres = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
+            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
+            using var tremolos = new YARGNativeSortedList<DualTime, DualTime>();
+            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
 
             const int NUM_LANES = 6;
             // Per-difficulty tracker of note positions
@@ -461,7 +458,7 @@ namespace YARG.Core.NewParsing.Midi
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
-                                ref var diffTrack = ref instrumentTrack[diffIndex];
+                                var diffTrack = instrumentTrack[diffIndex];
                                 lanes[diffIndex * NUM_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
@@ -472,7 +469,7 @@ namespace YARG.Core.NewParsing.Midi
 
                                 // We only need to touch the flam flag when we add a new note.
                                 // Any changes to the flag after this point will automatically occur from a separate scope.
-                                if (diffTrack.Notes.GetLastOrAppend(in position, out var drum))
+                                if (diffTrack.Notes.GetLastOrAdd(in position, out var drum))
                                 {
                                     drum->IsFlammed = flamFlag;
                                 }
@@ -499,7 +496,7 @@ namespace YARG.Core.NewParsing.Midi
                             else if (lane == 11 && diffIndex == 2)
                             {
                                 lanes[diffIndex * NUM_LANES + KICK_LANE] = position;
-                                instrumentTrack.Expert.Notes.TryAppend(in position);
+                                instrumentTrack.Expert.Notes.TryAdd(in position);
                             }
                         }
                         else if (MidiLoader_Constants.BRE_MIN <= note.Value && note.Value <= MidiLoader_Constants.BRE_MAX)
@@ -524,11 +521,11 @@ namespace YARG.Core.NewParsing.Midi
                                     break;
                                 case FLAM_VALUE:
                                     flamFlag = true;
-                                    for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+                                    foreach (var diff in instrumentTrack)
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (diff.Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -608,7 +605,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                bres.Append(in bre, position - bre);
+                                bres.Add(in bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
@@ -619,38 +616,38 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        overdrives.Append(in overdrivePosition, position - overdrivePosition);
+                                        overdrives.Add(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.SOLO:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        soloes.Append(in soloPosition, position - soloPosition);
+                                        soloes.Add(in soloPosition, position - soloPosition);
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        tremolos.Append(in tremoloPostion, position - tremoloPostion);
+                                        tremolos.Add(in tremoloPostion, position - tremoloPostion);
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        trills.Append(in trillPosition, position - trillPosition);
+                                        trills.Add(in trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
                                 case FLAM_VALUE:
                                     flamFlag = false;
-                                    for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+                                    foreach (var diff in instrumentTrack)
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (diff.Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = false;
                                         }
@@ -674,7 +671,7 @@ namespace YARG.Core.NewParsing.Midi
                         // all actually useful events will utilize ASCII encoding for state
                         var ev = str.GetString(Encoding.ASCII);
                         instrumentTrack.Events
-                            .GetLastOrAppend(position)
+                            .GetLastOrAdd(position)
                             .Add(ev);
                     }
                 }
@@ -682,7 +679,7 @@ namespace YARG.Core.NewParsing.Midi
 
             if (convertExpectKicksToShared)
             {
-                ref var expertNotes = ref instrumentTrack.Expert.Notes;
+                var expertNotes = instrumentTrack.Expert.Notes;
                 for (int i = 0; i < expertNotes.Count; ++i)
                 {
                     ref var drum = ref expertNotes.Data[i].Value;
@@ -693,25 +690,24 @@ namespace YARG.Core.NewParsing.Midi
                 }
             }
 
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+            foreach (var diff in instrumentTrack)
             {
-                ref var diff = ref instrumentTrack[i];
-                diff.Overdrives = overdrives.Clone();
-                diff.Soloes = soloes.Clone();
-                diff.BREs = bres.Clone();
-                diff.Tremolos = tremolos.Clone();
-                diff.Trills = trills.Clone();
+                diff.Overdrives.CopyFrom(overdrives);
+                diff.Soloes.CopyFrom(soloes);
+                diff.BREs.CopyFrom(bres);
+                diff.Tremolos.CopyFrom(tremolos);
+                diff.Trills.CopyFrom(trills);
             }
         }
 
         public static unsafe InstrumentTrack2<UnknownLaneDrums> LoadUnknownDrums(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ref DrumsType drumsType)
         {
             var instrumentTrack = new InstrumentTrack2<UnknownLaneDrums>();
-            using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var tremolos = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var bres = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
+            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
+            using var tremolos = new YARGNativeSortedList<DualTime, DualTime>();
+            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
 
             const int MAX_LANES = 6;
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * MAX_LANES]
@@ -773,7 +769,7 @@ namespace YARG.Core.NewParsing.Midi
                             // if we detect prodrums flags, this value changes to disallow the fifth pad lane
                             if (lane < numLanes)
                             {
-                                ref var diffTrack = ref instrumentTrack[diffIndex];
+                                var diffTrack = instrumentTrack[diffIndex];
                                 lanes[diffIndex * MAX_LANES + lane] = position;
                                 if (diffTrack.Notes.Capacity == 0)
                                 {
@@ -784,7 +780,7 @@ namespace YARG.Core.NewParsing.Midi
 
                                 // We only need to touch the flam flag when we add a new note.
                                 // Any changes to the flag after this point will automatically occur from a separate scope.
-                                if (diffTrack.Notes.GetLastOrAppend(in position, out var drum))
+                                if (diffTrack.Notes.GetLastOrAdd(in position, out var drum))
                                 {
                                     drum->IsFlammed = flamFlag;
                                 }
@@ -838,7 +834,7 @@ namespace YARG.Core.NewParsing.Midi
                             else if (lane == 11 && diffIndex == 2)
                             {
                                 lanes[diffIndex * MAX_LANES + KICK_LANE] = position;
-                                instrumentTrack.Expert.Notes.TryAppend(in position);
+                                instrumentTrack.Expert.Notes.TryAdd(in position);
                             }
                         }
                         else if (TOM_MIN_VALUE <= note.Value && note.Value <= TOM_MAX_VALUE)
@@ -847,11 +843,11 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 int index = note.Value - TOM_MIN_VALUE;
                                 cymbalFlags[index] = false;
-                                for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+                                foreach (var diff in instrumentTrack)
                                 {
                                     // If a flag flips on the same tick of any notes,
                                     // we MUST flip the applicable cymbal marker for those notes to match
-                                    if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
+                                    if (diff.Notes.TryGetLastValue(in position, out var drum))
                                     {
                                         // Blah blah: pointer arithmetic
                                         (&drum->Cymbal_Yellow)[index] = false;
@@ -883,11 +879,11 @@ namespace YARG.Core.NewParsing.Midi
                                     break;
                                 case FLAM_VALUE:
                                     flamFlag = true;
-                                    for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+                                    foreach (var diff in instrumentTrack)
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (diff.Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = true;
                                         }
@@ -970,11 +966,11 @@ namespace YARG.Core.NewParsing.Midi
                             {
                                 int index = note.Value - TOM_MIN_VALUE;
                                 cymbalFlags[index] = true;
-                                for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+                                foreach (var diff in instrumentTrack)
                                 {
                                     // If a flag flips on the same tick of any notes,
                                     // we MUST flip the applicable cymbal marker for those notes to match
-                                    if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
+                                    if (diff.Notes.TryGetLastValue(in position, out var drum))
                                     {
                                         // Blah blah: pointer arithmetic
                                         (&drum->Cymbal_Yellow)[index] = true;
@@ -993,7 +989,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                bres.Append(in bre, position - bre);
+                                bres.Add(in bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
@@ -1004,38 +1000,38 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        overdrives.Append(in overdrivePosition, position - overdrivePosition);
+                                        overdrives.Add(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.SOLO:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        soloes.Append(in soloPosition, position - soloPosition);
+                                        soloes.Add(in soloPosition, position - soloPosition);
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        tremolos.Append(in tremoloPostion, position - tremoloPostion);
+                                        tremolos.Add(in tremoloPostion, position - tremoloPostion);
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        trills.Append(in trillPosition, position - trillPosition);
+                                        trills.Add(in trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
                                 case FLAM_VALUE:
                                     flamFlag = false;
-                                    for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+                                    foreach (var diff in instrumentTrack)
                                     {
                                         // If a flag flips on the same tick of any notes,
                                         // we MUST flip the applicable flam marker for those notes to match
-                                        if (instrumentTrack[i].Notes.TryGetLastValue(in position, out var drum))
+                                        if (diff.Notes.TryGetLastValue(in position, out var drum))
                                         {
                                             drum->IsFlammed = false;
                                         }
@@ -1059,7 +1055,7 @@ namespace YARG.Core.NewParsing.Midi
                         // all actually useful events will utilize ASCII encoding for state
                         var ev = str.GetString(Encoding.ASCII);
                         instrumentTrack.Events
-                            .GetLastOrAppend(position)
+                            .GetLastOrAdd(position)
                             .Add(ev);
                     }
                 }
@@ -1067,7 +1063,7 @@ namespace YARG.Core.NewParsing.Midi
 
             if (convertExpectKicksToShared)
             {
-                ref var expertNotes = ref instrumentTrack.Expert.Notes;
+                var expertNotes = instrumentTrack.Expert.Notes;
                 for (int i = 0; i < expertNotes.Count; ++i)
                 {
                     ref var drum = ref expertNotes.Data[i].Value;
@@ -1078,14 +1074,13 @@ namespace YARG.Core.NewParsing.Midi
                 }
             }
 
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+            foreach (var diff in instrumentTrack)
             {
-                ref var diff = ref instrumentTrack[i];
-                diff.Overdrives = overdrives.Clone();
-                diff.Soloes = soloes.Clone();
-                diff.BREs = bres.Clone();
-                diff.Tremolos = tremolos.Clone();
-                diff.Trills = trills.Clone();
+                diff.Overdrives.CopyFrom(overdrives);
+                diff.Soloes.CopyFrom(soloes);
+                diff.BREs.CopyFrom(bres);
+                diff.Tremolos.CopyFrom(tremolos);
+                diff.Trills.CopyFrom(trills);
             }
             return instrumentTrack;
         }

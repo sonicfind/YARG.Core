@@ -2,23 +2,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace YARG.Core.Containers
 {
     [DebuggerDisplay("Count: {_count}")]
-    public unsafe class YARGNativeList<T> : IEnumerable<T>, IDisposable
-        where T : unmanaged
+    public class YARGManagedList<T> : IEnumerable<T>, IDisposable
+        where T : new()
     {
-        protected T* _buffer;
-        protected long _capacity;
-        protected long _count;
-        protected long _version;
+        protected T[] _buffer;
+        protected int _count;
+        protected int _version;
 
         /// <summary>
         /// The number of elements within the list
         /// </summary>
-        public long Count
+        public int Count
         {
             get
             {
@@ -29,39 +27,25 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The capacity of the list where elements will reside
         /// </summary>
-        public long Capacity
+        public int Capacity
         {
             get
             {
-                return _capacity;
+                return _buffer.Length;
             }
             set
             {
-                if (_count <= value && value != _capacity)
+                if (_count <= value && value != _buffer.Length)
                 {
+                    Array.Resize(ref _buffer, value);
                     if (value > 0)
                     {
-                        long size = value * sizeof(T);
-                        if (_buffer != null)
-                        {
-                            _buffer = (T*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) size);
-                        }
-                        else
-                        {
-                            _buffer = (T*) Marshal.AllocHGlobal((IntPtr) size);
-                        }
                         ++_version;
                     }
                     else
                     {
-                        if (_buffer != null)
-                        {
-                            Marshal.FreeHGlobal((IntPtr) _buffer);
-                        }
-                        _buffer = null;
                         _version = 0;
                     }
-                    _capacity = value;
                 }
             }
         }
@@ -73,14 +57,14 @@ namespace YARG.Core.Containers
         {
             get
             {
-                return new Span<T>(_buffer, (int)_count);
+                return new Span<T>(_buffer, 0, _count);
             }
         }
 
         /// <summary>
-        /// The direct pointer for the underlying data. Use carefully.
+        /// The direct arrau for the underlying data. Use carefully.
         /// </summary>
-        public T* Data
+        public T[] Data
         {
             get
             {
@@ -88,63 +72,59 @@ namespace YARG.Core.Containers
             }
         }
 
-        /// <summary>
-        /// The direct pointer to the end position of the underlying data. Use carefully.
-        /// </summary>
-        public T* End
+        public YARGManagedList()
         {
-            get
-            {
-                return _buffer + _count;
-            }
-        }
-
-        public YARGNativeList()
-        {
-            _buffer = null;
-            _capacity = 0;
+            _buffer = Array.Empty<T>();
             _count = 0;
             _version = 0;
         }
 
-        public YARGNativeList(YARGNativeList<T> source)
+        public YARGManagedList(YARGManagedList<T> source)
         {
-            _capacity = source._count;
+            _buffer = new T[source._count];
             _count = source._count;
             _version = source._version;
-            long bytes = _count * sizeof(T);
-            _buffer = (T*) Marshal.AllocHGlobal((IntPtr) bytes);
-            Buffer.MemoryCopy(source._buffer, _buffer, bytes, bytes);
+            Array.Copy(source._buffer, _buffer, _count);
         }
 
-        public void CopyFrom(YARGNativeList<T> source)
+        public void CopyFrom(YARGManagedList<T> source)
         {
-            long byteCount = source._count * sizeof(T);
-            if (source._count > _capacity)
+            if (source._count > _buffer.Length)
             {
-                _buffer = (T*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) byteCount);
-                _capacity = source._count;
+                for (int i = 0; i < _count; ++i)
+                {
+                    _buffer[i] = default!;
+                }
+                _buffer = new T[source._count];
+                Array.Copy(source._buffer, _buffer, source._count);
             }
-            Buffer.MemoryCopy(source._buffer, _buffer, _capacity * sizeof(T), byteCount);
+            else
+            {
+                Array.Copy(source._buffer, _buffer, source._count);
+                for (int i = source.Count; i < _count; ++i)
+                {
+                    _buffer[i] = default!;
+                }
+            }
             _count = source._count;
             _version++;
         }
 
-        public void MoveFrom(YARGNativeList<T> source)
+        public YARGManagedList<T> MoveFrom(YARGManagedList<T> source)
         {
-            if (_buffer != null)
+            for (int i = 0; i < _count; ++i)
             {
-                Marshal.FreeHGlobal((IntPtr) _buffer);
+                _buffer[i] = default!;
             }
 
             _buffer = source._buffer;
-            _capacity = source._capacity;
             _count = source._count;
             _version = source._version;
-            source._buffer = null;
-            source._capacity = 0;
+
+            source._buffer = Array.Empty<T>();
             source._count = 0;
             source._version = 0;
+            return this;
         }
 
         /// <summary>
@@ -156,22 +136,15 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
-        /// Shrinks the buffer down to match the number of elements
+        /// Clears every node present in the list and sets count to zero
         /// </summary>
-        public void TrimExcess()
-        {
-            Capacity = _count;
-        }
-
-        /// <summary>
-        /// Sets Count to zero
-        /// </summary>
-        /// <remarks>
-        /// Due to the unmanaged nature of the generic, and to how new nodes are overridden on append, simply setting count to zero is enough.
-        /// If the type requires extra disposal behavior, that must be handled extrernally before calling this method.
-        /// </remarks>
         public void Clear()
         {
+            for (int i = 0; i < _count; ++i)
+            {
+                _buffer[i] = default!;
+            }
+
             if (_count > 0)
             {
                 _version++;
@@ -180,9 +153,11 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
-        /// Adds the given value to the end of the list
+        /// Appends a new node with the given key - the value of the node being defaulted.
         /// </summary>
-        /// <param name="value">The value to insert</param>
+        /// <remarks>This does not do any checks in regards to ordering.</remarks>
+        /// <param name="key">The key to assign to the new node</param>
+        /// <returns>A reference to the value from the newly created node</returns>
         public void Add(in T value)
         {
             CheckAndGrow();
@@ -194,37 +169,36 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <param name="values">The buffer containing the data to copy</param>
         /// <param name="count">The number of elements to copy from the buffer</param>
-        public void AddRange(T* values, long count)
+        public void AddRange(T[] values, int offset, int count)
         {
-            if (count < 0 || long.MaxValue - count < _count)
+            if (count < 0 || int.MaxValue - count < _count)
             {
                 throw new ArgumentOutOfRangeException("count");
             }
+
             CheckAndGrow(count);
-            long size = count * sizeof(T);
-            Buffer.MemoryCopy(_buffer + _count, values, size, size);
+            Array.Copy(values, offset, _buffer, _count, count);
             _count += count;
         }
 
         /// <summary>
-        /// Forcibly inserts a value at the positional index.
+        /// Forcibly inserts a node with the provided key and value at the positional index.
         /// </summary>
         /// <remarks>
-        /// Does not check for correct ordering on forced insertion
+        /// Does not check for correct key ordering on forced insertion. Unsafe.
         /// </remarks>
         /// <param name="index">The position to place the node - an array offset.</param>
-        /// <param name="value">The value to insert</param>
-        public void Insert(long index, in T value)
+        /// <param name="key">The key to use for the node</param>
+        /// <param name="value">The value to assign to the node</param>
+        public void Insert(int index, in T value)
         {
             CheckAndGrow();
-            var position = _buffer + index;
             if (index < _count)
             {
-                long leftover = (_count - index) * sizeof(T);
-                Buffer.MemoryCopy(position, position + 1, leftover, leftover);
+                Array.Copy(_buffer, index, _buffer, index + 1, _count - index);
             }
-            *position = value;
             ++_count;
+            _buffer[index] = value;
         }
 
         /// <summary>
@@ -239,15 +213,15 @@ namespace YARG.Core.Containers
             }
 
             --_count;
+            _buffer[_count] = default!;
             ++_version;
         }
 
         /// <summary>
-        /// Removes the value present at the provided array offset index
+        /// Removes the node present at the provided array offset index
         /// </summary>
         /// <param name="index">The offset into the inner array buffer</param>
-        /// <returns>Whether the index was valid</returns>
-        public void RemoveAt(long index)
+        public void RemoveAt(int index)
         {
             if (index < 0 || _count <= index)
             {
@@ -255,9 +229,8 @@ namespace YARG.Core.Containers
             }
 
             --_count;
-            var position = _buffer + index;
-            long amount = (_count - index) * sizeof(T);
-            Buffer.MemoryCopy(position + 1, position, amount, amount);
+            Array.Copy(_buffer, index + 1, _buffer, index, _count - index);
+            _buffer[_count] = default!;
             ++_version;
         }
 
@@ -266,7 +239,7 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <param name="index">Array index in the list</param>
         /// <returns>The value by reference</returns>
-        public ref T this[long index]
+        public ref T this[int index]
         {
             get
             {
@@ -280,7 +253,7 @@ namespace YARG.Core.Containers
         /// <param name="index">Array index in the list</param>
         /// <returns>The value by reference</returns>
         /// <exception cref="ArgumentOutOfRangeException">Index was below 0 or >= count</exception>
-        public ref T At(long index)
+        public ref T At(int index)
         {
             if (index < 0 || _count <= index)
             {
@@ -289,25 +262,25 @@ namespace YARG.Core.Containers
             return ref _buffer[index];
         }
 
-        private const long DEFAULT_CAPACITY = 16;
-        protected void CheckAndGrow(long offset = 1)
+        private const int DEFAULT_CAPACITY = 16;
+        protected void CheckAndGrow(int offset = 1)
         {
-            if (_count >= long.MaxValue)
+            if (_count >= int.MaxValue)
             {
                 throw new OverflowException("Element limit reached");
             }
 
-            if (_count > _capacity - offset)
+            if (_count > _buffer.Length - offset)
             {
-                long newcapacity = _capacity == 0 ? DEFAULT_CAPACITY : 2 * _capacity;
+                int newcapacity = _buffer.Length == 0 ? DEFAULT_CAPACITY : 2 * _buffer.Length;
                 while (0 < newcapacity && newcapacity - offset < _count)
                 {
                     newcapacity *= 2;
                 }
 
-                if ((ulong) newcapacity > long.MaxValue)
+                if ((uint) newcapacity > int.MaxValue)
                 {
-                    newcapacity = long.MaxValue;
+                    newcapacity = int.MaxValue;
                 }
                 Capacity = newcapacity;
             }
@@ -316,22 +289,13 @@ namespace YARG.Core.Containers
 
         public void Dispose()
         {
-            if (_buffer != null)
+            for (int i = 0; i < _count; ++i)
             {
-                Marshal.FreeHGlobal((IntPtr) _buffer);
-                _buffer = null;
+                _buffer[i] = default!;
             }
+            _buffer = Array.Empty<T>();
             _version = 0;
-            _capacity = 0;
             _count = 0;
-        }
-
-        ~YARGNativeList()
-        {
-            if (_buffer != null)
-            {
-                Marshal.FreeHGlobal((IntPtr) _buffer);
-            }
         }
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
@@ -346,15 +310,15 @@ namespace YARG.Core.Containers
 
         public struct Enumerator : IEnumerator<T>, IEnumerator
         {
-            private readonly YARGNativeList<T> _list;
-            private readonly long _version;
-            private long _index;
+            private readonly YARGManagedList<T> _map;
+            private int _index;
+            private readonly int _version;
 
-            internal Enumerator(YARGNativeList<T> list)
+            internal Enumerator(YARGManagedList<T> map)
             {
-                _list = list;
-                _version = list._version;
+                _map = map;
                 _index = -1;
+                _version = map._version;
             }
 
             public readonly void Dispose()
@@ -363,35 +327,36 @@ namespace YARG.Core.Containers
 
             public bool MoveNext()
             {
-                if (_version != _list._version)
+                if (_version != _map._version)
                 {
                     throw new InvalidOperationException("Enum failed - Sorted List was updated");
                 }
 
                 ++_index;
-                return _index < _list.Count;
+                return _index < _map._count;
             }
 
             public readonly T Current
             {
                 get
                 {
-                    if (_version != _list._version || _index < 0 || _index >= _list._count)
+                    if (_version != _map._version || _index < 0 || _index >= _map._count)
                     {
                         throw new InvalidOperationException("Enum Operation not possible");
                     }
-                    return _list._buffer[_index];
+                    return _map._buffer[_index];
                 }
             }
 
-            readonly object IEnumerator.Current => Current;
+            readonly object IEnumerator.Current => Current!;
 
             void IEnumerator.Reset()
             {
-                if (_version != _list._version)
+                if (_version != _map._version)
                 {
                     throw new InvalidOperationException("Enum failed - Sorted List was updated");
                 }
+
                 _index = -1;
             }
         }

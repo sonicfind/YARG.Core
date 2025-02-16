@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-using YARG.Core.Containers;
+﻿using System.Diagnostics;
 
 namespace YARG.Core.NewParsing
 {
@@ -11,10 +7,11 @@ namespace YARG.Core.NewParsing
     /// </summary>
     public unsafe struct TempoTracker
     {
-        private readonly YARGKeyValuePair<long, Tempo2>* _end;
-        private YARGKeyValuePair<long, Tempo2>* _position;
+        private readonly long _resolution;
+        private readonly (long Position, Tempo2 TempoMarker)* _end;
+        private (long Position, Tempo2 TempoMarker)* _position;
 
-        public readonly long Resolution;
+        public readonly long Resolution => _resolution;
 
         /// <summary>
         /// Initializes the tracker to the starting position of the given sync track
@@ -24,7 +21,7 @@ namespace YARG.Core.NewParsing
         public TempoTracker(SyncTrack2 sync, long resolution)
         {
             Debug.Assert(sync.TempoMarkers.Count > 0, "There must exist at least one marker in the tempo list");
-            Resolution = resolution;
+            _resolution = resolution;
             _position = sync.TempoMarkers.Data;
             _end = _position + sync.TempoMarkers.Count;
         }
@@ -37,14 +34,14 @@ namespace YARG.Core.NewParsing
         /// <returns>The position in seconds</returns>
         public unsafe double Traverse(long ticks)
         {
-            Debug.Assert(ticks >= _position->Key, "Tick position to convert placed before the current key");
-            while (_position + 1 < _end && _position[1].Key <= ticks)
+            Debug.Assert(ticks >= _position->Position, "Tick position to convert placed before the current Position");
+            while (_position + 1 < _end && _position[1].Position <= ticks)
             {
                 ++_position;
             }
 
-            double quarters = (ticks - _position->Key) / (double) Resolution;
-            long micros = (long) (_position->Value.MicrosPerQuarter * quarters) + _position->Value.Anchor;
+            double quarters = (ticks - _position->Position) / (double) _resolution;
+            long micros = (long) (_position->TempoMarker.MicrosPerQuarter * quarters) + _position->TempoMarker.Anchor;
             return micros / (double) Tempo2.MICROS_PER_SECOND;
         }
 
@@ -56,15 +53,15 @@ namespace YARG.Core.NewParsing
         /// <returns>The position in seconds</returns>
         public readonly unsafe double UnmovingConvert(long ticks)
         {
-            Debug.Assert(ticks >= _position->Key, "Tick position to convert placed before the current key");
+            Debug.Assert(ticks >= _position->Position, "Tick position to convert placed before the current Position");
             var tmp = _position;
-            while (tmp + 1 < _end && tmp[1].Key <= ticks)
+            while (tmp + 1 < _end && tmp[1].Position <= ticks)
             {
                 ++tmp;
             }
 
-            double quarters = (ticks - tmp->Key) / (double) Resolution;
-            long micros = (long) (tmp->Value.MicrosPerQuarter * quarters) + tmp->Value.Anchor;
+            double quarters = (ticks - tmp->Position) / (double) _resolution;
+            long micros = (long) (tmp->TempoMarker.MicrosPerQuarter * quarters) + tmp->TempoMarker.Anchor;
             return micros / (double) Tempo2.MICROS_PER_SECOND;
         }
     }

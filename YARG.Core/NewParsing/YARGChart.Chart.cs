@@ -153,16 +153,16 @@ namespace YARG.Core.NewParsing
                         switch (ev.Type)
                         {
                             case ChartEventType.Bpm:
-                                chart.Sync.TempoMarkers.GetLastOrAppend(ev.Position)->MicrosPerQuarter = YARGChartFileReader.ExtractMicrosPerQuarter(ref container);
+                                chart.Sync.TempoMarkers.GetLastOrAdd(ev.Position)->MicrosPerQuarter = YARGChartFileReader.ExtractMicrosPerQuarter(ref container);
                                 break;
                             case ChartEventType.Anchor:
                                 if (ev.Position > 0)
                                 {
-                                    chart.Sync.TempoMarkers.GetLastOrAppend(ev.Position)->Anchor = YARGChartFileReader.ExtractWithWhitespace<TChar, long>(ref container);
+                                    chart.Sync.TempoMarkers.GetLastOrAdd(ev.Position)->Anchor = YARGChartFileReader.ExtractWithWhitespace<TChar, long>(ref container);
                                 }
                                 break;
                             case ChartEventType.Time_Sig:
-                                chart.Sync.TimeSigs.AppendOrUpdate(ev.Position, YARGChartFileReader.ExtractTimeSig(ref container));
+                                chart.Sync.TimeSigs.AddOrUpdate(ev.Position, YARGChartFileReader.ExtractTimeSig(ref container));
                                 break;
                         }
                     }
@@ -189,20 +189,14 @@ namespace YARG.Core.NewParsing
 
             if (unknownDrums != null)
             {
-                if ((drumsInChart & DrumsType.FourLane) == DrumsType.FourLane)
+                if ((drumsInChart & DrumsType.FourOrPro) > 0)
                 {
-                    unknownDrums.ConvertTo(chart.FourLaneDrums, false);
-                }
-                else if ((drumsInChart & DrumsType.ProDrums) == DrumsType.ProDrums)
-                {
-                    unknownDrums.ConvertTo(chart.FourLaneDrums, true);
+                    unknownDrums.Convert(chart.FourLaneDrums);
                 }
                 else
                 {
-                    unknownDrums.ConvertTo(chart.FiveLaneDrums);
+                    unknownDrums.Convert(chart.FiveLaneDrums);
                 }
-                // There's no need to call dipose OR the finalizer as everything would've already been transferred or pre-disposed
-                GC.SuppressFinalize(unknownDrums);
             }
             FinalizeDeserialization(chart);
         }
@@ -231,17 +225,17 @@ namespace YARG.Core.NewParsing
                     string str = YARGTextReader.ExtractText(ref container, true);
                     if (str.StartsWith(SECTION))
                     {
-                        chart.Sections.AppendOrUpdate(in position, str[SECTION.Length..]);
+                        chart.Sections.AddOrUpdate(in position, str[SECTION.Length..]);
                     }
                     else if (str.StartsWith(LYRIC))
                     {
-                        chart.LeadVocals[0].Lyrics.AppendOrUpdate(in position, str[LYRIC.Length..]);
+                        chart.LeadVocals[0].Lyrics.AddOrUpdate(in position, str[LYRIC.Length..]);
                     }
                     else if (str == PHRASE_START)
                     {
                         if (phrase.Ticks >= 0 && position.Ticks > phrase.Ticks)
                         {
-                            chart.LeadVocals.VocalPhrases_1.Append(in phrase, position - phrase);
+                            chart.LeadVocals.VocalPhrases_1.Add(in phrase, position - phrase);
                         }
                         phrase = position;
                     }
@@ -251,14 +245,14 @@ namespace YARG.Core.NewParsing
                         {
                             if (position.Ticks > phrase.Ticks)
                             {
-                                chart.LeadVocals!.VocalPhrases_1.Append(in phrase, position - phrase);
+                                chart.LeadVocals!.VocalPhrases_1.Add(in phrase, position - phrase);
                             }
                             phrase.Ticks = -1;
                         }
                     }
                     else
                     {
-                        chart.Globals.GetLastOrAppend(in position).Add(str);
+                        chart.Globals.GetLastOrAdd(in position).Add(str);
                     }
                 }
             }
@@ -299,7 +293,7 @@ namespace YARG.Core.NewParsing
                         return false;
                     }
                     unknownDrums ??= new InstrumentTrack2<UnknownLaneDrums>();
-                    return LoadInstrumentTrack_Chart(ref container, ref unknownDrums[difficulty], ref tempoTracker, new UnknownLaneSetter(drumsInChart));
+                    return LoadInstrumentTrack_Chart(ref container, unknownDrums[difficulty], ref tempoTracker, new UnknownLaneSetter(drumsInChart));
                 }
             }
 
@@ -309,21 +303,21 @@ namespace YARG.Core.NewParsing
             }
 
             return instrument switch
-                {
-                    Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretGuitar    [difficulty], ref tempoTracker, new FiveFretSetter()),
-                    Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretBass      [difficulty], ref tempoTracker, new FiveFretSetter()),
-                    Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretRhythm    [difficulty], ref tempoTracker, new FiveFretSetter()),
-                    Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, ref chart.FiveFretCoopGuitar[difficulty], ref tempoTracker, new FiveFretSetter()),
-                    Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, ref chart.Keys              [difficulty], ref tempoTracker, new FiveFretSetter()),
-                    Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretGuitar     [difficulty], ref tempoTracker, new SixFretSetter()),
-                    Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, ref chart.SixFretBass       [difficulty], ref tempoTracker, new SixFretSetter()),
-                    Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, ref chart.SixFretRhythm     [difficulty], ref tempoTracker, new SixFretSetter()),
-                    Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, ref chart.SixFretCoopGuitar [difficulty], ref tempoTracker, new SixFretSetter()),
-                    Instrument.FourLaneDrums =>      LoadInstrumentTrack_Chart(ref container, ref chart.FourLaneDrums     [difficulty], ref tempoTracker, new FourLaneSetter()),
-                    Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, ref chart.FourLaneDrums     [difficulty], ref tempoTracker, new ProDrumsSetter()),
-                    Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, ref chart.FiveLaneDrums     [difficulty], ref tempoTracker, new FiveLaneSetter()),
-                    _ => false,
-                };
+            {
+                Instrument.FiveFretGuitar =>     LoadInstrumentTrack_Chart(ref container, chart.FiveFretGuitar    [difficulty], ref tempoTracker, new FiveFretSetter()),
+                Instrument.FiveFretBass =>       LoadInstrumentTrack_Chart(ref container, chart.FiveFretBass      [difficulty], ref tempoTracker, new FiveFretSetter()),
+                Instrument.FiveFretRhythm =>     LoadInstrumentTrack_Chart(ref container, chart.FiveFretRhythm    [difficulty], ref tempoTracker, new FiveFretSetter()),
+                Instrument.FiveFretCoopGuitar => LoadInstrumentTrack_Chart(ref container, chart.FiveFretCoopGuitar[difficulty], ref tempoTracker, new FiveFretSetter()),
+                Instrument.Keys =>               LoadInstrumentTrack_Chart(ref container, chart.Keys              [difficulty], ref tempoTracker, new FiveFretSetter()),
+                Instrument.SixFretGuitar =>      LoadInstrumentTrack_Chart(ref container, chart.SixFretGuitar     [difficulty], ref tempoTracker, new SixFretSetter()),
+                Instrument.SixFretBass =>        LoadInstrumentTrack_Chart(ref container, chart.SixFretBass       [difficulty], ref tempoTracker, new SixFretSetter()),
+                Instrument.SixFretRhythm =>      LoadInstrumentTrack_Chart(ref container, chart.SixFretRhythm     [difficulty], ref tempoTracker, new SixFretSetter()),
+                Instrument.SixFretCoopGuitar =>  LoadInstrumentTrack_Chart(ref container, chart.SixFretCoopGuitar [difficulty], ref tempoTracker, new SixFretSetter()),
+                Instrument.FourLaneDrums =>      LoadInstrumentTrack_Chart(ref container, chart.FourLaneDrums     [difficulty], ref tempoTracker, new FourLaneSetter()),
+                Instrument.ProDrums =>           LoadInstrumentTrack_Chart(ref container, chart.FourLaneDrums     [difficulty], ref tempoTracker, new ProDrumsSetter()),
+                Instrument.FiveLaneDrums =>      LoadInstrumentTrack_Chart(ref container, chart.FiveLaneDrums     [difficulty], ref tempoTracker, new FiveLaneSetter()),
+                _ => false,
+            };
         }
 
         private enum SpecialPhraseType
@@ -336,7 +330,7 @@ namespace YARG.Core.NewParsing
             Trill = 66,
         }
 
-        private static bool LoadInstrumentTrack_Chart<TChar, TNote, TSetter>(ref YARGTextContainer<TChar> container, ref DifficultyTrack2<TNote> difficultyTrack, ref TempoTracker tempoTracker, TSetter setter)
+        private static bool LoadInstrumentTrack_Chart<TChar, TNote, TSetter>(ref YARGTextContainer<TChar> container, DifficultyTrack2<TNote> difficultyTrack, ref TempoTracker tempoTracker, TSetter setter)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
             where TNote : unmanaged, IInstrumentNote
             where TSetter : unmanaged, IChartLoadable<TNote>
@@ -364,7 +358,7 @@ namespace YARG.Core.NewParsing
                         unsafe
                         {
                             var (lane, duration) = YARGChartFileReader.ExtractLaneAndDuration(ref container, in position, in tempoTracker);
-                            var note = difficultyTrack.Notes.GetLastOrAppend(in position);
+                            var note = difficultyTrack.Notes.GetLastOrAdd(in position);
                             if (!setter.Set(note, lane, in duration) && note->GetNumActiveLanes() == 0)
                             {
                                 difficultyTrack.Notes.Pop();
@@ -376,12 +370,12 @@ namespace YARG.Core.NewParsing
                             var (lane, duration) = YARGChartFileReader.ExtractLaneAndDuration(ref container, in position, in tempoTracker);
                             switch ((SpecialPhraseType) lane)
                             {
-                                case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(ref difficultyTrack.Faceoff_Player1, in position, in duration); break;
-                                case SpecialPhraseType.FaceOff_Player2: AddSpecialPhrase(ref difficultyTrack.Faceoff_Player2, in position, in duration); break;
-                                case SpecialPhraseType.StarPower:       AddSpecialPhrase(ref difficultyTrack.Overdrives,      in position, in duration); break;
-                                case SpecialPhraseType.BRE:             AddSpecialPhrase(ref difficultyTrack.BREs,            in position, in duration); break;
-                                case SpecialPhraseType.Tremolo:         AddSpecialPhrase(ref difficultyTrack.Tremolos,        in position, in duration); break;
-                                case SpecialPhraseType.Trill:           AddSpecialPhrase(ref difficultyTrack.Trills,          in position, in duration); break;
+                                case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(difficultyTrack.Faceoff_Player1, in position, in duration); break;
+                                case SpecialPhraseType.FaceOff_Player2: AddSpecialPhrase(difficultyTrack.Faceoff_Player2, in position, in duration); break;
+                                case SpecialPhraseType.StarPower:       AddSpecialPhrase(difficultyTrack.Overdrives,      in position, in duration); break;
+                                case SpecialPhraseType.BRE:             AddSpecialPhrase(difficultyTrack.BREs,            in position, in duration); break;
+                                case SpecialPhraseType.Tremolo:         AddSpecialPhrase(difficultyTrack.Tremolos,        in position, in duration); break;
+                                case SpecialPhraseType.Trill:           AddSpecialPhrase(difficultyTrack.Trills,          in position, in duration); break;
                             }
                             break;
                         }
@@ -411,12 +405,12 @@ namespace YARG.Core.NewParsing
                                 {
                                     ++position.Ticks;
                                     position.Seconds = tempoTracker.UnmovingConvert(position.Ticks);
-                                    difficultyTrack.Soloes.Append(in soloPosition, position - soloPosition);
+                                    difficultyTrack.Soloes.Add(in soloPosition, position - soloPosition);
                                     soloPosition = DualTime.Inactive;
                                 }
                                 else
                                 {
-                                    difficultyTrack.Soloes.Append(in soloPosition, nextSoloPosition - soloPosition);
+                                    difficultyTrack.Soloes.Add(in soloPosition, nextSoloPosition - soloPosition);
                                     soloPosition = nextSoloPosition;
                                     nextSoloPosition = DualTime.Inactive;
                                 }
@@ -424,7 +418,7 @@ namespace YARG.Core.NewParsing
                         }
                         else 
                         {
-                            difficultyTrack.Events.GetLastOrAppend(in position).Add(str);
+                            difficultyTrack.Events.GetLastOrAdd(in position).Add(str);
                         }
                         break;
                 }
@@ -432,7 +426,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static unsafe void AddSpecialPhrase(ref YARGNativeSortedList<DualTime, DualTime> phrases, in DualTime position, in DualTime duration)
+        private static unsafe void AddSpecialPhrase(YARGNativeSortedList<DualTime, DualTime> phrases, in DualTime position, in DualTime duration)
         {
             if (phrases.Count > 0)
             {
@@ -442,7 +436,7 @@ namespace YARG.Core.NewParsing
                     last.Value = position - last.Key;
                 }
             }
-            phrases.Append(in position, duration);
+            phrases.Add(in position, duration);
         }
 
         private interface IChartLoadable<TNote>

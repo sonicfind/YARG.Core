@@ -2,7 +2,6 @@
 using System.Text;
 using YARG.Core.Containers;
 using YARG.Core.IO;
-using YARG.Core.Logging;
 
 namespace YARG.Core.NewParsing.Midi
 {
@@ -43,13 +42,13 @@ namespace YARG.Core.NewParsing.Midi
                 return;
             }
 
-            using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var tremolos = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var bres = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var faceoff_P1 = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var faceoff_P2 = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
+            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
+            using var tremolos = new YARGNativeSortedList<DualTime, DualTime>();
+            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
+            using var faceoff_P1 = new YARGNativeSortedList<DualTime, DualTime>();
+            using var faceoff_P2 = new YARGNativeSortedList<DualTime, DualTime>();
 
             var diffModifiers = stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES];
 
@@ -111,7 +110,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - FIVEFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            ref var diffTrack = ref instrumentTrack[diffIndex];
+                            var diffTrack = instrumentTrack[diffIndex];
                             int lane = laneIndices[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -126,7 +125,7 @@ namespace YARG.Core.NewParsing.Midi
                                 // We only need to touch the guitar state when we add a new note.
                                 // Any changes to the state afterwards will only occur if one of the applicable
                                 // flags undergoes a flip on the same tick, but solely within that scope.
-                                if (diffTrack.Notes.GetLastOrAppend(in position, out var guitar))
+                                if (diffTrack.Notes.GetLastOrAdd(in position, out var guitar))
                                 {
                                     ref var diffModifier = ref diffModifiers[diffIndex];
                                     // Hierarchy: Tap > Hopo > Strum > Natural
@@ -188,7 +187,7 @@ namespace YARG.Core.NewParsing.Midi
                                         // difficulty-based star power phrases. So we need to...
 
                                         // 1. convert all prior added solo phrases to expert star power phrases,
-                                        instrumentTrack.Expert.Overdrives = soloes.Clone();
+                                        instrumentTrack.Expert.Overdrives.MoveFrom(soloes);
 
                                         // 2. remove and disallow any track-wise star power phrases (as 116 becomes invalid),
                                         overdrives.Clear();
@@ -267,7 +266,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - FIVEFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            ref var diffTrack = ref instrumentTrack[diffIndex];
+                            var diffTrack = instrumentTrack[diffIndex];
                             int lane = laneIndices[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -319,7 +318,7 @@ namespace YARG.Core.NewParsing.Midi
                                         {
                                             if (soloPosition.Ticks > -1)
                                             {
-                                                soloes.Append(in soloPosition, position - soloPosition);
+                                                soloes.Add(in soloPosition, position - soloPosition);
                                                 soloPosition.Ticks = -1;
                                             }
                                         }
@@ -360,14 +359,14 @@ namespace YARG.Core.NewParsing.Midi
                                     case FACEOFF_1_INDEX:
                                         if (FaceOffPosition_1.Ticks > -1)
                                         {
-                                            faceoff_P1.Append(in FaceOffPosition_1, position - FaceOffPosition_1);
+                                            faceoff_P1.Add(in FaceOffPosition_1, position - FaceOffPosition_1);
                                             FaceOffPosition_1.Ticks = -1;
                                         }
                                         break;
                                     case FACEOFF_2_INDEX:
                                         if (FaceOffPosition_2.Ticks > -1)
                                         {
-                                            faceoff_P2.Append(in FaceOffPosition_2, position - FaceOffPosition_2);
+                                            faceoff_P2.Add(in FaceOffPosition_2, position - FaceOffPosition_2);
                                             FaceOffPosition_2.Ticks = -1;
                                         }
                                         break;
@@ -376,7 +375,7 @@ namespace YARG.Core.NewParsing.Midi
                                             ref var diffOverdrivePosition = ref overdriveDiffPositions[diffIndex];
                                             if (diffOverdrivePosition.Ticks > -1)
                                             {
-                                                instrumentTrack[diffIndex].Overdrives.Append(in diffOverdrivePosition, position - diffOverdrivePosition);
+                                                instrumentTrack[diffIndex].Overdrives.Add(in diffOverdrivePosition, position - diffOverdrivePosition);
                                                 diffOverdrivePosition.Ticks = -1;
                                             }
                                             break;
@@ -396,7 +395,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                bres.Append(in bre, position - bre);
+                                bres.Add(in bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
@@ -408,21 +407,21 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdriveTrackPosition.Ticks > -1)
                                     {
-                                        overdrives.Append(in overdriveTrackPosition, position - overdriveTrackPosition);
+                                        overdrives.Add(in overdriveTrackPosition, position - overdriveTrackPosition);
                                         overdriveTrackPosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        tremolos.Append(in tremoloPostion, position - tremoloPostion);
+                                        tremolos.Add(in tremoloPostion, position - tremoloPostion);
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        trills.Append(in trillPosition, position - trillPosition);
+                                        trills.Add(in trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
@@ -544,25 +543,24 @@ namespace YARG.Core.NewParsing.Midi
                         // all actually useful events will utilize ASCII encoding for state
                         var ev = str.GetString(Encoding.ASCII);
                         instrumentTrack.Events
-                            .GetLastOrAppend(position)
+                            .GetLastOrAdd(position)
                             .Add(ev);
                     }
                 }
             }
 
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+            foreach (var diff in instrumentTrack)
             {
-                ref var diff = ref instrumentTrack[i];
                 if (!_useAlternateOverdrive)
                 {
-                    diff.Overdrives = overdrives.Clone();
+                    diff.Overdrives.CopyFrom(overdrives);
                 }
-                diff.Soloes = soloes.Clone();
-                diff.BREs = bres.Clone();
-                diff.Tremolos = tremolos.Clone();
-                diff.Trills = trills.Clone();
-                diff.Faceoff_Player1 = trills.Clone();
-                diff.Faceoff_Player2 = trills.Clone();
+                diff.Soloes.CopyFrom(soloes);
+                diff.BREs.CopyFrom(bres);
+                diff.Tremolos.CopyFrom(tremolos);
+                diff.Trills.CopyFrom(trills);
+                diff.Faceoff_Player1.MoveFrom(faceoff_P1);
+                diff.Faceoff_Player2.MoveFrom(faceoff_P2);
             }
         }
     }

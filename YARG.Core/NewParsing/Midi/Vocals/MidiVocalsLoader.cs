@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text;
-using YARG.Core.Chart;
+﻿using System.Text;
 using YARG.Core.IO;
 
 namespace YARG.Core.NewParsing.Midi
@@ -20,7 +18,7 @@ namespace YARG.Core.NewParsing.Midi
 
         private static readonly byte[] RANGESHIFT_TEXT = Encoding.ASCII.GetBytes("[range_shift]");
 
-        public static unsafe bool Load(YARGMidiTrack midiTrack, VocalTrack2 vocalTrack, int trackIndex, ref TempoTracker tempoTracker, ref Encoding encoding)
+        public static unsafe bool Load(YARGMidiTrack midiTrack, VocalsTrack2 vocalTrack, int trackIndex, ref TempoTracker tempoTracker, ref Encoding encoding)
         {
             var part = vocalTrack[trackIndex];
             if (!part.IsEmpty())
@@ -105,7 +103,7 @@ namespace YARG.Core.NewParsing.Midi
                             }
                             else if (note.Value == LYRICSHIFT)
                             {
-                                vocalTrack.LyricShifts.Push(position);
+                                vocalTrack.LyricShifts.Add(position);
                             }
                         }
                         // and only harmony 2 can specify harmony lines
@@ -133,21 +131,21 @@ namespace YARG.Core.NewParsing.Midi
                                 case VOCAL_PHRASE_1:
                                     if (phrasePosition_1.Ticks > -1)
                                     {
-                                        vocalTrack.VocalPhrases_1.Append(in phrasePosition_1, position - phrasePosition_1);
+                                        vocalTrack.VocalPhrases_1.Add(in phrasePosition_1, position - phrasePosition_1);
                                         phrasePosition_1.Ticks = -1;
                                     }
                                     break;
                                 case VOCAL_PHRASE_2:
                                     if (phrasePosition_2.Ticks > -1)
                                     {
-                                        vocalTrack.VocalPhrases_2.Append(in phrasePosition_2, position - phrasePosition_2);
+                                        vocalTrack.VocalPhrases_2.Add(in phrasePosition_2, position - phrasePosition_2);
                                         phrasePosition_2.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        vocalTrack.Overdrives.Append(in overdrivePosition, position - overdrivePosition);
+                                        vocalTrack.Overdrives.Add(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
@@ -155,14 +153,14 @@ namespace YARG.Core.NewParsing.Midi
                                 case PERCUSSION_NOISE:
                                     if (percussionPosition.Ticks > -1)
                                     {
-                                        vocalTrack.Percussion.Append(in percussionPosition, note.Value == PERCUSSION_NOTE);
+                                        vocalTrack.Percussion.Add(in percussionPosition, note.Value == PERCUSSION_NOTE);
                                         percussionPosition.Ticks = -1;
                                     }
                                     break;
                                 case RANGESHIFT:
                                     if (rangeShiftPosition.Ticks > -1)
                                     {
-                                        vocalTrack.RangeShifts.Append(in rangeShiftPosition, position - rangeShiftPosition);
+                                        vocalTrack.RangeShifts.Add(in rangeShiftPosition, position - rangeShiftPosition);
                                         rangeShiftPosition.Ticks = -1;
                                     }
                                     break;
@@ -173,7 +171,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             if (phrasePosition_1.Ticks > -1)
                             {
-                                vocalTrack.HarmonyLines.Append(in phrasePosition_1, position - phrasePosition_1);
+                                vocalTrack.HarmonyLines.Add(in phrasePosition_1, position - phrasePosition_1);
                                 phrasePosition_1.Ticks = -1;
                             }
                         }
@@ -212,7 +210,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             vocalNote.TalkieState = TalkieState.None;
                         }
-                        part.Lyrics.AppendOrUpdate(position, lyric);
+                        part.Lyrics.AddOrUpdate(position, lyric);
                     }
                     else if (trackIndex == 0)
                     {
@@ -221,13 +219,13 @@ namespace YARG.Core.NewParsing.Midi
                             var endPoint = position;
                             endPoint.Ticks += tempoTracker.Resolution;
                             endPoint.Seconds = tempoTracker.UnmovingConvert(endPoint.Ticks);
-                            vocalTrack.RangeShifts.AppendOrUpdate(in position, endPoint - position);
+                            vocalTrack.RangeShifts.AddOrUpdate(in position, endPoint - position);
                         }
                         else
                         {
                             var ev = str.GetString(Encoding.ASCII);
                             vocalTrack.Events
-                                .GetLastOrAppend(position)
+                                .GetLastOrAdd(position)
                                 .Add(ev);
                         }
                     }
@@ -259,7 +257,7 @@ namespace YARG.Core.NewParsing.Midi
                     // Helps keep reallocations to a minimum.
                     part.Notes.Capacity = 1000;
                 }
-                part.Notes.Append(in vocalPosition, in vocalNote);
+                part.Notes.Add(in vocalPosition, in vocalNote);
                 vocalNote.TalkieState = TalkieState.None;
             }
         }

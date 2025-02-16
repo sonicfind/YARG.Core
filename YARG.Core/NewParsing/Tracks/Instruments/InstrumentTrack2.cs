@@ -8,109 +8,101 @@ namespace YARG.Core.NewParsing
     public static class InstrumentTrack2
     {
         public const int NUM_DIFFICULTIES = 4;
+        public static int DifficultyToIndex(Difficulty difficulty)
+        {
+            return difficulty switch
+            {
+                Difficulty.Beginner or
+                Difficulty.Easy => 0,
+                Difficulty.Medium => 1,
+                Difficulty.Hard => 2,
+                Difficulty.Expert or
+                Difficulty.ExpertPlus => 3,
+                _ => throw new ArgumentOutOfRangeException(),
+            };
+        }
     }
 
-    public class InstrumentTrack2<TNote> : ITrack
+    public class InstrumentTrack2<TNote> : ITrack, IEnumerable<DifficultyTrack2<TNote>>
         where TNote : unmanaged, IInstrumentNote
     {
-        public DifficultyTrack2<TNote> Easy   = DifficultyTrack2<TNote>.Default;
-        public DifficultyTrack2<TNote> Medium = DifficultyTrack2<TNote>.Default;
-        public DifficultyTrack2<TNote> Hard   = DifficultyTrack2<TNote>.Default;
-        public DifficultyTrack2<TNote> Expert = DifficultyTrack2<TNote>.Default;
-        public YARGManagedSortedList<DualTime, HashSet<string>> Events = YARGManagedSortedList<DualTime, HashSet<string>>.Default;
+        private readonly DifficultyTrack2<TNote>[] _difficulties = new DifficultyTrack2<TNote>[InstrumentTrack2.NUM_DIFFICULTIES];
+        public YARGManagedSortedList<DualTime, HashSet<string>> Events { get; }
+
+        public DifficultyTrack2<TNote> this[int index] => _difficulties[index];
+        public DifficultyTrack2<TNote> this[Difficulty difficulty] => _difficulties[InstrumentTrack2.DifficultyToIndex(difficulty)];
+
+        public DifficultyTrack2<TNote> Easy   => _difficulties[0];
+        public DifficultyTrack2<TNote> Medium => _difficulties[1];
+        public DifficultyTrack2<TNote> Hard   => _difficulties[2];
+        public DifficultyTrack2<TNote> Expert => _difficulties[3];
+
+        public InstrumentTrack2()
+        {
+            for (int i = 0; i < _difficulties.Length; i++)
+            {
+                _difficulties[i] = new();
+            }
+            Events = new();
+        }
+
+        public InstrumentTrack2(InstrumentTrack2<TNote> source)
+        {
+            for (int i = 0; i < _difficulties.Length; i++)
+            {
+                _difficulties[i] = new(source[i]);
+            }
+            Events = new(source.Events);
+        }
+
+        public void CopyFrom(InstrumentTrack2<TNote> source)
+        {
+            for (int i = 0; i < _difficulties.Length; i++)
+            {
+                _difficulties[i].CopyFrom(source[i]);
+            }
+            Events.CopyFrom(source.Events);
+        }
 
         /// <summary>
         /// Returns whether all active difficulties and track-scope phrases and events are empty
         /// </summary>
         /// <returns>Whether the instrument contains no data</returns>
-        public virtual bool IsEmpty()
+        public bool IsEmpty()
         {
-            return Easy.IsEmpty()
-                && Medium.IsEmpty()
-                && Hard.IsEmpty()
-                && Expert.IsEmpty()
-                && Events.IsEmpty();
+            foreach (var diff in _difficulties)
+            {
+                if (!diff.IsEmpty())
+                {
+                    return false;
+                }
+            }
+            return Events.IsEmpty();
         }
 
         /// <summary>
-        /// Clears all difficulties, phrases, and events
+        /// Clears all difficulties, and events
         /// </summary>
-        public virtual void Clear()
+        public void Clear()
         {
-            Easy.Clear();
-            Medium.Clear();
-            Hard.Clear();
-            Expert.Clear();
+            foreach (var diff in _difficulties)
+            {
+                diff.Clear();
+            }
             Events.Clear();
         }
 
         /// <summary>
         /// Trims excess unmanaged buffer data from all difficulties.<br></br>
         /// </summary>
-        public virtual void TrimExcess()
+        public void TrimExcess()
         {
-            Easy.TrimExcess();
-            Medium.TrimExcess();
-            Hard.TrimExcess();
-            Expert.TrimExcess();
-        }
-
-        /// <summary>
-        /// Returns a reference to the track that best matches the provided <see cref="Difficulty"></see>
-        /// </summary>
-        /// <remarks>
-        /// <see cref="Difficulty.Beginner"></see> maps to <see cref="Difficulty.Easy"></see><br></br>
-        /// <see cref="Difficulty.ExpertPlus"></see> maps to <see cref="Difficulty.Expert"></see>
-        /// </remarks>
-        /// <param name="diff">The difficulty to grab</param>
-        /// <returns>A direct ref to the appropriate track</returns>
-        /// <exception cref="ArgumentOutOfRangeException">Some unhandled difficulty was provided</exception>
-        public ref DifficultyTrack2<TNote> this[Difficulty diff]
-        {
-            get
+            foreach (var diff in _difficulties)
             {
-                switch (diff)
-                {
-                    case Difficulty.Beginner:
-                    case Difficulty.Easy:
-                        return ref Easy;
-                    case Difficulty.Medium:
-                        return ref Medium;
-                    case Difficulty.Hard:
-                        return ref Hard;
-                    case Difficulty.Expert:
-                    case Difficulty.ExpertPlus:
-                        return ref Expert;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                diff.TrimExcess();
             }
-        }
-
-        /// <summary>
-        /// Returns a reference to the track that aligns with the given index (ascending from Easy to Expert)
-        /// </summary>
-        /// <param name="index">The ascending index</param>
-        /// <returns>A direct ref to the appropriate track</returns>
-        /// <exception cref="IndexOutOfRangeException">Some invalid index was provided</exception>
-        public ref DifficultyTrack2<TNote> this[int index]
-        {
-            get
-            {
-                switch (index)
-                {
-                    case 0:
-                        return ref Easy;
-                    case 1:
-                        return ref Medium;
-                    case 2:
-                        return ref Hard;
-                    case 3:
-                        return ref Expert;
-                    default:
-                        throw new IndexOutOfRangeException();
-                }
-            }
+            // Trimming managed lists just generates a new array for GC to handle.
+            // The exact opposite of what we want.
         }
 
         /// <summary>
@@ -119,36 +111,32 @@ namespace YARG.Core.NewParsing
         /// <returns>The end point of the track</returns>
         public void UpdateLastNoteTime(ref DualTime lastNoteTime)
         {
-            Easy.UpdateLastNoteTime(ref lastNoteTime);
-            Medium.UpdateLastNoteTime(ref lastNoteTime);
-            Hard.UpdateLastNoteTime(ref lastNoteTime);
-            Expert.UpdateLastNoteTime(ref lastNoteTime);
+            foreach (var diff in _difficulties)
+            {
+                diff.UpdateLastNoteTime(ref lastNoteTime);
+            }
         }
 
         /// <summary>
         /// Disposes all unmanaged buffer data from every difficulty
         /// </summary>
-        public virtual void Dispose(bool dispose)
-        {
-            Easy.Dispose(dispose);
-            Medium.Dispose(dispose);
-            Hard.Dispose(dispose);
-            Expert.Dispose(dispose);
-            if (dispose)
-            {
-                Events.Dispose();
-            }
-        }
-
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            foreach(var diff in _difficulties)
+            {
+                diff.Dispose();
+            }
+            Events.Dispose();
         }
 
-        ~InstrumentTrack2()
+        public IEnumerator<DifficultyTrack2<TNote>> GetEnumerator()
         {
-            Dispose(false);
+            return ((IEnumerable<DifficultyTrack2<TNote>>) _difficulties).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return _difficulties.GetEnumerator();
         }
     }
 }

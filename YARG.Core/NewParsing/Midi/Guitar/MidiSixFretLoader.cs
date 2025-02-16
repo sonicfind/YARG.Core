@@ -2,7 +2,6 @@
 using System.Text;
 using YARG.Core.Containers;
 using YARG.Core.IO;
-using YARG.Core.Logging;
 
 namespace YARG.Core.NewParsing.Midi
 {
@@ -40,11 +39,11 @@ namespace YARG.Core.NewParsing.Midi
                 return;
             }
 
-            using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var tremolos = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var bres = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
+            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
+            using var tremolos = new YARGNativeSortedList<DualTime, DualTime>();
+            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
 
             var diffModifiers = stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES];
             // Per-difficulty tracker of note positions
@@ -86,7 +85,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - SIXFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            ref var diffTrack = ref instrumentTrack[diffIndex];
+                            var diffTrack = instrumentTrack[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -101,7 +100,7 @@ namespace YARG.Core.NewParsing.Midi
                                 // We only need to touch the guitar state when we add a new note.
                                 // Any changes to the state afterwards will only occur if one of the applicable
                                 // flags undergoes a flip on the same tick, but solely within that scope.
-                                if (diffTrack.Notes.GetLastOrAppend(in position, out var guitar))
+                                if (diffTrack.Notes.GetLastOrAdd(in position, out var guitar))
                                 {
                                     ref var diffModifier = ref diffModifiers[diffIndex];
                                     // Hierarchy: Tap > Hopo > Strum > Natural
@@ -207,7 +206,7 @@ namespace YARG.Core.NewParsing.Midi
                         {
                             int noteValue = note.Value - SIXFRET_MIN;
                             int diffIndex = MidiLoader_Constants.DIFFVALUES[noteValue];
-                            ref var diffTrack = ref instrumentTrack[diffIndex];
+                            var diffTrack = instrumentTrack[diffIndex];
                             int lane = LANEVALUES[noteValue];
                             if (lane < NUM_LANES)
                             {
@@ -259,7 +258,7 @@ namespace YARG.Core.NewParsing.Midi
                                         {
                                             if (soloPosition.Ticks > -1)
                                             {
-                                                soloes.Append(in soloPosition, position - soloPosition);
+                                                soloes.Add(in soloPosition, position - soloPosition);
                                                 soloPosition.Ticks = -1;
                                             }
                                         }
@@ -311,7 +310,7 @@ namespace YARG.Core.NewParsing.Midi
                                 && brePositions[2] == brePositions[3]
                                 && brePositions[3] == brePositions[4])
                             {
-                                bres.Append(in bre, position - bre);
+                                bres.Add(in bre, position - bre);
                             }
                             bre.Ticks = -1;
                         }
@@ -323,21 +322,21 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        overdrives.Append(in overdrivePosition, position - overdrivePosition);
+                                        overdrives.Add(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TREMOLO:
                                     if (tremoloPostion.Ticks > -1)
                                     {
-                                        tremolos.Append(in tremoloPostion, position - tremoloPostion);
+                                        tremolos.Add(in tremoloPostion, position - tremoloPostion);
                                         tremoloPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        trills.Append(in trillPosition, position - trillPosition);
+                                        trills.Add(in trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
@@ -411,19 +410,18 @@ namespace YARG.Core.NewParsing.Midi
                     var str = midiTrack.ExtractTextOrSysEx();
                     var ev = str.GetString(Encoding.ASCII);
                     instrumentTrack.Events
-                        .GetLastOrAppend(position)
+                        .GetLastOrAdd(position)
                         .Add(ev);
                 }
             }
 
-            for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+            foreach (var diff in instrumentTrack)
             {
-                ref var diff = ref instrumentTrack[i];
-                diff.Overdrives = overdrives.Clone();
-                diff.Soloes = soloes.Clone();
-                diff.BREs = bres.Clone();
-                diff.Tremolos = tremolos.Clone();
-                diff.Trills = trills.Clone();
+                diff.Overdrives.CopyFrom(overdrives);
+                diff.Soloes.CopyFrom(soloes);
+                diff.BREs.CopyFrom(bres);
+                diff.Tremolos.CopyFrom(tremolos);
+                diff.Trills.CopyFrom(trills);
             }
         }
     }

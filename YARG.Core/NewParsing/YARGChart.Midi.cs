@@ -8,7 +8,6 @@ using YARG.Core.IO.Ini;
 using YARG.Core.Logging;
 using YARG.Core.NewParsing.Midi;
 using YARG.Core.Song;
-using YARG.Core.Containers;
 
 namespace YARG.Core.NewParsing
 {
@@ -230,10 +229,10 @@ namespace YARG.Core.NewParsing
                     switch (stats.Type)
                     {
                         case MidiEventType.Tempo:
-                            sync.TempoMarkers.GetLastOrAppend(stats.Position)->MicrosPerQuarter = midiTrack.ExtractMicrosPerQuarter();
+                            sync.TempoMarkers.GetLastOrAdd(stats.Position)->MicrosPerQuarter = midiTrack.ExtractMicrosPerQuarter();
                             break;
                         case MidiEventType.Time_Sig:
-                            sync.TimeSigs.AppendOrUpdate(stats.Position, midiTrack.ExtractTimeSig());
+                            sync.TimeSigs.AddOrUpdate(stats.Position, midiTrack.ExtractTimeSig());
                             break;
                     }
                 }
@@ -268,15 +267,15 @@ namespace YARG.Core.NewParsing
                     var text = midiTrack.ExtractTextOrSysEx();
                     if (text.StartsWith(PREFIXES[0]))
                     {
-                        chart.Sections.GetLastOrAppend(position) = text.GetValidatedString(ref encoding, PREFIXES[0].Length, text.length - PREFIXES[0].Length - 1);
+                        chart.Sections.GetLastOrAdd(position) = text.GetValidatedString(ref encoding, PREFIXES[0].Length, text.length - PREFIXES[0].Length - 1);
                     }
                     else if (text.StartsWith(PREFIXES[1]))
                     {
-                        chart.Sections.GetLastOrAppend(position) = text.GetValidatedString(ref encoding, PREFIXES[1].Length, text.length - PREFIXES[1].Length - 1);
+                        chart.Sections.GetLastOrAdd(position) = text.GetValidatedString(ref encoding, PREFIXES[1].Length, text.length - PREFIXES[1].Length - 1);
                     }
                     else
                     {
-                        chart.Globals.GetLastOrAppend(position).Add(text.GetString(Encoding.ASCII));
+                        chart.Globals.GetLastOrAdd(position).Add(text.GetString(Encoding.ASCII));
                     }
                 }
             }
@@ -312,8 +311,8 @@ namespace YARG.Core.NewParsing
                         position.Seconds = tempoTracker.Traverse(position.Ticks);
                         switch (note.Value)
                         {
-                            case MEASURE_BEAT: chart.BeatMap.AppendOrUpdate(in position, BeatlineType.Measure); break;
-                            case STRONG_BEAT:  chart.BeatMap.AppendOrUpdate(in position, BeatlineType.Strong); break;
+                            case MEASURE_BEAT: chart.BeatMap.AddOrUpdate(in position, BeatlineType.Measure); break;
+                            case STRONG_BEAT:  chart.BeatMap.AddOrUpdate(in position, BeatlineType.Strong); break;
                         }
                     }
                 }
@@ -353,22 +352,20 @@ namespace YARG.Core.NewParsing
                             // Only possible if pre-type was FourOrFive AND fifth lane was not found
                             if (drumsInChart.Has(DrumsType.FourLane))
                             {
-                                track.ConvertTo(chart.FourLaneDrums, false);
+                                chart.FourLaneDrums = track.ConvertToFourLane();
                                 drumsInChart = DrumsType.FourLane;
                             }
                             // Only possible if pre-type was ProOrFive AND fifth lane was not found
                             else if (drumsInChart.Has(DrumsType.ProDrums))
                             {
-                                track.ConvertTo(chart.FourLaneDrums, true);
+                                chart.FourLaneDrums = track.ConvertToFourLane();
                                 drumsInChart = DrumsType.ProDrums;
                             }
                             // Only possible if fifth lane is found
                             else
                             {
-                                track.ConvertTo(chart.FiveLaneDrums);
+                                chart.FiveLaneDrums = track.ConvertToFiveLane();
                             }
-                            // There's no need to call dipose OR the finalizer as everything would've already been transferred or pre-disposed
-                            GC.SuppressFinalize(track);
                             break;
                         }
                     }
@@ -382,7 +379,7 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Pro_Guitar_22: MidiProGuitarLoader.Load(midiTrack, chart.ProGuitar_22Fret, ref tempoTracker); break;
                 case MidiTrackType.Pro_Bass_17:   MidiProGuitarLoader.Load(midiTrack, chart.ProBass_17Fret, ref tempoTracker); break;
                 case MidiTrackType.Pro_Bass_22:   MidiProGuitarLoader.Load(midiTrack, chart.ProBass_22Fret, ref tempoTracker); break;
-                
+
                 case MidiTrackType.Pro_Keys_X:
                 case MidiTrackType.Pro_Keys_H:
                 case MidiTrackType.Pro_Keys_M: // Handled per-difficulty, so we use 0-3 indexing

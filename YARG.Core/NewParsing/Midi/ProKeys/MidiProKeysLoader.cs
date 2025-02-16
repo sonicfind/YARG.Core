@@ -16,17 +16,16 @@ namespace YARG.Core.NewParsing.Midi
 
         public static unsafe bool Load(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ProKeysInstrumentTrack instrumentTrack, int diffIndex)
         {
-            ref var diffTrack = ref instrumentTrack[diffIndex];
-            ref var ranges = ref instrumentTrack.Ranges[diffIndex];
-            if (!diffTrack.Notes.IsEmpty() || !ranges.IsEmpty())
+            var diffTrack = instrumentTrack[diffIndex];
+            if (!diffTrack.Notes.IsEmpty())
             {
                 return false;
             }
 
-            using var overdrives = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var soloes = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var trills = YARGNativeSortedList<DualTime, DualTime>.Default;
-            using var bres = YARGNativeSortedList<DualTime, DualTime>.Default;
+            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
+            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
+            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
 
             // We do this on the commonality that most charts do not exceed this number of notes.
             // Helps keep reallocations to a minimum.
@@ -69,7 +68,7 @@ namespace YARG.Core.NewParsing.Midi
                         if (PROKEY_MIN <= note.Value && note.Value <= PROKEY_MAX)
                         {
                             lanes[note.Value - PROKEY_MIN] = position;
-                            diffTrack.Notes.TryAppend(in position);
+                            diffTrack.Notes.TryAdd(in position);
                         }
                         else
                         {
@@ -90,12 +89,12 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.TRILL:
                                     trillPosition = position;
                                     break;
-                                case 0: ranges.AppendOrUpdate(in position, ProKey_Ranges.C1_E2); break;
-                                case 2: ranges.AppendOrUpdate(in position, ProKey_Ranges.D1_F2); break;
-                                case 4: ranges.AppendOrUpdate(in position, ProKey_Ranges.E1_G2); break;
-                                case 5: ranges.AppendOrUpdate(in position, ProKey_Ranges.F1_A2); break;
-                                case 7: ranges.AppendOrUpdate(in position, ProKey_Ranges.G1_B2); break;
-                                case 9: ranges.AppendOrUpdate(in position, ProKey_Ranges.A1_C3); break;
+                                case 0: diffTrack.Ranges.AddOrUpdate(in position, ProKey_Ranges.C1_E2); break;
+                                case 2: diffTrack.Ranges.AddOrUpdate(in position, ProKey_Ranges.D1_F2); break;
+                                case 4: diffTrack.Ranges.AddOrUpdate(in position, ProKey_Ranges.E1_G2); break;
+                                case 5: diffTrack.Ranges.AddOrUpdate(in position, ProKey_Ranges.F1_A2); break;
+                                case 7: diffTrack.Ranges.AddOrUpdate(in position, ProKey_Ranges.G1_B2); break;
+                                case 9: diffTrack.Ranges.AddOrUpdate(in position, ProKey_Ranges.A1_C3); break;
                             };
                         }
                     }
@@ -124,35 +123,35 @@ namespace YARG.Core.NewParsing.Midi
                                 case MidiLoader_Constants.OVERDRIVE:
                                     if (overdrivePosition.Ticks > -1)
                                     {
-                                        overdrives!.Append(in overdrivePosition, position - overdrivePosition);
+                                        overdrives.Add(in overdrivePosition, position - overdrivePosition);
                                         overdrivePosition.Ticks = -1;
                                     }
                                     break;
                                 case SOLO_MIDI:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        soloes!.Append(in soloPosition, position - soloPosition);
+                                        soloes.Add(in soloPosition, position - soloPosition);
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
                                 case BRE_MIDI:
                                     if (brePosition.Ticks > -1)
                                     {
-                                        bres!.Append(in brePosition, position - brePosition);
+                                        bres.Add(in brePosition, position - brePosition);
                                         brePosition.Ticks = -1;
                                     }
                                     break;
                                 case GLISSANDO_MIDI:
                                     if (glissPostion.Ticks > -1)
                                     {
-                                        instrumentTrack.Glissandos.Append(in glissPostion, position - glissPostion);
+                                        instrumentTrack.Glissandos.Add(in glissPostion, position - glissPostion);
                                         glissPostion.Ticks = -1;
                                     }
                                     break;
                                 case MidiLoader_Constants.TRILL:
                                     if (trillPosition.Ticks > -1)
                                     {
-                                        trills!.Append(in trillPosition, position - trillPosition);
+                                        trills.Add(in trillPosition, position - trillPosition);
                                         trillPosition.Ticks = -1;
                                     }
                                     break;
@@ -168,20 +167,19 @@ namespace YARG.Core.NewParsing.Midi
                     var str = midiTrack.ExtractTextOrSysEx();
                     var ev = str.GetString(Encoding.ASCII);
                     instrumentTrack.Events
-                        .GetLastOrAppend(position)
+                        .GetLastOrAdd(position)
                         .Add(ev);
                 }
             }
 
             if (diffIndex == 3)
             {
-                for (int i = 0; i < InstrumentTrack2.NUM_DIFFICULTIES; ++i)
+                foreach (var diff in instrumentTrack)
                 {
-                    ref var diff = ref instrumentTrack[i];
-                    diff.Overdrives = overdrives.Clone();
-                    diff.Soloes = soloes.Clone();
-                    diff.BREs = bres.Clone();
-                    diff.Trills = trills.Clone();
+                    diff.Overdrives.CopyFrom(overdrives);
+                    diff.Soloes.CopyFrom(soloes);
+                    diff.BREs.CopyFrom(bres);
+                    diff.Trills.CopyFrom(trills);
                 }
             }
             return true;
