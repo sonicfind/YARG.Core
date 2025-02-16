@@ -123,7 +123,7 @@ namespace YARG.Core.NewParsing
                     }
                 }
             }
-            return true;
+            return false;
         }
 
         private static void AddNote(ProKeyNote* note, int binary, in DualTime length)
