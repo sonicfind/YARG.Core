@@ -113,19 +113,13 @@ namespace YARG.Core.Song
             }
 
             var drums = ParseDrumsType(in _parts);
-            switch (_chartFormat)
+            if (_chartFormat == ChartFormat.Chart)
             {
-                case ChartFormat.Mid:
-                case ChartFormat.Midi:
-                    {
-                        var tracks = ConvertToMidiTracks(activeInstruments);
-                        return YARGChart.LoadMidi_Single(data, in _metadata, in _settings, null, drums, tracks);
-                    }
-                default:
-                    {
-                        return YARGChart.LoadChart(data, in _metadata, in _settings, null, drums, activeInstruments);
-                    }
+                return YARGChart.LoadChart(data, in _metadata, in _settings, null, drums, activeInstruments);
             }
+
+            var tracks = ConvertToMidiTracks(activeInstruments);
+            return YARGChart.LoadMidi_Single(data, in _metadata, in _settings, null, drums, tracks);
         }
 
         public override FixedArray<byte>? LoadMiloData()
