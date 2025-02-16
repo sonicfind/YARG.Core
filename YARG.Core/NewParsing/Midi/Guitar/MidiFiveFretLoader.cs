@@ -53,7 +53,7 @@ namespace YARG.Core.NewParsing.Midi
             var diffModifiers = stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES];
 
             // Zero is reserved for open notes. Open notes apply in two situations:
-            // 1. The 13s will swap to zeroes when the ENHANCED_OPENS toggle occurs
+            // 1. The 13s will swap to zeroes when if find the ENHANCED_OPENS event
             // 2. The '1'(green) in a difficulty will swap to zero and back depending on the Open note sysex state
             //
             // Note: the 13s account for the -1 offset of the minimum note value
