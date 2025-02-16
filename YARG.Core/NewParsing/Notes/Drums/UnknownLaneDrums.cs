@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
-using YARG.Core.Chart;
 
 namespace YARG.Core.NewParsing
 {
@@ -22,13 +19,11 @@ namespace YARG.Core.NewParsing
         public bool Cymbal_Orange;
         public KickState KickState;
         public bool IsFlammed;
-        // Placed at the bottom to allowed best blittability with FourLane
+        // Placed at the bottom to allow best blittability with FourLane
         // as that will be the most common conversion
         public DualTime Green;
         public DrumDynamics Dynamics_Green;
 
-        public readonly int NUMLANES => 6;
-        
         public readonly int GetNumActiveLanes()
         {
             int numActive = 0;

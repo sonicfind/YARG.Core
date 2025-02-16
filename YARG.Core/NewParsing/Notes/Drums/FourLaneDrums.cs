@@ -1,7 +1,5 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
-using YARG.Core.Chart;
 
 namespace YARG.Core.NewParsing
 {
@@ -21,8 +19,6 @@ namespace YARG.Core.NewParsing
         public bool Cymbal_Green;
         public KickState KickState;
         public bool IsFlammed;
-
-        public readonly int NUMLANES => 5;
 
         public readonly int GetNumActiveLanes()
         {

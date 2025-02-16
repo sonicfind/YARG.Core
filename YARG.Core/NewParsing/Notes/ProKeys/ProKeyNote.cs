@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace YARG.Core.NewParsing
 {
@@ -14,8 +12,6 @@ namespace YARG.Core.NewParsing
         private PitchedKey _key4;
 #pragma warning restore CS0649
         private int _numActive;
-
-        public readonly int NUMLANES => 25;
 
         public readonly int GetNumActiveLanes()
         {
