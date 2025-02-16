@@ -193,12 +193,9 @@ namespace YARG.Core.NewParsing
             var globals = Globals.Span;
             for (int i = globals.Length - 1; i >= 0; --i)
             {
-                foreach (string ev in globals[i].Value)
+                if (globals[i].Value.Contains("[end]"))
                 {
-                    if (ev == "[end]")
-                    {
-                        return globals[i].Key;
-                    }
+                    return globals[i].Key;
                 }
             }
 
