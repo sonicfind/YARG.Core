@@ -63,7 +63,7 @@ namespace YARG.Core.Containers
             if (_count > 0)
             {
                 ref var node = ref _buffer[_count - 1];
-                if (node.Key.CompareTo(key) < 0)
+                if (node.Key.CompareTo(key) >= 0)
                 {
                     return ref node.Value;
                 }
