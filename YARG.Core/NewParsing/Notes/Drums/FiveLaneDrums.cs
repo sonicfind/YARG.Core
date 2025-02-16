@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace YARG.Core.NewParsing
@@ -21,8 +19,6 @@ namespace YARG.Core.NewParsing
         public KickState KickState;
         public bool IsFlammed;
 
-        public readonly int NUMLANES => 6;
-        
         public readonly int GetNumActiveLanes()
         {
             int numActive = 0;
