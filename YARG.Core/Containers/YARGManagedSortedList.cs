@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace YARG.Core.Containers
 {
@@ -16,84 +14,14 @@ namespace YARG.Core.Containers
     /// </remarks>
     /// <typeparam name="TKey">The type to use for determining sorting order</typeparam>
     /// <typeparam name="TValue">The value that gets mapped to keys</typeparam>
-    [DebuggerDisplay("Count: {_count}")]
-    public struct YARGManagedSortedList<TKey, TValue> : IEnumerable<YARGKeyValuePair<TKey, TValue>>, IDisposable
+    public sealed class YARGManagedSortedList<TKey, TValue> : YARGManagedList<(TKey Key, TValue Value)>
         where TKey : IEquatable<TKey>, IComparable<TKey>
         where TValue : new()
     {
-        public static readonly YARGManagedSortedList<TKey, TValue> Default = new()
-        {
-            _buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>(),
-            _count = 0,
-            _version = 0
-        };
+        public YARGManagedSortedList() { }
 
-        private YARGKeyValuePair<TKey, TValue>[] _buffer;
-        private int _count;
-        private int _version;
-
-        /// <summary>
-        /// The number of elements within the list
-        /// </summary>
-        public readonly int Count => _count;
-
-        /// <summary>
-        /// The capacity of the list where elements will reside
-        /// </summary>
-        public int Capacity
-        {
-            readonly get => _buffer.Length;
-            set
-            {
-                if (_count <= value && value != _buffer.Length)
-                {
-                    Array.Resize(ref _buffer, value);
-                    if (value > 0)
-                    {
-                        ++_version;
-                    }
-                    else
-                    {
-                        _version = 0;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// The span view of the data up to <see cref="Count"/>
-        /// </summary>
-        public readonly Span<YARGKeyValuePair<TKey, TValue>> Span => new(_buffer, 0, _count);
-
-        /// <summary>
-        /// The direct arrau for the underlying data. Use carefully.
-        /// </summary>
-        public readonly YARGKeyValuePair<TKey, TValue>[] Data => _buffer;
-
-        /// <summary>
-        /// Returns whether count is zero
-        /// </summary>
-        public readonly bool IsEmpty()
-        {
-            return _count == 0;
-        }
-
-        /// <summary>
-        /// Clears every node present in the list and sets count to zero
-        /// </summary>
-        public void Clear()
-        {
-            for (int i = 0; i < _count; ++i)
-            {
-                _buffer[i] = default;
-            }
-
-            if (_count > 0)
-            {
-                _version++;
-            }
-            _count = 0;
-        }
+        public YARGManagedSortedList(YARGManagedSortedList<TKey, TValue> list)
+            : base(list) { }
 
         /// <summary>
         /// Appends a new node with the given key - the value of the node being defaulted.
@@ -101,12 +29,12 @@ namespace YARG.Core.Containers
         /// <remarks>This does not do any checks in regards to ordering.</remarks>
         /// <param name="key">The key to assign to the new node</param>
         /// <returns>A reference to the value from the newly created node</returns>
-        public ref TValue Append(TKey key)
+        public ref TValue Add(TKey key)
         {
             CheckAndGrow();
             ref var node = ref _buffer[_count++];
             node.Key = key;
-            node.Value = new TValue();
+            node.Value = new();
             return ref node.Value;
         }
 
@@ -116,7 +44,7 @@ namespace YARG.Core.Containers
         /// <remarks>This does not do any checks in regards to ordering.</remarks>
         /// <param name="key">The key to assign to the new node</param>
         /// <param name="value">The value to assign to the new node</param>
-        public void Append(in TKey key, in TValue value)
+        public void Add(in TKey key, in TValue value)
         {
             CheckAndGrow();
             ref var node = ref _buffer[_count++];
@@ -130,13 +58,17 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <param name="key">The key to query and possibly append</param>
         /// <returns>A reference to the last value in the list</returns>
-        public ref TValue GetLastOrAppend(in TKey key)
+        public ref TValue GetLastOrAdd(in TKey key)
         {
-            if (_count == 0 || _buffer[_count - 1] < key)
+            if (_count > 0)
             {
-                return ref Append(key);
+                ref var node = ref _buffer[_count - 1];
+                if (node.Key.CompareTo(key) < 0)
+                {
+                    return ref node.Value;
+                }
             }
-            return ref _buffer[_count - 1].Value;
+            return ref Add(key);
         }
 
         /// <summary>
@@ -146,9 +78,9 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <param name="key">The key to query and possibly append</param>
         /// <param name="value">The value to use as the last value of the list</param>
-        public void AppendOrUpdate(in TKey key, in TValue value)
+        public void AddOrUpdate(in TKey key, in TValue value)
         {
-            if (_count == 0 || _buffer[_count - 1] < key)
+            if (_count == 0 || _buffer[_count - 1].Key.CompareTo(key) < 0)
             {
                 CheckAndGrow();
                 ++_count;
@@ -163,117 +95,17 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <param name="key">The key to query and possibly append</param>
         /// <returns>Whether a new node was created</returns>
-        public bool TryAppend(in TKey key)
+        public bool TryAdd(in TKey key)
         {
             if (_count > 0 && _buffer[_count - 1].Key.Equals(key))
             {
                 return false;
             }
-            Append(key);
-            return true;
-        }
-
-        /// <summary>
-        /// Forcibly inserts a node with the provided key and value at the positional index.
-        /// </summary>
-        /// <remarks>
-        /// Does not check for correct key ordering on forced insertion. Unsafe.
-        /// </remarks>
-        /// <param name="index">The position to place the node - an array offset.</param>
-        /// <param name="key">The key to use for the node</param>
-        /// <param name="value">The value to assign to the node</param>
-        public void Insert_Forced(int index, in TKey key, in TValue value)
-        {
             CheckAndGrow();
-            if (index < _count)
-            {
-                Array.Copy(_buffer, index, _buffer, index + 1, _count - index);
-            }
-            ++_count;
-
-            ref var node = ref _buffer[index];
+            ref var node = ref _buffer[_count++];
             node.Key = key;
-            node.Value = value;
-        }
-
-        /// <summary>
-        /// Removes the node with the given key if one exists
-        /// </summary>
-        /// <param name="key">The key to query for</param>
-        /// <returns>Whether a node was found and removed</returns>
-        public bool Remove(in TKey key)
-        {
-            int index = Find(key);
-            if (index < 0)
-            {
-                return false;
-            }
-            RemoveAtIndex(index);
+            node.Value = new();
             return true;
-        }
-
-        /// <summary>
-        /// Removes the node present at the provided array offset index
-        /// </summary>
-        /// <param name="index">The offset into the inner array buffer</param>
-        public void RemoveAtIndex(int index)
-        {
-            if (index < 0 || _count <= index)
-            {
-                throw new ArgumentOutOfRangeException();
-            }
-
-            --_count;
-            Array.Copy(_buffer, index + 1, _buffer, index, _count - index);
-        }
-
-        /// <summary>
-        /// Removes the last node in the list
-        /// </summary>
-        /// <exception cref="InvalidOperationException">The list has no elements to remove</exception>
-        public void Pop()
-        {
-            if (_count == 0)
-            {
-                throw new InvalidOperationException();
-            }
-
-            --_count;
-            ++_version;
-            _buffer[_count] = default;
-        }
-
-        /// <summary>
-        /// Returns the value from the node with a mathcing key.
-        /// If a node with that key does not exist, a new one is created in its appropriate spot first.
-        /// </summary>
-        /// <param name="key">The key to query for and possibly emplace in the list</param>
-        /// <returns>The reference to the node with the matching key</returns>
-        public ref TValue this[in TKey key]
-        {
-            get
-            {
-                int index = FindOrEmplaceIndex(in key);
-                return ref _buffer[index].Value;
-            }
-        }
-
-        /// <summary>
-        /// Returns the index of the node from the list that contains a key that matches the one provided, starting from the provided index.
-        /// If a node with that key does not exist, a new one is created in its appropriate spot first.
-        /// </summary>
-        /// <remarks>Undefined behavior will occur if the key and index are out of sync</remarks>
-        /// <param name="key">The key to query for and possibly emplace in the list</param>
-        /// <returns>The index of the node with the matching key</returns>
-        public int FindOrEmplaceIndex(in TKey key)
-        {
-            int index = Find(key);
-            if (index < 0)
-            {
-                index = ~index;
-                Insert_Forced(index, key, new());
-            }
-            return index;
         }
 
         /// <summary>
@@ -281,9 +113,8 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <remarks>Performs a binary search</remarks>
         /// <param name="key">The key to query for and possibly emplace in the list</param>
-        /// <param name="startIndex">The starting index bound for the binary search that is performed</param>
         /// <returns>The index of the node with the matching key. If one was not found, it returns the index where it would go, but bit-flipped.</returns>
-        public readonly int Find(in TKey key)
+        public int Find(in TKey key)
         {
             int lo = 0;
             int hi = _count - 1;
@@ -309,13 +140,59 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
+        /// Returns the index of the node from the list that contains a key that matches the one provided, starting from the provided index.
+        /// If a node with that key does not exist, a new one is created in its appropriate spot first.
+        /// </summary>
+        /// <remarks>Undefined behavior will occur if the key and index are out of sync</remarks>
+        /// <param name="key">The key to query for and possibly emplace in the list</param>
+        /// <returns>The index of the node with the matching key</returns>
+        public int FindOrEmplaceIndex(in TKey key)
+        {
+            int index = Find(key);
+            if (index < 0)
+            {
+                index = ~index;
+                Insert(index, (key, new TValue()));
+            }
+            return index;
+        }
+
+        /// <summary>
+        /// Returns the index of the node from the list that contains a key that matches the one provided, starting from the provided index.
+        /// If a node with that key does not exist, a new one is created in its appropriate spot first.
+        /// </summary>
+        /// <remarks>Undefined behavior will occur if the key and index are out of sync</remarks>
+        /// <param name="key">The key to query for and possibly emplace in the list</param>
+        /// <returns>The index of the node with the matching key</returns>
+        public ref TValue FindOrEmplace(in TKey key)
+        {
+            return ref _buffer[FindOrEmplaceIndex(key)].Value;
+        }
+
+        /// <summary>
+        /// Removes the node with the given key if one exists
+        /// </summary>
+        /// <param name="key">The key to query for</param>
+        /// <returns>Whether a node was found and removed</returns>
+        public bool Remove(in TKey key)
+        {
+            int index = Find(key);
+            if (index < 0)
+            {
+                return false;
+            }
+            RemoveAt(index);
+            return true;
+        }
+
+        /// <summary>
         /// Returns a reference to the value from the node with a matching key.
         /// </summary>
         /// <remarks>Performs a binary search</remarks>
         /// <param name="key">The key to query for and possibly emplace in the list</param>
         /// <returns>A reference of the node with the matching key.</returns>
         /// <exception cref="KeyNotFoundException">A node with the provided key does not exist</exception>
-        public readonly ref TValue At(in TKey key)
+        public ref TValue GetValue(in TKey key)
         {
             int index = Find(key);
             if (index < 0)
@@ -336,7 +213,7 @@ namespace YARG.Core.Containers
         /// </remarks>
         /// <param name="key">The key to linearly search for</param>
         /// <returns>The reference to the node with the matching key</returns>
-        public readonly ref TValue TraverseBackwardsUntil(in TKey key)
+        public ref TValue TraverseBackwardsUntil(in TKey key)
         {
             int index = _count - 1;
             while (index > 0 && key.CompareTo(_buffer[index].Key) < 0)
@@ -353,110 +230,19 @@ namespace YARG.Core.Containers
         /// <param name="key">The key to linearly search for</param>
         /// <param name="value">A reference to the last node, if the key matched</param>
         /// <returns>Whether the last key matched</returns>
-        public readonly bool TryGetLastValue(in TKey key, out TValue? value)
+        public bool TryGetLastValue(in TKey key, out TValue value)
         {
-            if (_count == 0 || !_buffer[_count - 1].Key.Equals(key))
+            if (_count > 0)
             {
-                value = default;
-                return false;
-            }
-            value = _buffer[_count - 1].Value;
-            return true;
-        }
-
-        private void CheckAndGrow()
-        {
-            if (_count >= int.MaxValue)
-            {
-                throw new OverflowException("Element limit reached");
-            }
-
-            if (_count == _buffer.Length)
-            {
-                Grow();
-            }
-            ++_version;
-        }
-
-        private const int DEFAULT_CAPACITY = 16;
-        private void Grow()
-        {
-            int newcapacity = _buffer.Length == 0 ? DEFAULT_CAPACITY : 2 * _buffer.Length;
-            if ((uint) newcapacity > int.MaxValue)
-            {
-                newcapacity = int.MaxValue;
-            }
-            Capacity = newcapacity;
-        }
-
-        public void Dispose()
-        {
-            _buffer = Array.Empty<YARGKeyValuePair<TKey, TValue>>();
-            _version = 0;
-            _count = 0;
-        }
-
-        readonly IEnumerator<YARGKeyValuePair<TKey, TValue>> IEnumerable<YARGKeyValuePair<TKey, TValue>>.GetEnumerator()
-        {
-            return ((IEnumerable<YARGKeyValuePair<TKey, TValue>>) this).GetEnumerator();
-        }
-
-        readonly IEnumerator IEnumerable.GetEnumerator()
-        {
-            return new Enumerator(in this);
-        }
-
-        public struct Enumerator : IEnumerator<YARGKeyValuePair<TKey, TValue>>, IEnumerator
-        {
-            private readonly YARGManagedSortedList<TKey, TValue> _map;
-            private int _index;
-            private readonly int _version;
-
-            internal Enumerator(in YARGManagedSortedList<TKey, TValue> map)
-            {
-                _map = map;
-                _index = -1;
-                _version = map._version;
-            }
-
-            public readonly void Dispose()
-            {
-            }
-
-            public bool MoveNext()
-            {
-                if (_version != _map._version)
+                ref var node = ref _buffer[_count - 1];
+                if (node.Key.Equals(key))
                 {
-                    throw new InvalidOperationException("Enum failed - Sorted List was updated");
-                }
-
-                ++_index;
-                return _index < _map._count;
-            }
-
-            public readonly YARGKeyValuePair<TKey, TValue> Current
-            {
-                get
-                {
-                    if (_version != _map._version || _index < 0 || _index >= _map._count)
-                    {
-                        throw new InvalidOperationException("Enum Operation not possible");
-                    }
-                    return _map._buffer[_index];
+                    value = node.Value;
+                    return true;
                 }
             }
-
-            readonly object IEnumerator.Current => Current;
-
-            void IEnumerator.Reset()
-            {
-                if (_version != _map._version)
-                {
-                    throw new InvalidOperationException("Enum failed - Sorted List was updated");
-                }
-
-                _index = -1;
-            }
+            value = default!;
+            return false;
         }
     }
 }

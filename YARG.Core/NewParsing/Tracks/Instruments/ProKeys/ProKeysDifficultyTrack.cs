@@ -3,10 +3,19 @@ using YARG.Core.Containers;
 
 namespace YARG.Core.NewParsing
 {
-    public class DifficultyTrack2<TNote> : ITrack
-        where TNote : unmanaged, IInstrumentNote
+    public enum ProKey_Ranges
     {
-        public YARGNativeSortedList<DualTime, TNote> Notes { get; }
+        C1_E2,
+        D1_F2,
+        E1_G2,
+        F1_A2,
+        G1_B2,
+        A1_C3,
+    };
+
+    public class ProKeysDifficultyTrack
+    {
+        public YARGNativeSortedList<DualTime, ProKeyNote> Notes { get; }
         public YARGNativeSortedList<DualTime, DualTime> Overdrives { get; }
         public YARGNativeSortedList<DualTime, DualTime> Soloes { get; }
         public YARGNativeSortedList<DualTime, DualTime> Trills { get; }
@@ -14,9 +23,10 @@ namespace YARG.Core.NewParsing
         public YARGNativeSortedList<DualTime, DualTime> BREs { get; }
         public YARGNativeSortedList<DualTime, DualTime> Faceoff_Player1 { get; }
         public YARGNativeSortedList<DualTime, DualTime> Faceoff_Player2 { get; }
+        public YARGNativeSortedList<DualTime, ProKey_Ranges> Ranges { get; }
         public YARGManagedSortedList<DualTime, HashSet<string>> Events { get; }
 
-        public DifficultyTrack2()
+        public ProKeysDifficultyTrack()
         {
             Notes = new();
             Overdrives = new();
@@ -26,23 +36,25 @@ namespace YARG.Core.NewParsing
             BREs = new();
             Faceoff_Player1 = new();
             Faceoff_Player2 = new();
+            Ranges = new();
             Events = new();
         }
 
-        public DifficultyTrack2(DifficultyTrack2<TNote> source)
+        public ProKeysDifficultyTrack(ProKeysDifficultyTrack source)
         {
-            Notes           = new(source.Notes);
-            Overdrives      = new(source.Overdrives);
-            Soloes          = new(source.Soloes);
-            Trills          = new(source.Trills);
-            Tremolos        = new(source.Tremolos);
-            BREs            = new(source.BREs);
+            Notes = new(source.Notes);
+            Overdrives = new(source.Overdrives);
+            Soloes = new(source.Soloes);
+            Trills = new(source.Trills);
+            Tremolos = new(source.Tremolos);
+            BREs = new(source.BREs);
             Faceoff_Player1 = new(source.Faceoff_Player1);
             Faceoff_Player2 = new(source.Faceoff_Player2);
-            Events          = new(source.Events);
+            Ranges = new(source.Ranges);
+            Events = new(source.Events);
         }
 
-        public void CopyFrom(DifficultyTrack2<TNote> source)
+        public void CopyFrom(ProKeysDifficultyTrack source)
         {
             Notes.CopyFrom(source.Notes);
             Overdrives.CopyFrom(source.Overdrives);
@@ -52,6 +64,7 @@ namespace YARG.Core.NewParsing
             BREs.CopyFrom(source.BREs);
             Faceoff_Player1.CopyFrom(source.Faceoff_Player1);
             Faceoff_Player2.CopyFrom(source.Faceoff_Player2);
+            Ranges.CopyFrom(source.Ranges);
             Events.CopyFrom(source.Events);
         }
 
@@ -69,6 +82,7 @@ namespace YARG.Core.NewParsing
                 && BREs.IsEmpty()
                 && Faceoff_Player1.IsEmpty()
                 && Faceoff_Player2.IsEmpty()
+                && Ranges.IsEmpty()
                 && Events.IsEmpty();
         }
 
@@ -85,6 +99,7 @@ namespace YARG.Core.NewParsing
             BREs.Clear();
             Faceoff_Player1.Clear();
             Faceoff_Player2.Clear();
+            Ranges.Clear();
             Events.Clear();
         }
 
@@ -104,8 +119,7 @@ namespace YARG.Core.NewParsing
             BREs.TrimExcess();
             Faceoff_Player1.TrimExcess();
             Faceoff_Player2.TrimExcess();
-            // Trimming managed lists just generates a new array for GC to handle.
-            // The exact opposite of what we want.
+            Ranges.TrimExcess();
         }
 
         public void UpdateLastNoteTime(ref DualTime lastNoteTime)
@@ -131,6 +145,7 @@ namespace YARG.Core.NewParsing
             BREs.Dispose();
             Faceoff_Player1.Dispose();
             Faceoff_Player2.Dispose();
+            Ranges.Dispose();
             Events.Dispose();
         }
     }
