@@ -3,7 +3,6 @@ using System.Diagnostics;
 
 namespace YARG.Core.NewParsing
 {
-    [DebuggerDisplay("[{Ticks}, {Seconds}]")]
     public struct DualTime : IEquatable<DualTime>, IComparable<DualTime>
     {
         public static readonly DualTime Inactive = new()
@@ -53,6 +52,11 @@ namespace YARG.Core.NewParsing
         public readonly override int GetHashCode()
         {
             return Ticks.GetHashCode();
+        }
+
+        public readonly override string ToString()
+        {
+            return $"[{Ticks}, {Seconds}]";
         }
 
         public static bool operator <(in DualTime lhs, in DualTime rhs)
