@@ -61,34 +61,33 @@ namespace YARG.Core.NewParsing
             chart.Sync.TempoMarkers.TrimExcess();
             chart.Sync.TimeSigs.TrimExcess();
             chart.BeatMap.TrimExcess();
-            chart.FiveFretGuitar?.TrimExcess();
-            chart.FiveFretBass?.TrimExcess();
-            chart.FiveFretRhythm?.TrimExcess();
-            chart.FiveFretCoopGuitar?.TrimExcess();
+            chart.Venue.TrimExcess();
 
-            chart.SixFretGuitar?.TrimExcess();
-            chart.SixFretBass?.TrimExcess();
-            chart.SixFretRhythm?.TrimExcess();
-            chart.SixFretCoopGuitar?.TrimExcess();
+            chart._fiveFretGuitar?.TrimExcess();
+            chart._fiveFretBass?.TrimExcess();
+            chart._fiveFretRhythm?.TrimExcess();
+            chart._fiveFretCoopGuitar?.TrimExcess();
+            chart._keys?.TrimExcess();
 
-            chart.Keys?.TrimExcess();
+            chart._sixFretGuitar?.TrimExcess();
+            chart._sixFretBass?.TrimExcess();
+            chart._sixFretRhythm?.TrimExcess();
+            chart._sixFretCoopGuitar?.TrimExcess();
 
-            chart.FourLaneDrums?.TrimExcess();
-            chart.FiveLaneDrums?.TrimExcess();
+            chart._fourLaneDrums?.TrimExcess();
+            chart._fiveLaneDrums?.TrimExcess();
 
-            // chart.TrueDrums?.TrimExcess();
+            // chart._eliteDrums?.TrimExcess();
 
-            chart.ProGuitar_17Fret?.TrimExcess();
-            chart.ProGuitar_22Fret?.TrimExcess();
-            chart.ProBass_17Fret?.TrimExcess();
-            chart.ProBass_22Fret?.TrimExcess();
+            chart._proGuitar_17Fret?.TrimExcess();
+            chart._proGuitar_22Fret?.TrimExcess();
+            chart._proBass_17Fret?.TrimExcess();
+            chart._proBass_22Fret?.TrimExcess();
 
-            chart.ProKeys?.TrimExcess();
+            chart._proKeys?.TrimExcess();
 
-            // chart.DJ?.Dispose();
-
-            chart.LeadVocals?.TrimExcess();
-            chart.HarmonyVocals?.TrimExcess();
+            chart._leadVocals?.TrimExcess();
+            chart._harmonyVocals?.TrimExcess();
         }
 
         /// <summary>
@@ -141,7 +140,7 @@ namespace YARG.Core.NewParsing
                         {
                             buffer.Ticks = position;
                             buffer.Seconds = tempoTracker.Traverse(position);
-                            chart.BeatMap.Insert(beatIndex, in buffer, BeatlineType.Weak);
+                            chart.BeatMap.Insert(beatIndex, (buffer, BeatlineType.Weak));
                         }
                         ++beatIndex;
                         position += ticksPerMarker;
@@ -153,7 +152,7 @@ namespace YARG.Core.NewParsing
                 {
                     buffer.Ticks = endTime;
                     buffer.Seconds = tempoTracker.Traverse(endTime);
-                    chart.BeatMap.Append(buffer, BeatlineType.Measure);
+                    chart.BeatMap.Add(buffer, BeatlineType.Measure);
                 }
             }
         }
@@ -224,7 +223,7 @@ namespace YARG.Core.NewParsing
                     {
                         buffer.Ticks = position;
                         buffer.Seconds = tempoTracker.Traverse(position);
-                        chart.BeatMap.Append(buffer, pattern[i]);
+                        chart.BeatMap.Add(buffer, pattern[i]);
                     }
                     currSig->Key += ticksPerMeasure;
                 }
@@ -233,7 +232,7 @@ namespace YARG.Core.NewParsing
                 {
                     buffer.Ticks = endTime;
                     buffer.Seconds = tempoTracker.Traverse(endTime);
-                    chart.BeatMap.Append(buffer, BeatlineType.Measure);
+                    chart.BeatMap.Add(buffer, BeatlineType.Measure);
                 }
             }
         }
