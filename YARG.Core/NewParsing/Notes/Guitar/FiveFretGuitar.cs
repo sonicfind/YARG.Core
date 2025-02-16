@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace YARG.Core.NewParsing
@@ -19,8 +18,6 @@ namespace YARG.Core.NewParsing
             readonly get => _state;
             set => _state = value;
         }
-
-        public readonly int NUMLANES => 6;
 
         public readonly int GetNumActiveLanes()
         {
