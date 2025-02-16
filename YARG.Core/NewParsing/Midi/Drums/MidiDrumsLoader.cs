@@ -66,7 +66,7 @@ namespace YARG.Core.NewParsing.Midi
             var cymbalFlags = stackalloc bool[3] { isProDrums, isProDrums, isProDrums };
 
             // Various special phrases trackers
-            var brePositions = stackalloc DualTime[5];
+            var brePositions = stackalloc DualTime[5] { DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive };
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
             var tremoloPostion = DualTime.Inactive;
@@ -427,7 +427,7 @@ namespace YARG.Core.NewParsing.Midi
             bool convertExpectKicksToShared = true;
 
             // Various special phrases trackers
-            var brePositions = stackalloc DualTime[5];
+            var brePositions = stackalloc DualTime[5] { DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive };
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
             var tremoloPostion = DualTime.Inactive;
@@ -737,7 +737,7 @@ namespace YARG.Core.NewParsing.Midi
                 : stackalloc bool[3] { false, false, false };
 
             // Various special phrases trackers
-            var brePositions = stackalloc DualTime[5];
+            var brePositions = stackalloc DualTime[5] { DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive };
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
             var tremoloPostion = DualTime.Inactive;
