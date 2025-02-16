@@ -643,25 +643,14 @@ namespace YARG.Core.NewParsing
                     case 44: note->Dynamics_Green = DrumDynamics.Ghost; break;
 
                     case 66:
-                        if (_type->Has(DrumsType.ProDrums))
-                        {
-                            note->Cymbal_Yellow = true;
-                            *_type = DrumsType.ProDrums;
-                        }
-                        break;
                     case 67:
-                        if (_type->Has(DrumsType.ProDrums))
-                        {
-                            note->Cymbal_Blue = true;
-                            *_type = DrumsType.ProDrums;
-                        }
-                        break;
                     case 68:
-                        if (_type->Has(DrumsType.ProDrums))
+                        if (!_type->Has(DrumsType.ProDrums))
                         {
-                            note->Cymbal_Orange = true;
-                            *_type = DrumsType.ProDrums;
+                            return false;
                         }
+                        (&note->Cymbal_Yellow)[lane - 66] = true;
+                        *_type = DrumsType.ProDrums;
                         break;
                     default:
                         return false;
