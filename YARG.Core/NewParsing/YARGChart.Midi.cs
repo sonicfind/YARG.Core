@@ -237,7 +237,7 @@ namespace YARG.Core.NewParsing
                     }
                 }
             }
-            FinalizeAnchors(sync, resolution);
+            FinalizeSyncTrack(sync, resolution);
         }
 
         private static readonly byte[][] PREFIXES = { Encoding.ASCII.GetBytes("[section "), Encoding.ASCII.GetBytes("[prc_") };

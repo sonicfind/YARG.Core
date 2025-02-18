@@ -16,7 +16,7 @@ namespace YARG.Core.NewParsing
         /// This MUST be called following the deserialization of a sync track from either file format.
         /// </remarks>
         /// <param name="sync">The synctrack to finalize</param>
-        private static unsafe void FinalizeAnchors(SyncTrack2 sync, double resolution)
+        private static unsafe void FinalizeSyncTrack(SyncTrack2 sync, double resolution)
         {
             Debug.Assert(sync.TempoMarkers.Count > 0, "A least one tempo marker must exist");
             var curr = sync.TempoMarkers.Data;
