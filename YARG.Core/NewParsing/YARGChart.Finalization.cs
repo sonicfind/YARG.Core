@@ -31,13 +31,13 @@ namespace YARG.Core.NewParsing
                 }
 
                 double numQuarters = (curr->Key - prev->Key) / resolution;
-                if (curr->Value.Anchor == 0)
+                if (curr->Value.PositionInMicroseconds == 0)
                 {
-                    curr->Value.Anchor = (long) (numQuarters * prev->Value.MicrosPerQuarter) + prev->Value.Anchor;
+                    curr->Value.PositionInMicroseconds = (long) (numQuarters * prev->Value.MicrosecondsPerQuarter) + prev->Value.PositionInMicroseconds;
                 }
                 else
                 {
-                    prev->Value.MicrosPerQuarter = (int) ((curr->Value.Anchor - prev->Value.Anchor) / numQuarters);
+                    prev->Value.MicrosecondsPerQuarter = (int) ((curr->Value.PositionInMicroseconds - prev->Value.PositionInMicroseconds) / numQuarters);
                 }
             }
         }
