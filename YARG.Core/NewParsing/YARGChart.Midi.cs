@@ -229,7 +229,7 @@ namespace YARG.Core.NewParsing
                     switch (stats.Type)
                     {
                         case MidiEventType.Tempo:
-                            sync.TempoMarkers.GetLastOrAdd(stats.Position)->MicrosPerQuarter = midiTrack.ExtractMicrosPerQuarter();
+                            sync.TempoMarkers.GetLastOrAdd(stats.Position)->MicrosecondsPerQuarter = midiTrack.ExtractMicrosPerQuarter();
                             break;
                         case MidiEventType.Time_Sig:
                             sync.TimeSigs.AddOrUpdate(stats.Position, midiTrack.ExtractTimeSig());

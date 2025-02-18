@@ -41,7 +41,7 @@ namespace YARG.Core.NewParsing
             }
 
             double quarters = (ticks - _position->Position) / (double) _resolution;
-            long micros = (long) (_position->TempoMarker.MicrosPerQuarter * quarters) + _position->TempoMarker.Anchor;
+            long micros = (long) (_position->TempoMarker.MicrosecondsPerQuarter * quarters) + _position->TempoMarker.PositionInMicroseconds;
             return micros / (double) Tempo2.MICROS_PER_SECOND;
         }
 
@@ -61,7 +61,7 @@ namespace YARG.Core.NewParsing
             }
 
             double quarters = (ticks - tmp->Position) / (double) _resolution;
-            long micros = (long) (tmp->TempoMarker.MicrosPerQuarter * quarters) + tmp->TempoMarker.Anchor;
+            long micros = (long) (tmp->TempoMarker.MicrosecondsPerQuarter * quarters) + tmp->TempoMarker.PositionInMicroseconds;
             return micros / (double) Tempo2.MICROS_PER_SECOND;
         }
     }
