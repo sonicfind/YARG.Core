@@ -153,12 +153,12 @@ namespace YARG.Core.NewParsing
                         switch (ev.Type)
                         {
                             case ChartEventType.Bpm:
-                                chart.Sync.TempoMarkers.GetLastOrAdd(ev.Position)->MicrosPerQuarter = YARGChartFileReader.ExtractMicrosPerQuarter(ref container);
+                                chart.Sync.TempoMarkers.GetLastOrAdd(ev.Position)->MicrosecondsPerQuarter = YARGChartFileReader.ExtractMicrosPerQuarter(ref container);
                                 break;
                             case ChartEventType.Anchor:
                                 if (ev.Position > 0)
                                 {
-                                    chart.Sync.TempoMarkers.GetLastOrAdd(ev.Position)->Anchor = YARGChartFileReader.ExtractWithWhitespace<TChar, long>(ref container);
+                                    chart.Sync.TempoMarkers.GetLastOrAdd(ev.Position)->PositionInMicroseconds = YARGChartFileReader.ExtractWithWhitespace<TChar, long>(ref container);
                                 }
                                 break;
                             case ChartEventType.Time_Sig:
