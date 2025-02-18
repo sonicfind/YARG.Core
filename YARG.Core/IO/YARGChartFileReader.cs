@@ -196,11 +196,11 @@ namespace YARG.Core.IO
             return true;
         }
 
-        public static int ExtractMicrosPerQuarter<TChar>(ref YARGTextContainer<TChar> container)
+        public static long ExtractMicrosPerQuarter<TChar>(ref YARGTextContainer<TChar> container)
             where TChar : unmanaged, IEquatable<TChar>, IConvertible
         {
             const double TEMPO_FACTOR = 60000000000;
-            return (int)Math.Round(TEMPO_FACTOR / ExtractWithWhitespace<TChar, uint>(ref container));
+            return (long) Math.Round(TEMPO_FACTOR / ExtractWithWhitespace<TChar, ulong>(ref container));
         }
 
         public static TimeSig2 ExtractTimeSig<TChar>(ref YARGTextContainer<TChar> container)
