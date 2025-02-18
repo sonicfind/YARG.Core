@@ -167,7 +167,7 @@ namespace YARG.Core.NewParsing
                         }
                     }
                 }
-                FinalizeAnchors(chart.Sync, chart._resolution);
+                FinalizeSyncTrack(chart.Sync, chart._resolution);
             }
             return chart;
         }
