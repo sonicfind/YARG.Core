@@ -16,19 +16,19 @@
 
         public static readonly Tempo2 DEFAULT = new()
         {
-            MicrosPerQuarter = MICROS_AT_120BPM
+            MicrosecondsPerQuarter = MICROS_AT_120BPM
         };
 
-        public int MicrosPerQuarter;
-        public long Anchor;
+        public int MicrosecondsPerQuarter;
+        public long PositionInMicroseconds;
 
         /// <summary>
         /// Handles the conversions to and from float BPMs from and to microseconds per quarter (respectively)
         /// </summary>
         public float BPM
         {
-            readonly get { return MicrosPerQuarter != 0 ? (float) BPM_FACTOR / MicrosPerQuarter : float.MaxValue; }
-            set { MicrosPerQuarter = value != 0 ? (int) (BPM_FACTOR / value) : int.MaxValue; }
+            readonly get { return MicrosecondsPerQuarter != 0 ? (float) BPM_FACTOR / MicrosecondsPerQuarter : float.MaxValue; }
+            set { MicrosecondsPerQuarter = value != 0 ? (int) (BPM_FACTOR / value) : int.MaxValue; }
         }
     }
 }
