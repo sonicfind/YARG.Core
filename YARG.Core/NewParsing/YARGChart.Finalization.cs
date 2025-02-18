@@ -37,7 +37,7 @@ namespace YARG.Core.NewParsing
                 }
                 else
                 {
-                    prev->Value.MicrosecondsPerQuarter = (int) ((curr->Value.PositionInMicroseconds - prev->Value.PositionInMicroseconds) / numQuarters);
+                    prev->Value.MicrosecondsPerQuarter = (long) ((curr->Value.PositionInMicroseconds - prev->Value.PositionInMicroseconds) / numQuarters);
                 }
             }
         }
