@@ -33,25 +33,25 @@ namespace YARG.Core.Benchmarks
         }
 
         [Benchmark]
-        public void SongParsing_New()
+        public void YARGChartLoading()
         {
             using var chart = YARGChart.LoadChart(chartPath, null);
         }
 
         [Benchmark]
-        public void SongParsing_New_GuitarOnly()
+        public void YARGChartLoading_GuitarOnly()
         {
             using var chart = YARGChart.LoadChart(chartPath, guitarOnly);
         }
 
         [Benchmark]
-        public void SongParsing()
+        public void MoonSongParsing()
         {
             MoonSongLoader.LoadDotChart(ParseSettings.Default_Chart, File.ReadAllText(chartPath));
         }
 
         [Benchmark]
-        public SongChart FullChartParsing()
+        public SongChart SongChartLoading()
         {
             return SongChart.FromDotChart(in ParseSettings.Default_Chart, File.ReadAllText(chartPath));
         }
