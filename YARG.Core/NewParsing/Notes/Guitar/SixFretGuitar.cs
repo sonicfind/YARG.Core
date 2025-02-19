@@ -1,9 +1,8 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Text;
 
 namespace YARG.Core.NewParsing
 {
-    public struct SixFretGuitar : IGuitarNote
+    public struct SixFretGuitar : IInstrumentNote
     {
         public DualTime Open;
         public DualTime Black1;
@@ -12,13 +11,7 @@ namespace YARG.Core.NewParsing
         public DualTime White1;
         public DualTime White2;
         public DualTime White3;
-        private GuitarState _state;
-
-        public GuitarState State
-        {
-            readonly get => _state;
-            set => _state = value;
-        }
+        public GuitarState State;
 
         public readonly int GetNumActiveLanes()
         {
@@ -101,9 +94,9 @@ namespace YARG.Core.NewParsing
             {
                 stringBuilder.Append($"White 3: {White3.Ticks}");
             }
-            if (_state != GuitarState.Natural)
+            if (State != GuitarState.Natural)
             {
-                stringBuilder.Append(_state.ToString());
+                stringBuilder.Append(State.ToString());
             }
             return stringBuilder.ToString();
         }
