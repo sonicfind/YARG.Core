@@ -8,6 +8,14 @@ namespace YARG.Core.NewParsing
         public static readonly DualTime Inactive = new()
         {
             Ticks = -1,
+            // Seconds value doesn't matter
+            Seconds = 0,
+        };
+
+        public static readonly DualTime Zero = new()
+        {
+            Ticks = 0,
+            Seconds = 0,
         };
 
         public long Ticks;

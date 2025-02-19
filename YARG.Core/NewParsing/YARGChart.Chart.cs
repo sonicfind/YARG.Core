@@ -213,7 +213,7 @@ namespace YARG.Core.NewParsing
             // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(chart.Sync, chart.Resolution);
             var ev = default(DotChartEvent);
-            var position = default(DualTime);
+            var position = DualTime.Zero;
             var phrase = DualTime.Inactive;
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
             {
@@ -346,7 +346,7 @@ namespace YARG.Core.NewParsing
             var nextSoloPosition = DualTime.Inactive;
 
             var ev = default(DotChartEvent);
-            var position = default(DualTime);
+            var position = DualTime.Zero;
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
             {
                 position.Ticks = ev.Position;
