@@ -37,25 +37,25 @@ namespace YARG.Core.Benchmarks
         }
 
         [Benchmark]
-        public void SongLoading_New()
+        public void YARGChartLoading()
         {
             using var chart = YARGChart.LoadMidi_Single(chartPath, null);
         }
 
         [Benchmark]
-        public void SongLoading_New_GuitarOnly()
+        public void YARGChartLoading_GuitarOnly()
         {
             using var chart = YARGChart.LoadMidi_Single(chartPath, guitarOnly);
         }
 
         [Benchmark]
-        public void SongLoading()
+        public void MoonSongParsing()
         {
             MoonSongLoader.LoadSong(ParseSettings.Default_Midi, chartPath);
         }
 
         [Benchmark]
-        public SongChart FullChartLoading()
+        public SongChart SongChartLoading()
         {
             return SongChart.FromMidi(in ParseSettings.Default_Midi, MidiFile.Read(chartPath));
         }
