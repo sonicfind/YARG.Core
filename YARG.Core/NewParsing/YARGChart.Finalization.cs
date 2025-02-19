@@ -131,12 +131,12 @@ namespace YARG.Core.NewParsing
                     long position = currSig->Key;
                     for (uint n = 0; n < currSig->Value.Numerator && position < endTime; ++n)
                     {
-                        while (beatIndex < chart.BeatMap.Count && chart.BeatMap.Data[beatIndex].Key.Ticks < position)
+                        while (beatIndex < chart.BeatMap.Count && chart.BeatMap[beatIndex].Key.Ticks < position)
                         {
                             ++beatIndex;
                         }
 
-                        if (beatIndex == chart.BeatMap.Count || position < chart.BeatMap.Data[beatIndex].Key.Ticks)
+                        if (beatIndex == chart.BeatMap.Count || position < chart.BeatMap[beatIndex].Key.Ticks)
                         {
                             buffer.Ticks = position;
                             buffer.Seconds = tempoTracker.Traverse(position);

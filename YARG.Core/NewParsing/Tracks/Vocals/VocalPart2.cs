@@ -37,14 +37,11 @@ namespace YARG.Core.NewParsing
                 return;
             }
 
-            unsafe
+            ref readonly var vocal = ref Notes[Notes.Count - 1];
+            var end = vocal.Key + vocal.Value.Duration;
+            if (end > lastNoteTime)
             {
-                ref readonly var vocal = ref Notes.Data[Notes.Count - 1];
-                var end = vocal.Key + vocal.Value.Duration;
-                if (end > lastNoteTime)
-                {
-                    lastNoteTime = end;
-                }
+                lastNoteTime = end;
             }
         }
 

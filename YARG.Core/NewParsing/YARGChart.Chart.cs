@@ -426,11 +426,11 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static unsafe void AddSpecialPhrase(YARGNativeSortedList<DualTime, DualTime> phrases, in DualTime position, in DualTime duration)
+        private static void AddSpecialPhrase(YARGNativeSortedList<DualTime, DualTime> phrases, in DualTime position, in DualTime duration)
         {
             if (phrases.Count > 0)
             {
-                ref var last = ref phrases.Data[phrases.Count - 1];
+                ref var last = ref phrases[phrases.Count - 1];
                 if (last.Key + last.Value > position)
                 {
                     last.Value = position - last.Key;
