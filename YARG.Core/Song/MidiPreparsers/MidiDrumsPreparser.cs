@@ -27,7 +27,7 @@ namespace YARG.Core.Song
             var validations = DifficultyMask.None;
             int statusBitMask = 0;
             var note = default(MidiNote);
-            var stats = default(YARGMidiTrack.Stats);
+            var stats = default(MidiStats);
             while (track.ParseEvent(ref stats))
             {
                 if (stats.Type != MidiEventType.Note_On && stats.Type != MidiEventType.Note_Off)
