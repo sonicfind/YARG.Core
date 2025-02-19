@@ -108,13 +108,10 @@ namespace YARG.Core.NewParsing
 
             if (!Percussion.IsEmpty())
             {
-                unsafe
+                ref readonly var perc = ref Percussion[Percussion.Count - 1];
+                if (perc.Key > lastNoteTime)
                 {
-                    ref readonly var perc = ref Percussion.Data[Percussion.Count - 1];
-                    if (perc.Key > lastNoteTime)
-                    {
-                        lastNoteTime = perc.Key;
-                    }
+                    lastNoteTime = perc.Key;
                 }
             }
         }
