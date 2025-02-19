@@ -9,7 +9,6 @@ namespace YARG.Core.NewParsing
     /// <remarks>
     /// This is necessary for use with generic containers that require the type to come with a default constructor
     /// </remarks>
-    [DebuggerDisplay("{Str}")]
     public struct NonNullString
     {
         private string _value;
