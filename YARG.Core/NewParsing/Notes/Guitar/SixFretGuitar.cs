@@ -15,21 +15,13 @@ namespace YARG.Core.NewParsing
 
         public readonly int GetNumActiveLanes()
         {
-            int numActive = 0;
-            bool state = Open.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = Black1.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = Black2.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = Black3.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = White1.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = White2.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = White3.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
+            int numActive = Open.IsActive() ? 1 : 0;
+            numActive += Black1 .IsActive() ? 1 : 0;
+            numActive += Black2 .IsActive() ? 1 : 0;
+            numActive += Black3 .IsActive() ? 1 : 0;
+            numActive += White1 .IsActive() ? 1 : 0;
+            numActive += White2 .IsActive() ? 1 : 0;
+            numActive += White3 .IsActive() ? 1 : 0;
             return numActive;
         }
 
