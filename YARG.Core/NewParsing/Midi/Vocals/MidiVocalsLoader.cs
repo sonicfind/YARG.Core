@@ -42,7 +42,7 @@ namespace YARG.Core.NewParsing.Midi
 
             var note = default(MidiNote);
             var position = DualTime.Zero;
-            var stats = default(YARGMidiTrack.Stats);
+            var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
             {
                 position.Ticks = stats.Position;

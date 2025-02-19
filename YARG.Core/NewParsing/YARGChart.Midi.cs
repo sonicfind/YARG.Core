@@ -221,7 +221,7 @@ namespace YARG.Core.NewParsing
         private static void LoadSyncTrack_Midi(YARGMidiTrack midiTrack, SyncTrack2 sync, long resolution)
         {
             sync.Reset();
-            var stats = default(YARGMidiTrack.Stats);
+            var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
             {
                 unsafe
@@ -256,7 +256,7 @@ namespace YARG.Core.NewParsing
             }
 
             var position = DualTime.Zero;
-            var stats = default(YARGMidiTrack.Stats);
+            var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
             {
                 if (MidiEventType.Text <= stats.Type && stats.Type <= MidiEventType.Text_EnumLimit && stats.Type != MidiEventType.Text_TrackName)
@@ -298,7 +298,7 @@ namespace YARG.Core.NewParsing
 
             var note = default(MidiNote);
             var position = DualTime.Zero;
-            var stats = default(YARGMidiTrack.Stats);
+            var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
             {
                 if (stats.Type == MidiEventType.Note_On)
