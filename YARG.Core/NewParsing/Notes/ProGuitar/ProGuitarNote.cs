@@ -57,19 +57,12 @@ namespace YARG.Core.NewParsing
 
         public readonly unsafe int GetNumActiveLanes()
         {
-            int numActive = 0;
-            bool state = String_1.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = String_2.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = String_3.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = String_4.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = String_5.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = String_6.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
+            int numActive = String_1.IsActive() ? 1 : 0;
+            numActive += String_2.IsActive() ? 1 : 0;
+            numActive += String_3.IsActive() ? 1 : 0;
+            numActive += String_4.IsActive() ? 1 : 0;
+            numActive += String_5.IsActive() ? 1 : 0;
+            numActive += String_6.IsActive() ? 1 : 0;
             return numActive;
         }
 

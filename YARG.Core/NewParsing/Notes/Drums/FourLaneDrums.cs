@@ -22,17 +22,11 @@ namespace YARG.Core.NewParsing
 
         public readonly int GetNumActiveLanes()
         {
-            int numActive = 0;
-            bool state = Kick.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = Snare.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = Yellow.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = Blue.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
-            state = Green.IsActive();
-            numActive += Unsafe.As<bool, byte>(ref state);
+            int numActive = Kick.IsActive() ? 1 : 0;
+            numActive += Snare  .IsActive() ? 1 : 0;
+            numActive += Yellow .IsActive() ? 1 : 0;
+            numActive += Blue   .IsActive() ? 1 : 0;
+            numActive += Green  .IsActive() ? 1 : 0;
             return numActive;
         }
 
