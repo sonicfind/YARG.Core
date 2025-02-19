@@ -109,7 +109,7 @@ namespace YARG.Core.IO
         public bool FindTrackName(out TextSpan trackname)
         {
             trackname = TextSpan.Empty;
-            var stats = default(Stats);
+            var stats = default(MidiStats);
             while (ParseEvent(ref stats) && _tickPosition == 0)
             {
                 if (stats.Type == MidiEventType.Text_TrackName)
@@ -132,14 +132,7 @@ namespace YARG.Core.IO
         private const int CHANNEL_MASK = 0x0F;
         private const int EVENTTYPE_MASK = 0xF0;
 
-        public struct Stats
-        {
-            public long Position;
-            public MidiEventType Type;
-            public int Channel;
-        }
-
-        public bool ParseEvent(ref Stats stats)
+        public bool ParseEvent(ref MidiStats stats)
         {
             _tickPosition += ReadVLQ();
             if (_trackPosition == _length)
@@ -337,6 +330,13 @@ namespace YARG.Core.IO
         Active_Sensing = 0xFE,
         Reset_Or_Meta = 0xFF,
     };
+
+    public struct MidiStats
+    {
+        public long Position;
+        public MidiEventType Type;
+        public int Channel;
+    }
 
     public struct MidiNote
     {

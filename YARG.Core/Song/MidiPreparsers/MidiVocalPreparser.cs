@@ -18,7 +18,7 @@ namespace YARG.Core.Song
             long percussionPosition = -1;
 
             var note = default(MidiNote);
-            var stats = default(YARGMidiTrack.Stats);
+            var stats = default(MidiStats);
             while (track.ParseEvent(ref stats))
             {
                 if (stats.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
