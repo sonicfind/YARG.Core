@@ -109,7 +109,7 @@ namespace YARG.Core.NewParsing.Midi
                                 // Attempts to add a lane to the found note
                                 //
                                 // Will fail if four lanes were already applied to said note
-                                if (!ProKeyNote.Add(diffTrack.Notes.TraverseBackwardsUntil(in lane), note.Value, position - lane))
+                                if (!diffTrack.Notes.TraverseBackwardsUntil(in lane)->Add(note.Value, position - lane))
                                 {
                                     YargLogger.LogWarning("Illegal pro keys charting discovered");
                                 }

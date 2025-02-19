@@ -5,145 +5,183 @@ namespace YARG.Core.NewParsing
     public unsafe struct ProKeyNote : IInstrumentNote
     {
         private static readonly PitchValidator VALIDATOR = new(3, 5);
-#pragma warning disable CS0649
-        private PitchedKey _key1;
-        private PitchedKey _key2;
-        private PitchedKey _key3;
-        private PitchedKey _key4;
-#pragma warning restore CS0649
-        private int _numActive;
+        public PitchedKey Key1;
+        public PitchedKey Key2;
+        public PitchedKey Key3;
+        public PitchedKey Key4;
 
         public readonly int GetNumActiveLanes()
         {
-            return _numActive;
+            int numActive = Key1.IsActive() ? 1 : 0;
+            numActive += Key2.IsActive() ? 1 : 0;
+            numActive += Key3.IsActive() ? 1 : 0;
+            numActive += Key4.IsActive() ? 1 : 0;
+            return numActive;
         }
 
         public readonly DualTime GetLongestSustain()
         {
             var sustain = DualTime.Zero;
-            switch (_numActive)
+            if (Key1.Pitch > 0 && Key1.Duration > sustain)
             {
-                case 4: goto Key4;
-                case 3: goto Key3;
-                case 2: goto Key2;
-                case 1: goto Key1;
-                default: goto End;
+                sustain = Key1.Duration;
             }
-        Key4:
-            sustain = _key4.Duration;
-        Key3:
-            if (_key3.Duration > sustain)
+            if (Key2.Pitch > 0 && Key2.Duration > sustain)
             {
-                sustain = _key3.Duration;
+                sustain = Key2.Duration;
             }
-        Key2:
-            if (_key2.Duration > sustain)
+            if (Key3.Pitch > 0 && Key3.Duration > sustain)
             {
-                sustain = _key2.Duration;
+                sustain = Key3.Duration;
             }
-        Key1:
-            if (_key1.Duration > sustain)
+            if (Key4.Pitch > 0 && Key4.Duration > sustain)
             {
-                sustain = _key1.Duration;
+                sustain = Key4.Duration;
             }
-        End:
             return sustain;
         }
 
-        public static bool Add(ProKeyNote* note, int binary, in DualTime length)
+        public bool Add(int binary, in DualTime length)
         {
-            if (note->_numActive == 4 || !VALIDATOR.ValidateBinary(binary))
+            return binary != 0 && VALIDATOR.ValidateBinary(binary) && AddNote(binary, in length);
+        }
+
+        public bool Add(int octave, PitchName pitch, in DualTime length)
+        {
+            return VALIDATOR.ValidateOctaveAndPitch(octave, pitch, out int binary) && binary != 0 && AddNote(binary, in length);
+        }
+
+        public bool Remove(int pitch)
+        {
+            if (pitch == 0)
             {
                 return false;
             }
-            AddNote(note, binary, in length);
-            return true;
-        }
 
-        public static bool Add(ProKeyNote* note, int octave, PitchName pitch, in DualTime length)
-        {
-            if (note->_numActive == 4 || !VALIDATOR.ValidateOctaveAndPitch(octave, pitch, out int binary))
+            if (Key1.Pitch == pitch)
+            {
+                Key1.Pitch = 0;
+                Key1.Duration = DualTime.Zero;
+            }
+            else if (Key2.Pitch == pitch)
+            {
+                Key2.Pitch = 0;
+                Key2.Duration = DualTime.Zero;
+            }
+            else if (Key3.Pitch == pitch)
+            {
+                Key3.Pitch = 0;
+                Key3.Duration = DualTime.Zero;
+            }
+            else if (Key4.Pitch == pitch)
+            {
+                Key4.Pitch = 0;
+                Key4.Duration = DualTime.Zero;
+            }
+            else
             {
                 return false;
             }
-            AddNote(note, binary, in length);
             return true;
         }
 
-        public static bool Remove(ProKeyNote* note, int pitch)
+        public bool SetLength(int pitch, in DualTime length)
         {
-            if (pitch > 0)
+            if (pitch == 0)
             {
-                var keys = &note->_key1;
-                for (int i = 0; i < 4; ++i)
-                {
-                    if (keys[i].Pitch == pitch)
-                    {
-                        keys[i].Pitch = 0;
-                        --note->_numActive;
-                        return true;
-                    }
-                }
+                return false;
             }
-            return false;
+
+            if (Key1.Pitch == pitch)
+            {
+                Key1.Duration = length;
+            }
+            else if (Key2.Pitch == pitch)
+            {
+                Key2.Duration = length;
+            }
+            else if (Key3.Pitch == pitch)
+            {
+                Key3.Duration = length;
+            }
+            else if (Key4.Pitch == pitch)
+            {
+                Key4.Duration = length;
+            }
+            else
+            {
+                return false;
+            }
+            return true;
         }
 
-        public static bool SetLength(ProKeyNote* note, int pitch, in DualTime length)
+        public bool SetPitch(int pitchToFind, int pitchToSet)
         {
-            if (pitch > 0)
+            if (!VALIDATOR.ValidateBinary(pitchToSet))
             {
-                var keys = &note->_key1;
-                for (int i = 0; i < 4; ++i)
-                {
-                    if (keys[i].Pitch == pitch)
-                    {
-                        keys[i].Duration = length;
-                        return true;
-                    }
-                }
+                return false;
             }
-            return false;
+
+            if (Key1.Pitch == pitchToFind)
+            {
+                Key1.Pitch = pitchToSet;
+            }
+            else if (Key2.Pitch == pitchToFind)
+            {
+                Key2.Pitch = pitchToSet;
+            }
+            else if (Key3.Pitch == pitchToFind)
+            {
+                Key3.Pitch = pitchToSet;
+            }
+            else if (Key4.Pitch == pitchToFind)
+            {
+                Key4.Pitch = pitchToSet;
+            }
+            else
+            {
+                return false;
+            }
+            return true;
         }
 
-        public static bool SetPitch(ProKeyNote* note, int pitchToFind, int pitchToSet)
+        private bool AddNote(int binary, in DualTime length)
         {
-            if (note->_numActive > 0 && VALIDATOR.ValidateBinary(pitchToSet))
+            if (Key1.Pitch == binary
+            ||  Key2.Pitch == binary
+            ||  Key3.Pitch == binary
+            ||  Key4.Pitch == binary)
             {
-                var keys = &note->_key1;
-                for (int i = 0; i < 4; ++i)
-                {
-                    if (keys[i].Pitch == pitchToFind)
-                    {
-                        keys[i].Pitch = pitchToSet;
-                        if (pitchToSet == 0)
-                        {
-                            --note->_numActive;
-                        }
-                        return true;
-                    }
-                }
+                throw new Exception("Duplicate pitches are not allowed");
             }
-            return false;
-        }
 
-        private static void AddNote(ProKeyNote* note, int binary, in DualTime length)
-        {
-            var keys = &note->_key1;
-            int index = -1;
-            for (int i = 0; i < 4; ++i)
+            if (Key1.Pitch == 0)
             {
-                if (keys[i].Pitch == binary)
-                {
-                    throw new Exception("Duplicate pitches are not allowed");
-                }
-                if (index == -1 && keys[i].Pitch == 0)
-                {
-                    index = i;
-                }
+                Key1.Pitch = binary;
+                Key1.Duration = length;
             }
-            keys[index].Pitch = binary;
-            keys[index].Duration = length;
-            note->_numActive++;
+            else if (Key2.Pitch == 0)
+            {
+                Key2.Pitch = binary;
+                Key2.Duration = length;
+            }
+
+            else if (Key3.Pitch == 0)
+            {
+                Key3.Pitch = binary;
+                Key3.Duration = length;
+            }
+
+            else if (Key4.Pitch == 0)
+            {
+                Key4.Pitch = binary;
+                Key4.Duration = length;
+            }
+            else
+            {
+                return false;
+            }
+            return true;
         }
     }
 }
