@@ -75,7 +75,7 @@ namespace YARG.Core.NewParsing
 
         public readonly DualTime GetLongestSustain()
         {
-            DualTime sustain = default;
+            var sustain = DualTime.Zero;
             if (String_1.Fret.Value >= 0 && String_1.Duration > sustain)
             {
                 sustain = String_1.Duration;

@@ -90,7 +90,7 @@ namespace YARG.Core.NewParsing.Midi
             var accidentalPosition = DualTime.Inactive;
             var fullChordPosition = DualTime.Inactive;
 
-            var position = default(DualTime);
+            var position = DualTime.Zero;
             var note = default(MidiNote);
             var stats = default(YARGMidiTrack.Stats);
             // Used for snapping together notes that get accidentally misaligned during authoring
