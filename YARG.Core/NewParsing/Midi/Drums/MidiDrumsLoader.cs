@@ -56,8 +56,8 @@ namespace YARG.Core.NewParsing.Midi
             // should only show up in Expert, not Expert+.
             // In those situations, kicks that should appear in both will have both note 95 & 96 activated on the same tick.
             // However, the majority of charts will assume that note value 96 applies to both X & X+, thus only writing note 96.
-            // This boolean flag determines whether we need to perform the X -> X/X+ conversion on those notes.
-            // It will be flipped to false if the chart contains 95 & 96 together.
+            // This boolean flag determines whether we need to perform the X -> X/X+ conversion on those notes - flipping to false
+            // if we find 95 & 96 together for the same note.
             bool convertExpectKicksToShared = true;
 
             // By default, all non-kick notes in a four lane track are cymbals.
