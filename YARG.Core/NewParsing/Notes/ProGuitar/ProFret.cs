@@ -4,9 +4,9 @@ namespace YARG.Core.NewParsing
 {
     public interface IProFret
     {
-        public int MAX_FRET { get; }
-        public int Value { get; set; }
-        public bool Validate(int fret);
+        int MAX_FRET { get; }
+        int Value { get; set; }
+        bool Validate(int fret);
     }
 
     public struct ProFret_17 : IProFret
