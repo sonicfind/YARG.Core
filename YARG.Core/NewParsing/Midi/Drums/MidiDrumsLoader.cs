@@ -74,7 +74,7 @@ namespace YARG.Core.NewParsing.Midi
 
             var position = DualTime.Zero;
             var note = default(MidiNote);
-            var stats = default(YARGMidiTrack.Stats);
+            var stats = default(MidiStats);
             // Used for snapping together notes that get accidentally misaligned during authoring
             var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent(ref stats))
@@ -435,7 +435,7 @@ namespace YARG.Core.NewParsing.Midi
 
             var position = DualTime.Zero;
             var note = default(MidiNote);
-            var stats = default(YARGMidiTrack.Stats);
+            var stats = default(MidiStats);
             // Used for snapping together notes that get accidentally misaligned during authoring
             var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent(ref stats))
@@ -745,7 +745,7 @@ namespace YARG.Core.NewParsing.Midi
 
             var position = DualTime.Zero;
             var note = default(MidiNote);
-            var stats = default(YARGMidiTrack.Stats);
+            var stats = default(MidiStats);
             // Used for snapping together notes that get accidentally misaligned during authoring
             var chordSnapper = new ChordSnapper();
             while (midiTrack.ParseEvent(ref stats))
