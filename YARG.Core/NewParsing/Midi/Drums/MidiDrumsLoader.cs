@@ -375,7 +375,7 @@ namespace YARG.Core.NewParsing.Midi
                 var expertNotes = instrumentTrack.Expert.Notes;
                 for (int i = 0; i < expertNotes.Count; ++i)
                 {
-                    ref var drum = ref expertNotes.Data[i].Value;
+                    ref var drum = ref expertNotes[i].Value;
                     if (drum.KickState == KickState.NonPlusOnly)
                     {
                         drum.KickState = KickState.Shared;
@@ -682,7 +682,7 @@ namespace YARG.Core.NewParsing.Midi
                 var expertNotes = instrumentTrack.Expert.Notes;
                 for (int i = 0; i < expertNotes.Count; ++i)
                 {
-                    ref var drum = ref expertNotes.Data[i].Value;
+                    ref var drum = ref expertNotes[i].Value;
                     if (drum.KickState == KickState.NonPlusOnly)
                     {
                         drum.KickState = KickState.Shared;
@@ -1066,7 +1066,7 @@ namespace YARG.Core.NewParsing.Midi
                 var expertNotes = instrumentTrack.Expert.Notes;
                 for (int i = 0; i < expertNotes.Count; ++i)
                 {
-                    ref var drum = ref expertNotes.Data[i].Value;
+                    ref var drum = ref expertNotes[i].Value;
                     if (drum.KickState == KickState.NonPlusOnly)
                     {
                         drum.KickState = KickState.Shared;
