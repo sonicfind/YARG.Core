@@ -199,7 +199,7 @@ namespace YARG.Core.NewParsing
                 }
             }
 
-            var lastNoteTime = default(DualTime);
+            var lastNoteTime = DualTime.Zero;
             _fiveFretGuitar?.UpdateLastNoteTime(ref lastNoteTime);
             _fiveFretBass?.UpdateLastNoteTime(ref lastNoteTime);
             _fiveFretRhythm?.UpdateLastNoteTime(ref lastNoteTime);

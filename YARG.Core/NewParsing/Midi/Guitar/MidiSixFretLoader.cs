@@ -63,7 +63,7 @@ namespace YARG.Core.NewParsing.Midi
             var trillPosition = DualTime.Inactive;
 
             ReadOnlySpan<byte> SYSEXTAG = stackalloc byte[] { (byte) 'P', (byte) 'S', (byte) '\0', };
-            var position = default(DualTime);
+            var position = DualTime.Zero;
             var note = default(MidiNote);
             var stats = default(MidiStats);
             // Used for snapping together notes that get accidentally misaligned during authoring

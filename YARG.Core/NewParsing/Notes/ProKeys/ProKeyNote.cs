@@ -20,7 +20,7 @@ namespace YARG.Core.NewParsing
 
         public readonly DualTime GetLongestSustain()
         {
-            DualTime sustain = default;
+            var sustain = DualTime.Zero;
             switch (_numActive)
             {
                 case 4: goto Key4;

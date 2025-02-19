@@ -41,7 +41,7 @@ namespace YARG.Core.NewParsing.Midi
             var rangeShiftPosition = DualTime.Inactive;
 
             var note = default(MidiNote);
-            var position = default(DualTime);
+            var position = DualTime.Zero;
             var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
             {

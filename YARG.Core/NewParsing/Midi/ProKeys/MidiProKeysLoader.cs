@@ -47,7 +47,7 @@ namespace YARG.Core.NewParsing.Midi
             var glissPostion = DualTime.Inactive;
             var trillPosition = DualTime.Inactive;
 
-            var position = default(DualTime);
+            var position = DualTime.Zero;
             var note = default(MidiNote);
             var stats = default(MidiStats);
             // Used for snapping together notes that get accidentally misaligned during authoring

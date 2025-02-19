@@ -255,7 +255,7 @@ namespace YARG.Core.NewParsing
                 return;
             }
 
-            var position = default(DualTime);
+            var position = DualTime.Zero;
             var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
             {
@@ -297,7 +297,7 @@ namespace YARG.Core.NewParsing
             }
 
             var note = default(MidiNote);
-            var position = default(DualTime);
+            var position = DualTime.Zero;
             var stats = default(MidiStats);
             while (midiTrack.ParseEvent(ref stats))
             {
