@@ -18,6 +18,7 @@ namespace YARG.Core.NewParsing.Midi
         private const int STARPOWER_DIFF_OFFSET = 8;
         private const int STARPOWER_DIFF_VALUE = 12;
 
+        private static readonly byte[] SYSEXTAG = { (byte) 'P', (byte) 'S', (byte) '\0', };
         private const int SYSEX_LENGTH = 8;
         private const int SYSEX_DIFF_INDEX = 4;
         private const int SYSEX_TYPE_INDEX = 5;
@@ -62,7 +63,6 @@ namespace YARG.Core.NewParsing.Midi
             var tremoloPostion = DualTime.Inactive;
             var trillPosition = DualTime.Inactive;
 
-            ReadOnlySpan<byte> SYSEXTAG = stackalloc byte[] { (byte) 'P', (byte) 'S', (byte) '\0', };
             var position = DualTime.Zero;
             var note = default(MidiNote);
             var stats = default(MidiStats);
