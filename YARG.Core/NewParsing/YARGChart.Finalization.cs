@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using YARG.Core.Chart;
 
 namespace YARG.Core.NewParsing
@@ -18,26 +19,19 @@ namespace YARG.Core.NewParsing
         /// <param name="sync">The synctrack to finalize</param>
         private static unsafe void FinalizeSyncTrack(SyncTrack2 sync, double resolution)
         {
-            Debug.Assert(sync.TempoMarkers.Count > 0, "A least one tempo marker must exist");
-            var curr = sync.TempoMarkers.Data;
-            var end = curr + sync.TempoMarkers.Count;
-            while (true)
+            // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
+            for (long index = 1; index < sync.TempoMarkers.Count; ++index)
             {
-                // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
-                var prev = curr++;
-                if (curr == end)
+                ref var currMarker = ref sync.TempoMarkers[index];
+                ref var prevMarker = ref sync.TempoMarkers[index - 1];
+                double numQuarters = (currMarker.Key - prevMarker.Key) / resolution;
+                if (currMarker.Value.PositionInMicroseconds == 0)
                 {
-                    break;
-                }
-
-                double numQuarters = (curr->Key - prev->Key) / resolution;
-                if (curr->Value.PositionInMicroseconds == 0)
-                {
-                    curr->Value.PositionInMicroseconds = (long) (numQuarters * prev->Value.MicrosecondsPerQuarter) + prev->Value.PositionInMicroseconds;
+                    currMarker.Value.PositionInMicroseconds = (long) (numQuarters * prevMarker.Value.MicrosecondsPerQuarter) + prevMarker.Value.PositionInMicroseconds;
                 }
                 else
                 {
-                    prev->Value.MicrosecondsPerQuarter = (long) ((curr->Value.PositionInMicroseconds - prev->Value.PositionInMicroseconds) / numQuarters);
+                    prevMarker.Value.MicrosecondsPerQuarter = (long) ((currMarker.Value.PositionInMicroseconds - prevMarker.Value.PositionInMicroseconds) / numQuarters);
                 }
             }
         }
@@ -95,7 +89,7 @@ namespace YARG.Core.NewParsing
         /// </summary>
         /// <param name="chart">The chart with the beattrack to alter</param>
         /// <param name="endPosition">The position where the chart data should stop</param>
-        private static unsafe void GenerateLeftoverBeats(YARGChart chart, in DualTime endPosition)
+        private static void GenerateLeftoverBeats(YARGChart chart, in DualTime endPosition)
         {
             long multipliedTickrate = 4 * chart.Resolution;
 
@@ -103,22 +97,22 @@ namespace YARG.Core.NewParsing
             // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(chart.Sync, chart.Resolution);
 
-            DualTime buffer = default;
-            var end = chart.Sync.TimeSigs.End;
-            for (var currSig = chart.Sync.TimeSigs.Data; currSig < end; ++currSig)
+            var buffer = DualTime.Zero;
+            for (long index = 0; index < chart.Sync.TimeSigs.Count; ++index)
             {
-                long ticksPerMarker = multipliedTickrate >> currSig->Value.Denominator;
-                long ticksPerMeasure = (multipliedTickrate * currSig->Value.Numerator) >> currSig->Value.Denominator;
+                ref readonly var timeSig = ref chart.Sync.TimeSigs[index];
+                long ticksPerMarker = multipliedTickrate >> timeSig.Value.Denominator;
+                long ticksPerMeasure = (multipliedTickrate * timeSig.Value.Numerator) >> timeSig.Value.Denominator;
 
                 long endTime;
-                if (currSig + 1 < end)
+                if (index + 1 < chart.Sync.TimeSigs.Count)
                 {
-                    endTime = currSig[1].Key;
+                    endTime = chart.Sync.TimeSigs[index + 1].Key;
                 }
                 else
                 {
                     endTime = endPosition.Ticks;
-                    long tickDisplacement = endTime - currSig->Key;
+                    long tickDisplacement = endTime - timeSig.Key;
                     long mod = tickDisplacement % ticksPerMeasure;
                     if (mod > 0)
                     {
@@ -126,29 +120,30 @@ namespace YARG.Core.NewParsing
                     }
                 }
 
-                while (currSig->Key < endTime)
+                long currMeasure = timeSig.Key;
+                while (currMeasure < endTime)
                 {
-                    long position = currSig->Key;
-                    for (uint n = 0; n < currSig->Value.Numerator && position < endTime; ++n)
+                    long currMarker = currMeasure;
+                    for (uint n = 0; n < timeSig.Value.Numerator && currMarker < endTime; ++n)
                     {
-                        while (beatIndex < chart.BeatMap.Count && chart.BeatMap[beatIndex].Key.Ticks < position)
+                        while (beatIndex < chart.BeatMap.Count && chart.BeatMap[beatIndex].Key.Ticks < currMarker)
                         {
                             ++beatIndex;
                         }
 
-                        if (beatIndex == chart.BeatMap.Count || position < chart.BeatMap[beatIndex].Key.Ticks)
+                        if (beatIndex == chart.BeatMap.Count || currMarker < chart.BeatMap[beatIndex].Key.Ticks)
                         {
-                            buffer.Ticks = position;
-                            buffer.Seconds = tempoTracker.Traverse(position);
+                            buffer.Ticks = currMarker;
+                            buffer.Seconds = tempoTracker.Traverse(currMarker);
                             chart.BeatMap.Insert(beatIndex, (buffer, BeatlineType.Weak));
                         }
                         ++beatIndex;
-                        position += ticksPerMarker;
+                        currMarker += ticksPerMarker;
                     }
-                    currSig->Key += ticksPerMeasure;
+                    currMeasure += ticksPerMeasure;
                 }
 
-                if (currSig + 1 == end)
+                if (index + 1 == chart.Sync.TimeSigs.Count)
                 {
                     buffer.Ticks = endTime;
                     buffer.Seconds = tempoTracker.Traverse(endTime);
@@ -162,31 +157,31 @@ namespace YARG.Core.NewParsing
         /// </summary>
         /// <param name="chart">The chart with the beattrack to alter</param>
         /// <param name="endPosition">The position where the chart data should stop</param>
-        private static unsafe void GenerateAllBeats(YARGChart chart, in DualTime endPosition)
+        private static void GenerateAllBeats(YARGChart chart, in DualTime endPosition)
         {
             long multipliedTickrate = 4 * chart.Resolution;
             // Provides a more algorithmically optimal route for mapping midi ticks to seconds
             var tempoTracker = new TempoTracker(chart.Sync, chart.Resolution);
 
-            DualTime buffer = default;
-            var end = chart.Sync.TimeSigs.End;
-            for (var currSig = chart.Sync.TimeSigs.Data; currSig < end; ++currSig)
+            var buffer = DualTime.Zero;
+            for (long index = 0; index < chart.Sync.TimeSigs.Count; ++index)
             {
-                int numerator = currSig->Value.Numerator;
-                int markersPerClick = (6 << currSig->Value.Denominator) / currSig->Value.Metronome;
-                long ticksPerMarker = multipliedTickrate >> currSig->Value.Denominator;
-                long ticksPerMeasure = (multipliedTickrate * numerator) >> currSig->Value.Denominator;
+                ref readonly var timeSig = ref chart.Sync.TimeSigs[index];
+                int numerator = timeSig.Value.Numerator;
+                int markersPerClick = (6 << timeSig.Value.Denominator) / timeSig.Value.Metronome;
+                long ticksPerMarker = multipliedTickrate >> timeSig.Value.Denominator;
+                long ticksPerMeasure = (multipliedTickrate * numerator) >> timeSig.Value.Denominator;
                 bool isIrregular = (numerator & 1) == 1 && (numerator % 3) > 0;
 
                 long endTime;
-                if (currSig + 1 < end)
+                if (index + 1 < chart.Sync.TimeSigs.Count)
                 {
-                    endTime = currSig[1].Key;
+                    endTime = chart.Sync.TimeSigs[index + 1].Key;
                 }
                 else
                 {
                     endTime = endPosition.Ticks;
-                    long tickDisplacement = endTime - currSig->Key;
+                    long tickDisplacement = endTime - timeSig.Key;
                     long mod = tickDisplacement % ticksPerMeasure;
                     if (mod > 0)
                     {
@@ -216,19 +211,20 @@ namespace YARG.Core.NewParsing
                     }
                 }
 
-                while (currSig->Key < endTime)
+                long currMeasure = timeSig.Key;
+                while (currMeasure < endTime)
                 {
-                    long position = currSig->Key;
-                    for (int i = 0; i < numerator && position < endTime; ++i, position += ticksPerMarker)
+                    long currMarker = currMeasure;
+                    for (int i = 0; i < numerator && currMarker < endTime; ++i, currMarker += ticksPerMarker)
                     {
-                        buffer.Ticks = position;
-                        buffer.Seconds = tempoTracker.Traverse(position);
+                        buffer.Ticks = currMarker;
+                        buffer.Seconds = tempoTracker.Traverse(currMarker);
                         chart.BeatMap.Add(buffer, pattern[i]);
                     }
-                    currSig->Key += ticksPerMeasure;
+                    currMeasure += ticksPerMeasure;
                 }
 
-                if (currSig + 1 == end)
+                if (index + 1 == chart.Sync.TimeSigs.Count)
                 {
                     buffer.Ticks = endTime;
                     buffer.Seconds = tempoTracker.Traverse(endTime);
