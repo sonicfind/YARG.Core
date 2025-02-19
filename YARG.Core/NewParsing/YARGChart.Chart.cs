@@ -443,7 +443,7 @@ namespace YARG.Core.NewParsing
             where TNote : unmanaged, IInstrumentNote
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public unsafe bool Set(TNote* note, int lane, in DualTime length);
+            unsafe bool Set(TNote* note, int lane, in DualTime length);
         }
 
         private readonly struct FiveFretSetter : IChartLoadable<FiveFretGuitar>

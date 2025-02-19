@@ -2,7 +2,7 @@
 {
     public interface IInstrumentNote
     {
-        public int GetNumActiveLanes();
-        public DualTime GetLongestSustain();
+        int GetNumActiveLanes();
+        DualTime GetLongestSustain();
     }
 }
