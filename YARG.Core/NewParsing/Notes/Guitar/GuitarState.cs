@@ -8,9 +8,4 @@
         Strum,
         Tap
     }
-
-    public interface IGuitarNote : IInstrumentNote
-    {
-        public GuitarState State { get; set; }
-    }
 }
