@@ -21,7 +21,11 @@ namespace YARG.Core.NewLoading
             {
                 switch (selection.Instrument)
                 {
-                    case Instrument.FiveFretGuitar: players.Add(FiveFretPlayer.Create(chart, chart.FiveFretGuitar, in endTime, in selection)); break;
+                    case Instrument.FiveFretGuitar:     players.Add(FiveFretPlayer.Create(chart, chart.FiveFretGuitar,     in endTime, in selection)); break;
+                    case Instrument.FiveFretBass:       players.Add(FiveFretPlayer.Create(chart, chart.FiveFretBass,       in endTime, in selection)); break;
+                    case Instrument.FiveFretRhythm:     players.Add(FiveFretPlayer.Create(chart, chart.FiveFretRhythm,     in endTime, in selection)); break;
+                    case Instrument.FiveFretCoopGuitar: players.Add(FiveFretPlayer.Create(chart, chart.FiveFretCoopGuitar, in endTime, in selection)); break;
+                    case Instrument.Keys:               players.Add(FiveFretPlayer.Create(chart, chart.Keys,               in endTime, in selection)); break;
                 }
             }
             return players;
