@@ -23,6 +23,10 @@ namespace YARG.Core.NewLoading
             public long        NoteCount;
         }
 
+        public override void Dispose()
+        {
+        }
+
         public static FiveFretPlayer Create(YARGChart chart, InstrumentTrack2<GuitarNote<FiveFret>> instrument, in DualTime endTime, in InstrumentSelection selection)
         {
             return new FiveFretPlayer();
