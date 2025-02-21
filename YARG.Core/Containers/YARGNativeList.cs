@@ -10,10 +10,10 @@ namespace YARG.Core.Containers
     public unsafe class YargNativeList<T> : IEnumerable<T>, IDisposable
         where T : unmanaged
     {
-        protected T* _buffer;
-        protected long _capacity;
+        private   long _capacity;
+        private   long _version;
+        protected T*   _buffer;
         protected long _count;
-        protected long _version;
 
         /// <summary>
         /// The number of elements within the list
