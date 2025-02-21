@@ -17,36 +17,29 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The number of elements within the list
         /// </summary>
-        public int Count
-        {
-            get
-            {
-                return _count;
-            }
-        }
+        public int Count => _count;
 
         /// <summary>
         /// The capacity of the list where elements will reside
         /// </summary>
         public int Capacity
         {
-            get
-            {
-                return _buffer.Length;
-            }
+            get => _buffer.Length;
             set
             {
-                if (_count <= value && value != _buffer.Length)
+                if (_count > value || value == _buffer.Length)
                 {
-                    Array.Resize(ref _buffer, value);
-                    if (value > 0)
-                    {
-                        ++_version;
-                    }
-                    else
-                    {
-                        _version = 0;
-                    }
+                    return;
+                }
+
+                Array.Resize(ref _buffer, value);
+                if (value > 0)
+                {
+                    ++_version;
+                }
+                else
+                {
+                    _version = 0;
                 }
             }
         }
@@ -54,24 +47,12 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The span view of the data up to <see cref="Count"/>
         /// </summary>
-        public Span<T> Span
-        {
-            get
-            {
-                return new Span<T>(_buffer, 0, _count);
-            }
-        }
+        public Span<T> Span => new(_buffer, 0, _count);
 
         /// <summary>
         /// The direct arrau for the underlying data. Use carefully.
         /// </summary>
-        public T[] Data
-        {
-            get
-            {
-                return _buffer;
-            }
-        }
+        public T[] Data => _buffer;
 
         public YargManagedList()
         {
@@ -137,7 +118,7 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
-        /// Clears every node present in the list and sets count to zero
+        /// Clears every value present in the list and sets count to zero
         /// </summary>
         public void Clear()
         {
@@ -154,11 +135,9 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
-        /// Appends a new node with the given key - the value of the node being defaulted.
+        /// Adds the given value to the end of the list
         /// </summary>
-        /// <remarks>This does not do any checks in regards to ordering.</remarks>
-        /// <param name="key">The key to assign to the new node</param>
-        /// <returns>A reference to the value from the newly created node</returns>
+        /// <param name="value">The value to insert</param>
         public void Add(in T value)
         {
             CheckAndGrow();
@@ -169,12 +148,13 @@ namespace YARG.Core.Containers
         /// Copies over the provided buffer of values to the end of the lsit
         /// </summary>
         /// <param name="values">The buffer containing the data to copy</param>
-        /// <param name="count">The number of elements to copy from the buffer</param>
+        /// <param name="offset">The starting point in the buffer to copy from</param>
+        /// <param name="count">The number of elements to copy</param>
         public void AddRange(T[] values, int offset, int count)
         {
             if (count < 0 || int.MaxValue - count < _count)
             {
-                throw new ArgumentOutOfRangeException("count");
+                throw new ArgumentOutOfRangeException(nameof(count));
             }
 
             CheckAndGrow(count);
@@ -183,14 +163,10 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
-        /// Forcibly inserts a node with the provided key and value at the positional index.
+        /// Inserts a value into the provided index.
         /// </summary>
-        /// <remarks>
-        /// Does not check for correct key ordering on forced insertion. Unsafe.
-        /// </remarks>
-        /// <param name="index">The position to place the node - an array offset.</param>
-        /// <param name="key">The key to use for the node</param>
-        /// <param name="value">The value to assign to the node</param>
+        /// <param name="index">The position to place the value</param>
+        /// <param name="value">The value to insert</param>
         public void Insert(int index, in T value)
         {
             CheckAndGrow();
@@ -203,7 +179,7 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
-        /// Removes the last node in the list
+        /// Removes the last value in the list
         /// </summary>
         /// <exception cref="InvalidOperationException">The list has no elements to remove</exception>
         public void Pop()
@@ -219,7 +195,7 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
-        /// Removes the node present at the provided array offset index
+        /// Removes the value present at the provided index
         /// </summary>
         /// <param name="index">The offset into the inner array buffer</param>
         public void RemoveAt(int index)
@@ -240,13 +216,7 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <param name="index">Array index in the list</param>
         /// <returns>The value by reference</returns>
-        public ref T this[int index]
-        {
-            get
-            {
-                return ref _buffer[index];
-            }
-        }
+        public ref T this[int index] => ref _buffer[index];
 
         /// <summary>
         /// Returns a reference to the value at the provided index
@@ -273,17 +243,17 @@ namespace YARG.Core.Containers
 
             if (_count > _buffer.Length - offset)
             {
-                int newcapacity = _buffer.Length == 0 ? DEFAULT_CAPACITY : 2 * _buffer.Length;
-                while (0 < newcapacity && newcapacity - offset < _count)
+                int newCapacity = _buffer.Length == 0 ? DEFAULT_CAPACITY : 2 * _buffer.Length;
+                while (0 < newCapacity && newCapacity - offset < _count)
                 {
-                    newcapacity *= 2;
+                    newCapacity *= 2;
                 }
 
-                if ((uint) newcapacity > int.MaxValue)
+                if ((uint) newCapacity > int.MaxValue)
                 {
-                    newcapacity = int.MaxValue;
+                    newCapacity = int.MaxValue;
                 }
-                Capacity = newcapacity;
+                Capacity = newCapacity;
             }
             ++_version;
         }
@@ -309,7 +279,7 @@ namespace YARG.Core.Containers
             return new Enumerator(this);
         }
 
-        public struct Enumerator : IEnumerator<T>, IEnumerator
+        private struct Enumerator : IEnumerator<T>, IEnumerator
         {
             private readonly YargManagedList<T> _map;
             private int _index;
