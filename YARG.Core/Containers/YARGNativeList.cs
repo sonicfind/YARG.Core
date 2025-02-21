@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 namespace YARG.Core.Containers
 {
     [DebuggerDisplay("Count: {_count}")]
-    public unsafe class YARGNativeList<T> : IEnumerable<T>, IDisposable
+    public unsafe class YargNativeList<T> : IEnumerable<T>, IDisposable
         where T : unmanaged
     {
         protected T* _buffer;
@@ -99,7 +99,7 @@ namespace YARG.Core.Containers
             }
         }
 
-        public YARGNativeList()
+        public YargNativeList()
         {
             _buffer = null;
             _capacity = 0;
@@ -107,7 +107,7 @@ namespace YARG.Core.Containers
             _version = 0;
         }
 
-        public YARGNativeList(YARGNativeList<T> source)
+        public YargNativeList(YargNativeList<T> source)
         {
             _capacity = source._count;
             _count = source._count;
@@ -117,7 +117,7 @@ namespace YARG.Core.Containers
             Buffer.MemoryCopy(source._buffer, _buffer, bytes, bytes);
         }
 
-        public void CopyFrom(YARGNativeList<T> source)
+        public void CopyFrom(YargNativeList<T> source)
         {
             long byteCount = source._count * sizeof(T);
             if (source._count > _capacity)
@@ -130,7 +130,7 @@ namespace YARG.Core.Containers
             _version++;
         }
 
-        public void MoveFrom(YARGNativeList<T> source)
+        public void MoveFrom(YargNativeList<T> source)
         {
             if (_buffer != null)
             {
@@ -326,7 +326,7 @@ namespace YARG.Core.Containers
             _count = 0;
         }
 
-        ~YARGNativeList()
+        ~YargNativeList()
         {
             if (_buffer != null)
             {
@@ -346,11 +346,11 @@ namespace YARG.Core.Containers
 
         public struct Enumerator : IEnumerator<T>, IEnumerator
         {
-            private readonly YARGNativeList<T> _list;
+            private readonly YargNativeList<T> _list;
             private readonly long _version;
             private long _index;
 
-            internal Enumerator(YARGNativeList<T> list)
+            internal Enumerator(YargNativeList<T> list)
             {
                 _list = list;
                 _version = list._version;

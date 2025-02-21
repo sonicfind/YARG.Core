@@ -15,23 +15,23 @@ namespace YARG.Core.Containers
     /// </remarks>
     /// <typeparam name="TKey">The type to use for determining sorting order</typeparam>
     /// <typeparam name="TValue">The value that gets mapped to keys</typeparam>
-    public sealed class YARGNativeSortedList<TKey, TValue> : YARGNativeList<(TKey Key, TValue Value)>
+    public sealed class YargNativeSortedList<TKey, TValue> : YargNativeList<(TKey Key, TValue Value)>
         where TKey : unmanaged, IEquatable<TKey>, IComparable<TKey>
         where TValue : unmanaged
     {
         // This pattern of copying a pre-defined value is faster than default construction
-        // Note: except possibly for types of 16 bytes or less, idk
+        // Note: except possibly for types of 16 bytes or fewer, idk
         private static readonly TValue DEFAULT_VALUE = default;
 
-        public YARGNativeSortedList() { }
+        public YargNativeSortedList() { }
 
-        public YARGNativeSortedList(YARGNativeSortedList<TKey, TValue> list)
+        public YargNativeSortedList(YargNativeSortedList<TKey, TValue> list)
             : base(list) { }
 
         /// <summary>
         /// Appends a new node with the given key - the value of the node being defaulted.
         /// </summary>
-        /// <remarks>This does not do any checks in regards to ordering.</remarks>
+        /// <remarks>This does not do any checks with regards to ordering.</remarks>
         /// <param name="key">The key to assign to the new node</param>
         /// <returns>The pointer to the value from the newly created node</returns>
         public unsafe TValue* Add(in TKey key)

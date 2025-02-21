@@ -8,19 +8,19 @@ namespace YARG.Core.Containers
     /// </summary>
     /// <remarks>
     /// This container differs from the built-in Dictionary container in two important ways:<br></br>
-    /// 1. The keys and values are stored local to eachother in a single array of data. While it loses key-to-key locality, key-to-value locality improves. <br></br>
+    /// 1. The keys and values are stored local to each other in a single array of data. While it loses key-to-key locality, key-to-value locality improves. <br></br>
     /// 2. Functions that provide access to elements within the container do so by reference instead of by value.
     /// This allows in-place modification of mapped values (<see langword="struct"/> types) through single access calls instead of get + set.
     /// </remarks>
     /// <typeparam name="TKey">The type to use for determining sorting order</typeparam>
     /// <typeparam name="TValue">The value that gets mapped to keys</typeparam>
-    public sealed class YARGManagedSortedList<TKey, TValue> : YARGManagedList<(TKey Key, TValue Value)>
+    public sealed class YargManagedSortedList<TKey, TValue> : YargManagedList<(TKey Key, TValue Value)>
         where TKey : IEquatable<TKey>, IComparable<TKey>
         where TValue : new()
     {
-        public YARGManagedSortedList() { }
+        public YargManagedSortedList() { }
 
-        public YARGManagedSortedList(YARGManagedSortedList<TKey, TValue> list)
+        public YargManagedSortedList(YargManagedSortedList<TKey, TValue> list)
             : base(list) { }
 
         /// <summary>

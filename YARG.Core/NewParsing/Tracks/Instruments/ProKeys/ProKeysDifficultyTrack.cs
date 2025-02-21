@@ -15,16 +15,16 @@ namespace YARG.Core.NewParsing
 
     public class ProKeysDifficultyTrack
     {
-        public YARGNativeSortedList<DualTime, ProKeyNote> Notes { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Overdrives { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Soloes { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Trills { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Tremolos { get; }
-        public YARGNativeSortedList<DualTime, DualTime> BREs { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Faceoff_Player1 { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Faceoff_Player2 { get; }
-        public YARGNativeSortedList<DualTime, ProKey_Ranges> Ranges { get; }
-        public YARGManagedSortedList<DualTime, HashSet<string>> Events { get; }
+        public YargNativeSortedList<DualTime, ProKeyNote> Notes { get; }
+        public YargNativeSortedList<DualTime, DualTime> Overdrives { get; }
+        public YargNativeSortedList<DualTime, DualTime> Soloes { get; }
+        public YargNativeSortedList<DualTime, DualTime> Trills { get; }
+        public YargNativeSortedList<DualTime, DualTime> Tremolos { get; }
+        public YargNativeSortedList<DualTime, DualTime> BREs { get; }
+        public YargNativeSortedList<DualTime, DualTime> Faceoff_Player1 { get; }
+        public YargNativeSortedList<DualTime, DualTime> Faceoff_Player2 { get; }
+        public YargNativeSortedList<DualTime, ProKey_Ranges> Ranges { get; }
+        public YargManagedSortedList<DualTime, HashSet<string>> Events { get; }
 
         public ProKeysDifficultyTrack()
         {

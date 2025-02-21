@@ -43,13 +43,13 @@ namespace YARG.Core.NewParsing.Midi
                 return;
             }
 
-            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
-            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
-            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
-            using var tremolos = new YARGNativeSortedList<DualTime, DualTime>();
-            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
-            using var faceoff_P1 = new YARGNativeSortedList<DualTime, DualTime>();
-            using var faceoff_P2 = new YARGNativeSortedList<DualTime, DualTime>();
+            using var overdrives = new YargNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YargNativeSortedList<DualTime, DualTime>();
+            using var trills = new YargNativeSortedList<DualTime, DualTime>();
+            using var tremolos = new YargNativeSortedList<DualTime, DualTime>();
+            using var bres = new YargNativeSortedList<DualTime, DualTime>();
+            using var faceoff_P1 = new YargNativeSortedList<DualTime, DualTime>();
+            using var faceoff_P2 = new YargNativeSortedList<DualTime, DualTime>();
 
             var diffModifiers = stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES];
 

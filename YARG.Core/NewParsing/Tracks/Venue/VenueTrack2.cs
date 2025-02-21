@@ -5,10 +5,10 @@ namespace YARG.Core.NewParsing
 {
     public class VenueTrack2 : ITrack
     {
-        public YARGNativeSortedList<DualTime, VenueEvent2<LightingType>> Lighting { get; } = new();
-        public YARGNativeSortedList<DualTime, VenueEvent2<PostProcessingType>> PostProcessing { get; } = new();
-        public YARGNativeSortedList<DualTime, VenueEvent2<PerformerEvent2>> Performer { get; } = new();
-        public YARGNativeSortedList<DualTime, VenueEvent2<StageEffect>> Stage { get; } = new();
+        public YargNativeSortedList<DualTime, VenueEvent2<LightingType>> Lighting { get; } = new();
+        public YargNativeSortedList<DualTime, VenueEvent2<PostProcessingType>> PostProcessing { get; } = new();
+        public YargNativeSortedList<DualTime, VenueEvent2<PerformerEvent2>> Performer { get; } = new();
+        public YargNativeSortedList<DualTime, VenueEvent2<StageEffect>> Stage { get; } = new();
 
         public bool IsEmpty()
         {

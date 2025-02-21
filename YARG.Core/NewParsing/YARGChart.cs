@@ -13,9 +13,9 @@ namespace YARG.Core.NewParsing
         public long Resolution => _resolution;
 
         public SyncTrack2 Sync { get; } = new();
-        public YARGManagedSortedList<DualTime, NonNullString> Sections { get; } = new();
-        public YARGManagedSortedList<DualTime, List<string>> Globals { get; } = new();
-        public YARGNativeSortedList<DualTime, BeatlineType> BeatMap { get; } = new();
+        public YargManagedSortedList<DualTime, NonNullString> Sections { get; } = new();
+        public YargManagedSortedList<DualTime, List<string>> Globals { get; } = new();
+        public YargNativeSortedList<DualTime, BeatlineType> BeatMap { get; } = new();
         public VenueTrack2 Venue { get; } = new();
 
         public SongMetadata Metadata;
@@ -28,12 +28,12 @@ namespace YARG.Core.NewParsing
         private InstrumentTrack2<FiveFretGuitar>? _fiveFretRhythm;
         private InstrumentTrack2<FiveFretGuitar>? _fiveFretCoopGuitar;
         private InstrumentTrack2<FiveFretGuitar>? _keys;
-        
+
         private InstrumentTrack2<SixFretGuitar>? _sixFretGuitar;
         private InstrumentTrack2<SixFretGuitar>? _sixFretBass;
         private InstrumentTrack2<SixFretGuitar>? _sixFretRhythm;
         private InstrumentTrack2<SixFretGuitar>? _sixFretCoopGuitar;
-        
+
         private InstrumentTrack2<FourLaneDrums>? _fourLaneDrums;
         private InstrumentTrack2<FiveLaneDrums>? _fiveLaneDrums;
 

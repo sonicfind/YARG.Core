@@ -8,13 +8,13 @@ namespace YARG.Core.NewParsing
         where TProFret : unmanaged, IProFret
     {
         private readonly ProGuitarDifficultyTrack<TProFret>[] _difficulties = new ProGuitarDifficultyTrack<TProFret>[InstrumentTrack2.NUM_DIFFICULTIES];
-        public YARGNativeSortedList<DualTime, PitchName> Roots { get; }
-        public YARGNativeSortedList<DualTime, TProFret>  HandPositions { get; }
-        public YARGNativeSortedList<DualTime, DualTime>  Force_ChordNumbering { get; }
-        public YARGNativeSortedList<DualTime, DualTime>  SlashChords { get; }
-        public YARGNativeSortedList<DualTime, DualTime>  HideChords { get; }
-        public YARGNativeSortedList<DualTime, DualTime>  AccidentalSwitches { get; }
-        public YARGManagedSortedList<DualTime, HashSet<string>> Events { get; }
+        public YargNativeSortedList<DualTime, PitchName> Roots { get; }
+        public YargNativeSortedList<DualTime, TProFret>  HandPositions { get; }
+        public YargNativeSortedList<DualTime, DualTime>  Force_ChordNumbering { get; }
+        public YargNativeSortedList<DualTime, DualTime>  SlashChords { get; }
+        public YargNativeSortedList<DualTime, DualTime>  HideChords { get; }
+        public YargNativeSortedList<DualTime, DualTime>  AccidentalSwitches { get; }
+        public YargManagedSortedList<DualTime, HashSet<string>> Events { get; }
 
         public ProGuitarDifficultyTrack<TProFret> this[int index] => _difficulties[index];
 

@@ -6,16 +6,16 @@ namespace YARG.Core.NewParsing
     public class ProGuitarDifficultyTrack<TProFret>
         where TProFret : unmanaged, IProFret
     {
-        public YARGNativeSortedList<DualTime, ProGuitarNote<TProFret>> Notes { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Overdrives { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Soloes { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Trills { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Tremolos { get; }
-        public YARGNativeSortedList<DualTime, DualTime> BREs { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Faceoff_Player1 { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Faceoff_Player2 { get; }
-        public YARGNativeSortedList<DualTime, DualTime> Arpeggios { get; }
-        public YARGManagedSortedList<DualTime, HashSet<string>> Events { get; }
+        public YargNativeSortedList<DualTime, ProGuitarNote<TProFret>> Notes { get; }
+        public YargNativeSortedList<DualTime, DualTime> Overdrives { get; }
+        public YargNativeSortedList<DualTime, DualTime> Soloes { get; }
+        public YargNativeSortedList<DualTime, DualTime> Trills { get; }
+        public YargNativeSortedList<DualTime, DualTime> Tremolos { get; }
+        public YargNativeSortedList<DualTime, DualTime> BREs { get; }
+        public YargNativeSortedList<DualTime, DualTime> Faceoff_Player1 { get; }
+        public YargNativeSortedList<DualTime, DualTime> Faceoff_Player2 { get; }
+        public YargNativeSortedList<DualTime, DualTime> Arpeggios { get; }
+        public YargManagedSortedList<DualTime, HashSet<string>> Events { get; }
 
         public ProGuitarDifficultyTrack()
         {
