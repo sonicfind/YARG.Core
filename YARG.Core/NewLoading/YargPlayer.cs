@@ -1,4 +1,5 @@
-﻿using YARG.Core.NewParsing;
+﻿using System;
+using YARG.Core.NewParsing;
 
 namespace YARG.Core.NewLoading
 {
@@ -42,7 +43,8 @@ namespace YARG.Core.NewLoading
         }
     }
 
-    public abstract class YargPlayer
+    public abstract class YargPlayer : IDisposable
     {
+        public abstract void Dispose();
     }
 }
