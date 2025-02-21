@@ -6,18 +6,19 @@ namespace YARG.Core.Game
     [Flags]
     public enum Modifier : ulong
     {
-        None          = 0,
-        AllStrums     = 1 << 0,
-        AllHopos      = 1 << 1,
-        AllTaps       = 1 << 2,
-        HoposToTaps   = 1 << 3,
-        TapsToHopos   = 1 << 4,
-        NoteShuffle   = 1 << 5,
-        NoKicks       = 1 << 6,
-        UnpitchedOnly = 1 << 7,
-        NoDynamics    = 1 << 8,
+        None              = 0,
+        AllStrums         = 1 << 0,
+        AllHopos          = 1 << 1,
+        AllTaps           = 1 << 2,
+        HoposToTaps       = 1 << 3,
+        TapsToHopos       = 1 << 4,
+        NoteShuffle       = 1 << 5,
+        NoKicks           = 1 << 6,
+        UnpitchedOnly     = 1 << 7,
+        NoDynamics        = 1 << 8,
         NoVocalPercussion = 1 << 9,
-        RangeCompress = 1 << 10,
+        RangeCompress     = 1 << 10,
+        LeftyFlip         = 1 << 11,
     }
 
     public static class ModifierConflicts
