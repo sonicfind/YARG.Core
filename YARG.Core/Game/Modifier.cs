@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace YARG.Core.Game
 {
@@ -84,6 +85,12 @@ namespace YARG.Core.Game
             }
 
             return output;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Has(this Modifier type, Modifier value)
+        {
+            return (type & value) == value;
         }
     }
 }
