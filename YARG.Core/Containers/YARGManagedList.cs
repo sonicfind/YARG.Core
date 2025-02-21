@@ -9,9 +9,10 @@ namespace YARG.Core.Containers
     public class YargManagedList<T> : IEnumerable<T>, IDisposable
         where T : new()
     {
+        private   int _version;
         protected T[] _buffer;
         protected int _count;
-        protected int _version;
+
 
         /// <summary>
         /// The number of elements within the list
