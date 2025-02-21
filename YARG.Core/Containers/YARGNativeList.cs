@@ -18,86 +18,56 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The number of elements within the list
         /// </summary>
-        public long Count
-        {
-            get
-            {
-                return _count;
-            }
-        }
+        public long Count => _count;
 
         /// <summary>
         /// The capacity of the list where elements will reside
         /// </summary>
         public long Capacity
         {
-            get
-            {
-                return _capacity;
-            }
+            get => _capacity;
             set
             {
-                if (_count <= value && value != _capacity)
+                if (_count > value || value == _capacity)
                 {
-                    if (value > 0)
+                    return;
+                }
+
+                if (value > 0)
+                {
+                    long size = value * sizeof(T);
+                    if (_buffer != null)
                     {
-                        long size = value * sizeof(T);
-                        if (_buffer != null)
-                        {
-                            _buffer = (T*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) size);
-                        }
-                        else
-                        {
-                            _buffer = (T*) Marshal.AllocHGlobal((IntPtr) size);
-                        }
-                        ++_version;
+                        _buffer = (T*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) size);
                     }
                     else
                     {
-                        if (_buffer != null)
-                        {
-                            Marshal.FreeHGlobal((IntPtr) _buffer);
-                        }
-                        _buffer = null;
-                        _version = 0;
+                        _buffer = (T*) Marshal.AllocHGlobal((IntPtr) size);
                     }
-                    _capacity = value;
+                    ++_version;
                 }
+                else
+                {
+                    if (_buffer != null)
+                    {
+                        Marshal.FreeHGlobal((IntPtr) _buffer);
+                    }
+                    _buffer = null;
+                    _version = 0;
+                }
+                _capacity = value;
             }
         }
 
         /// <summary>
         /// The span view of the data up to <see cref="Count"/>
         /// </summary>
-        public Span<T> Span
-        {
-            get
-            {
-                return new Span<T>(_buffer, (int)_count);
-            }
-        }
+        public Span<T> Span => new(_buffer, (int)_count);
 
         /// <summary>
         /// The direct pointer for the underlying data. Use carefully.
         /// </summary>
-        public T* Data
-        {
-            get
-            {
-                return _buffer;
-            }
-        }
-
-        /// <summary>
-        /// The direct pointer to the end position of the underlying data. Use carefully.
-        /// </summary>
-        public T* End
-        {
-            get
-            {
-                return _buffer + _count;
-            }
-        }
+        public T* Data => _buffer;
 
         public YargNativeList()
         {
@@ -167,8 +137,8 @@ namespace YARG.Core.Containers
         /// Sets Count to zero
         /// </summary>
         /// <remarks>
-        /// Due to the unmanaged nature of the generic, and to how new nodes are overridden on append, simply setting count to zero is enough.
-        /// If the type requires extra disposal behavior, that must be handled extrernally before calling this method.
+        /// Due to the unmanaged nature of the generic, and to how new values lead to overriding buffer locations, simply setting count to zero is enough.
+        /// If the type requires extra disposal behavior, that must be handled externally before calling this method.
         /// </remarks>
         public void Clear()
         {
@@ -190,7 +160,7 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
-        /// Copies over the provided buffer of values to the end of the lsit
+        /// Copies over the provided buffer of values to the end of the list
         /// </summary>
         /// <param name="values">The buffer containing the data to copy</param>
         /// <param name="count">The number of elements to copy from the buffer</param>
@@ -198,7 +168,7 @@ namespace YARG.Core.Containers
         {
             if (count < 0 || long.MaxValue - count < _count)
             {
-                throw new ArgumentOutOfRangeException("count");
+                throw new ArgumentOutOfRangeException(nameof(count));
             }
             CheckAndGrow(count);
             long size = count * sizeof(T);
@@ -207,12 +177,9 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
-        /// Forcibly inserts a value at the positional index.
+        /// Inserts a value into the provided index.
         /// </summary>
-        /// <remarks>
-        /// Does not check for correct ordering on forced insertion
-        /// </remarks>
-        /// <param name="index">The position to place the node - an array offset.</param>
+        /// <param name="index">The position to place the value</param>
         /// <param name="value">The value to insert</param>
         public void Insert(long index, in T value)
         {
@@ -228,7 +195,7 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
-        /// Removes the last node in the list
+        /// Removes the last value in the list
         /// </summary>
         /// <exception cref="InvalidOperationException">The list has no elements to remove</exception>
         public void Pop()
@@ -243,7 +210,7 @@ namespace YARG.Core.Containers
         }
 
         /// <summary>
-        /// Removes the value present at the provided array offset index
+        /// Removes the value present at the provided index
         /// </summary>
         /// <param name="index">The offset into the inner array buffer</param>
         /// <returns>Whether the index was valid</returns>
@@ -266,13 +233,7 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <param name="index">Array index in the list</param>
         /// <returns>The value by reference</returns>
-        public ref T this[long index]
-        {
-            get
-            {
-                return ref _buffer[index];
-            }
-        }
+        public ref T this[long index] => ref _buffer[index];
 
         /// <summary>
         /// Returns a reference to the value at the provided index
@@ -299,17 +260,17 @@ namespace YARG.Core.Containers
 
             if (_count > _capacity - offset)
             {
-                long newcapacity = _capacity == 0 ? DEFAULT_CAPACITY : 2 * _capacity;
-                while (0 < newcapacity && newcapacity - offset < _count)
+                long newCapacity = _capacity == 0 ? DEFAULT_CAPACITY : 2 * _capacity;
+                while (0 < newCapacity && newCapacity - offset < _count)
                 {
-                    newcapacity *= 2;
+                    newCapacity *= 2;
                 }
 
-                if ((ulong) newcapacity > long.MaxValue)
+                if ((ulong) newCapacity > long.MaxValue)
                 {
-                    newcapacity = long.MaxValue;
+                    newCapacity = long.MaxValue;
                 }
-                Capacity = newcapacity;
+                Capacity = newCapacity;
             }
             ++_version;
         }
@@ -344,7 +305,7 @@ namespace YARG.Core.Containers
             return new Enumerator(this);
         }
 
-        public struct Enumerator : IEnumerator<T>, IEnumerator
+        private struct Enumerator : IEnumerator<T>, IEnumerator
         {
             private readonly YargNativeList<T> _list;
             private readonly long _version;
