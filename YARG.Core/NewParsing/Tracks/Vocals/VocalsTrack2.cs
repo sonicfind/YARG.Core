@@ -6,14 +6,14 @@ namespace YARG.Core.NewParsing
     public class VocalsTrack2 : ITrack
     {
         private readonly VocalPart2[] _parts;
-        public YARGNativeSortedList<DualTime, bool> Percussion { get; } = new();
-        public YARGNativeSortedList<DualTime, DualTime> VocalPhrases_1 { get; } = new();
-        public YARGNativeSortedList<DualTime, DualTime> VocalPhrases_2 { get; } = new();
-        public YARGNativeSortedList<DualTime, DualTime> HarmonyLines { get; } = new();
-        public YARGNativeSortedList<DualTime, DualTime> RangeShifts { get; } = new();
-        public YARGNativeSortedList<DualTime, DualTime> Overdrives { get; } = new();
-        public YARGNativeList<DualTime> LyricShifts { get; } = new();
-        public YARGManagedSortedList<DualTime, HashSet<string>> Events { get; } = new();
+        public YargNativeSortedList<DualTime, bool> Percussion { get; } = new();
+        public YargNativeSortedList<DualTime, DualTime> VocalPhrases_1 { get; } = new();
+        public YargNativeSortedList<DualTime, DualTime> VocalPhrases_2 { get; } = new();
+        public YargNativeSortedList<DualTime, DualTime> HarmonyLines { get; } = new();
+        public YargNativeSortedList<DualTime, DualTime> RangeShifts { get; } = new();
+        public YargNativeSortedList<DualTime, DualTime> Overdrives { get; } = new();
+        public YargNativeList<DualTime> LyricShifts { get; } = new();
+        public YargManagedSortedList<DualTime, HashSet<string>> Events { get; } = new();
 
         /// <summary>
         /// Returns the vocal part (lyrics and notes) for the specified index
