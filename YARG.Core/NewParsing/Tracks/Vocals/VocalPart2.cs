@@ -8,8 +8,8 @@ namespace YARG.Core.NewParsing
     /// </summary>
     public class VocalPart2 : IDisposable
     {
-        public YARGNativeSortedList<DualTime, VocalNote2> Notes { get; } = new();
-        public YARGManagedSortedList<DualTime, NonNullString> Lyrics { get; } = new();
+        public YargNativeSortedList<DualTime, VocalNote2> Notes { get; } = new();
+        public YargManagedSortedList<DualTime, NonNullString> Lyrics { get; } = new();
 
         public bool IsEmpty()
         {
