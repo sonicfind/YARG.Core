@@ -7,8 +7,8 @@ namespace YARG.Core.NewParsing
     public class ProKeysInstrumentTrack : ITrack, IEnumerable<ProKeysDifficultyTrack>
     {
         private readonly ProKeysDifficultyTrack[] _difficulties = new ProKeysDifficultyTrack[InstrumentTrack2.NUM_DIFFICULTIES];
-        public YARGNativeSortedList<DualTime, DualTime> Glissandos { get; }
-        public YARGManagedSortedList<DualTime, HashSet<string>> Events { get; }
+        public YargNativeSortedList<DualTime, DualTime> Glissandos { get; }
+        public YargManagedSortedList<DualTime, HashSet<string>> Events { get; }
 
         public ProKeysDifficultyTrack this[int index] => _difficulties[index];
 

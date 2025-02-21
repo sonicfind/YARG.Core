@@ -22,10 +22,10 @@ namespace YARG.Core.NewParsing.Midi
                 return false;
             }
 
-            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
-            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
-            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
-            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
+            using var overdrives = new YargNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YargNativeSortedList<DualTime, DualTime>();
+            using var trills = new YargNativeSortedList<DualTime, DualTime>();
+            using var bres = new YargNativeSortedList<DualTime, DualTime>();
 
             // We do this on the commonality that most charts do not exceed this number of notes.
             // Helps keep reallocations to a minimum.

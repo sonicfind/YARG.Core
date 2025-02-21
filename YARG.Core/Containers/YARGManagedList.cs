@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace YARG.Core.Containers
 {
     [DebuggerDisplay("Count: {_count}")]
-    public class YARGManagedList<T> : IEnumerable<T>, IDisposable
+    public class YargManagedList<T> : IEnumerable<T>, IDisposable
         where T : new()
     {
         protected T[] _buffer;
@@ -72,14 +72,14 @@ namespace YARG.Core.Containers
             }
         }
 
-        public YARGManagedList()
+        public YargManagedList()
         {
             _buffer = Array.Empty<T>();
             _count = 0;
             _version = 0;
         }
 
-        public YARGManagedList(YARGManagedList<T> source)
+        public YargManagedList(YargManagedList<T> source)
         {
             _buffer = new T[source._count];
             _count = source._count;
@@ -87,7 +87,7 @@ namespace YARG.Core.Containers
             Array.Copy(source._buffer, _buffer, _count);
         }
 
-        public void CopyFrom(YARGManagedList<T> source)
+        public void CopyFrom(YargManagedList<T> source)
         {
             if (source._count > _buffer.Length)
             {
@@ -110,7 +110,7 @@ namespace YARG.Core.Containers
             _version++;
         }
 
-        public YARGManagedList<T> MoveFrom(YARGManagedList<T> source)
+        public YargManagedList<T> MoveFrom(YargManagedList<T> source)
         {
             for (int i = 0; i < _count; ++i)
             {
@@ -310,11 +310,11 @@ namespace YARG.Core.Containers
 
         public struct Enumerator : IEnumerator<T>, IEnumerator
         {
-            private readonly YARGManagedList<T> _map;
+            private readonly YargManagedList<T> _map;
             private int _index;
             private readonly int _version;
 
-            internal Enumerator(YARGManagedList<T> map)
+            internal Enumerator(YargManagedList<T> map)
             {
                 _map = map;
                 _index = -1;
