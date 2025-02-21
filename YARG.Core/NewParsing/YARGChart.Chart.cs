@@ -426,7 +426,7 @@ namespace YARG.Core.NewParsing
             return true;
         }
 
-        private static void AddSpecialPhrase(YARGNativeSortedList<DualTime, DualTime> phrases, in DualTime position, in DualTime duration)
+        private static void AddSpecialPhrase(YargNativeSortedList<DualTime, DualTime> phrases, in DualTime position, in DualTime duration)
         {
             if (phrases.Count > 0)
             {

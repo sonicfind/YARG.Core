@@ -27,7 +27,7 @@ namespace YARG.Core.NewParsing
         where TNote : unmanaged, IInstrumentNote
     {
         private readonly DifficultyTrack2<TNote>[] _difficulties = new DifficultyTrack2<TNote>[InstrumentTrack2.NUM_DIFFICULTIES];
-        public YARGManagedSortedList<DualTime, HashSet<string>> Events { get; }
+        public YargManagedSortedList<DualTime, HashSet<string>> Events { get; }
 
         public DifficultyTrack2<TNote> this[int index] => _difficulties[index];
         public DifficultyTrack2<TNote> this[Difficulty difficulty] => _difficulties[InstrumentTrack2.DifficultyToIndex(difficulty)];

@@ -32,11 +32,11 @@ namespace YARG.Core.NewParsing.Midi
                 return;
             }
 
-            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
-            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
-            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
-            using var tremolos = new YARGNativeSortedList<DualTime, DualTime>();
-            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
+            using var overdrives = new YargNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YargNativeSortedList<DualTime, DualTime>();
+            using var trills = new YargNativeSortedList<DualTime, DualTime>();
+            using var tremolos = new YargNativeSortedList<DualTime, DualTime>();
+            using var bres = new YargNativeSortedList<DualTime, DualTime>();
 
             const int NUM_LANES = 6;
             const int DOUBLEKICK_LANE = 5;
@@ -400,11 +400,11 @@ namespace YARG.Core.NewParsing.Midi
                 return;
             }
 
-            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
-            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
-            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
-            using var tremolos = new YARGNativeSortedList<DualTime, DualTime>();
-            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
+            using var overdrives = new YargNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YargNativeSortedList<DualTime, DualTime>();
+            using var trills = new YargNativeSortedList<DualTime, DualTime>();
+            using var tremolos = new YargNativeSortedList<DualTime, DualTime>();
+            using var bres = new YargNativeSortedList<DualTime, DualTime>();
 
             const int NUM_LANES = 6;
             // Per-difficulty tracker of note positions
@@ -703,11 +703,11 @@ namespace YARG.Core.NewParsing.Midi
         public static unsafe InstrumentTrack2<UnknownLaneDrums> LoadUnknownDrums(YARGMidiTrack midiTrack, ref TempoTracker tempoTracker, ref DrumsType drumsType)
         {
             var instrumentTrack = new InstrumentTrack2<UnknownLaneDrums>();
-            using var overdrives = new YARGNativeSortedList<DualTime, DualTime>();
-            using var soloes = new YARGNativeSortedList<DualTime, DualTime>();
-            using var trills = new YARGNativeSortedList<DualTime, DualTime>();
-            using var tremolos = new YARGNativeSortedList<DualTime, DualTime>();
-            using var bres = new YARGNativeSortedList<DualTime, DualTime>();
+            using var overdrives = new YargNativeSortedList<DualTime, DualTime>();
+            using var soloes = new YargNativeSortedList<DualTime, DualTime>();
+            using var trills = new YargNativeSortedList<DualTime, DualTime>();
+            using var tremolos = new YargNativeSortedList<DualTime, DualTime>();
+            using var bres = new YargNativeSortedList<DualTime, DualTime>();
 
             const int MAX_LANES = 6;
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * MAX_LANES]
