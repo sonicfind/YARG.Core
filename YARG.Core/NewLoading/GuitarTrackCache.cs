@@ -58,7 +58,8 @@ namespace YARG.Core.NewLoading
             Solos.Dispose();
         }
 
-        public static GuitarTrackCache Create(YARGChart chart, InstrumentTrack2<GuitarNote<FiveFret>> instrument, in DualTime chartEndTime, in InstrumentSelection selection)
+        public static GuitarTrackCache Create<TConfig>(YARGChart chart, InstrumentTrack2<GuitarNote<TConfig>> instrument, in DualTime chartEndTime, in InstrumentSelection selection)
+            where TConfig : unmanaged, IGuitarConfig<TConfig>
         {
             var track = instrument[selection.Difficulty];
             var cache = new GuitarTrackCache();
@@ -67,7 +68,6 @@ namespace YARG.Core.NewLoading
             cache.Overdrives.Capacity = track.Overdrives.Count;
             cache.Solos.Capacity      = track.Solos.Count;
 
-            const uint NUM_LANES = 6;
             const uint OPEN_NOTE = 0;
             bool useLeftyFlip = selection.Modifiers.Has(Modifier.LeftyFlip);
             long overdriveIndex = 0;
@@ -124,15 +124,16 @@ namespace YARG.Core.NewLoading
                         soloIndex++;
                     }
 
-                    for (uint index = 0; index < NUM_LANES; index++)
+                    var frets = (DualTime*)&note->Value.Lanes;
+                    for (uint index = 0; index < IGuitarConfig<TConfig>.MAX_LANES; index++)
                     {
-                        var fret = (&note->Value.Lanes.Open)[index];
+                        var fret = frets[index];
                         if (!fret.IsActive())
                         {
                             continue;
                         }
 
-                        uint lane = !useLeftyFlip || index == OPEN_NOTE ? index : NUM_LANES - index;
+                        uint lane = !useLeftyFlip || index == OPEN_NOTE ? index : IGuitarConfig<TConfig>.MAX_LANES - index;
                         var sustain = DualTime.Truncate(fret, chart.Settings.SustainCutoffThreshold);
                         if (sustain.Ticks > 1)
                         {
