@@ -44,7 +44,7 @@ namespace YARG.Core.NewParsing.Midi
             }
 
             using var overdrives = new YargNativeSortedList<DualTime, DualTime>();
-            using var soloes = new YargNativeSortedList<DualTime, DualTime>();
+            using var solos = new YargNativeSortedList<DualTime, DualTime>();
             using var trills = new YargNativeSortedList<DualTime, DualTime>();
             using var tremolos = new YargNativeSortedList<DualTime, DualTime>();
             using var bres = new YargNativeSortedList<DualTime, DualTime>();
@@ -60,7 +60,7 @@ namespace YARG.Core.NewParsing.Midi
             // Note: the 13s account for the -1 offset of the minimum note value
             //
             // Note 2: If we're using the alternate overdrive note, then the file is most likely tailored for GH1/2.
-            // Therefore, we need to alter the index meant for soloes to the difficulty-based SP index (8->12)
+            // Therefore, we need to alter the index meant for solos to the difficulty-based SP index (8->12)
             var laneIndices = stackalloc int[InstrumentTrack2.NUM_DIFFICULTIES * MidiLoader_Constants.NOTES_PER_DIFFICULTY]
             {
                 13, 1, 2, 3, 4, 5, HOPO_ON_INDEX, HOPO_OFF_INDEX, (_useAlternateOverdrive ? OVERDIVE_DIFFICULTY_INDEX : SP_SOLO_INDEX), TAP_INDEX, FACEOFF_1_INDEX, FACEOFF_2_INDEX,
@@ -187,13 +187,13 @@ namespace YARG.Core.NewParsing.Midi
                                         // difficulty-based star power phrases. So we need to...
 
                                         // 1. convert all prior added solo phrases to expert star power phrases,
-                                        instrumentTrack.Expert.Overdrives.MoveFrom(soloes);
+                                        instrumentTrack.Expert.Overdrives.MoveFrom(solos);
 
                                         // 2. remove and disallow any track-wise star power phrases (as 116 becomes invalid),
                                         overdrives.Clear();
                                         _useAlternateOverdrive = true;
 
-                                        // 3. map Index 8 for soloes to index 12 for difficulty-based star power,
+                                        // 3. map Index 8 for solos to index 12 for difficulty-based star power,
                                         laneIndices[SP_SOLO_INDEX] = OVERDIVE_DIFFICULTY_INDEX;
                                         laneIndices[MidiLoader_Constants.NOTES_PER_DIFFICULTY + SP_SOLO_INDEX] = OVERDIVE_DIFFICULTY_INDEX;
                                         laneIndices[2 * MidiLoader_Constants.NOTES_PER_DIFFICULTY + SP_SOLO_INDEX] = OVERDIVE_DIFFICULTY_INDEX;
@@ -318,7 +318,7 @@ namespace YARG.Core.NewParsing.Midi
                                         {
                                             if (soloPosition.Ticks > -1)
                                             {
-                                                soloes.Add(in soloPosition, position - soloPosition);
+                                                solos.Add(in soloPosition, position - soloPosition);
                                                 soloPosition.Ticks = -1;
                                             }
                                         }
@@ -555,12 +555,12 @@ namespace YARG.Core.NewParsing.Midi
                 {
                     diff.Overdrives.CopyFrom(overdrives);
                 }
-                diff.Soloes.CopyFrom(soloes);
+                diff.Solos.CopyFrom(solos);
                 diff.BREs.CopyFrom(bres);
                 diff.Tremolos.CopyFrom(tremolos);
                 diff.Trills.CopyFrom(trills);
-                diff.Faceoff_Player1.MoveFrom(faceoff_P1);
-                diff.Faceoff_Player2.MoveFrom(faceoff_P2);
+                diff.FaceOffPlayer1.MoveFrom(faceoff_P1);
+                diff.FaceOffPlayer2.MoveFrom(faceoff_P2);
             }
         }
     }

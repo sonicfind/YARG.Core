@@ -23,7 +23,7 @@ namespace YARG.Core.NewParsing.Midi
             }
 
             using var overdrives = new YargNativeSortedList<DualTime, DualTime>();
-            using var soloes = new YargNativeSortedList<DualTime, DualTime>();
+            using var solos = new YargNativeSortedList<DualTime, DualTime>();
             using var trills = new YargNativeSortedList<DualTime, DualTime>();
             using var bres = new YargNativeSortedList<DualTime, DualTime>();
 
@@ -130,7 +130,7 @@ namespace YARG.Core.NewParsing.Midi
                                 case SOLO_MIDI:
                                     if (soloPosition.Ticks > -1)
                                     {
-                                        soloes.Add(in soloPosition, position - soloPosition);
+                                        solos.Add(in soloPosition, position - soloPosition);
                                         soloPosition.Ticks = -1;
                                     }
                                     break;
@@ -177,7 +177,7 @@ namespace YARG.Core.NewParsing.Midi
                 foreach (var diff in instrumentTrack)
                 {
                     diff.Overdrives.CopyFrom(overdrives);
-                    diff.Soloes.CopyFrom(soloes);
+                    diff.Soloes.CopyFrom(solos);
                     diff.BREs.CopyFrom(bres);
                     diff.Trills.CopyFrom(trills);
                 }
