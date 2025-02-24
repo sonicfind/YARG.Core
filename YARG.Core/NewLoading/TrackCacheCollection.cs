@@ -37,20 +37,24 @@ namespace YARG.Core.NewLoading
             _guitar = new Dictionary<InstrumentSelection, GuitarTrackCache>();
         }
 
-        public GuitarTrackCache GetFiveFretCache(in InstrumentSelection selection)
+        public GuitarTrackCache GetGuitarTrackCache(in InstrumentSelection selection)
         {
             if (!_guitar.TryGetValue(selection, out var guitarCache))
             {
-                var instrument = selection.Instrument switch
+                guitarCache = selection.Instrument switch
                 {
-                    Instrument.FiveFretGuitar => _chart.FiveFretGuitar,
-                    Instrument.FiveFretBass => _chart.FiveFretBass,
-                    Instrument.FiveFretRhythm => _chart.FiveFretRhythm,
-                    Instrument.FiveFretCoopGuitar => _chart.FiveFretCoopGuitar,
-                    Instrument.Keys => _chart.Keys,
+                    Instrument.FiveFretGuitar     => GuitarTrackCache.Create(_chart, _chart.FiveFretGuitar,     in _endTime, in selection),
+                    Instrument.FiveFretBass       => GuitarTrackCache.Create(_chart, _chart.FiveFretBass,       in _endTime, in selection),
+                    Instrument.FiveFretRhythm     => GuitarTrackCache.Create(_chart, _chart.FiveFretRhythm,     in _endTime, in selection),
+                    Instrument.FiveFretCoopGuitar => GuitarTrackCache.Create(_chart, _chart.FiveFretCoopGuitar, in _endTime, in selection),
+                    Instrument.Keys               => GuitarTrackCache.Create(_chart, _chart.Keys,               in _endTime, in selection),
+                    Instrument.SixFretGuitar      => GuitarTrackCache.Create(_chart, _chart.SixFretGuitar,      in _endTime, in selection),
+                    Instrument.SixFretBass        => GuitarTrackCache.Create(_chart, _chart.SixFretBass,        in _endTime, in selection),
+                    Instrument.SixFretRhythm      => GuitarTrackCache.Create(_chart, _chart.SixFretRhythm,      in _endTime, in selection),
+                    Instrument.SixFretCoopGuitar  => GuitarTrackCache.Create(_chart, _chart.SixFretCoopGuitar,  in _endTime, in selection),
                     _ => throw new InvalidOperationException("Incompatible instrument for guitar")
                 };
-                _guitar.Add(selection, guitarCache = GuitarTrackCache.Create(_chart, instrument, in _endTime, in selection));
+                _guitar.Add(selection, guitarCache);
             }
             return new GuitarTrackCache(guitarCache);
         }
