@@ -142,7 +142,7 @@ namespace YARG.Core.NewLoading
         {
             while (phraseIndex < trackPhrases.Count)
             {
-                ref var overdrive = ref trackPhrases[phraseIndex];
+                ref readonly var overdrive = ref trackPhrases[phraseIndex];
                 var phraseEndTime = overdrive.Key + overdrive.Value;
                 if (position < phraseEndTime)
                 {
@@ -195,7 +195,7 @@ namespace YARG.Core.NewLoading
                 return !modifiers.Has(Modifier.TapsToHopos) ? GuitarState.Tap : GuitarState.Hopo;
             }
 
-            if (state == GuitarState.Natural || state == GuitarState.Forced)
+            if (state is GuitarState.Natural or GuitarState.Forced)
             {
                 var naturalState = GuitarState.Strum;
                 if (!IsChord(laneMask) && groups.Count > 0)
