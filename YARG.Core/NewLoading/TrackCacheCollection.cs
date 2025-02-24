@@ -1,29 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using YARG.Core.Game;
 using YARG.Core.NewParsing;
 
 namespace YARG.Core.NewLoading
 {
-    public struct InstrumentSelection : IEquatable<InstrumentSelection>
-    {
-        public Instrument Instrument;
-        public Difficulty Difficulty;
-        public Modifier Modifiers;
-
-        public readonly override int GetHashCode()
-        {
-            return Instrument.GetHashCode() ^ Difficulty.GetHashCode() ^ Modifiers.GetHashCode();
-        }
-
-        public readonly bool Equals(InstrumentSelection other)
-        {
-            return Instrument == other.Instrument &&
-                   Difficulty == other.Difficulty &&
-                   Modifiers  == other.Modifiers;
-        }
-    }
-
     public class TrackCacheCollection : IDisposable
     {
         private readonly YARGChart _chart;
