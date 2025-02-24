@@ -43,12 +43,14 @@ namespace YARG.Core.NewParsing
 
         public bool Add(int binary, in DualTime length)
         {
-            return binary != 0 && VALIDATOR.ValidateBinary(binary) && AddNote(binary, in length);
+            return VALIDATOR.ValidateBinary(binary)
+                && AddNote(binary, in length);
         }
 
         public bool Add(int octave, PitchName pitch, in DualTime length)
         {
-            return VALIDATOR.ValidateOctaveAndPitch(octave, pitch, out int binary) && binary != 0 && AddNote(binary, in length);
+            return VALIDATOR.ValidateOctaveAndPitch(octave, pitch, out int binary)
+                && AddNote(binary, in length);
         }
 
         public bool Remove(int pitch)
@@ -147,6 +149,11 @@ namespace YARG.Core.NewParsing
 
         private bool AddNote(int binary, in DualTime length)
         {
+            if (binary == 0)
+            {
+                return false;
+            }
+
             if (Key1.Pitch == binary
             ||  Key2.Pitch == binary
             ||  Key3.Pitch == binary
