@@ -341,7 +341,7 @@ namespace YARG.Core.NewParsing
             }
             difficultyTrack.Notes.Capacity = 5000;
 
-            // Keeps tracks of soloes that start on the same tick when another solo ends
+            // Keeps tracks of solos that start on the same tick when another solo ends
             var soloPosition = DualTime.Inactive;
             var nextSoloPosition = DualTime.Inactive;
 
@@ -370,8 +370,8 @@ namespace YARG.Core.NewParsing
                             var (lane, duration) = YARGChartFileReader.ExtractLaneAndDuration(ref container, in position, in tempoTracker);
                             switch ((SpecialPhraseType) lane)
                             {
-                                case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(difficultyTrack.Faceoff_Player1, in position, in duration); break;
-                                case SpecialPhraseType.FaceOff_Player2: AddSpecialPhrase(difficultyTrack.Faceoff_Player2, in position, in duration); break;
+                                case SpecialPhraseType.FaceOff_Player1: AddSpecialPhrase(difficultyTrack.FaceOffPlayer1, in position, in duration); break;
+                                case SpecialPhraseType.FaceOff_Player2: AddSpecialPhrase(difficultyTrack.FaceOffPlayer2, in position, in duration); break;
                                 case SpecialPhraseType.StarPower:       AddSpecialPhrase(difficultyTrack.Overdrives,      in position, in duration); break;
                                 case SpecialPhraseType.BRE:             AddSpecialPhrase(difficultyTrack.BREs,            in position, in duration); break;
                                 case SpecialPhraseType.Tremolo:         AddSpecialPhrase(difficultyTrack.Tremolos,        in position, in duration); break;
@@ -405,18 +405,18 @@ namespace YARG.Core.NewParsing
                                 {
                                     ++position.Ticks;
                                     position.Seconds = tempoTracker.UnmovingConvert(position.Ticks);
-                                    difficultyTrack.Soloes.Add(in soloPosition, position - soloPosition);
+                                    difficultyTrack.Solos.Add(in soloPosition, position - soloPosition);
                                     soloPosition = DualTime.Inactive;
                                 }
                                 else
                                 {
-                                    difficultyTrack.Soloes.Add(in soloPosition, nextSoloPosition - soloPosition);
+                                    difficultyTrack.Solos.Add(in soloPosition, nextSoloPosition - soloPosition);
                                     soloPosition = nextSoloPosition;
                                     nextSoloPosition = DualTime.Inactive;
                                 }
                             }
                         }
-                        else 
+                        else
                         {
                             difficultyTrack.Events.GetLastOrAdd(in position).Add(str);
                         }

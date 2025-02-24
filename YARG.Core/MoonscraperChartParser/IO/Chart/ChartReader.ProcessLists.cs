@@ -204,7 +204,7 @@ namespace MoonscraperChartEditor.Song.IO
         private static void ConvertSoloEvents(ref NoteProcessParams noteProcessParams)
         {
             var chart = noteProcessParams.chart;
-            // Keeps tracks of soloes that start on the same tick when another solo ends
+            // Keeps tracks of solos that start on the same tick when another solo ends
             uint startTick = uint.MaxValue;
             uint nextStartTick = uint.MaxValue;
             for (int i = 0; i < chart.events.Count; ++i)

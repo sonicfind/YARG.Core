@@ -55,12 +55,12 @@ namespace YARG.Core.NewParsing
             }
             source.Notes.Dispose();
             destination.Overdrives.MoveFrom(source.Overdrives);
-            destination.Soloes.MoveFrom(source.Soloes);
+            destination.Solos.MoveFrom(source.Solos);
             destination.Trills.MoveFrom(source.Trills);
             destination.Tremolos.MoveFrom(source.Tremolos);
             destination.BREs.MoveFrom(source.BREs);
-            destination.Faceoff_Player1.MoveFrom(source.Faceoff_Player1);
-            destination.Faceoff_Player2.MoveFrom(source.Faceoff_Player2);
+            destination.FaceOffPlayer1.MoveFrom(source.FaceOffPlayer1);
+            destination.FaceOffPlayer2.MoveFrom(source.FaceOffPlayer2);
             destination.Events.MoveFrom(source.Events);
         }
 
@@ -89,12 +89,12 @@ namespace YARG.Core.NewParsing
             }
             source.Notes.Dispose();
             destination.Overdrives.MoveFrom(source.Overdrives);
-            destination.Soloes.MoveFrom(source.Soloes);
+            destination.Solos.MoveFrom(source.Solos);
             destination.Trills.MoveFrom(source.Trills);
             destination.Tremolos.MoveFrom(source.Tremolos);
             destination.BREs.MoveFrom(source.BREs);
-            destination.Faceoff_Player1.MoveFrom(source.Faceoff_Player1);
-            destination.Faceoff_Player2.MoveFrom(source.Faceoff_Player2);
+            destination.FaceOffPlayer1.MoveFrom(source.FaceOffPlayer1);
+            destination.FaceOffPlayer2.MoveFrom(source.FaceOffPlayer2);
             destination.Events.MoveFrom(source.Events);
         }
     }

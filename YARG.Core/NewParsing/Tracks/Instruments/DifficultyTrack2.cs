@@ -8,51 +8,51 @@ namespace YARG.Core.NewParsing
     {
         public YargNativeSortedList<DualTime, TNote> Notes { get; }
         public YargNativeSortedList<DualTime, DualTime> Overdrives { get; }
-        public YargNativeSortedList<DualTime, DualTime> Soloes { get; }
+        public YargNativeSortedList<DualTime, DualTime> Solos { get; }
         public YargNativeSortedList<DualTime, DualTime> Trills { get; }
         public YargNativeSortedList<DualTime, DualTime> Tremolos { get; }
         public YargNativeSortedList<DualTime, DualTime> BREs { get; }
-        public YargNativeSortedList<DualTime, DualTime> Faceoff_Player1 { get; }
-        public YargNativeSortedList<DualTime, DualTime> Faceoff_Player2 { get; }
+        public YargNativeSortedList<DualTime, DualTime> FaceOffPlayer1 { get; }
+        public YargNativeSortedList<DualTime, DualTime> FaceOffPlayer2 { get; }
         public YargManagedSortedList<DualTime, HashSet<string>> Events { get; }
 
         public DifficultyTrack2()
         {
-            Notes = new();
-            Overdrives = new();
-            Soloes = new();
-            Trills = new();
-            Tremolos = new();
-            BREs = new();
-            Faceoff_Player1 = new();
-            Faceoff_Player2 = new();
-            Events = new();
+            Notes          = new YargNativeSortedList<DualTime, TNote>();
+            Overdrives     = new YargNativeSortedList<DualTime, DualTime>();
+            Solos          = new YargNativeSortedList<DualTime, DualTime>();
+            Trills         = new YargNativeSortedList<DualTime, DualTime>();
+            Tremolos       = new YargNativeSortedList<DualTime, DualTime>();
+            BREs           = new YargNativeSortedList<DualTime, DualTime>();
+            FaceOffPlayer1 = new YargNativeSortedList<DualTime, DualTime>();
+            FaceOffPlayer2 = new YargNativeSortedList<DualTime, DualTime>();
+            Events         = new YargManagedSortedList<DualTime, HashSet<string>>();
         }
 
         public DifficultyTrack2(DifficultyTrack2<TNote> source)
         {
-            Notes           = new(source.Notes);
-            Overdrives      = new(source.Overdrives);
-            Soloes          = new(source.Soloes);
-            Trills          = new(source.Trills);
-            Tremolos        = new(source.Tremolos);
-            BREs            = new(source.BREs);
-            Faceoff_Player1 = new(source.Faceoff_Player1);
-            Faceoff_Player2 = new(source.Faceoff_Player2);
-            Events          = new(source.Events);
+            Notes          = new YargNativeSortedList<DualTime, TNote>(source.Notes);
+            Overdrives     = new YargNativeSortedList<DualTime, DualTime>(source.Overdrives);
+            Solos          = new YargNativeSortedList<DualTime, DualTime>(source.Solos);
+            Trills         = new YargNativeSortedList<DualTime, DualTime>(source.Trills);
+            Tremolos       = new YargNativeSortedList<DualTime, DualTime>(source.Tremolos);
+            BREs           = new YargNativeSortedList<DualTime, DualTime>(source.BREs);
+            FaceOffPlayer1 = new YargNativeSortedList<DualTime, DualTime>(source.FaceOffPlayer1);
+            FaceOffPlayer2 = new YargNativeSortedList<DualTime, DualTime>(source.FaceOffPlayer2);
+            Events         = new YargManagedSortedList<DualTime, HashSet<string>>(source.Events);
         }
 
         public void CopyFrom(DifficultyTrack2<TNote> source)
         {
-            Notes.CopyFrom(source.Notes);
-            Overdrives.CopyFrom(source.Overdrives);
-            Soloes.CopyFrom(source.Soloes);
-            Trills.CopyFrom(source.Trills);
-            Tremolos.CopyFrom(source.Tremolos);
-            BREs.CopyFrom(source.BREs);
-            Faceoff_Player1.CopyFrom(source.Faceoff_Player1);
-            Faceoff_Player2.CopyFrom(source.Faceoff_Player2);
-            Events.CopyFrom(source.Events);
+            Notes         .CopyFrom(source.Notes);
+            Overdrives    .CopyFrom(source.Overdrives);
+            Solos         .CopyFrom(source.Solos);
+            Trills        .CopyFrom(source.Trills);
+            Tremolos      .CopyFrom(source.Tremolos);
+            BREs          .CopyFrom(source.BREs);
+            FaceOffPlayer1.CopyFrom(source.FaceOffPlayer1);
+            FaceOffPlayer2.CopyFrom(source.FaceOffPlayer2);
+            Events        .CopyFrom(source.Events);
         }
 
         /// <summary>
@@ -63,12 +63,12 @@ namespace YARG.Core.NewParsing
         {
             return Notes.IsEmpty()
                 && Overdrives.IsEmpty()
-                && Soloes.IsEmpty()
+                && Solos.IsEmpty()
                 && Trills.IsEmpty()
                 && Tremolos.IsEmpty()
                 && BREs.IsEmpty()
-                && Faceoff_Player1.IsEmpty()
-                && Faceoff_Player2.IsEmpty()
+                && FaceOffPlayer1.IsEmpty()
+                && FaceOffPlayer2.IsEmpty()
                 && Events.IsEmpty();
         }
 
@@ -79,12 +79,12 @@ namespace YARG.Core.NewParsing
         {
             Notes.Clear();
             Overdrives.Clear();
-            Soloes.Clear();
+            Solos.Clear();
             Trills.Clear();
             Tremolos.Clear();
             BREs.Clear();
-            Faceoff_Player1.Clear();
-            Faceoff_Player2.Clear();
+            FaceOffPlayer1.Clear();
+            FaceOffPlayer2.Clear();
             Events.Clear();
         }
 
@@ -98,12 +98,12 @@ namespace YARG.Core.NewParsing
                 Notes.TrimExcess();
             }
             Overdrives.TrimExcess();
-            Soloes.TrimExcess();
+            Solos.TrimExcess();
             Trills.TrimExcess();
             Tremolos.TrimExcess();
             BREs.TrimExcess();
-            Faceoff_Player1.TrimExcess();
-            Faceoff_Player2.TrimExcess();
+            FaceOffPlayer1.TrimExcess();
+            FaceOffPlayer2.TrimExcess();
             // Trimming managed lists just generates a new array for GC to handle.
             // The exact opposite of what we want.
         }
@@ -125,12 +125,12 @@ namespace YARG.Core.NewParsing
         {
             Notes.Dispose();
             Overdrives.Dispose();
-            Soloes.Dispose();
+            Solos.Dispose();
             Trills.Dispose();
             Tremolos.Dispose();
             BREs.Dispose();
-            Faceoff_Player1.Dispose();
-            Faceoff_Player2.Dispose();
+            FaceOffPlayer1.Dispose();
+            FaceOffPlayer2.Dispose();
             Events.Dispose();
         }
     }
