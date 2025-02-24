@@ -5,30 +5,30 @@ using YARG.Core.NewParsing;
 
 namespace YARG.Core.NewLoading
 {
+    public struct GuitarNoteGroup
+    {
+        public uint        LaneMask;
+        public GuitarState State;
+        public long        SustainIndex;
+        public long        SustainCount;
+        public long        OverdriveIndex;
+        public long        SoloIndex;
+    }
+
+    public struct Sustain
+    {
+        public readonly DualTime EndTime;
+        public          uint     LaneMask;
+
+        public Sustain(in DualTime endTime)
+        {
+            EndTime = endTime;
+            LaneMask = 0;
+        }
+    }
+
     public class GuitarTrackCache : IDisposable
     {
-        public struct Sustain
-        {
-            public readonly DualTime EndTime;
-            public          uint     LaneMask;
-
-            public Sustain(in DualTime endTime)
-            {
-                EndTime = endTime;
-                LaneMask = 0;
-            }
-        }
-
-        public struct GuitarNoteGroup
-        {
-            public uint        LaneMask;
-            public GuitarState State;
-            public long        SustainIndex;
-            public long        SustainCount;
-            public long        OverdriveIndex;
-            public long        SoloIndex;
-        }
-
         public YargNativeSortedList<DualTime, GuitarNoteGroup> NoteGroups { get; }
         public YargNativeSortedList<DualTime, HittablePhrase>  Overdrives { get; }
         public YargNativeSortedList<DualTime, HittablePhrase>  Solos { get; }
@@ -38,16 +38,16 @@ namespace YARG.Core.NewLoading
         {
             NoteGroups = new YargNativeSortedList<DualTime, GuitarNoteGroup>(source.NoteGroups);
             Overdrives = new YargNativeSortedList<DualTime, HittablePhrase>(source.Overdrives);
-            Solos = new YargNativeSortedList<DualTime, HittablePhrase>(source.Solos);
-            Sustains = new YargNativeList<Sustain>(source.Sustains);
+            Solos      = new YargNativeSortedList<DualTime, HittablePhrase>(source.Solos);
+            Sustains   = new YargNativeList<Sustain>(source.Sustains);
         }
 
         private GuitarTrackCache()
         {
             NoteGroups = new YargNativeSortedList<DualTime, GuitarNoteGroup>();
             Overdrives = new YargNativeSortedList<DualTime, HittablePhrase>();
-            Solos = new YargNativeSortedList<DualTime, HittablePhrase>();
-            Sustains = new YargNativeList<Sustain>();
+            Solos      = new YargNativeSortedList<DualTime, HittablePhrase>();
+            Sustains   = new YargNativeList<Sustain>();
         }
 
         public void Dispose()
