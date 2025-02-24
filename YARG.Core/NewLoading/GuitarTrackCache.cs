@@ -30,9 +30,9 @@ namespace YARG.Core.NewLoading
     public class GuitarTrackCache : IDisposable
     {
         public YargNativeSortedList<DualTime, GuitarNoteGroup> NoteGroups { get; }
+        public YargNativeList<Sustain>                         Sustains   { get; }
         public YargNativeSortedList<DualTime, HittablePhrase>  Overdrives { get; }
-        public YargNativeSortedList<DualTime, HittablePhrase>  Solos { get; }
-        public YargNativeList<Sustain> Sustains { get; }
+        public YargNativeSortedList<DualTime, HittablePhrase>  Solos      { get; }
 
         public GuitarTrackCache(GuitarTrackCache source)
         {
