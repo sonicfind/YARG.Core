@@ -33,7 +33,7 @@ namespace YARG.Core.NewParsing.Midi
             0, 4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 11,
         };
 
-        public static unsafe void Load(YARGMidiTrack midiTrack, InstrumentTrack2<SixFretGuitar> instrumentTrack, ref TempoTracker tempoTracker)
+        public static unsafe void Load(YARGMidiTrack midiTrack, InstrumentTrack2<GuitarNote<SixFret>> instrumentTrack, ref TempoTracker tempoTracker)
         {
             if (!instrumentTrack.IsEmpty())
             {
