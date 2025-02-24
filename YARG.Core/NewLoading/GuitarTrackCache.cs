@@ -58,6 +58,7 @@ namespace YARG.Core.NewLoading
             Solos.Dispose();
         }
 
+        private const uint OPEN_NOTE = 0;
         public static GuitarTrackCache Create<TConfig>(YARGChart chart, InstrumentTrack2<GuitarNote<TConfig>> instrument, in DualTime chartEndTime, in InstrumentSelection selection)
             where TConfig : unmanaged, IGuitarConfig<TConfig>
         {
@@ -68,7 +69,6 @@ namespace YARG.Core.NewLoading
             cache.Overdrives.Capacity = track.Overdrives.Count;
             cache.Solos.Capacity      = track.Solos.Count;
 
-            const uint OPEN_NOTE = 0;
             bool useLeftyFlip = selection.Modifiers.Has(Modifier.LeftyFlip);
             long overdriveIndex = 0;
             long soloIndex = 0;
