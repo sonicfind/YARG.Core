@@ -80,49 +80,9 @@ namespace YARG.Core.NewLoading
                     var group = new GuitarNoteGroup
                     {
                         SustainIndex = cache.Sustains.Count,
-                        OverdriveIndex = -1,
-                        SoloIndex = -1
+                        OverdriveIndex = GetPhraseIndex(track.Overdrives, cache.Overdrives, in note->Key, ref overdriveIndex),
+                        SoloIndex = GetPhraseIndex(track.Solos, cache.Solos, in note->Key, ref soloIndex),
                     };
-
-                    while (overdriveIndex < track.Overdrives.Count)
-                    {
-                        ref var overdrive = ref track.Overdrives[overdriveIndex];
-                        var phraseEndTime = overdrive.Key + overdrive.Value;
-                        if (note->Key < phraseEndTime)
-                        {
-                            if (note->Key >= overdrive.Key)
-                            {
-                                group.OverdriveIndex = overdriveIndex;
-                                if (cache.Overdrives.GetLastOrAdd(overdrive.Key, out var phrase))
-                                {
-                                    phrase->EndTime = phraseEndTime;
-                                }
-                                phrase->TotalNotes++;
-                            }
-                            break;
-                        }
-                        overdriveIndex++;
-                    }
-
-                    while (soloIndex < track.Overdrives.Count)
-                    {
-                        ref var solo = ref track.Solos[soloIndex];
-                        var phraseEndTime = solo.Key + solo.Value;
-                        if (note->Key < solo.Key + solo.Value)
-                        {
-                            if (note->Key >= solo.Key)
-                            {
-                                group.SoloIndex = soloIndex;
-                                if (cache.Overdrives.GetLastOrAdd(solo.Key, out var phrase))
-                                {
-                                    phrase->EndTime = phraseEndTime;
-                                }
-                                phrase->TotalNotes++;
-                            }
-                            break;
-                        }
-                        soloIndex++;
-                    }
 
                     var frets = (DualTime*)&note->Value.Lanes;
                     for (uint index = 0; index < IGuitarConfig<TConfig>.MAX_LANES; index++)
@@ -172,6 +132,39 @@ namespace YARG.Core.NewLoading
             cache.Solos.TrimExcess();
             return cache;
         }
+
+        private static long GetPhraseIndex(
+            YargNativeSortedList<DualTime, DualTime> trackPhrases,
+            YargNativeSortedList<DualTime, HittablePhrase> cachePhrases,
+            in DualTime position,
+            ref long phraseIndex
+        )
+        {
+            while (phraseIndex < trackPhrases.Count)
+            {
+                ref var overdrive = ref trackPhrases[phraseIndex];
+                var phraseEndTime = overdrive.Key + overdrive.Value;
+                if (position < phraseEndTime)
+                {
+                    if (position >= overdrive.Key)
+                    {
+                        unsafe
+                        {
+                            if (cachePhrases.GetLastOrAdd(overdrive.Key, out var phrase))
+                            {
+                                phrase->EndTime = phraseEndTime;
+                            }
+                            phrase->TotalNotes++;
+                        }
+                        return phraseIndex;
+                    }
+                    break;
+                }
+                phraseIndex++;
+            }
+            return -1;
+        }
+
 
         private static GuitarState ParseGuitarState(
             Modifier modifiers,
