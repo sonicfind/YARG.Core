@@ -36,7 +36,7 @@ namespace YARG.Core.NewParsing.Midi
 
         private static readonly byte[][] ENHANCED_STRINGS = new byte[][] { Encoding.ASCII.GetBytes("[ENHANCED_OPENS]"), Encoding.ASCII.GetBytes("ENHANCED_OPENS") };
 
-        public static unsafe void Load(YARGMidiTrack midiTrack, InstrumentTrack2<FiveFretGuitar> instrumentTrack, ref TempoTracker tempoTracker)
+        public static unsafe void Load(YARGMidiTrack midiTrack, InstrumentTrack2<GuitarNote<FiveFret>> instrumentTrack, ref TempoTracker tempoTracker)
         {
             if (!instrumentTrack.IsEmpty())
             {

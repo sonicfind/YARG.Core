@@ -23,16 +23,16 @@ namespace YARG.Core.NewParsing
         public string MidiSequenceName = string.Empty;
         public IniModifierCollection? Miscellaneous { get; }
 
-        private InstrumentTrack2<FiveFretGuitar>? _fiveFretGuitar;
-        private InstrumentTrack2<FiveFretGuitar>? _fiveFretBass;
-        private InstrumentTrack2<FiveFretGuitar>? _fiveFretRhythm;
-        private InstrumentTrack2<FiveFretGuitar>? _fiveFretCoopGuitar;
-        private InstrumentTrack2<FiveFretGuitar>? _keys;
+        private InstrumentTrack2<GuitarNote<FiveFret>>? _fiveFretGuitar;
+        private InstrumentTrack2<GuitarNote<FiveFret>>? _fiveFretBass;
+        private InstrumentTrack2<GuitarNote<FiveFret>>? _fiveFretRhythm;
+        private InstrumentTrack2<GuitarNote<FiveFret>>? _fiveFretCoopGuitar;
+        private InstrumentTrack2<GuitarNote<FiveFret>>? _keys;
 
-        private InstrumentTrack2<SixFretGuitar>? _sixFretGuitar;
-        private InstrumentTrack2<SixFretGuitar>? _sixFretBass;
-        private InstrumentTrack2<SixFretGuitar>? _sixFretRhythm;
-        private InstrumentTrack2<SixFretGuitar>? _sixFretCoopGuitar;
+        private InstrumentTrack2<GuitarNote<SixFret>>? _sixFretGuitar;
+        private InstrumentTrack2<GuitarNote<SixFret>>? _sixFretBass;
+        private InstrumentTrack2<GuitarNote<SixFret>>? _sixFretRhythm;
+        private InstrumentTrack2<GuitarNote<SixFret>>? _sixFretCoopGuitar;
 
         private InstrumentTrack2<FourLaneDrums>? _fourLaneDrums;
         private InstrumentTrack2<FiveLaneDrums>? _fiveLaneDrums;
@@ -49,55 +49,55 @@ namespace YARG.Core.NewParsing
         private VocalsTrack2? _leadVocals;
         private VocalsTrack2? _harmonyVocals;
 
-        public InstrumentTrack2<FiveFretGuitar> FiveFretGuitar
+        public InstrumentTrack2<GuitarNote<FiveFret>> FiveFretGuitar
         {
             get => _fiveFretGuitar ??= new();
             private set => _fiveFretGuitar = value;
         }
 
-        public InstrumentTrack2<FiveFretGuitar> FiveFretBass
+        public InstrumentTrack2<GuitarNote<FiveFret>> FiveFretBass
         {
             get => _fiveFretBass ??= new();
             private set => _fiveFretBass = value;
         }
 
-        public InstrumentTrack2<FiveFretGuitar> FiveFretRhythm
+        public InstrumentTrack2<GuitarNote<FiveFret>> FiveFretRhythm
         {
             get => _fiveFretRhythm ??= new();
             private set => _fiveFretRhythm = value;
         }
 
-        public InstrumentTrack2<FiveFretGuitar> FiveFretCoopGuitar
+        public InstrumentTrack2<GuitarNote<FiveFret>> FiveFretCoopGuitar
         {
             get => _fiveFretCoopGuitar ??= new();
             private set => _fiveFretCoopGuitar = value;
         }
 
-        public InstrumentTrack2<FiveFretGuitar> Keys
+        public InstrumentTrack2<GuitarNote<FiveFret>> Keys
         {
             get => _keys ??= new();
             private set => _keys = value;
         }
 
-        public InstrumentTrack2<SixFretGuitar> SixFretGuitar
+        public InstrumentTrack2<GuitarNote<SixFret>> SixFretGuitar
         {
             get => _sixFretGuitar ??= new();
             private set => _sixFretGuitar = value;
         }
 
-        public InstrumentTrack2<SixFretGuitar> SixFretBass
+        public InstrumentTrack2<GuitarNote<SixFret>> SixFretBass
         {
             get => _sixFretBass ??= new();
             private set => _sixFretBass = value;
         }
 
-        public InstrumentTrack2<SixFretGuitar> SixFretRhythm
+        public InstrumentTrack2<GuitarNote<SixFret>> SixFretRhythm
         {
             get => _sixFretRhythm ??= new();
             private set => _sixFretRhythm = value;
         }
 
-        public InstrumentTrack2<SixFretGuitar> SixFretCoopGuitar
+        public InstrumentTrack2<GuitarNote<SixFret>> SixFretCoopGuitar
         {
             get => _sixFretCoopGuitar ??= new();
             private set => _sixFretCoopGuitar = value;
