@@ -446,18 +446,18 @@ namespace YARG.Core.NewParsing
             unsafe bool Set(TNote* note, int lane, in DualTime length);
         }
 
-        private readonly struct FiveFretSetter : IChartLoadable<FiveFretGuitar>
+        private readonly struct FiveFretSetter : IChartLoadable<GuitarNote<FiveFret>>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public unsafe bool Set(FiveFretGuitar* note, int lane, in DualTime length)
+            public unsafe bool Set(GuitarNote<FiveFret>* note, int lane, in DualTime length)
             {
                 switch (lane)
                 {
-                    case 0: note->Green = length; break;
-                    case 1: note->Red = length; break;
-                    case 2: note->Yellow = length; break;
-                    case 3: note->Blue = length; break;
-                    case 4: note->Orange = length; break;
+                    case 0: note->Lanes.Green = length; break;
+                    case 1: note->Lanes.Red = length; break;
+                    case 2: note->Lanes.Yellow = length; break;
+                    case 3: note->Lanes.Blue = length; break;
+                    case 4: note->Lanes.Orange = length; break;
                     case 5:
                         if (note->State == GuitarState.Natural)
                         {
@@ -465,7 +465,7 @@ namespace YARG.Core.NewParsing
                         }
                         break;
                     case 6: note->State = GuitarState.Tap; break;
-                    case 7: note->Open = length; break;
+                    case 7: note->Lanes.Open = length; break;
                     default:
                         return false;
                 }
@@ -473,18 +473,18 @@ namespace YARG.Core.NewParsing
             }
         }
 
-        private readonly struct SixFretSetter : IChartLoadable<SixFretGuitar>
+        private readonly struct SixFretSetter : IChartLoadable<GuitarNote<SixFret>>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public unsafe bool Set(SixFretGuitar* note, int lane, in DualTime length)
+            public unsafe bool Set(GuitarNote<SixFret>* note, int lane, in DualTime length)
             {
                 switch (lane)
                 {
-                    case 0: note->White1 = length; break;
-                    case 1: note->White2 = length; break;
-                    case 2: note->White3 = length; break;
-                    case 3: note->Black1 = length; break;
-                    case 4: note->Black2 = length; break;
+                    case 0: note->Lanes.White1 = length; break;
+                    case 1: note->Lanes.White2 = length; break;
+                    case 2: note->Lanes.White3 = length; break;
+                    case 3: note->Lanes.Black1 = length; break;
+                    case 4: note->Lanes.Black2 = length; break;
                     case 5:
                         if (note->State == GuitarState.Natural)
                         {
@@ -492,8 +492,8 @@ namespace YARG.Core.NewParsing
                         }
                         break;
                     case 6: note->State = GuitarState.Tap; break;
-                    case 7: note->Open = length; break;
-                    case 8: note->Black3 = length; break;
+                    case 7: note->Lanes.Open = length; break;
+                    case 8: note->Lanes.Black3 = length; break;
                     default:
                         return false;
                 }
