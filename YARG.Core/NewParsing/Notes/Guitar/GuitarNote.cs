@@ -11,13 +11,14 @@ namespace YARG.Core.NewParsing
         Tap
     }
 
-    public interface IGuitarConfig : IInstrumentNote
+    public interface IGuitarConfig<TConfig> : IInstrumentNote
+        where TConfig : unmanaged, IGuitarConfig<TConfig>
     {
-        int MAX_LANES { get; }
+        public static readonly unsafe uint MAX_LANES = (uint)(sizeof(TConfig) / sizeof(DualTime));
     }
 
     public struct GuitarNote<TConfig> : IInstrumentNote
-        where TConfig : unmanaged, IGuitarConfig
+        where TConfig : unmanaged, IGuitarConfig<TConfig>
     {
         public TConfig     Lanes;
         public GuitarState State;
