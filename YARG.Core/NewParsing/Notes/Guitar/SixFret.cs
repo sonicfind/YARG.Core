@@ -2,10 +2,8 @@
 
 namespace YARG.Core.NewParsing
 {
-    public struct SixFret : IGuitarConfig
+    public struct SixFret : IGuitarConfig<SixFret>
     {
-        public int MAX_LANES => 7;
-
         public DualTime Open;
         public DualTime Black1;
         public DualTime Black2;

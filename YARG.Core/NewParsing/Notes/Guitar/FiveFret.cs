@@ -2,10 +2,8 @@
 
 namespace YARG.Core.NewParsing
 {
-    public struct FiveFret : IGuitarConfig
+    public struct FiveFret : IGuitarConfig<FiveFret>
     {
-        public int MAX_LANES => 6;
-
         public DualTime Open;
         public DualTime Green;
         public DualTime Red;
