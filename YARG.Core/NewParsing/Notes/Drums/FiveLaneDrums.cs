@@ -5,53 +5,65 @@ namespace YARG.Core.NewParsing
 {
     public struct FiveLaneDrums : IInstrumentNote
     {
-        public DualTime Kick;
-        public DualTime Snare;
-        public DualTime Yellow;
-        public DualTime Blue;
-        public DualTime Orange;
-        public DualTime Green;
-        public DrumDynamics Dynamics_Snare;
-        public DrumDynamics Dynamics_Yellow;
-        public DrumDynamics Dynamics_Blue;
-        public DrumDynamics Dynamics_Orange;
-        public DrumDynamics Dynamics_Green;
-        public KickState KickState;
-        public bool IsFlammed;
+        public static readonly unsafe int NUM_LANES = sizeof(LaneArray) / sizeof(DualTime);
+        public struct LaneArray
+        {
+            public DualTime Kick;
+            public DualTime Snare;
+            public DualTime Yellow;
+            public DualTime Blue;
+            public DualTime Orange;
+            public DualTime Green;
+        }
+
+        public static readonly unsafe int NUM_DYNAMICS = sizeof(DynamicsArray) / sizeof(DrumDynamics);
+        public struct DynamicsArray
+        {
+            public DrumDynamics Snare;
+            public DrumDynamics Yellow;
+            public DrumDynamics Blue;
+            public DrumDynamics Orange;
+            public DrumDynamics Green;
+        }
+
+        public LaneArray     Lanes;
+        public DynamicsArray Dynamics;
+        public KickState     KickState;
+        public bool          IsFlammed;
 
         public readonly int GetNumActiveLanes()
         {
-            int numActive = Kick.IsActive() ? 1 : 0;
-            numActive += Snare  .IsActive() ? 1 : 0;
-            numActive += Yellow .IsActive() ? 1 : 0;
-            numActive += Blue   .IsActive() ? 1 : 0;
-            numActive += Orange .IsActive() ? 1 : 0;
-            numActive += Green  .IsActive() ? 1 : 0;
+            int numActive = Lanes.Kick.IsActive() ? 1 : 0;
+            numActive += Lanes.Snare  .IsActive() ? 1 : 0;
+            numActive += Lanes.Yellow .IsActive() ? 1 : 0;
+            numActive += Lanes.Blue   .IsActive() ? 1 : 0;
+            numActive += Lanes.Orange .IsActive() ? 1 : 0;
+            numActive += Lanes.Green  .IsActive() ? 1 : 0;
             return numActive;
         }
 
         public readonly DualTime GetLongestSustain()
         {
-            var sustain = Kick;
-            if (Snare > sustain)
+            var sustain = Lanes.Kick;
+            if (Lanes.Snare > sustain)
             {
-                sustain = Snare;
+                sustain = Lanes.Snare;
             }
-            if (Yellow > sustain)
+            if (Lanes.Yellow > sustain)
             {
-                sustain = Yellow;
+                sustain = Lanes.Yellow;
             }
-            if (Blue > sustain)
+            if (Lanes.Blue > sustain)
             {
-                sustain = Blue;
+                sustain = Lanes.Blue;
             }
-            if (Orange > sustain)
+            if (Lanes.Orange > sustain)
             {
-                sustain = Orange;
+                sustain = Lanes.Orange;
             }
-            if (Green > sustain)
+            if (Lanes.Green > sustain)
             {
-                sustain = Green;
+                sustain = Lanes.Green;
             }
             return sustain;
         }
@@ -59,59 +71,59 @@ namespace YARG.Core.NewParsing
         public readonly override string ToString()
         {
             StringBuilder builder = new();
-            if (Kick.IsActive())
+            if (Lanes.Kick.IsActive())
             {
                 if (KickState != KickState.PlusOnly)
                 {
-                    builder.Append($"Bass: {Kick.Ticks} | ");
+                    builder.Append($"Bass: {Lanes.Kick.Ticks} | ");
                 }
                 else
                 {
-                    builder.Append($"DoubleBass: {Kick.Ticks} | ");
+                    builder.Append($"DoubleBass: {Lanes.Kick.Ticks} | ");
                 }
             }
-            if (Snare.IsActive())
+            if (Lanes.Snare.IsActive())
             {
-                builder.Append($"Snare: {Snare.Ticks}");
-                if (Dynamics_Snare != DrumDynamics.None)
+                builder.Append($"Snare: {Lanes.Snare.Ticks}");
+                if (Dynamics.Snare != DrumDynamics.None)
                 {
-                    builder.Append($"({Dynamics_Snare})");
-                }
-                builder.Append(" | ");
-            }
-            if (Yellow.IsActive())
-            {
-                builder.Append($"Yellow: {Yellow.Ticks}");
-                if (Dynamics_Yellow != DrumDynamics.None)
-                {
-                    builder.Append($"({Dynamics_Yellow})");
+                    builder.Append($"({Dynamics.Snare})");
                 }
                 builder.Append(" | ");
             }
-            if (Blue.IsActive())
+            if (Lanes.Yellow.IsActive())
             {
-                builder.Append($"Blue: {Blue.Ticks}");
-                if (Dynamics_Blue != DrumDynamics.None)
+                builder.Append($"Yellow: {Lanes.Yellow.Ticks}");
+                if (Dynamics.Yellow != DrumDynamics.None)
                 {
-                    builder.Append($"({Dynamics_Blue})");
+                    builder.Append($"({Dynamics.Yellow})");
                 }
                 builder.Append(" | ");
             }
-            if (Orange.IsActive())
+            if (Lanes.Blue.IsActive())
             {
-                builder.Append($"Orange: {Orange.Ticks}");
-                if (Dynamics_Orange != DrumDynamics.None)
+                builder.Append($"Blue: {Lanes.Blue.Ticks}");
+                if (Dynamics.Blue != DrumDynamics.None)
                 {
-                    builder.Append($"({Dynamics_Orange})");
+                    builder.Append($"({Dynamics.Blue})");
                 }
                 builder.Append(" | ");
             }
-            if (Green.IsActive())
+            if (Lanes.Orange.IsActive())
             {
-                builder.Append($"Green: {Green.Ticks}");
-                if (Dynamics_Green != DrumDynamics.None)
+                builder.Append($"Orange: {Lanes.Orange.Ticks}");
+                if (Dynamics.Orange != DrumDynamics.None)
                 {
-                    builder.Append($"({Dynamics_Green})");
+                    builder.Append($"({Dynamics.Orange})");
+                }
+                builder.Append(" | ");
+            }
+            if (Lanes.Green.IsActive())
+            {
+                builder.Append($"Green: {Lanes.Green.Ticks}");
+                if (Dynamics.Green != DrumDynamics.None)
+                {
+                    builder.Append($"({Dynamics.Green})");
                 }
                 builder.Append(" | ");
             }

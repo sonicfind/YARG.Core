@@ -122,7 +122,7 @@ namespace YARG.Core.NewParsing.Midi
                                         // The FourLaneDrums type lays all the dynamics adjacent to each other.
                                         // Having the pointer to an instance thus allows us to use arithmetic on the location
                                         // of the first dynamic enum variable to get the specific one we want.
-                                        (&drum->Dynamics_Snare)[lane - SNARE_LANE] = note.Velocity switch
+                                        (&drum->Dynamics.Snare)[lane - SNARE_LANE] = note.Velocity switch
                                         {
                                             127 => DrumDynamics.Accent,
                                             1 => DrumDynamics.Ghost,
@@ -135,7 +135,7 @@ namespace YARG.Core.NewParsing.Midi
                                     {
                                         // Same idea as the drum dynamics above.
                                         int index = lane - YELLOW_LANE;
-                                        (&drum->Cymbal_Yellow)[index] = cymbalFlags[index];
+                                        (&drum->Cymbals.Yellow)[index] = cymbalFlags[index];
                                     }
                                 }
                             }
@@ -167,7 +167,7 @@ namespace YARG.Core.NewParsing.Midi
                                 if (diff.Notes.TryGetLastValue(in position, out var drum))
                                 {
                                     // Blah blah: pointer arithmetic
-                                    (&drum->Cymbal_Yellow)[index] = false;
+                                    (&drum->Cymbals.Yellow)[index] = false;
                                 }
                             }
                         }
@@ -223,7 +223,7 @@ namespace YARG.Core.NewParsing.Midi
                                     // Having the pointer to an instance thus allows us to use arithmetic on the location
                                     // of the Bass lane variable to get the specific one we want.
                                     var drum = instrumentTrack[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition);
-                                    (&drum->Kick)[lane] = position - colorPosition;
+                                    (&drum->Lanes.Kick)[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
 
                                     if (lane == 0)
@@ -251,7 +251,7 @@ namespace YARG.Core.NewParsing.Midi
                                 if (colorPosition.Ticks != -1)
                                 {
                                     var drum = instrumentTrack.Expert.Notes.TraverseBackwardsUntil(in colorPosition);
-                                    drum->Kick = position - colorPosition;
+                                    drum->Lanes.Kick = position - colorPosition;
                                     colorPosition.Ticks = -1;
 
                                     if (drum->KickState == KickState.NonPlusOnly)
@@ -283,7 +283,7 @@ namespace YARG.Core.NewParsing.Midi
                                 if (diff.Notes.TryGetLastValue(in position, out var drum))
                                 {
                                     // Blah blah: pointer arithmetic
-                                    (&drum->Cymbal_Yellow)[index] = true;
+                                    (&drum->Cymbals.Yellow)[index] = true;
                                 }
                             }
                         }
@@ -480,7 +480,7 @@ namespace YARG.Core.NewParsing.Midi
                                     // The FiveLaneDrums type lays all the dynamics adjacent to each other.
                                     // Having the pointer to an instance thus allows us to use arithmetic on the location
                                     // of the first dynamic enum variable to get the specific one we want.
-                                    (&drum->Dynamics_Snare)[lane - SNARE_LANE] = note.Velocity switch
+                                    (&drum->Dynamics.Snare)[lane - SNARE_LANE] = note.Velocity switch
                                     {
                                         127 => DrumDynamics.Accent,
                                         1 => DrumDynamics.Ghost,
@@ -551,7 +551,7 @@ namespace YARG.Core.NewParsing.Midi
                                     // Having the pointer to an instance thus allows us to use arithmetic on the location
                                     // of the Bass lane variable to get the specific one we want.
                                     var drum = instrumentTrack[diffIndex].Notes.TraverseBackwardsUntil(in colorPosition);
-                                    (&drum->Kick)[lane] = position - colorPosition;
+                                    (&drum->Lanes.Kick)[lane] = position - colorPosition;
                                     colorPosition.Ticks = -1;
 
                                     if (lane == 0)
@@ -579,7 +579,7 @@ namespace YARG.Core.NewParsing.Midi
                                 if (colorPosition.Ticks != -1)
                                 {
                                     var drum = instrumentTrack.Expert.Notes.TraverseBackwardsUntil(in colorPosition);
-                                    drum->Kick = position - colorPosition;
+                                    drum->Lanes.Kick = position - colorPosition;
                                     colorPosition.Ticks = -1;
 
                                     if (drum->KickState == KickState.NonPlusOnly)
@@ -782,7 +782,7 @@ namespace YARG.Core.NewParsing.Midi
                                 // Any changes to the flag after this point will automatically occur from a separate scope.
                                 if (diffTrack.Notes.GetLastOrAdd(in position, out var drum))
                                 {
-                                    drum->IsFlammed = flamFlag;
+                                    drum->FourLane.IsFlammed = flamFlag;
                                 }
 
                                 if (lane < FIFTH_LANE)
@@ -795,7 +795,7 @@ namespace YARG.Core.NewParsing.Midi
                                             // The UnknownLaneDrums type lays the dynamics of the first four lanes adjacent to each other.
                                             // Having the pointer to an instance thus allows us to use arithmetic on the location
                                             // of the first dynamic enum variable to get the specific one we want.
-                                            (&drum->Dynamics_Snare)[lane - SNARE_LANE] = note.Velocity switch
+                                            (&drum->FourLane.Dynamics.Snare)[lane - SNARE_LANE] = note.Velocity switch
                                             {
                                                 127 => DrumDynamics.Accent,
                                                 1 => DrumDynamics.Ghost,
@@ -808,7 +808,7 @@ namespace YARG.Core.NewParsing.Midi
                                         {
                                             // Same idea as the drum dynamics above.
                                             int cymbalIndex = lane - YELLOW_LANE;
-                                            (&drum->Cymbal_Yellow)[cymbalIndex] = cymbalFlags[cymbalIndex];
+                                            (&drum->FourLane.Cymbals.Yellow)[cymbalIndex] = cymbalFlags[cymbalIndex];
                                         }
                                     }
                                 }
@@ -817,7 +817,7 @@ namespace YARG.Core.NewParsing.Midi
                                     drumsType = DrumsType.FiveLane;
                                     if (enableDynamics)
                                     {
-                                        drum->Dynamics_Green = note.Velocity switch
+                                        drum->FifthDynamics = note.Velocity switch
                                         {
                                             127 => DrumDynamics.Accent,
                                             1 => DrumDynamics.Ghost,
@@ -850,7 +850,7 @@ namespace YARG.Core.NewParsing.Midi
                                     if (diff.Notes.TryGetLastValue(in position, out var drum))
                                     {
                                         // Blah blah: pointer arithmetic
-                                        (&drum->Cymbal_Yellow)[index] = false;
+                                        (&drum->FourLane.Cymbals.Yellow)[index] = false;
                                     }
                                 }
                                 drumsType = DrumsType.ProDrums;
@@ -885,7 +885,7 @@ namespace YARG.Core.NewParsing.Midi
                                         // we MUST flip the applicable flam marker for those notes to match
                                         if (diff.Notes.TryGetLastValue(in position, out var drum))
                                         {
-                                            drum->IsFlammed = true;
+                                            drum->FourLane.IsFlammed = true;
                                         }
                                     }
                                     break;
@@ -912,24 +912,24 @@ namespace YARG.Core.NewParsing.Midi
                                         // The UnknownLaneDrums type lays kick and the first four pad lanes adjacent to each other.
                                         // Having the pointer to an instance thus allows us to use arithmetic on the location
                                         // of the Bass lane variable to get the specific one we want.
-                                        (&drum->Kick)[lane] = duration;
+                                        (&drum->FourLane.Lanes.Kick)[lane] = duration;
 
                                         if (lane == 0)
                                         {
-                                            if (drum->KickState == KickState.PlusOnly)
+                                            if (drum->FourLane.KickState == KickState.PlusOnly)
                                             {
                                                 convertExpectKicksToShared = false;
-                                                drum->KickState = KickState.Shared;
+                                                drum->FourLane.KickState = KickState.Shared;
                                             }
                                             else
                                             {
-                                                drum->KickState = KickState.NonPlusOnly;
+                                                drum->FourLane.KickState = KickState.NonPlusOnly;
                                             }
                                         }
                                     }
                                     else
                                     {
-                                        drum->Green = duration;
+                                        drum->FifthLane = duration;
                                     }
                                     colorPosition.Ticks = -1;
                                 }
@@ -945,17 +945,17 @@ namespace YARG.Core.NewParsing.Midi
                                 if (colorPosition.Ticks != -1)
                                 {
                                     var drum = instrumentTrack.Expert.Notes.TraverseBackwardsUntil(in colorPosition);
-                                    drum->Kick = position - colorPosition;
+                                    drum->FourLane.Lanes.Kick = position - colorPosition;
                                     colorPosition.Ticks = -1;
 
-                                    if (drum->KickState == KickState.NonPlusOnly)
+                                    if (drum->FourLane.KickState == KickState.NonPlusOnly)
                                     {
                                         convertExpectKicksToShared = false;
-                                        drum->KickState = KickState.Shared;
+                                        drum->FourLane.KickState = KickState.Shared;
                                     }
                                     else
                                     {
-                                        drum->KickState = KickState.PlusOnly;
+                                        drum->FourLane.KickState = KickState.PlusOnly;
                                     }
                                 }
                             }
@@ -973,7 +973,7 @@ namespace YARG.Core.NewParsing.Midi
                                     if (diff.Notes.TryGetLastValue(in position, out var drum))
                                     {
                                         // Blah blah: pointer arithmetic
-                                        (&drum->Cymbal_Yellow)[index] = true;
+                                        (&drum->FourLane.Cymbals.Yellow)[index] = true;
                                     }
                                 }
                             }
@@ -1033,7 +1033,7 @@ namespace YARG.Core.NewParsing.Midi
                                         // we MUST flip the applicable flam marker for those notes to match
                                         if (diff.Notes.TryGetLastValue(in position, out var drum))
                                         {
-                                            drum->IsFlammed = false;
+                                            drum->FourLane.IsFlammed = false;
                                         }
                                     }
                                     break;
@@ -1067,9 +1067,9 @@ namespace YARG.Core.NewParsing.Midi
                 for (int i = 0; i < expertNotes.Count; ++i)
                 {
                     ref var drum = ref expertNotes[i].Value;
-                    if (drum.KickState == KickState.NonPlusOnly)
+                    if (drum.FourLane.KickState == KickState.NonPlusOnly)
                     {
-                        drum.KickState = KickState.Shared;
+                        drum.FourLane.KickState = KickState.Shared;
                     }
                 }
             }

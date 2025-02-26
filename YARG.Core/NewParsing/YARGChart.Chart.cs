@@ -508,23 +508,23 @@ namespace YARG.Core.NewParsing
             {
                 switch (lane)
                 {
-                    case 0: note->Kick = length; break;
-                    case 1: note->Snare = length; break;
-                    case 2: note->Yellow = length; break;
-                    case 3: note->Blue = length; break;
-                    case 4: note->Green = length; break;
+                    case 0: note->Lanes.Kick = length; break;
+                    case 1: note->Lanes.Snare = length; break;
+                    case 2: note->Lanes.Yellow = length; break;
+                    case 3: note->Lanes.Blue = length; break;
+                    case 4: note->Lanes.Green = length; break;
 
                     case 32: note->KickState = KickState.PlusOnly; break;
 
-                    case 34: note->Dynamics_Snare = DrumDynamics.Accent; break;
-                    case 35: note->Dynamics_Yellow = DrumDynamics.Accent; break;
-                    case 36: note->Dynamics_Blue = DrumDynamics.Accent; break;
-                    case 37: note->Dynamics_Green = DrumDynamics.Accent; break;
+                    case 34: note->Dynamics.Snare = DrumDynamics.Accent; break;
+                    case 35: note->Dynamics.Yellow = DrumDynamics.Accent; break;
+                    case 36: note->Dynamics.Blue = DrumDynamics.Accent; break;
+                    case 37: note->Dynamics.Green = DrumDynamics.Accent; break;
 
-                    case 40: note->Dynamics_Snare = DrumDynamics.Ghost; break;
-                    case 41: note->Dynamics_Yellow = DrumDynamics.Ghost; break;
-                    case 42: note->Dynamics_Blue = DrumDynamics.Ghost; break;
-                    case 43: note->Dynamics_Green = DrumDynamics.Ghost; break;
+                    case 40: note->Dynamics.Snare = DrumDynamics.Ghost; break;
+                    case 41: note->Dynamics.Yellow = DrumDynamics.Ghost; break;
+                    case 42: note->Dynamics.Blue = DrumDynamics.Ghost; break;
+                    case 43: note->Dynamics.Green = DrumDynamics.Ghost; break;
                     default:
                         return false;
                 }
@@ -539,27 +539,27 @@ namespace YARG.Core.NewParsing
             {
                 switch (lane)
                 {
-                    case 0: note->Kick = length; break;
-                    case 1: note->Snare = length; break;
-                    case 2: note->Yellow = length; break;
-                    case 3: note->Blue = length; break;
-                    case 4: note->Green = length; break;
+                    case 0: note->Lanes.Kick   = length; break;
+                    case 1: note->Lanes.Snare  = length; break;
+                    case 2: note->Lanes.Yellow = length; break;
+                    case 3: note->Lanes.Blue   = length; break;
+                    case 4: note->Lanes.Green  = length; break;
 
                     case 32: note->KickState = KickState.PlusOnly; break;
 
-                    case 34: note->Dynamics_Snare = DrumDynamics.Accent; break;
-                    case 35: note->Dynamics_Yellow = DrumDynamics.Accent; break;
-                    case 36: note->Dynamics_Blue = DrumDynamics.Accent; break;
-                    case 37: note->Dynamics_Green = DrumDynamics.Accent; break;
+                    case 34: note->Dynamics.Snare  = DrumDynamics.Accent; break;
+                    case 35: note->Dynamics.Yellow = DrumDynamics.Accent; break;
+                    case 36: note->Dynamics.Blue   = DrumDynamics.Accent; break;
+                    case 37: note->Dynamics.Green  = DrumDynamics.Accent; break;
 
-                    case 40: note->Dynamics_Snare = DrumDynamics.Ghost; break;
-                    case 41: note->Dynamics_Yellow = DrumDynamics.Ghost; break;
-                    case 42: note->Dynamics_Blue = DrumDynamics.Ghost; break;
-                    case 43: note->Dynamics_Green = DrumDynamics.Ghost; break;
+                    case 40: note->Dynamics.Snare  = DrumDynamics.Ghost; break;
+                    case 41: note->Dynamics.Yellow = DrumDynamics.Ghost; break;
+                    case 42: note->Dynamics.Blue   = DrumDynamics.Ghost; break;
+                    case 43: note->Dynamics.Green  = DrumDynamics.Ghost; break;
 
-                    case 66: note->Cymbal_Yellow = true; break;
-                    case 67: note->Cymbal_Blue = true; break;
-                    case 68: note->Cymbal_Green = true; break;
+                    case 66: note->Cymbals.Yellow = true; break;
+                    case 67: note->Cymbals.Blue   = true; break;
+                    case 68: note->Cymbals.Green  = true; break;
                     default:
                         return false;
                 }
@@ -574,26 +574,26 @@ namespace YARG.Core.NewParsing
             {
                 switch (lane)
                 {
-                    case 0: note->Kick = length; break;
-                    case 1: note->Snare = length; break;
-                    case 2: note->Yellow = length; break;
-                    case 3: note->Blue = length; break;
-                    case 4: note->Orange = length; break;
-                    case 5: note->Green = length; break;
+                    case 0: note->Lanes.Kick   = length; break;
+                    case 1: note->Lanes.Snare  = length; break;
+                    case 2: note->Lanes.Yellow = length; break;
+                    case 3: note->Lanes.Blue   = length; break;
+                    case 4: note->Lanes.Orange = length; break;
+                    case 5: note->Lanes.Green  = length; break;
 
                     case 32: note->KickState = KickState.PlusOnly; break;
 
-                    case 34: note->Dynamics_Snare = DrumDynamics.Accent; break;
-                    case 35: note->Dynamics_Yellow = DrumDynamics.Accent; break;
-                    case 36: note->Dynamics_Blue = DrumDynamics.Accent; break;
-                    case 37: note->Dynamics_Orange = DrumDynamics.Accent; break;
-                    case 38: note->Dynamics_Green = DrumDynamics.Accent; break;
+                    case 34: note->Dynamics.Snare  = DrumDynamics.Accent; break;
+                    case 35: note->Dynamics.Yellow = DrumDynamics.Accent; break;
+                    case 36: note->Dynamics.Blue   = DrumDynamics.Accent; break;
+                    case 37: note->Dynamics.Orange = DrumDynamics.Accent; break;
+                    case 38: note->Dynamics.Green  = DrumDynamics.Accent; break;
 
-                    case 40: note->Dynamics_Snare = DrumDynamics.Ghost; break;
-                    case 41: note->Dynamics_Yellow = DrumDynamics.Ghost; break;
-                    case 42: note->Dynamics_Blue = DrumDynamics.Ghost; break;
-                    case 43: note->Dynamics_Orange = DrumDynamics.Ghost; break;
-                    case 44: note->Dynamics_Green = DrumDynamics.Ghost; break;
+                    case 40: note->Dynamics.Snare  = DrumDynamics.Ghost; break;
+                    case 41: note->Dynamics.Yellow = DrumDynamics.Ghost; break;
+                    case 42: note->Dynamics.Blue   = DrumDynamics.Ghost; break;
+                    case 43: note->Dynamics.Orange = DrumDynamics.Ghost; break;
+                    case 44: note->Dynamics.Green  = DrumDynamics.Ghost; break;
                     default:
                         return false;
                 }
@@ -615,32 +615,32 @@ namespace YARG.Core.NewParsing
             {
                 switch (lane)
                 {
-                    case 0: note->Kick = length; break;
-                    case 1: note->Snare = length; break;
-                    case 2: note->Yellow = length; break;
-                    case 3: note->Blue = length; break;
-                    case 4: note->Orange = length; break;
+                    case 0: note->FourLane.Lanes.Kick = length; break;
+                    case 1: note->FourLane.Lanes.Snare = length; break;
+                    case 2: note->FourLane.Lanes.Yellow = length; break;
+                    case 3: note->FourLane.Lanes.Blue = length; break;
+                    case 4: note->FourLane.Lanes.Green = length; break;
                     case 5:
                         if (!_type->Has(DrumsType.FiveLane))
                         {
                             return false;
                         }
-                        note->Green = length;
+                        note->FifthLane = length;
                         *_type = DrumsType.FiveLane;
                         break;
-                    case 32: note->KickState = KickState.PlusOnly; break;
+                    case 32: note->FourLane.KickState = KickState.PlusOnly; break;
 
-                    case 34: note->Dynamics_Snare = DrumDynamics.Accent; break;
-                    case 35: note->Dynamics_Yellow = DrumDynamics.Accent; break;
-                    case 36: note->Dynamics_Blue = DrumDynamics.Accent; break;
-                    case 37: note->Dynamics_Orange = DrumDynamics.Accent; break;
-                    case 38: note->Dynamics_Green = DrumDynamics.Accent; break;
+                    case 34: note->FourLane.Dynamics.Snare  = DrumDynamics.Accent; break;
+                    case 35: note->FourLane.Dynamics.Yellow = DrumDynamics.Accent; break;
+                    case 36: note->FourLane.Dynamics.Blue   = DrumDynamics.Accent; break;
+                    case 37: note->FourLane.Dynamics.Green  = DrumDynamics.Accent; break;
+                    case 38: note->FifthDynamics = DrumDynamics.Accent; break;
 
-                    case 40: note->Dynamics_Snare = DrumDynamics.Ghost; break;
-                    case 41: note->Dynamics_Yellow = DrumDynamics.Ghost; break;
-                    case 42: note->Dynamics_Blue = DrumDynamics.Ghost; break;
-                    case 43: note->Dynamics_Orange = DrumDynamics.Ghost; break;
-                    case 44: note->Dynamics_Green = DrumDynamics.Ghost; break;
+                    case 40: note->FourLane.Dynamics.Snare  = DrumDynamics.Ghost; break;
+                    case 41: note->FourLane.Dynamics.Yellow = DrumDynamics.Ghost; break;
+                    case 42: note->FourLane.Dynamics.Blue   = DrumDynamics.Ghost; break;
+                    case 43: note->FourLane.Dynamics.Green  = DrumDynamics.Ghost; break;
+                    case 44: note->FifthDynamics = DrumDynamics.Ghost; break;
 
                     case 66:
                     case 67:
@@ -649,7 +649,7 @@ namespace YARG.Core.NewParsing
                         {
                             return false;
                         }
-                        (&note->Cymbal_Yellow)[lane - 66] = true;
+                        ((bool*)&note->FourLane.Cymbals)[lane - 66] = true;
                         *_type = DrumsType.ProDrums;
                         break;
                     default:
