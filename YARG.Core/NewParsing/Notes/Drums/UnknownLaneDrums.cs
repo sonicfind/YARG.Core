@@ -5,130 +5,37 @@ namespace YARG.Core.NewParsing
 {
     public struct UnknownLaneDrums : IInstrumentNote
     {
-        public DualTime Kick;
-        public DualTime Snare;
-        public DualTime Yellow;
-        public DualTime Blue;
-        public DualTime Orange;
-        public DrumDynamics Dynamics_Snare;
-        public DrumDynamics Dynamics_Yellow;
-        public DrumDynamics Dynamics_Blue;
-        public DrumDynamics Dynamics_Orange;
-        public bool Cymbal_Yellow;
-        public bool Cymbal_Blue;
-        public bool Cymbal_Orange;
-        public KickState KickState;
-        public bool IsFlammed;
-        // Placed at the bottom to allow best blittability with FourLane
-        // as that will be the most common conversion
-        public DualTime Green;
-        public DrumDynamics Dynamics_Green;
+        public FourLaneDrums FourLane;
+        public DualTime      FifthLane;
+        public DrumDynamics  FifthDynamics;
 
         public readonly int GetNumActiveLanes()
         {
-            int numActive = Kick.IsActive() ? 1 : 0;
-            numActive += Snare  .IsActive() ? 1 : 0;
-            numActive += Yellow .IsActive() ? 1 : 0;
-            numActive += Blue   .IsActive() ? 1 : 0;
-            numActive += Orange .IsActive() ? 1 : 0;
-            numActive += Green  .IsActive() ? 1 : 0;
+            int numActive = FourLane.GetNumActiveLanes();
+            numActive += FifthLane.IsActive() ? 1 : 0;
             return numActive;
         }
 
         public readonly DualTime GetLongestSustain()
         {
-            var sustain = Kick;
-            if (Snare > sustain)
+            var sustain = FourLane.GetLongestSustain();
+            if (FifthLane > sustain)
             {
-                sustain = Snare;
-            }
-            if (Yellow > sustain)
-            {
-                sustain = Yellow;
-            }
-            if (Blue > sustain)
-            {
-                sustain = Blue;
-            }
-            if (Orange > sustain)
-            {
-                sustain = Orange;
-            }
-            if (Green > sustain)
-            {
-                sustain = Green;
+                sustain = FifthLane;
             }
             return sustain;
         }
 
         public readonly override string ToString()
         {
-            StringBuilder builder = new();
-            if (Kick.IsActive())
+            var builder = new StringBuilder();
+            builder.Append(FourLane.ToString());
+            if (FifthLane.IsActive())
             {
-                if (KickState != KickState.PlusOnly)
+                builder.Append($"Green: {FifthLane.Ticks}");
+                if (FifthDynamics != DrumDynamics.None)
                 {
-                    builder.Append($"Bass: {Kick.Ticks} | ");
-                }
-                else
-                {
-                    builder.Append($"DoubleBass: {Kick.Ticks} | ");
-                }
-            }
-            if (Snare.IsActive())
-            {
-                builder.Append($"Snare: {Snare.Ticks}");
-                if (Dynamics_Snare != DrumDynamics.None)
-                {
-                    builder.Append($"({Dynamics_Snare})");
-                }
-                builder.Append(" | ");
-            }
-            if (Yellow.IsActive())
-            {
-                builder.Append($"Yellow: {Yellow.Ticks}");
-                if (Cymbal_Yellow)
-                {
-                    builder.Append("(Cymbal)");
-                }
-                if (Dynamics_Yellow != DrumDynamics.None)
-                {
-                    builder.Append($"({Dynamics_Yellow})");
-                }
-                builder.Append(" | ");
-            }
-            if (Blue.IsActive())
-            {
-                builder.Append($"Blue: {Blue.Ticks}");
-                if (Cymbal_Blue)
-                {
-                    builder.Append("(Cymbal)");
-                }
-                if (Dynamics_Blue != DrumDynamics.None)
-                {
-                    builder.Append($"({Dynamics_Blue})");
-                }
-                builder.Append(" | ");
-            }
-            if (Orange.IsActive())
-            {
-                builder.Append($"Orange: {Orange.Ticks}");
-                if (Cymbal_Orange)
-                {
-                    builder.Append("(Cymbal)");
-                }
-                if (Dynamics_Orange != DrumDynamics.None)
-                {
-                    builder.Append($"({Dynamics_Orange})");
-                }
-                builder.Append(" | ");
-            }
-            if (Green.IsActive())
-            {
-                builder.Append($"Green: {Green.Ticks}");
-                if (Dynamics_Green != DrumDynamics.None)
-                {
-                    builder.Append($"({Dynamics_Green})");
+                    builder.Append($"({FifthDynamics})");
                 }
                 builder.Append(" | ");
             }
