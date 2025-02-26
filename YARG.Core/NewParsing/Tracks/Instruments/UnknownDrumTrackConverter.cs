@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace YARG.Core.NewParsing
 {
@@ -47,11 +48,8 @@ namespace YARG.Core.NewParsing
             destination.Notes.Capacity = source.Notes.Count;
             for (long i = 0; i < source.Notes.Count; ++i)
             {
-                unsafe
-                {
-                    var curr = source.Notes.Data + i;
-                    destination.Notes.Add(in curr->Key, in *(FourLaneDrums*) &curr->Value);
-                }
+                ref readonly var curr = ref source.Notes[i];
+                destination.Notes.Add(in curr.Key, in curr.Value.FourLane);
             }
             source.Notes.Dispose();
             destination.Overdrives.MoveFrom(source.Overdrives);
@@ -71,20 +69,16 @@ namespace YARG.Core.NewParsing
             {
                 unsafe
                 {
-                    const int DUAL_COUNT = 5;
-                    const int DYMANICS_COUNT = 4;
                     var curr = source.Notes.Data + i;
                     var note = destination.Notes.Add(in curr->Key);
-                    //                                               Bass + four pads = 5
-                    Unsafe.CopyBlock(&note->Kick, &curr->Value.Kick, DUAL_COUNT * (uint) sizeof(DualTime));
-                    note->Green = curr->Value.Green;
+                    Buffer.MemoryCopy(&curr->Value.FourLane.Lanes, &note->Lanes, sizeof(FiveLaneDrums.LaneArray), sizeof(FourLaneDrums.LaneArray));
+                    note->Lanes.Green = curr->Value.FifthLane;
 
-                    //                                                                   four pads = 4 (duh)
-                    Unsafe.CopyBlock(&note->Dynamics_Snare, &curr->Value.Dynamics_Snare, DYMANICS_COUNT * (uint) sizeof(DrumDynamics));
-                    note->Dynamics_Green = curr->Value.Dynamics_Green;
+                    Buffer.MemoryCopy(&curr->Value.FourLane.Dynamics, &note->Dynamics, sizeof(FiveLaneDrums.DynamicsArray), sizeof(FourLaneDrums.DynamicsArray));
+                    note->Dynamics.Green = curr->Value.FifthDynamics;
 
-                    note->KickState = curr->Value.KickState;
-                    note->IsFlammed = curr->Value.IsFlammed;
+                    note->KickState = curr->Value.FourLane.KickState;
+                    note->IsFlammed = curr->Value.FourLane.IsFlammed;
                 }
             }
             source.Notes.Dispose();
