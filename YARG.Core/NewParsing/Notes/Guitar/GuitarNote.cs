@@ -14,7 +14,7 @@ namespace YARG.Core.NewParsing
     public interface IGuitarConfig<TConfig> : IInstrumentNote
         where TConfig : unmanaged, IGuitarConfig<TConfig>
     {
-        public static readonly unsafe uint MAX_LANES = (uint)(sizeof(TConfig) / sizeof(DualTime));
+        public static readonly unsafe int MAX_LANES = sizeof(TConfig) / sizeof(DualTime);
     }
 
     public struct GuitarNote<TConfig> : IInstrumentNote
