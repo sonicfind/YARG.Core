@@ -1,30 +1,30 @@
 ﻿using System;
+using System.Diagnostics;
 using YARG.Core.Containers;
 using YARG.Core.Game;
 using YARG.Core.NewParsing;
 
 namespace YARG.Core.NewLoading
 {
-    public struct GuitarNoteGroup
+    [Flags]
+    public enum GuitarNoteMask
     {
-        public uint        LaneMask;
-        public GuitarState State;
-        public long        SustainIndex;
-        public long        SustainCount;
-        public long        OverdriveIndex;
-        public long        SoloIndex;
+        Open_DisableAnchoring = 1 << 0,
+        Green                 = 1 << 1,
+        Red                   = 1 << 2,
+        Yellow                = 1 << 3,
+        Blue                  = 1 << 4,
+        Orange                = 1 << 5,
     }
 
-    public struct Sustain
+    public struct GuitarNoteGroup
     {
-        public readonly DualTime EndTime;
-        public          uint     LaneMask;
-
-        public Sustain(in DualTime endTime)
-        {
-            EndTime = endTime;
-            LaneMask = 0;
-        }
+        public GuitarNoteMask NoteMask;
+        public GuitarState    State;
+        public long           SustainIndex;
+        public long           SustainCount;
+        public long           OverdriveIndex;
+        public long           SoloIndex;
     }
 
     public class GuitarTrackCache : IDisposable
@@ -58,8 +58,12 @@ namespace YARG.Core.NewLoading
             Solos.Dispose();
         }
 
-        private const uint OPEN_NOTE = 0;
-        public static GuitarTrackCache Create<TConfig>(YARGChart chart, InstrumentTrack2<GuitarNote<TConfig>> instrument, in DualTime chartEndTime, in InstrumentSelection selection)
+        public static unsafe GuitarTrackCache Create<TConfig>(
+            YARGChart chart,
+            InstrumentTrack2<GuitarNote<TConfig>> instrument,
+            in DualTime chartEndTime,
+            in InstrumentSelection selection
+        )
             where TConfig : unmanaged, IGuitarConfig<TConfig>
         {
             var track = instrument[selection.Difficulty];
@@ -69,62 +73,73 @@ namespace YARG.Core.NewLoading
             cache.Overdrives.Capacity = track.Overdrives.Count;
             cache.Solos.Capacity      = track.Solos.Count;
 
-            bool useLeftyFlip = selection.Modifiers.Has(Modifier.LeftyFlip);
             long overdriveIndex = 0;
             long soloIndex = 0;
-            for (long i = 0; i < track.Notes.Count; i++)
+
+            // We have to validate note sustain data to ensure that we can run engine logic without issue.
+            var landEndings = stackalloc long[IGuitarConfig<TConfig>.MAX_LANES];
+            for (long noteIndex = 0; noteIndex < track.Notes.Count; noteIndex++)
             {
-                unsafe
+                var note = track.Notes.Data + noteIndex;
+                // This ensures that the result screen doesn't add notes that can never be played
+                if (note->Key >= chartEndTime)
                 {
-                    var note = track.Notes.Data + i;
-                    var group = new GuitarNoteGroup
+                    break;
+                }
+
+                var group = new GuitarNoteGroup
+                {
+                    SustainIndex = cache.Sustains.Count,
+                    OverdriveIndex = CommonTrackCacheOps.GetPhraseIndex(track.Overdrives, cache.Overdrives, in note->Key, ref overdriveIndex),
+                    SoloIndex = CommonTrackCacheOps.GetPhraseIndex(track.Solos, cache.Solos, in note->Key, ref soloIndex),
+                };
+
+                var frets = (DualTime*)&note->Value.Lanes;
+                for (int lane = 0; lane < IGuitarConfig<TConfig>.MAX_LANES; lane++)
+                {
+                    var fret = frets[lane];
+                    // We have to account for bad charting where the current note has an active lane
+                    // even though the prior note sustains through it with the same lane
+                    if (!fret.IsActive() || note->Key.Ticks < landEndings[lane])
                     {
-                        SustainIndex = cache.Sustains.Count,
-                        OverdriveIndex = GetPhraseIndex(track.Overdrives, cache.Overdrives, in note->Key, ref overdriveIndex),
-                        SoloIndex = GetPhraseIndex(track.Solos, cache.Solos, in note->Key, ref soloIndex),
-                    };
-
-                    var frets = (DualTime*)&note->Value.Lanes;
-                    for (uint index = 0; index < IGuitarConfig<TConfig>.MAX_LANES; index++)
-                    {
-                        var fret = frets[index];
-                        if (!fret.IsActive())
-                        {
-                            continue;
-                        }
-
-                        uint lane = !useLeftyFlip || index == OPEN_NOTE ? index : IGuitarConfig<TConfig>.MAX_LANES - index;
-                        var sustain = DualTime.Truncate(fret, chart.Settings.SustainCutoffThreshold);
-                        if (sustain.Ticks > 1)
-                        {
-                            var laneEndTime = sustain + note->Key;
-                            long location = group.SustainIndex;
-                            while (location < cache.Sustains.Count && cache.Sustains[location].EndTime != laneEndTime)
-                            {
-                                ++location;
-                            }
-
-                            if (location == cache.Sustains.Count)
-                            {
-                                cache.Sustains.Add(new Sustain(laneEndTime));
-                                group.SustainCount++;
-                            }
-                            cache.Sustains[location].LaneMask |= lane;
-                        }
-                        group.LaneMask |= lane;
+                        continue;
                     }
 
-                    group.State = ParseGuitarState(
-                        selection.Modifiers,
-                        note->Value.State,
-                        group.LaneMask,
-                        cache.NoteGroups,
-                        note->Key.Ticks,
-                        chart.Settings.HopoThreshold
-                    );
+                    int laneMask = 1 << lane;
+                    var sustain = DualTime.Truncate(fret, chart.Settings.SustainCutoffThreshold);
+                    // Anything greater than 1 signals that the sustain length satisfied the threshold
+                    if (sustain.Ticks > 1)
+                    {
+                        long location = group.SustainIndex;
+                        var laneEndTime = sustain + note->Key;
+                        // To keep parity with other games that support disjointed sustains, we need to group together
+                        // lanes that extend to the same end time point. In doing so, if/when a player drops one of the
+                        // frets in the group, both notes will be dropped together (See Clone Hero for an example).
+                        while (location < cache.Sustains.Count && cache.Sustains[location].EndTime != laneEndTime)
+                        {
+                            ++location;
+                        }
 
-                    cache.NoteGroups.Add(note->Key, in group);
+                        if (location == cache.Sustains.Count)
+                        {
+                            cache.Sustains.Add(new Sustain(laneEndTime));
+                        }
+                        cache.Sustains[location].NoteMask |= laneMask;
+                    }
+                    group.NoteMask |= (GuitarNoteMask)laneMask;
                 }
+
+                group.SustainCount = cache.Sustains.Count - group.SustainIndex;
+                group.State = ParseGuitarState(
+                    selection.Modifiers,
+                    note->Value.State,
+                    group.NoteMask,
+                    cache.NoteGroups,
+                    note->Key.Ticks,
+                    chart.Settings.HopoThreshold
+                );
+
+                cache.NoteGroups.Add(note->Key, in group);
             }
 
             cache.Sustains.TrimExcess();
@@ -133,48 +148,16 @@ namespace YARG.Core.NewLoading
             return cache;
         }
 
-        private static long GetPhraseIndex(
-            YargNativeSortedList<DualTime, DualTime> trackPhrases,
-            YargNativeSortedList<DualTime, HittablePhrase> cachePhrases,
-            in DualTime position,
-            ref long phraseIndex
-        )
-        {
-            while (phraseIndex < trackPhrases.Count)
-            {
-                ref readonly var overdrive = ref trackPhrases[phraseIndex];
-                var phraseEndTime = overdrive.Key + overdrive.Value;
-                if (position < phraseEndTime)
-                {
-                    if (position >= overdrive.Key)
-                    {
-                        unsafe
-                        {
-                            if (cachePhrases.GetLastOrAdd(overdrive.Key, out var phrase))
-                            {
-                                phrase->EndTime = phraseEndTime;
-                            }
-                            phrase->TotalNotes++;
-                        }
-                        return phraseIndex;
-                    }
-                    break;
-                }
-                phraseIndex++;
-            }
-            return -1;
-        }
-
-
         private static GuitarState ParseGuitarState(
             Modifier modifiers,
             GuitarState state,
-            uint laneMask,
+            GuitarNoteMask noteMask,
             YargNativeSortedList<DualTime, GuitarNoteGroup> groups,
             long tickPosition,
             long hopoThreshold
         )
         {
+            // First three are pretty straightforward
             if (modifiers.Has(Modifier.AllStrums))
             {
                 return GuitarState.Strum;
@@ -192,26 +175,28 @@ namespace YARG.Core.NewLoading
 
             if (state == GuitarState.Tap)
             {
+                // Going by YARG, the presence of this flag turns *all* taps to hopos, regardless
+                // of other factors (like notes before it)
                 return !modifiers.Has(Modifier.TapsToHopos) ? GuitarState.Tap : GuitarState.Hopo;
             }
 
             if (state is GuitarState.Natural or GuitarState.Forced)
             {
                 var naturalState = GuitarState.Strum;
-                if (!IsChord(laneMask) && groups.Count > 0)
+                if (!IsChord((uint)noteMask) && groups.Count > 0)
                 {
                     ref readonly var previous = ref groups[groups.Count - 1];
-                    if ((previous.Value.LaneMask & laneMask) == 0 && tickPosition - previous.Key.Ticks <= hopoThreshold)
+                    if ((previous.Value.NoteMask & noteMask) == 0 && tickPosition - previous.Key.Ticks <= hopoThreshold)
                     {
                         naturalState = GuitarState.Hopo;
                     }
                 }
 
-                // Nat    + Strum = Strum
-                // Nat    + Hopo  = Hopo
-                // Forced + Strum = Hopo
-                // Forced + Hopo  = Strum
-                // Think of it like xor
+                // Natural + Strum = Strum
+                // Natural + Hopo  = Hopo
+                // Forced  + Strum = Hopo
+                // Forced  + Hopo  = Strum
+                // Think of it like xor, where "Strum" is 0
                 state = (state == GuitarState.Natural) == (naturalState == GuitarState.Strum)
                     ? GuitarState.Strum : GuitarState.Hopo;
             }
@@ -223,17 +208,18 @@ namespace YARG.Core.NewLoading
             return state;
         }
 
-        private static bool IsChord(uint laneMask)
+        private static bool IsChord(uint noteMask)
         {
-            while (laneMask > 0)
+            Debug.Assert(noteMask > 0, "At least one lane must be specified");
+            // We know that at least one lane is active, so this loop will always terminate.
+            // Once we find the first active bit, we simply need to test whether it's the *sole* bit
+            while ((noteMask & 1) == 0)
             {
-                if ((laneMask & 1) > 0)
-                {
-                    return laneMask > 1;
-                }
-                laneMask >>= 1;
+                noteMask >>= 1;
             }
-            return false;
+            // Anything more than 1 signals that at least one additional bit exists in the mask
+            // meaning more than one lane
+            return noteMask > 1;
         }
     }
 }
