@@ -183,6 +183,33 @@ namespace YARG.Core.NewParsing
             Miscellaneous = modifiers;
         }
 
+        public bool Has(Instrument instrument)
+        {
+            return instrument switch
+            {
+                Instrument.FiveFretGuitar     => _fiveFretGuitar != null,
+                Instrument.FiveFretBass       => _fiveFretBass != null,
+                Instrument.FiveFretRhythm     => _fiveFretRhythm != null,
+                Instrument.FiveFretCoopGuitar => _fiveFretCoopGuitar != null,
+                Instrument.Keys               => _keys != null,
+                Instrument.SixFretGuitar      => _sixFretGuitar != null,
+                Instrument.SixFretBass        => _sixFretBass != null,
+                Instrument.SixFretRhythm      => _sixFretRhythm != null,
+                Instrument.SixFretCoopGuitar  => _sixFretCoopGuitar != null,
+                Instrument.FourLaneDrums or
+                Instrument.ProDrums           => _fourLaneDrums != null,
+                Instrument.FiveLaneDrums      => _fiveLaneDrums != null,
+                Instrument.ProGuitar_17Fret   => _proGuitar_17Fret != null,
+                Instrument.ProGuitar_22Fret   => _proGuitar_22Fret != null,
+                Instrument.ProBass_17Fret     => _proBass_17Fret != null,
+                Instrument.ProBass_22Fret     => _proBass_22Fret != null,
+                Instrument.ProKeys            => _proKeys != null,
+                Instrument.Vocals             => _leadVocals != null,
+                Instrument.Harmony            => _harmonyVocals != null,
+                _                             => false
+            };
+        }
+
         /// <summary>
         /// Calculates when the chart should end based on the notes and text events contained within it.
         /// </summary>
