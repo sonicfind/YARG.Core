@@ -17,7 +17,6 @@ namespace YARG.Core.Game
         NoKicks       = 1 << 6,
         UnpitchedOnly = 1 << 7,
         NoDynamics    = 1 << 8,
-        LeftyFlip     = 1 << 9,
     }
 
     public static class ModifierConflicts
