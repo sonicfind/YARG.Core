@@ -19,7 +19,6 @@ namespace YARG.Core.Game
         NoDynamics        = 1 << 8,
         NoVocalPercussion = 1 << 9,
         RangeCompress     = 1 << 10,
-        LeftyFlip         = 1 << 11,
     }
 
     public static class ModifierConflicts
