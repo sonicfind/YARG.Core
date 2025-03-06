@@ -3,46 +3,51 @@ using YARG.Core.NewParsing;
 
 namespace YARG.Core.NewLoading
 {
-    public struct Sustain
-    {
-        public readonly DualTime EndTime;
-        public          int      NoteMask;
-
-        public Sustain(in DualTime endTime)
-        {
-            EndTime = endTime;
-            NoteMask = 0;
-        }
-    }
-
     public static class CommonTrackCacheOps
     {
-        public static long GetPhraseIndex(
-            YargNativeSortedList<DualTime, DualTime> trackPhrases,
-            YargNativeSortedList<DualTime, HittablePhrase> cachePhrases,
+        public static long GetOverdrivePhraseIndex(
+            YargNativeSortedList<DualTime, DualTime> trackOverdrives,
+            YargNativeList<OverdrivePhrase> cacheOverdrives,
             in DualTime position,
             ref long phraseIndex
         )
         {
             // This value will only ever change if the position lies within a phrase
             long resultIndex = -1;
-            while (phraseIndex < trackPhrases.Count)
+            while (phraseIndex < trackOverdrives.Count)
             {
-                ref readonly var overdrive = ref trackPhrases[phraseIndex];
+                ref readonly var overdrive = ref trackOverdrives[phraseIndex];
                 var phraseEndTime = overdrive.Key + overdrive.Value;
                 if (position < phraseEndTime)
                 {
                     if (position >= overdrive.Key)
                     {
-                        unsafe
-                        {
-                            if (cachePhrases.GetLastOrAdd(overdrive.Key, out var phrase))
-                            {
-                                // No reason to set the end time more than once, am I right?
-                                phrase->EndTime = phraseEndTime;
-                            }
-                            phrase->TotalNotes++;
-                        }
+                        cacheOverdrives[phraseIndex].TotalNotes++;
+                        resultIndex = phraseIndex;
+                    }
+                    break;
+                }
+                phraseIndex++;
+            }
+            return resultIndex;
+        }
+
+        public static long GetSoloPhraseIndex(
+            YargNativeList<SoloPhrase> cacheSolos,
+            in DualTime position,
+            ref long phraseIndex
+        )
+        {
+            // This value will only ever change if the position lies within a phrase
+            long resultIndex = -1;
+            while (phraseIndex < cacheSolos.Count)
+            {
+                ref var solo = ref cacheSolos[phraseIndex];
+                if (position < solo.EndTime)
+                {
+                    if (position >= solo.StartTime)
+                    {
+                        solo.TotalNotes++;
                         resultIndex = phraseIndex;
                     }
                     break;

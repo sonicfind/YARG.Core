@@ -6,70 +6,16 @@ using YARG.Core.NewParsing;
 
 namespace YARG.Core.NewLoading
 {
-    [Flags]
-    public enum DrumNoteMask
-    {
-        Kick = 1 << 0,
-        Snare = 1 << 1,
-        Tom_1 = 1 << 2,
-        Tom_2 = 1 << 3,
-        Tom_3 = 1 << 4,
-        Cymbal_1 = 1 << 5,
-        Cymbal_2 = 1 << 6,
-        Cymbal_3 = 1 << 7,
-    }
-
-    [Flags]
-    public enum DrumDynamicsMask
-    {
-        Accent_Kick     = 1 <<  0,
-        Accent_Snare    = 1 <<  1,
-        Accent_Tom_1    = 1 <<  2,
-        Accent_Tom_2    = 1 <<  3,
-        Accent_Tom_3    = 1 <<  4,
-        Accent_Cymbal_1 = 1 <<  5,
-        Accent_Cymbal_2 = 1 <<  6,
-        Accent_Cymbal_3 = 1 <<  7,
-        Ghost_Kick      = 1 <<  8,
-        Ghost_Snare     = 1 <<  9,
-        Ghost_Tom_1     = 1 << 10,
-        Ghost_Tom_2     = 1 << 11,
-        Ghost_Tom_3     = 1 << 12,
-        Ghost_Cymbal_1  = 1 << 13,
-        Ghost_Cymbal_2  = 1 << 14,
-        Ghost_Cymbal_3  = 1 << 15,
-    }
-
-    public struct DrumNoteGroup
-    {
-        public DrumNoteMask     NoteMask;
-        public DrumDynamicsMask DynamicsMask;
-        public long             RollIndex;
-        public long             OverdriveIndex;
-        public long             SoloIndex;
-    }
-
     public class DrumTrackCache : IDisposable
     {
-        public YargNativeSortedList<DualTime, DrumNoteGroup>  NoteGroups { get; }
-        public YargNativeList<Sustain>                        Rolls      { get; }
-        public YargNativeSortedList<DualTime, HittablePhrase> Overdrives { get; }
-        public YargNativeSortedList<DualTime, HittablePhrase> Solos      { get; }
+        public YargNativeList<DrumNoteGroup>   NoteGroups { get; }
+        public YargNativeList<DrumRoll>        Rolls      { get; }
+        public YargNativeList<OverdrivePhrase> Overdrives { get; }
+        public YargNativeList<SoloPhrase>      Solos      { get; }
 
-        public DrumTrackCache(DrumTrackCache source)
+        public DrumTrackCache Clone()
         {
-            NoteGroups = new YargNativeSortedList<DualTime, DrumNoteGroup> (source.NoteGroups);
-            Overdrives = new YargNativeSortedList<DualTime, HittablePhrase>(source.Overdrives);
-            Solos      = new YargNativeSortedList<DualTime, HittablePhrase>(source.Solos);
-            Rolls      = new YargNativeList<Sustain>(source.Rolls);
-        }
-
-        private DrumTrackCache()
-        {
-            NoteGroups = new YargNativeSortedList<DualTime, DrumNoteGroup>();
-            Overdrives = new YargNativeSortedList<DualTime, HittablePhrase>();
-            Solos      = new YargNativeSortedList<DualTime, HittablePhrase>();
-            Rolls      = new YargNativeList<Sustain>();
+            return new DrumTrackCache(this);
         }
 
         public void Dispose()
@@ -78,6 +24,34 @@ namespace YARG.Core.NewLoading
             Rolls.Dispose();
             Overdrives.Dispose();
             Solos.Dispose();
+        }
+
+        private DrumTrackCache(long numNotes, long numOverdrives, long numSolos)
+        {
+            NoteGroups = new YargNativeList<DrumNoteGroup>
+            {
+                Capacity = numNotes
+            };
+            Rolls = new YargNativeList<DrumRoll>
+            {
+                Capacity = numNotes
+            };
+            Overdrives = new YargNativeList<OverdrivePhrase>
+            {
+                Capacity = numOverdrives
+            };
+            Solos = new YargNativeList<SoloPhrase>
+            {
+                Capacity = numSolos
+            };
+        }
+
+        private DrumTrackCache(DrumTrackCache source)
+        {
+            NoteGroups = new YargNativeList<DrumNoteGroup>  (source.NoteGroups);
+            Rolls      = new YargNativeList<DrumRoll>       (source.Rolls);
+            Overdrives = new YargNativeList<OverdrivePhrase>(source.Overdrives);
+            Solos      = new YargNativeList<SoloPhrase>     (source.Solos);
         }
 
         private const int KICK         = 0;
@@ -99,17 +73,21 @@ namespace YARG.Core.NewLoading
         )
         {
             var track = instrument[selection.Difficulty];
-            var cache = new DrumTrackCache();
-            cache.NoteGroups.Capacity = track.Notes.Count;
-            cache.Rolls.Capacity      = track.Notes.Count;
-            cache.Overdrives.Capacity = track.Overdrives.Count;
-            cache.Solos.Capacity      = track.Solos.Count;
+            var cache = new DrumTrackCache(track.Notes.Count, track.Overdrives.Count, track.Solos.Count);
+
+            for (int i = 0; i < track.Notes.Count; i++)
+            {
+                cache.Overdrives.Add(new OverdrivePhrase());
+            }
+
+            foreach (var solo in track.Solos)
+            {
+                cache.Solos.Add(new SoloPhrase(solo.Key, solo.Key + solo.Value));
+            }
 
             long overdriveIndex = 0;
             long soloIndex = 0;
 
-            // We have to validate note sustain data to ensure that we can run engine logic without issue.
-            var landEndings = stackalloc long[FourLaneDrums.NUM_LANES];
             for (long noteIndex = 0; noteIndex < track.Notes.Count; noteIndex++)
             {
                 var note = track.Notes.Data + noteIndex;
@@ -119,12 +97,11 @@ namespace YARG.Core.NewLoading
                     break;
                 }
 
-                var group = new DrumNoteGroup
-                {
-                    RollIndex = -1,
-                    OverdriveIndex = CommonTrackCacheOps.GetPhraseIndex(track.Overdrives, cache.Overdrives, in note->Key, ref overdriveIndex),
-                    SoloIndex = CommonTrackCacheOps.GetPhraseIndex(track.Solos, cache.Solos, in note->Key, ref soloIndex),
-                };
+                var group = new DrumNoteGroup(
+                    in note->Key,
+                    CommonTrackCacheOps.GetOverdrivePhraseIndex(track.Overdrives, cache.Overdrives, in note->Key, ref overdriveIndex),
+                    CommonTrackCacheOps.GetSoloPhraseIndex(cache.Solos, in note->Key, ref soloIndex)
+                );
 
                 var lanes = (DualTime*)&note->Value.Lanes;
                 for (int lane = 0; lane < FourLaneDrums.NUM_LANES; lane++)
@@ -185,15 +162,13 @@ namespace YARG.Core.NewLoading
                     }
 
                     int laneMask = 1 << shift;
-                    var sustain = DualTime.Truncate(fret, chart.Settings.SustainCutoffThreshold);
+                    var length = DualTime.Truncate(fret, chart.Settings.SustainCutoffThreshold);
                     // Anything greater than 1 signals that the sustain length satisfied the threshold.
-                    // However, you can't do a drum roll on two drums... in-game anyway.
-                    if (sustain.Ticks > 1 && group.RollIndex == -1)
+                    if (length.Ticks > 1)
                     {
-                        group.RollIndex = cache.Rolls.Count;
-                        cache.Rolls.Add(new Sustain(sustain + note->Key) { NoteMask = laneMask });
+                        cache.Rolls.Add(new DrumRoll(length + note->Key, laneMask));
                     }
-                    group.NoteMask |= (DrumNoteMask)laneMask;
+                    group.LaneMask |= (DrumLaneMask)laneMask;
 
                     if (lane >= SNARE)
                     {
@@ -204,7 +179,7 @@ namespace YARG.Core.NewLoading
                         }
                     }
                 }
-                cache.NoteGroups.Add(note->Key, in group);
+                cache.NoteGroups.Add(in group);
             }
 
             cache.Rolls.TrimExcess();
@@ -221,17 +196,21 @@ namespace YARG.Core.NewLoading
         )
         {
             var track = instrument[selection.Difficulty];
-            var cache = new DrumTrackCache();
-            cache.NoteGroups.Capacity = track.Notes.Count;
-            cache.Rolls.Capacity      = track.Notes.Count;
-            cache.Overdrives.Capacity = track.Overdrives.Count;
-            cache.Solos.Capacity      = track.Solos.Count;
+            var cache = new DrumTrackCache(track.Notes.Count, track.Overdrives.Count, track.Solos.Count);
+
+            for (int i = 0; i < track.Notes.Count; i++)
+            {
+                cache.Overdrives.Add(new OverdrivePhrase());
+            }
+
+            foreach (var solo in track.Solos)
+            {
+                cache.Solos.Add(new SoloPhrase(solo.Key, solo.Key + solo.Value));
+            }
 
             long overdriveIndex = 0;
             long soloIndex = 0;
 
-            // We have to validate note sustain data to ensure that we can run engine logic without issue.
-            var landEndings = stackalloc long[FourLaneDrums.NUM_LANES];
             for (long noteIndex = 0; noteIndex < track.Notes.Count; noteIndex++)
             {
                 var note = track.Notes.Data + noteIndex;
@@ -241,12 +220,11 @@ namespace YARG.Core.NewLoading
                     break;
                 }
 
-                var group = new DrumNoteGroup
-                {
-                    RollIndex = -1,
-                    OverdriveIndex = CommonTrackCacheOps.GetPhraseIndex(track.Overdrives, cache.Overdrives, in note->Key, ref overdriveIndex),
-                    SoloIndex = CommonTrackCacheOps.GetPhraseIndex(track.Solos, cache.Solos, in note->Key, ref soloIndex),
-                };
+                var group = new DrumNoteGroup(
+                    in note->Key,
+                    CommonTrackCacheOps.GetOverdrivePhraseIndex(track.Overdrives, cache.Overdrives, in note->Key, ref overdriveIndex),
+                    CommonTrackCacheOps.GetSoloPhraseIndex(cache.Solos, in note->Key, ref soloIndex)
+                );
 
                 var lanes = (DualTime*)&note->Value.Lanes;
                 for (int lane = 0; lane < FourLaneDrums.NUM_LANES; lane++)
@@ -282,15 +260,13 @@ namespace YARG.Core.NewLoading
                     }
 
                     int laneMask = 1 << shift;
-                    var sustain = DualTime.Truncate(fret, chart.Settings.SustainCutoffThreshold);
+                    var length = DualTime.Truncate(fret, chart.Settings.SustainCutoffThreshold);
                     // Anything greater than 1 signals that the sustain length satisfied the threshold.
-                    // However, you can't do a drum roll on two drums... in-game anyway.
-                    if (sustain.Ticks > 1 && group.RollIndex == -1)
+                    if (length.Ticks > 1)
                     {
-                        group.RollIndex = cache.Rolls.Count;
-                        cache.Rolls.Add(new Sustain(sustain + note->Key) { NoteMask = laneMask });
+                        cache.Rolls.Add(new DrumRoll(length + note->Key, laneMask));
                     }
-                    group.NoteMask |= (DrumNoteMask)laneMask;
+                    group.LaneMask |= (DrumLaneMask)laneMask;
 
                     if (lane >= SNARE)
                     {
@@ -301,7 +277,7 @@ namespace YARG.Core.NewLoading
                         }
                     }
                 }
-                cache.NoteGroups.Add(note->Key, in group);
+                cache.NoteGroups.Add(in group);
             }
 
             cache.Rolls.TrimExcess();
