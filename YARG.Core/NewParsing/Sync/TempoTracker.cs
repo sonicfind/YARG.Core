@@ -1,15 +1,16 @@
 ﻿using System.Diagnostics;
+using YARG.Core.Containers;
 
 namespace YARG.Core.NewParsing
 {
     /// <summary>
     /// Handles tracking the position in seconds of a particular tick. It uses a moving pointer to dodge long binary searches.
     /// </summary>
-    public unsafe struct TempoTracker
+    public struct TempoTracker
     {
-        private readonly long _resolution;
-        private readonly (long Position, Tempo2 TempoMarker)* _end;
-        private (long Position, Tempo2 TempoMarker)* _position;
+        private readonly long                               _resolution;
+        private readonly YargNativeSortedList<long, Tempo2> _tempoMarkers;
+        private          long                               _index;
 
         public readonly long Resolution => _resolution;
 
@@ -20,10 +21,10 @@ namespace YARG.Core.NewParsing
         /// <param name="resolution">The tickrate of the chart</param>
         public TempoTracker(SyncTrack2 sync, long resolution)
         {
-            Debug.Assert(sync.TempoMarkers.Count > 0, "There must exist at least one marker in the tempo list");
+            Debug.Assert(sync.TempoMarkers.Count > 0, "At least one marker must exist in the tempo list");
             _resolution = resolution;
-            _position = sync.TempoMarkers.Data;
-            _end = _position + sync.TempoMarkers.Count;
+            _tempoMarkers = sync.TempoMarkers;
+            _index = 0;
         }
 
         /// <summary>
@@ -32,17 +33,21 @@ namespace YARG.Core.NewParsing
         /// <remarks>This modifies internal state to perform performance-optimized searches</remarks>
         /// <param name="ticks">Position in ticks to convert</param>
         /// <returns>The position in seconds</returns>
-        public unsafe double Traverse(long ticks)
+        public double Convert(long ticks)
         {
-            Debug.Assert(ticks >= _position->Position, "Tick position to convert placed before the current Position");
-            while (_position + 1 < _end && _position[1].Position <= ticks)
+            Debug.Assert(ticks >= _tempoMarkers[_index].Key,
+                "Tick position to convert must reside at or later than the current position");
+
+            while (_index + 1 < _tempoMarkers.Count && _tempoMarkers[_index + 1].Key <= ticks)
             {
-                ++_position;
+                ++_index;
             }
 
-            double quarters = (ticks - _position->Position) / (double) _resolution;
-            long micros = (long) (_position->TempoMarker.MicrosecondsPerQuarter * quarters) + _position->TempoMarker.PositionInMicroseconds;
-            return micros / (double) Tempo2.MICROS_PER_SECOND;
+            ref readonly var marker = ref _tempoMarkers[_index];
+            double quartersOffset = (ticks - marker.Key) / (double) _resolution;
+            long microsecondOffset = (long) (marker.Value.MicrosecondsPerQuarter * quartersOffset);
+            long microsecondPosition = microsecondOffset + marker.Value.PositionInMicroseconds;
+            return microsecondPosition / (double) Tempo2.MICROS_PER_SECOND;
         }
 
         /// <summary>
@@ -51,18 +56,22 @@ namespace YARG.Core.NewParsing
         /// <remarks>The internal state of the tracker will not change from this call</remarks>
         /// <param name="ticks">Position in ticks to convert</param>
         /// <returns>The position in seconds</returns>
-        public readonly unsafe double UnmovingConvert(long ticks)
+        public readonly double ReadonlyConvert(long ticks)
         {
-            Debug.Assert(ticks >= _position->Position, "Tick position to convert placed before the current Position");
-            var tmp = _position;
-            while (tmp + 1 < _end && tmp[1].Position <= ticks)
+            Debug.Assert(ticks >= _tempoMarkers[_index].Key,
+                "Tick position to convert must reside at or later than the current position");
+
+            var index = _index;
+            while (index + 1 < _tempoMarkers.Count && _tempoMarkers[index + 1].Key <= ticks)
             {
-                ++tmp;
+                ++index;
             }
 
-            double quarters = (ticks - tmp->Position) / (double) _resolution;
-            long micros = (long) (tmp->TempoMarker.MicrosecondsPerQuarter * quarters) + tmp->TempoMarker.PositionInMicroseconds;
-            return micros / (double) Tempo2.MICROS_PER_SECOND;
+            ref readonly var marker = ref _tempoMarkers[index];
+            double quartersOffset = (ticks - marker.Key) / (double) _resolution;
+            long microsecondOffset = (long) (marker.Value.MicrosecondsPerQuarter * quartersOffset);
+            long microsecondPosition = microsecondOffset + marker.Value.PositionInMicroseconds;
+            return microsecondPosition / (double) Tempo2.MICROS_PER_SECOND;
         }
     }
 }

@@ -236,7 +236,7 @@ namespace YARG.Core.IO
             var duration = new DualTime()
             {
                 Ticks = tickDuration,
-                Seconds = tracker.UnmovingConvert(position.Ticks + tickDuration) - position.Seconds
+                Seconds = tracker.ReadonlyConvert(position.Ticks + tickDuration) - position.Seconds
             };
             return (lane, duration);
         }
