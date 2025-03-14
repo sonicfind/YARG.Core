@@ -220,7 +220,7 @@ namespace YARG.Core.NewParsing
                 if (ev.Type == ChartEventType.Text)
                 {
                     position.Ticks = ev.Position;
-                    position.Seconds = tempoTracker.Traverse(ev.Position);
+                    position.Seconds = tempoTracker.Convert(ev.Position);
 
                     string str = YARGTextReader.ExtractText(ref container, true);
                     if (str.StartsWith(SECTION))
@@ -350,7 +350,7 @@ namespace YARG.Core.NewParsing
             while (YARGChartFileReader.TryParseEvent(ref container, ref ev))
             {
                 position.Ticks = ev.Position;
-                position.Seconds = tempoTracker.Traverse(ev.Position);
+                position.Seconds = tempoTracker.Convert(ev.Position);
 
                 switch (ev.Type)
                 {
@@ -404,7 +404,7 @@ namespace YARG.Core.NewParsing
                                 if (nextSoloPosition != position)
                                 {
                                     ++position.Ticks;
-                                    position.Seconds = tempoTracker.UnmovingConvert(position.Ticks);
+                                    position.Seconds = tempoTracker.ReadonlyConvert(position.Ticks);
                                     difficultyTrack.Solos.Add(in soloPosition, position - soloPosition);
                                     soloPosition = DualTime.Inactive;
                                 }
