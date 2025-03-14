@@ -113,7 +113,7 @@ namespace YARG.Core.NewParsing
         /// <returns>The chart data from the midi stream</returns>
         public static YARGChart LoadMidi_Single(in FixedArray<byte> data, in SongMetadata metadata, in LoaderSettings settings, IniModifierCollection? modifiers, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
         {
-            var midi = new YARGMidiFile(in data);
+            var midi = YARGMidiFile.Load(in data);
             var chart = new YARGChart(midi.Resolution, in metadata, in settings, modifiers);
             MidiFiveFretLoader.SetOverdriveMidiNote(chart.Settings.OverdiveMidiNote);
 
@@ -138,7 +138,7 @@ namespace YARG.Core.NewParsing
         /// <returns>The combined chart data from all the midi streams</returns>
         public static YARGChart LoadMidi_Multi(in FixedArray<byte> mainData, in FixedArray<byte> updateData, in FixedArray<byte> upgradeData, in SongMetadata metadata, in LoaderSettings settings, DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
         {
-            var mainMidi = new YARGMidiFile(in mainData);
+            var mainMidi = YARGMidiFile.Load(in mainData);
             var chart = new YARGChart(mainMidi.Resolution, in metadata, in settings, null);
             MidiFiveFretLoader.SetOverdriveMidiNote(chart.Settings.OverdiveMidiNote);
 
@@ -146,13 +146,13 @@ namespace YARG.Core.NewParsing
             var encoding = Encoding.UTF8;
             if (updateData.IsAllocated)
             {
-                var updateMidi = new YARGMidiFile(in updateData);
+                var updateMidi = YARGMidiFile.Load(in updateData);
                 LoadTracks_Midi(chart, ref updateMidi, ref encoding, ref drumsInChart, activeInstruments);
             }
 
             if (upgradeData.IsAllocated)
             {
-                var upgradeMidi = new YARGMidiFile(in upgradeData);
+                var upgradeMidi = YARGMidiFile.Load(in upgradeData);
                 LoadTracks_Midi(chart, ref upgradeMidi, ref encoding, ref drumsInChart, activeInstruments);
             }
 
@@ -171,25 +171,25 @@ namespace YARG.Core.NewParsing
         /// <param name="activeInstruments">Provides guidance over which instruments from the midi file to load. If null, all instruments will be loaded.</param>
         private static void LoadTracks_Midi(YARGChart chart, ref YARGMidiFile midi, ref Encoding encoding, ref DrumsType drumsInChart, HashSet<MidiTrackType>? activeInstruments)
         {
-            foreach (var midiTrack in midi)
+            while (midi.GetNextTrack(out var trackNumber, out var track))
             {
-                if (!midiTrack.FindTrackName(out var trackname))
+                if (!track.FindTrackName(out var trackname))
                 {
-                    YargLogger.LogInfo($"Duplicate MIDI Track names for Track #{midi.TrackNumber}");
+                    YargLogger.LogInfo($"Duplicate MIDI Track names for Track #{trackNumber}");
                     trackname = TextSpan.Empty;
                 }
 
                 string name = trackname.GetString(Encoding.ASCII);
-                if (midi.TrackNumber == 1)
+                if (trackNumber == 1)
                 {
                     chart.MidiSequenceName = name;
-                    LoadSyncTrack_Midi(midiTrack, chart.Sync, chart.Resolution);
+                    LoadSyncTrack_Midi(track, chart.Sync, chart.Resolution);
                     continue;
                 }
 
                 if (!YARGMidiTrack.TRACKNAMES.TryGetValue(name, out var type))
                 {
-                    YargLogger.LogInfo($"Unrecognized MIDI Track #{midi.TrackNumber}: {name}");
+                    YargLogger.LogInfo($"Unrecognized MIDI Track #{trackNumber}: {name}");
                     continue;
                 }
 
@@ -197,15 +197,15 @@ namespace YARG.Core.NewParsing
                 var tempoTracker = new TempoTracker(chart.Sync, chart.Resolution);
                 if (type == MidiTrackType.Events)
                 {
-                    LoadEventsTrack_Midi(chart, ref tempoTracker, ref encoding, midiTrack);
+                    LoadEventsTrack_Midi(chart, ref tempoTracker, ref encoding, track);
                 }
                 else if (type == MidiTrackType.Beat)
                 {
-                    LoadBeatsTrack_Midi(chart, ref tempoTracker, midiTrack);
+                    LoadBeatsTrack_Midi(chart, ref tempoTracker, track);
                 }
                 else if (activeInstruments == null || activeInstruments.Contains(type))
                 {
-                    LoadInstrument_Midi(chart, type, ref drumsInChart, ref tempoTracker, midiTrack, ref encoding);
+                    LoadInstrument_Midi(chart, type, ref drumsInChart, ref tempoTracker, track, ref encoding);
                 }
             }
         }
@@ -330,7 +330,7 @@ namespace YARG.Core.NewParsing
         /// </param>
         /// <param name="midiTrack">The track containing the instrument or vocal data</param>
         /// <param name="encoding">The encoding to use to decode midi text events to lyrics</param>
-        private static void LoadInstrument_Midi(YARGChart chart, MidiTrackType type, ref DrumsType drumsInChart, ref TempoTracker tempoTracker, in YARGMidiTrack midiTrack, ref Encoding encoding) 
+        private static void LoadInstrument_Midi(YARGChart chart, MidiTrackType type, ref DrumsType drumsInChart, ref TempoTracker tempoTracker, in YARGMidiTrack midiTrack, ref Encoding encoding)
         {
             switch (type)
             {
@@ -379,7 +379,7 @@ namespace YARG.Core.NewParsing
                 case MidiTrackType.Pro_Guitar_22: MidiProGuitarLoader.Load(midiTrack, chart.ProGuitar_22Fret, ref tempoTracker); break;
                 case MidiTrackType.Pro_Bass_17:   MidiProGuitarLoader.Load(midiTrack, chart.ProBass_17Fret, ref tempoTracker); break;
                 case MidiTrackType.Pro_Bass_22:   MidiProGuitarLoader.Load(midiTrack, chart.ProBass_22Fret, ref tempoTracker); break;
-                
+
                 case MidiTrackType.Pro_Keys_X:
                 case MidiTrackType.Pro_Keys_H:
                 case MidiTrackType.Pro_Keys_M: // Handled per-difficulty, so we use 0-3 indexing
