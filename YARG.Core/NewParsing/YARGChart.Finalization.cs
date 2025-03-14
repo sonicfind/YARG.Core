@@ -134,7 +134,7 @@ namespace YARG.Core.NewParsing
                         if (beatIndex == chart.BeatMap.Count || currMarker < chart.BeatMap[beatIndex].Key.Ticks)
                         {
                             buffer.Ticks = currMarker;
-                            buffer.Seconds = tempoTracker.Traverse(currMarker);
+                            buffer.Seconds = tempoTracker.Convert(currMarker);
                             chart.BeatMap.Insert(beatIndex, (buffer, BeatlineType.Weak));
                         }
                         ++beatIndex;
@@ -146,7 +146,7 @@ namespace YARG.Core.NewParsing
                 if (index + 1 == chart.Sync.TimeSigs.Count)
                 {
                     buffer.Ticks = endTime;
-                    buffer.Seconds = tempoTracker.Traverse(endTime);
+                    buffer.Seconds = tempoTracker.Convert(endTime);
                     chart.BeatMap.Add(buffer, BeatlineType.Measure);
                 }
             }
@@ -218,7 +218,7 @@ namespace YARG.Core.NewParsing
                     for (int i = 0; i < numerator && currMarker < endTime; ++i, currMarker += ticksPerMarker)
                     {
                         buffer.Ticks = currMarker;
-                        buffer.Seconds = tempoTracker.Traverse(currMarker);
+                        buffer.Seconds = tempoTracker.Convert(currMarker);
                         chart.BeatMap.Add(buffer, pattern[i]);
                     }
                     currMeasure += ticksPerMeasure;
@@ -227,7 +227,7 @@ namespace YARG.Core.NewParsing
                 if (index + 1 == chart.Sync.TimeSigs.Count)
                 {
                     buffer.Ticks = endTime;
-                    buffer.Seconds = tempoTracker.Traverse(endTime);
+                    buffer.Seconds = tempoTracker.Convert(endTime);
                     chart.BeatMap.Add(buffer, BeatlineType.Measure);
                 }
             }

@@ -80,7 +80,7 @@ namespace YARG.Core.NewParsing.Midi
             while (midiTrack.ParseEvent(ref stats))
             {
                 position.Ticks = stats.Position;
-                position.Seconds = tempoTracker.Traverse(position.Ticks);
+                position.Seconds = tempoTracker.Convert(position.Ticks);
                 if (stats.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
@@ -441,7 +441,7 @@ namespace YARG.Core.NewParsing.Midi
             while (midiTrack.ParseEvent(ref stats))
             {
                 position.Ticks = stats.Position;
-                position.Seconds = tempoTracker.Traverse(position.Ticks);
+                position.Seconds = tempoTracker.Convert(position.Ticks);
                 if (stats.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);
@@ -751,7 +751,7 @@ namespace YARG.Core.NewParsing.Midi
             while (midiTrack.ParseEvent(ref stats))
             {
                 position.Ticks = stats.Position;
-                position.Seconds = tempoTracker.Traverse(position.Ticks);
+                position.Seconds = tempoTracker.Convert(position.Ticks);
                 if (stats.Type is MidiEventType.Note_On or MidiEventType.Note_Off)
                 {
                     midiTrack.ExtractMidiNote(ref note);

@@ -262,7 +262,7 @@ namespace YARG.Core.NewParsing
                 if (MidiEventType.Text <= stats.Type && stats.Type <= MidiEventType.Text_EnumLimit && stats.Type != MidiEventType.Text_TrackName)
                 {
                     position.Ticks = stats.Position;
-                    position.Seconds = tempoTracker.Traverse(position.Ticks);
+                    position.Seconds = tempoTracker.Convert(position.Ticks);
 
                     var text = midiTrack.ExtractTextOrSysEx();
                     if (text.StartsWith(PREFIXES[0]))
@@ -308,7 +308,7 @@ namespace YARG.Core.NewParsing
                     if (note.Velocity > 0)
                     {
                         position.Ticks = stats.Position;
-                        position.Seconds = tempoTracker.Traverse(position.Ticks);
+                        position.Seconds = tempoTracker.Convert(position.Ticks);
                         switch (note.Value)
                         {
                             case MEASURE_BEAT: chart.BeatMap.AddOrUpdate(in position, BeatlineType.Measure); break;
