@@ -72,7 +72,11 @@ namespace YARG.Core.NewParsing.Midi
             };
 
             // Various special phrases trackers
-            var brePositions = stackalloc DualTime[6];
+            var brePositions = stackalloc DualTime[6]
+            {
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive,
+                DualTime.Inactive, DualTime.Inactive, DualTime.Inactive
+            };
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
 

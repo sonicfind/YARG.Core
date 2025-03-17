@@ -46,7 +46,15 @@ namespace YARG.Core.NewParsing.Midi
             using var tremolos = new YargNativeSortedList<DualTime, DualTime>();
             using var bres = new YargNativeSortedList<DualTime, DualTime>();
 
-            var diffModifiers = stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES];
+            var diffModifiers =
+                stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES]
+            {
+                (false, false, false),
+                (false, false, false),
+                (false, false, false),
+                (false, false, false),
+            };
+
             // Per-difficulty tracker of note positions
             var lanes = stackalloc DualTime[InstrumentTrack2.NUM_DIFFICULTIES * NUM_LANES]
             {
@@ -57,7 +65,7 @@ namespace YARG.Core.NewParsing.Midi
             };
 
             // Various special phrases trackers
-            var brePositions = stackalloc DualTime[5] { DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive };
+            var brePositions = stackalloc DualTime[5]{ DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive, DualTime.Inactive };
             var overdrivePosition = DualTime.Inactive;
             var soloPosition = DualTime.Inactive;
             var tremoloPostion = DualTime.Inactive;
