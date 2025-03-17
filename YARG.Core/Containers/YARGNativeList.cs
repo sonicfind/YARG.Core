@@ -64,6 +64,13 @@ namespace YARG.Core.Containers
         /// </summary>
         public Span<T> Span => new(_buffer, (int)_count);
 
+        public long CountInBytes => _count * sizeof(T);
+
+        /// <summary>
+        /// The span view of all elements as bytes
+        /// </summary>
+        public Span<byte> SpanAsBytes => new(_buffer, (int)CountInBytes);
+
         /// <summary>
         /// The direct pointer for the underlying data. Use carefully.
         /// </summary>
