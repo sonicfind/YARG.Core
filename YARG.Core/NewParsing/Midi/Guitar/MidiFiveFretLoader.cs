@@ -51,7 +51,14 @@ namespace YARG.Core.NewParsing.Midi
             using var faceoff_P1 = new YargNativeSortedList<DualTime, DualTime>();
             using var faceoff_P2 = new YargNativeSortedList<DualTime, DualTime>();
 
-            var diffModifiers = stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES];
+            var diffModifiers =
+                stackalloc (bool SliderNotes, bool HopoOn, bool HopoOff)[InstrumentTrack2.NUM_DIFFICULTIES]
+            {
+                (false, false, false),
+                (false, false, false),
+                (false, false, false),
+                (false, false, false),
+            };
 
             // Zero is reserved for open notes. Open notes apply in two situations:
             // 1. The 13s will swap to zeroes when if find the ENHANCED_OPENS event
