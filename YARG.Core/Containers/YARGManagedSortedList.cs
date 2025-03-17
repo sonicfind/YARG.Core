@@ -113,11 +113,17 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <remarks>Performs a binary search</remarks>
         /// <param name="key">The key to query for and possibly emplace in the list</param>
+        /// <param name="lo">The lowest point in the list to search from</param>
+        /// <param name="hi">The exclusively highest point in the list to search from</param>
         /// <returns>The index of the node with the matching key. If one was not found, it returns the index where it would go, but bit-flipped.</returns>
-        public int Find(in TKey key)
+        public int Find(in TKey key, int lo = 0, int hi = int.MaxValue)
         {
-            int lo = 0;
-            int hi = _count - 1;
+            if (hi > _count)
+            {
+                hi = _count;
+            }
+            hi--;
+
             while (lo <= hi)
             {
                 int curr = lo + (hi - lo >> 1);
