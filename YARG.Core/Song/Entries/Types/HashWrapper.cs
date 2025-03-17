@@ -111,6 +111,15 @@ namespace YARG.Core.Song
             }
         }
 
+        public static HashWrapper operator^(HashWrapper a, HashWrapper b)
+        {
+            for (int i = 0; i < HASH_SIZE_IN_INTS; i++)
+            {
+                a._hash[i] ^= b._hash[i];
+            }
+            return a;
+        }
+
         public readonly int CompareTo(HashWrapper other)
         {
             for (int i = 0; i < HASH_SIZE_IN_INTS; ++i)
