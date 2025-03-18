@@ -18,6 +18,12 @@ namespace YARG.Core.NewParsing
             Seconds = 0,
         };
 
+        public static readonly DualTime Max = new()
+        {
+            Ticks = int.MaxValue,
+            Seconds = double.MaxValue,
+        };
+
         public long Ticks;
         public double Seconds;
 

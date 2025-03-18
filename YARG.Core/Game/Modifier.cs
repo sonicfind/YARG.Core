@@ -14,10 +14,11 @@ namespace YARG.Core.Game
         HoposToTaps       = 1 << 3,
         TapsToHopos       = 1 << 4,
         NoteShuffle       = 1 << 5,
-        NoKicks           = 1 << 6,
-        UnpitchedOnly     = 1 << 7,
-        NoDynamics        = 1 << 8,
-        NoVocalPercussion = 1 << 9,
+        DoubleNotes       = 1 << 6,
+        NoKicks           = 1 << 7,
+        UnpitchedOnly     = 1 << 8,
+        NoDynamics        = 1 << 9,
+        NoVocalPercussion = 1 << 10,
     }
 
     public static class ModifierConflicts
@@ -25,7 +26,7 @@ namespace YARG.Core.Game
         // We can essentially treat a set of conflicting modifiers as a group, since they
         // conflict in both ways (i.e. all strums conflicts with all HOPOs, and vice versa).
         // Returning a list of the conflicting modifiers, and simply removing them, takes
-        // care of all of the possibilities. A modifier can be a part of multiple groups,
+        // care of all the possibilities. A modifier can be a part of multiple groups,
         // which is why we use a list here.
         private static readonly List<Modifier> _conflictingModifiers = new()
         {
