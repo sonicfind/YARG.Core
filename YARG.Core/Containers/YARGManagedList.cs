@@ -269,23 +269,65 @@ namespace YARG.Core.Containers
             _count = 0;
         }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            return ((IEnumerable<T>) this).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
+        Enumerator GetEnumerator()
         {
             return new Enumerator(this);
         }
 
-        private struct Enumerator : IEnumerator<T>, IEnumerator
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            return new _Enumerator(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new _Enumerator(this);
+        }
+
+        public ref struct Enumerator
+        {
+            private readonly YargManagedList<T> _map;
+            private          int                _index;
+            private readonly int                _version;
+
+            internal Enumerator(YargManagedList<T> map)
+            {
+                _map = map;
+                _index = -1;
+                _version = map._version;
+            }
+
+            public bool MoveNext()
+            {
+                if (_version != _map._version)
+                {
+                    throw new InvalidOperationException("Enum failed - Sorted List was updated");
+                }
+
+                ++_index;
+                return _index < _map._count;
+            }
+
+            public ref readonly T Current
+            {
+                get
+                {
+                    if (_version != _map._version || _index < 0 || _index >= _map._count)
+                    {
+                        throw new InvalidOperationException("Enum Operation not possible");
+                    }
+                    return ref _map._buffer[_index];
+                }
+            }
+        }
+
+        private struct _Enumerator : IEnumerator<T>, IEnumerator
         {
             private readonly YargManagedList<T> _map;
             private int _index;
             private readonly int _version;
 
-            internal Enumerator(YargManagedList<T> map)
+            internal _Enumerator(YargManagedList<T> map)
             {
                 _map = map;
                 _index = -1;

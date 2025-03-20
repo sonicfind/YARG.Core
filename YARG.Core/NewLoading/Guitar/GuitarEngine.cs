@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using YARG.Core.Containers;
 using YARG.Core.Engine;
 using YARG.Core.Game;
@@ -17,22 +18,20 @@ namespace YARG.Core.NewLoading
 
         private readonly NewHitWindow                   _hitWindow;
         private readonly DualTime                       _strumLeniency;
-        private readonly Modifier                       _baseModifiers;
         private readonly YargNativeList<SustainTracker> _activeSustains = new();
 
-        private GuitarTrack? _track = null;
-        private EngineStats       _stats = EngineStats.Zero;
-        private long              _sustainIndex;
-        private GuitarButtonMask  _buttonMask  = GuitarButtonMask.None;
-        private DualTime          _strumWindow = DualTime.Zero;
-        private StrumState        _strumState  = StrumState.Inactive;
+        private GuitarTrack?     _track        = null;
+        private EngineStats      _stats        = EngineStats.Zero;
+        private long             _sustainIndex = 0;
+        private GuitarButtonMask _buttonMask   = GuitarButtonMask.None;
+        private DualTime         _strumWindow  = DualTime.Zero;
+        private StrumState       _strumState   = StrumState.Inactive;
 
 
         public GuitarEngine(in NewHitWindow hitWindow, in DualTime strumWindow, Modifier modifiers)
         {
             _hitWindow = hitWindow;
             _strumWindow = strumWindow;
-            _baseModifiers = modifiers;
         }
 
         public void SetTrack(in GuitarTrack track)
@@ -41,144 +40,97 @@ namespace YARG.Core.NewLoading
             _track = track;
             _stats.NoteIndex = 0;
             _stats.SoloIndex = 0;
-            _sustainIndex = 0;
-
-            if (_baseModifiers == Modifier.None)
-            {
-                return;
-            }
-
-            if ((_baseModifiers & ~Modifier.NoteShuffle) > 0)
-            {
-                if (_baseModifiers.Has(Modifier.AllStrums))
-                {
-                    for (long noteIndex = 0; noteIndex < _track.NoteGroups.Count; noteIndex++)
-                    {
-                        _track.NoteGroups[noteIndex].GuitarState = GuitarState.Strum;
-                    }
-                }
-                else if (_baseModifiers.Has(Modifier.AllTaps))
-                {
-                    for (long noteIndex = 0; noteIndex < _track.NoteGroups.Count; noteIndex++)
-                    {
-                        _track.NoteGroups[noteIndex].GuitarState = GuitarState.Tap;
-                    }
-                }
-                else if (_baseModifiers.Has(Modifier.AllHopos))
-                {
-                    for (long noteIndex = 0; noteIndex < _track.NoteGroups.Count; noteIndex++)
-                    {
-                        _track.NoteGroups[noteIndex].GuitarState = GuitarState.Hopo;
-                    }
-                }
-                else
-                {
-                    for (long noteIndex = 0; noteIndex < _track.NoteGroups.Count; noteIndex++)
-                    {
-                        ref var noteGroup = ref _track.NoteGroups[noteIndex];
-                        if (noteGroup.GuitarState == GuitarState.Tap)
-                        {
-                            // Going by YARG, the presence of this flag turns *all* taps to hopos, regardless
-                            // of other factors (like notes before it)
-                            if (_baseModifiers.Has(Modifier.TapsToHopos))
-                            {
-                                noteGroup.GuitarState = GuitarState.Hopo;
-                            }
-                        }
-                        else if (noteGroup.GuitarState == GuitarState.Hopo)
-                        {
-                            if (_baseModifiers.Has(Modifier.HoposToTaps))
-                            {
-                                noteGroup.GuitarState = GuitarState.Tap;
-                            }
-                        }
-                    }
-                }
-
-                if (_baseModifiers.Has(Modifier.DoubleNotes))
-                {
-                    Span<long> doubleNoteTrackers = stackalloc long[track.NumLanes];
-                    for (long noteIndex = 0, sustainIndex = 0; noteIndex < _track.NoteGroups.Count; noteIndex++)
-                    {
-                        ref var noteGroup = ref _track.NoteGroups[noteIndex];
-                        if (noteGroup.LaneMask == GuitarLaneMask.Open_DisableAnchoring)
-                        {
-                            continue;
-                        }
-
-                        int laneCount = noteGroup.LaneCount;
-                        if (noteGroup.LaneMask.HasFlag(GuitarLaneMask.Open_DisableAnchoring))
-                        {
-                            laneCount--;
-                        }
-
-                        if (laneCount >= 3)
-                        {
-                            continue;
-                        }
-
-                        int laneIndex = 0;
-                        while (laneCount > 0)
-                        {
-                            ++laneIndex;
-                            if (noteGroup.LaneMask.HasFlag((GuitarLaneMask) (1 << laneIndex)))
-                            {
-                                --laneCount;
-                            }
-                        }
-
-                        var mask = (GuitarLaneMask) (1 << laneIndex);
-                        int upper = laneIndex + 1;
-                        while (upper < track.NumLanes)
-                        {
-                            if (doubleNoteTrackers[upper] <= noteGroup.Position.Ticks)
-                            {
-                                break;
-                            }
-
-                            long endTick = _track.TryAddLaneToGroup(noteIndex, sustainIndex, mask, upper);
-                            if (endTick >= 0)
-                            {
-                                doubleNoteTrackers[upper] = endTick;
-                                break;
-                            }
-                            ++upper;
-                        }
-
-                        if (upper < track.NumLanes)
-                        {
-                            int lower = laneIndex - 1;
-                            while (lower > 0)
-                            {
-                                var lowerMask = (GuitarLaneMask) (1 << lower);
-                                if (!noteGroup.LaneMask.HasFlag(lowerMask) &&
-                                    doubleNoteTrackers[lower] <= noteGroup.Position.Ticks)
-                                {
-                                    break;
-                                }
-
-                                long endTick = _track.TryAddLaneToGroup(noteIndex, sustainIndex, mask, lower);
-                                if (endTick >= 0)
-                                {
-                                    doubleNoteTrackers[lower] = endTick;
-                                    break;
-                                }
-                                --lower;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (_baseModifiers.Has(Modifier.NoteShuffle))
-            {
-
-            }
         }
 
-        public void ReplaceTrackWithOffset(in GuitarTrack track, in DualTime time)
+        public void SwapTrack(in GuitarTrack track, in DualTime swapPosition)
         {
+            Debug.Assert(track != null);
+            long noteReplacementIndex = _stats.NoteIndex;
+            long sustainReplacementIndex = _sustainIndex;
+            double latestEndPoint = swapPosition.Seconds;
+            for (int i = 0; i < _activeSustains.Count; ++i)
+            {
+                ref readonly var activeSustain = ref _activeSustains[i];
+                ref var sustain = ref _track!.Sustains[activeSustain.SustainIndex];
+                sustain.OverdriveIndex = -1;
+                if (latestEndPoint < sustain.EndTime.Seconds)
+                {
+                    latestEndPoint = sustain.EndTime.Seconds;
+                }
+            }
 
+            while (noteReplacementIndex < _track!.NoteGroups.Count)
+            {
+                ref var noteGroup = ref _track.NoteGroups[noteReplacementIndex];
+                if (noteGroup.Position >= swapPosition)
+                {
+                    break;
+                }
+
+                noteGroup.OverdriveIndex = -1;
+                noteGroup.SoloIndex = -1;
+                for (int sustainOffset = 0; sustainOffset < noteGroup.SustainCount; sustainOffset++)
+                {
+                    ref var sustain = ref _track.Sustains[sustainReplacementIndex++];
+                    sustain.OverdriveIndex = -1;
+                    if (latestEndPoint < sustain.EndTime.Seconds)
+                    {
+                        latestEndPoint = sustain.EndTime.Seconds;
+                    }
+                }
+                ++noteReplacementIndex;
+            }
+
+            latestEndPoint += 1;
+            long noteCopyIndex = 0;
+            long sustainCopyIndex = 0;
+            while (noteCopyIndex < track.NoteGroups.Count)
+            {
+                ref readonly var noteGroup = ref track.NoteGroups[noteCopyIndex];
+                if (noteGroup.Position.Seconds >= latestEndPoint)
+                {
+                    break;
+                }
+                sustainCopyIndex += noteGroup.SustainCount;
+                ++noteCopyIndex;
+            }
+
+            _track.NoteGroups.Resize_NoInitialization(noteReplacementIndex);
+            _track.Sustains.Resize_NoInitialization(sustainReplacementIndex);
+            unsafe
+            {
+                _track.NoteGroups.AddRange(track.NoteGroups.Data + noteCopyIndex, track.NoteGroups.Count - noteCopyIndex);
+                _track.Sustains.AddRange(track.Sustains.Data + sustainCopyIndex, track.Sustains.Count - sustainCopyIndex);
+            }
+
+            _track!.Solos.CopyFrom(track.Solos);
+            _track.Overdrives.CopyFrom(track.Overdrives);
+            // We need to invalidate an overdrive phrase if the starting note of the copy
+            // does not allow the player to hit all the notes required
+            if (noteReplacementIndex < _track.NoteGroups.Count)
+            {
+                ref readonly var noteGroup = ref _track.NoteGroups[noteCopyIndex];
+                if (noteGroup.OverdriveIndex >= 0)
+                {
+                    long overdriveNoteIndex = noteCopyIndex + 1;
+                    long overdriveNoteCount = 1;
+                    while (overdriveNoteIndex < _track.NoteGroups.Count &&
+                        _track.NoteGroups[overdriveNoteIndex].OverdriveIndex == noteGroup.OverdriveIndex)
+                    {
+                        overdriveNoteCount++;
+                        overdriveNoteIndex++;
+                    }
+
+                    ref var overdrive = ref _track.Overdrives[noteGroup.OverdriveIndex];
+                    if (overdrive.TotalNotes != overdriveNoteCount)
+                    {
+                        overdrive.HitCount = -1;
+                    }
+                }
+            }
+
+            _stats.NoteIndex = noteReplacementIndex;
+            _sustainIndex = sustainReplacementIndex;
         }
 
         public UpdateResult UpdateTime(in DualTime time, long resolution)

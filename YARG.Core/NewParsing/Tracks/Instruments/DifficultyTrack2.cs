@@ -165,5 +165,10 @@ namespace YARG.Core.NewParsing
             FaceOffPlayer2.Dispose();
             Events.Dispose();
         }
+
+        public override int GetHashCode()
+        {
+            return ComputeHash().GetHashCode();
+        }
     }
 }

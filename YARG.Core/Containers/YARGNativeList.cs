@@ -94,6 +94,18 @@ namespace YARG.Core.Containers
             Buffer.MemoryCopy(source._buffer, _buffer, bytes, bytes);
         }
 
+        public YargNativeList(T value, long count)
+        {
+            Capacity = count;
+            _count = count;
+            _version = 1;
+
+            for (long i = 0; i < count; i++)
+            {
+                _buffer[i] = value;
+            }
+        }
+
         public void CopyFrom(YargNativeList<T> source)
         {
             long byteCount = source._count * sizeof(T);
@@ -235,6 +247,30 @@ namespace YARG.Core.Containers
             ++_version;
         }
 
+        public void Resize(long newCount, in T value)
+        {
+            Debug.Assert(newCount >= 0);
+            if (newCount > _count)
+            {
+                CheckAndGrow(newCount - _count);
+                while (_count < newCount)
+                {
+                    _buffer[_count++] = value;
+                }
+            }
+            _count = newCount;
+        }
+
+        public void Resize_NoInitialization(long newCount)
+        {
+            Debug.Assert(newCount >= 0);
+            if (newCount > _count)
+            {
+                CheckAndGrow(newCount - _count);
+            }
+            _count = newCount;
+        }
+
         /// <summary>
         /// Returns a reference to the value at the provided index
         /// </summary>
@@ -302,23 +338,65 @@ namespace YARG.Core.Containers
             }
         }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            return ((IEnumerable<T>) this).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
+        Enumerator GetEnumerator()
         {
             return new Enumerator(this);
         }
 
-        private struct Enumerator : IEnumerator<T>, IEnumerator
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            return new _Enumerator(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new _Enumerator(this);
+        }
+
+        public ref struct Enumerator
+        {
+            private readonly YargNativeList<T> _list;
+            private readonly long          _version;
+            private          long          _index;
+
+            internal Enumerator(YargNativeList<T> list)
+            {
+                _list = list;
+                _version = list._version;
+                _index = -1;
+            }
+
+            public bool MoveNext()
+            {
+                if (_version != _list._version)
+                {
+                    throw new InvalidOperationException("Enum failed - Sorted List was updated");
+                }
+
+                ++_index;
+                return _index < _list.Count;
+            }
+
+            public ref readonly T Current
+            {
+                get
+                {
+                    if (_version != _list._version || _index < 0 || _index >= _list._count)
+                    {
+                        throw new InvalidOperationException("Enum Operation not possible");
+                    }
+                    return ref _list[_index];
+                }
+            }
+        }
+
+        private struct _Enumerator : IEnumerator<T>, IEnumerator
         {
             private readonly YargNativeList<T> _list;
             private readonly long _version;
             private long _index;
 
-            internal Enumerator(YargNativeList<T> list)
+            internal _Enumerator(YargNativeList<T> list)
             {
                 _list = list;
                 _version = list._version;

@@ -108,7 +108,7 @@ namespace YARG.Core.NewLoading
 
             if (!_route.IsEmpty())
             {
-                if (!ResetStartBeat(in time, out long startBeat))
+                if (!ResetRoute(in time, out long startBeat))
                 {
                     return;
                 }
@@ -121,12 +121,12 @@ namespace YARG.Core.NewLoading
             }
         }
 
-        public void StartGains(in DualTime time)
+        public void StartGains(in DualTime time, in DualTime endTime)
         {
             _baseOverdrive = GetOverdrive(time).Amount;
             _gains.Clear();
 
-            if (!ResetStartBeat(in time, out long startBeat))
+            if (!ResetRoute(in time, out long startBeat))
             {
                 return;
             }
@@ -200,22 +200,33 @@ namespace YARG.Core.NewLoading
             BuildRoute(in time, startBeat);
         }
 
+        public void StopGains(in DualTime time)
+        {
+            _baseOverdrive = GetOverdrive(time).Amount;
+            _gains.Clear();
+
+            if (_isActive && ResetRoute(in time, out long startBeat))
+            {
+                BuildRoute(in time, startBeat);
+            }
+        }
+
         public bool ActivateOverdrive(in DualTime time)
         {
             long overdrive = GetOverdrive(in time).Amount;
             if (_isActive ||
                 overdrive < ACTIVATION_THRESHOLD ||
-                !ResetStartBeat(in time, out long startBeat))
+                !ResetRoute(in time, out long startBeat))
             {
                 return false;
             }
 
+            _baseOverdrive = overdrive;
             _isActive = true;
             while (_gains.Count > 0 && _gains[0].EndTime <= time.Seconds)
             {
                 _gains.RemoveAt(0);
             }
-            _baseOverdrive = overdrive;
             BuildRoute(in time, startBeat);
             return true;
         }
@@ -343,7 +354,7 @@ namespace YARG.Core.NewLoading
             }
         }
 
-        private bool ResetStartBeat(in DualTime time, out long startBeat)
+        private bool ResetRoute(in DualTime time, out long startBeat)
         {
             _route.Clear();
             startBeat = _chart.BeatMap.Find(time);

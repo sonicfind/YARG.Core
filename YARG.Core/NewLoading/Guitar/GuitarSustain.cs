@@ -12,20 +12,18 @@ namespace YARG.Core.NewLoading
     public struct GuitarSustain
     {
         public readonly DualTime       EndTime;
-        public readonly long           OverdriveIndex;
         public readonly bool           HasFretLeniency;
+        public          long           OverdriveIndex;
         public          GuitarLaneMask LaneMask;
         public          int            LaneCount;
-        public          SustainState   State;
 
-        public GuitarSustain(in DualTime endTime, long overdriveIndex, bool hasFretLeniency)
+        public GuitarSustain(in DualTime endTime, bool hasFretLeniency, long overdriveIndex)
         {
             EndTime = endTime;
             OverdriveIndex = overdriveIndex;
             HasFretLeniency = hasFretLeniency;
             LaneMask = 0;
             LaneCount = 0;
-            State = SustainState.Idle;
         }
     }
 }

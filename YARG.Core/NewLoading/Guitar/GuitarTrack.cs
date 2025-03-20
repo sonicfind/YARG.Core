@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using YARG.Core.Chart;
 using YARG.Core.Containers;
 using YARG.Core.Game;
 using YARG.Core.NewParsing;
@@ -30,56 +26,6 @@ namespace YARG.Core.NewLoading
             );
         }
 
-        public long TryAddLaneToGroup(long groupIndex, long sustainIndex, GuitarLaneMask originalMask, int lane)
-        {
-            ref var noteGroup = ref NoteGroups[groupIndex];
-            var mask = (GuitarLaneMask)(1 << lane);
-            long sustainOffset = 0;
-            while (sustainOffset < noteGroup.SustainCount)
-            {
-                ref readonly var sustain = ref Sustains[sustainIndex + sustainOffset];
-                if (!sustain.LaneMask.HasFlag(originalMask))
-                {
-                    ++sustainOffset;
-                    continue;
-                }
-
-                if (IsLaneOccupied(groupIndex + 1, in sustain.EndTime, mask))
-                {
-                    return -1;
-                }
-                break;
-            }
-
-            noteGroup.LaneMask |= mask;
-            if (sustainOffset == noteGroup.SustainCount)
-            {
-                return noteGroup.Position.Ticks + 1;
-            }
-
-            ref var sustainToModify = ref Sustains[sustainIndex + sustainOffset];
-            sustainToModify.LaneMask |= mask;
-            return sustainToModify.EndTime.Ticks;
-        }
-
-        public bool IsLaneOccupied(long startIndex, in DualTime endTime, GuitarLaneMask mask)
-        {
-            while (startIndex < NoteGroups.Count)
-            {
-                ref readonly var futureNote = ref NoteGroups[startIndex++];
-                if (endTime <= futureNote.Position)
-                {
-                    break;
-                }
-
-                if (futureNote.LaneMask.HasFlag(mask))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         public void Dispose()
         {
             NoteGroups.Dispose();
@@ -103,12 +49,49 @@ namespace YARG.Core.NewLoading
             Solos = solos;
         }
 
-        private enum SustainLeniency
+        private static readonly Dictionary<GuitarLaneMask, GuitarDoubleNote> _doubleNotesFiveFret = new()
         {
-            Normal,
-            Extended,
-            Disjoint
-        }
+            {GuitarLaneMask.Green,                          new GuitarDoubleNote((int)GuitarLane.Red,    (int)GuitarLane.Green) },
+            {GuitarLaneMask.Red,                            new GuitarDoubleNote((int)GuitarLane.Yellow, (int)GuitarLane.Red) },
+            {GuitarLaneMask.Yellow,                         new GuitarDoubleNote((int)GuitarLane.Blue,   (int)GuitarLane.Yellow) },
+            {GuitarLaneMask.Blue,                           new GuitarDoubleNote((int)GuitarLane.Orange, (int)GuitarLane.Blue) },
+            {GuitarLaneMask.Orange,                         new GuitarDoubleNote((int)GuitarLane.Yellow, (int)GuitarLane.Orange) },
+            {GuitarLaneMask.Green  | GuitarLaneMask.Red,    new GuitarDoubleNote((int)GuitarLane.Yellow, (int)GuitarLane.Red) },
+            {GuitarLaneMask.Green  | GuitarLaneMask.Yellow, new GuitarDoubleNote((int)GuitarLane.Blue,   (int)GuitarLane.Yellow) },
+            {GuitarLaneMask.Green  | GuitarLaneMask.Blue,   new GuitarDoubleNote((int)GuitarLane.Orange, (int)GuitarLane.Blue) },
+            {GuitarLaneMask.Green  | GuitarLaneMask.Orange, new GuitarDoubleNote((int)GuitarLane.Yellow, (int)GuitarLane.Orange) },
+            {GuitarLaneMask.Red    | GuitarLaneMask.Yellow, new GuitarDoubleNote((int)GuitarLane.Blue,   (int)GuitarLane.Yellow) },
+            {GuitarLaneMask.Red    | GuitarLaneMask.Blue,   new GuitarDoubleNote((int)GuitarLane.Orange, (int)GuitarLane.Blue) },
+            {GuitarLaneMask.Red    | GuitarLaneMask.Orange, new GuitarDoubleNote((int)GuitarLane.Green,  (int)GuitarLane.Red) },
+            {GuitarLaneMask.Yellow | GuitarLaneMask.Blue,   new GuitarDoubleNote((int)GuitarLane.Orange, (int)GuitarLane.Blue) },
+            {GuitarLaneMask.Yellow | GuitarLaneMask.Orange, new GuitarDoubleNote((int)GuitarLane.Red,    (int)GuitarLane.Yellow) },
+            {GuitarLaneMask.Blue   | GuitarLaneMask.Orange, new GuitarDoubleNote((int)GuitarLane.Yellow, (int)GuitarLane.Blue) },
+        };
+
+        private static readonly Dictionary<GuitarLaneMask, GuitarDoubleNote> _doubleNotesSixFret = new()
+        {
+            {GuitarLaneMask.Black1,                         new GuitarDoubleNote((int)GuitarLane.Black2, (int)GuitarLane.Black1) },
+            {GuitarLaneMask.Black2,                         new GuitarDoubleNote((int)GuitarLane.Black3, (int)GuitarLane.Black2) },
+            {GuitarLaneMask.Black3,                         new GuitarDoubleNote((int)GuitarLane.White1, (int)GuitarLane.Black3) },
+            {GuitarLaneMask.White1,                         new GuitarDoubleNote((int)GuitarLane.White2, (int)GuitarLane.White1) },
+            {GuitarLaneMask.White2,                         new GuitarDoubleNote((int)GuitarLane.White3, (int)GuitarLane.White2) },
+            {GuitarLaneMask.White3,                         new GuitarDoubleNote((int)GuitarLane.Black3, (int)GuitarLane.White3) },
+            {GuitarLaneMask.Black1 | GuitarLaneMask.Black2, new GuitarDoubleNote((int)GuitarLane.Black3, (int)GuitarLane.Black2) },
+            {GuitarLaneMask.Black1 | GuitarLaneMask.Black3, new GuitarDoubleNote((int)GuitarLane.White1, (int)GuitarLane.Black3) },
+            {GuitarLaneMask.Black1 | GuitarLaneMask.White1, new GuitarDoubleNote((int)GuitarLane.White2, (int)GuitarLane.White1) },
+            {GuitarLaneMask.Black1 | GuitarLaneMask.White2, new GuitarDoubleNote((int)GuitarLane.White3, (int)GuitarLane.White2) },
+            {GuitarLaneMask.Black1 | GuitarLaneMask.White3, new GuitarDoubleNote((int)GuitarLane.Black3, (int)GuitarLane.White3) },
+            {GuitarLaneMask.Black2 | GuitarLaneMask.Black3, new GuitarDoubleNote((int)GuitarLane.White1, (int)GuitarLane.Black3) },
+            {GuitarLaneMask.Black2 | GuitarLaneMask.White1, new GuitarDoubleNote((int)GuitarLane.White2, (int)GuitarLane.White1) },
+            {GuitarLaneMask.Black2 | GuitarLaneMask.White2, new GuitarDoubleNote((int)GuitarLane.White3, (int)GuitarLane.White2) },
+            {GuitarLaneMask.Black2 | GuitarLaneMask.White3, new GuitarDoubleNote((int)GuitarLane.Black1, (int)GuitarLane.White3) },
+            {GuitarLaneMask.Black3 | GuitarLaneMask.White1, new GuitarDoubleNote((int)GuitarLane.White2, (int)GuitarLane.White1) },
+            {GuitarLaneMask.Black3 | GuitarLaneMask.White2, new GuitarDoubleNote((int)GuitarLane.White3, (int)GuitarLane.White2) },
+            {GuitarLaneMask.Black3 | GuitarLaneMask.White3, new GuitarDoubleNote((int)GuitarLane.Black2, (int)GuitarLane.White3) },
+            {GuitarLaneMask.White1 | GuitarLaneMask.White2, new GuitarDoubleNote((int)GuitarLane.White3, (int)GuitarLane.White2) },
+            {GuitarLaneMask.White1 | GuitarLaneMask.White3, new GuitarDoubleNote((int)GuitarLane.Black3, (int)GuitarLane.White3) },
+            {GuitarLaneMask.White2 | GuitarLaneMask.White3, new GuitarDoubleNote((int)GuitarLane.White1, (int)GuitarLane.White2) },
+        };
 
         public static unsafe GuitarTrack Create<TConfig>(
             YARGChart chart,
@@ -173,16 +156,19 @@ namespace YARG.Core.NewLoading
                 long sustainIndex = track.Sustains.Count;
                 var frets = (DualTime*)&note->Value.Lanes;
 
-                var nextNotePosition = noteIndex + 1 < difficultyTrack.Notes.Count
-                    ? difficultyTrack.Notes[noteIndex + 1].Key
-                    : DualTime.Max;
+                bool sustainFretLeniency = note->Key < priorNoteEnd;
+                if (!sustainFretLeniency && noteIndex + 1 < difficultyTrack.Notes.Count)
+                {
+                    sustainFretLeniency = IsDisjointOrExtended(
+                        in note->Key,
+                        in difficultyTrack.Notes[noteIndex + 1].Key,
+                        frets,
+                        IGuitarConfig<TConfig>.MAX_LANES);
+                }
 
-                var sustainLeniency = CheckSustainLeniency<TConfig>(in note->Key, in nextNotePosition, frets);
                 for (int lane = 0; lane < IGuitarConfig<TConfig>.MAX_LANES; lane++)
                 {
                     var fret = frets[lane];
-                    // We have to account for bad charting where the current note has an active lane
-                    // even though the prior note sustains through it with the same lane
                     if (!fret.IsActive())
                     {
                         continue;
@@ -193,15 +179,21 @@ namespace YARG.Core.NewLoading
                     // Anything greater than 1 signals that the sustain length satisfied the threshold
                     if (length.Ticks > 1)
                     {
-                        if (sustainLeniency == SustainLeniency.Disjoint || sustainIndex == track.Sustains.Count)
+                        long target = sustainIndex;
+                        var endTime = length + note->Key;
+                        while (target < track.Sustains.Count && track.Sustains[target].EndTime != endTime)
                         {
-                            var endTime = length + note->Key;
+                            target++;
+                        }
+
+                        if (target == track.Sustains.Count)
+                        {
                             track.Sustains.Add(
                                 new GuitarSustain
                                 (
                                     in endTime,
-                                    group.OverdriveIndex,
-                                    sustainLeniency != SustainLeniency.Normal
+                                    sustainFretLeniency,
+                                    group.OverdriveIndex
                                 )
                             );
 
@@ -211,7 +203,7 @@ namespace YARG.Core.NewLoading
                             }
                         }
 
-                        ref var sustain = ref track.Sustains[track.Sustains.Count - 1];
+                        ref var sustain = ref track.Sustains[target];
                         sustain.LaneMask |= (GuitarLaneMask)laneMask;
                         sustain.LaneCount++;
                     }
@@ -219,16 +211,16 @@ namespace YARG.Core.NewLoading
                     group.LaneCount++;
                 }
 
-                group.SustainCount = (int)(track.Sustains.Count - sustainIndex);
-                if (selection.Modifiers.HasFlag(Modifier.AllStrums))
+                group.SustainCount = track.Sustains.Count - sustainIndex;
+                if (selection.Modifiers.Has(Modifier.AllStrums))
                 {
                     group.GuitarState = GuitarState.Strum;
                 }
-                else if (selection.Modifiers.HasFlag(Modifier.AllTaps))
+                else if (selection.Modifiers.Has(Modifier.AllTaps))
                 {
                     group.GuitarState = GuitarState.Tap;
                 }
-                else if (selection.Modifiers.HasFlag(Modifier.AllHopos))
+                else if (selection.Modifiers.Has(Modifier.AllHopos))
                 {
                     group.GuitarState = GuitarState.Hopo;
                 }
@@ -287,24 +279,15 @@ namespace YARG.Core.NewLoading
                 track.NoteGroups.Add(in group);
             }
 
+            if (selection.Modifiers.Has(Modifier.DoubleNotes))
+            {
+                ApplyDoubleNotes(track.NoteGroups, track.Sustains, IGuitarConfig<TConfig>.MAX_LANES);
+            }
+
             if (selection.Modifiers.Has(Modifier.NoteShuffle))
             {
-                int rngSeed = difficultyTrack.GetHashCode();
-                Span<int> laneMappingBuffer = stackalloc int[IGuitarConfig<TConfig>.MAX_LANES];
-                Span<int> laneMapping       = stackalloc int[IGuitarConfig<TConfig>.MAX_LANES];
-                for (int i = 0; i < IGuitarConfig<TConfig>.MAX_LANES; i++)
-                {
-                    laneMappingBuffer[i] = i;
-                }
-
-                Span<long> laneEndTrackers  = stackalloc long[IGuitarConfig<TConfig>.MAX_LANES];
-                laneEndTrackers.Clear();
-                for (long noteIndex = 0, sustainIndex = 0; noteIndex < track.NoteGroups.Count; noteIndex++)
-                {
-
-                    ref var noteGroup = ref track.NoteGroups[noteIndex];
-
-                }
+                ApplyRandomNotes(track.NoteGroups, track.Sustains, IGuitarConfig<TConfig>.MAX_LANES,
+                    difficultyTrack.GetHashCode());
             }
 
             track.Sustains.TrimExcess();
@@ -313,36 +296,243 @@ namespace YARG.Core.NewLoading
             return track;
         }
 
-        private static unsafe SustainLeniency CheckSustainLeniency<TConfig>(
-            in DualTime currNote,
-            in DualTime nextNote,
-            DualTime* frets
-        )
-            where TConfig : unmanaged, IGuitarConfig<TConfig>
+        public static unsafe void ApplyDoubleNotes(
+            YargNativeList<GuitarNoteGroup> groups,
+            YargNativeList<GuitarSustain> sustains,
+            int numLanes)
         {
-            var leniency = SustainLeniency.Normal;
-            long length = 0;
-            for (int lane = 0; lane < IGuitarConfig<TConfig>.MAX_LANES; lane++)
+            // NumLanes includes open note
+            Span<long> noteTrackers = stackalloc long[numLanes];
+            var mapping = numLanes == 6 ? _doubleNotesFiveFret : _doubleNotesSixFret;
+            var sustainPtr = sustains.Data;
+            for (long noteIndex = 0; noteIndex < groups.Count; noteIndex++)
             {
-                ref readonly var fret = ref frets[lane];
-                if (!fret.IsActive() || fret.Ticks == length)
+                ref var noteGroup = ref groups[noteIndex];
+
+                // For the tracker to successfully lock out certain double note options,
+                // we have to apply the end ticks for the sustains that already existed.
+                for (int sustainOffset = 0; sustainOffset < noteGroup.SustainCount; sustainOffset++)
                 {
-                    continue;
+                    ref readonly var sustain = ref sustainPtr[sustainOffset];
+                    for (int lane = 1; lane < numLanes; lane++)
+                    {
+                        if (noteTrackers[lane] < sustain.EndTime.Ticks &&
+                            sustain.LaneMask.Has((GuitarLaneMask)(1 << lane)))
+                        {
+                            noteTrackers[lane] = sustain.EndTime.Ticks;
+                        }
+                    }
                 }
 
-                if (length > 0)
+                // Open note is irrelevant in these operations
+                if (mapping.TryGetValue(noteGroup.LaneMask & ~GuitarLaneMask.Open_DisableAnchoring, out var doubleNote))
                 {
-                    leniency = SustainLeniency.Disjoint;
+                    long sustainOffset2 = 0;
+                    while (sustainOffset2 < noteGroup.SustainCount && !sustainPtr[sustainOffset2].LaneMask.Has(doubleNote.MaskQuery))
+                    {
+                        sustainOffset2++;
+                    }
+
+                    if (noteTrackers[doubleNote.LaneAddition] <= noteGroup.Position.Ticks)
+                    {
+                        if (sustainOffset2 == noteGroup.SustainCount ||
+                            TryAddLaneToSustain(groups, ref sustainPtr[sustainOffset2], doubleNote.MaskAddition, noteIndex + 1,
+                                ref noteTrackers[doubleNote.LaneAddition]))
+                        {
+                            noteGroup.LaneMask |= doubleNote.MaskAddition;
+                            noteGroup.LaneCount++;
+                            continue;
+                        }
+                    }
+
+                    int lower = doubleNote.LaneQuery - 1;
+                    int upper = doubleNote.LaneQuery + 1;
+                    while (lower > 0 || upper < numLanes)
+                    {
+                        if (lower > 0)
+                        {
+                            var maskToAdd = (GuitarLaneMask) (1 << lower);
+                            if (!noteGroup.LaneMask.Has(maskToAdd) && noteTrackers[lower] <= noteGroup.Position.Ticks)
+                            {
+                                if (sustainOffset2 == noteGroup.SustainCount ||
+                                    TryAddLaneToSustain(groups, ref sustainPtr[sustainOffset2], maskToAdd, noteIndex + 1,
+                                        ref noteTrackers[lower]))
+                                {
+                                    noteGroup.LaneMask |= maskToAdd;
+                                    noteGroup.LaneCount++;
+                                    break;
+                                }
+                            }
+                            --lower;
+                        }
+
+                        if (upper < numLanes)
+                        {
+                            var maskToAdd = (GuitarLaneMask) (1 << upper);
+                            if (!noteGroup.LaneMask.Has(maskToAdd) && noteTrackers[upper] <= noteGroup.Position.Ticks)
+                            {
+                                if (sustainOffset2 == noteGroup.SustainCount ||
+                                    TryAddLaneToSustain(groups, ref sustainPtr[sustainOffset2], maskToAdd, noteIndex + 1,
+                                        ref noteTrackers[upper]))
+                                {
+                                    noteGroup.LaneMask |= maskToAdd;
+                                    noteGroup.LaneCount++;
+                                    break;
+                                }
+                            }
+                            ++upper;
+                        }
+                    }
+                }
+                sustainPtr += noteGroup.SustainCount;
+            }
+        }
+
+        private static unsafe void ApplyRandomNotes(
+            YargNativeList<GuitarNoteGroup> groups,
+            YargNativeList<GuitarSustain> sustains,
+            int numLanes,
+            int rngSeed)
+        {
+            Span<GuitarLaneMask> masks = stackalloc GuitarLaneMask[numLanes];
+            for (int i = 0; i < numLanes; i++)
+            {
+                masks[i] = (GuitarLaneMask) (1 << i);
+            }
+
+            var random = new Random(rngSeed);
+            Span<int> laneMappingBuffer = stackalloc int[numLanes];
+            Span<int> laneMapping       = stackalloc int[numLanes];
+            for (int i = 0; i < numLanes; i++)
+            {
+                laneMappingBuffer[i] = i;
+            }
+
+            Span<long> laneEndTrackers = stackalloc long[numLanes];
+            laneEndTrackers.Clear();
+            var sustainPtr = sustains.Data;
+            for (long noteIndex = 0; noteIndex < groups.Count; noteIndex++)
+            {
+                laneMappingBuffer.CopyTo(laneMapping);
+                // Shuffle the lane map
+                for (int lane = 1; lane < numLanes; lane++)
+                {
+                    int index = random.Next(lane, numLanes);
+                    if (index != lane)
+                    {
+                        (laneMapping[index], laneMapping[lane]) = (laneMapping[lane], laneMapping[index]);
+                    }
+                }
+
+                ref var noteGroup = ref groups[noteIndex];
+                // For extended sustains to behave properly, the lane needs to stay the same for all the notes
+                // for the length of the sustain
+                for (int lane = 1; lane < numLanes; lane++)
+                {
+                    if (laneEndTrackers[lane] > noteGroup.Position.Ticks)
+                    {
+                        int search = 1;
+                        while (laneMapping[search] != laneMappingBuffer[lane])
+                        {
+                            ++search;
+                        }
+
+                        if (search != lane)
+                        {
+                            (laneMapping[lane], laneMapping[search]) = (laneMapping[search], laneMapping[lane]);
+                        }
+                    }
+                }
+
+                var originalMask = noteGroup.LaneMask;
+                noteGroup.LaneMask &= GuitarLaneMask.Open_DisableAnchoring;
+                for (int lane = 1; lane < numLanes; lane++)
+                {
+                    if (originalMask.Has(masks[lane]))
+                    {
+                        noteGroup.LaneMask |= (GuitarLaneMask) (1 << laneMapping[lane]);
+                    }
+                }
+
+                for (int sustainOffset = 0; sustainOffset < noteGroup.SustainCount; sustainOffset++)
+                {
+                    ref var sustain = ref sustainPtr[sustainOffset];
+                    originalMask = sustain.LaneMask;
+                    sustain.LaneMask &= GuitarLaneMask.Open_DisableAnchoring;
+                    for (int lane = 1; lane < numLanes; lane++)
+                    {
+                        if (originalMask.Has(masks[lane]))
+                        {
+                            sustain.LaneMask |= (GuitarLaneMask) (1 << laneMapping[lane]);
+                            laneEndTrackers[lane] = sustain.EndTime.Ticks;
+                        }
+                    }
+                }
+                sustainPtr += noteGroup.SustainCount;
+                laneMapping.CopyTo(laneMappingBuffer);
+            }
+        }
+
+        private static unsafe bool IsDisjointOrExtended(
+            in DualTime currNote,
+            in DualTime nextNote,
+            DualTime* frets,
+            int numLanes
+        )
+        {
+            long fretIndex = 0;
+            while (fretIndex < numLanes && !frets[fretIndex].IsActive())
+            {
+                fretIndex++;
+            }
+
+            if (fretIndex < numLanes)
+            {
+                ref readonly var firstFret = ref frets[fretIndex++];
+                if (currNote + firstFret > nextNote)
+                {
+                    // Extended
+                    return true;
+                }
+
+                while (fretIndex < numLanes)
+                {
+                    ref readonly var currFret = ref frets[fretIndex++];
+                    if (currFret.IsActive() && currFret != firstFret)
+                    {
+                        // Disjoint
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private static bool TryAddLaneToSustain(
+            YargNativeList<GuitarNoteGroup> groups,
+            ref GuitarSustain sustain,
+            GuitarLaneMask laneToAdd,
+            long groupIndex,
+            ref long endTick)
+        {
+            while (groupIndex < groups.Count)
+            {
+                ref readonly var noteGroup = ref groups[groupIndex++];
+                if (sustain.EndTime <= noteGroup.Position)
+                {
                     break;
                 }
 
-                if (currNote + fret > nextNote)
+                if (noteGroup.LaneMask.Has(laneToAdd))
                 {
-                    leniency = SustainLeniency.Extended;
+                    return false;
                 }
-                length = fret.Ticks;
             }
-            return leniency;
+
+            sustain.LaneMask |= laneToAdd;
+            sustain.LaneCount++;
+            endTick = sustain.EndTime.Ticks;
+            return true;
         }
     }
 }
