@@ -371,16 +371,17 @@ namespace YARG.Core.NewParsing.Midi
                         chordSnapper.Snap(ref position);
                     }
 
-                    int diffIndex = sysex[SYSEX_DIFF_INDEX];
-                    int max = InstrumentTrack2.NUM_DIFFICULTIES;
-                    if (diffIndex == SYSEX_ALLDIFF)
+                    int diffIndex, max;
+                    if (sysex[SYSEX_DIFF_INDEX] == SYSEX_ALLDIFF)
                     {
                         // Loops through all the diffs
                         diffIndex = 0;
+                        max = InstrumentTrack2.NUM_DIFFICULTIES;
                     }
                     else
                     {
                         // Limited to only the current one
+                        diffIndex = sysex[SYSEX_DIFF_INDEX];
                         max = diffIndex + 1;
                     }
 
