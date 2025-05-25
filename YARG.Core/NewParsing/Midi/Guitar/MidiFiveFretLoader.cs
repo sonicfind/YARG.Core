@@ -459,7 +459,7 @@ namespace YARG.Core.NewParsing.Midi
                     {
                         switch (sysex[SYSEX_TYPE_INDEX])
                         {
-                            case SYSEX_TAP_TYPE:
+                            case SYSEX_OPEN_TYPE:
                                 // 1 - Green; 0 - Open
                                 int status = !enable ? 1 : 0;
                                 for (int diffIndex = 0; diffIndex < InstrumentTrack2.NUM_DIFFICULTIES; ++diffIndex)
@@ -467,7 +467,7 @@ namespace YARG.Core.NewParsing.Midi
                                     laneIndices[MidiLoader_Constants.NOTES_PER_DIFFICULTY * diffIndex + 1] = status;
                                 }
                                 break;
-                            case SYSEX_OPEN_TYPE:
+                            case SYSEX_TAP_TYPE:
                                 for (int diffIndex = 0; diffIndex < InstrumentTrack2.NUM_DIFFICULTIES; ++diffIndex)
                                 {
                                     diffModifiers[diffIndex].SliderNotes = enable;
@@ -501,11 +501,11 @@ namespace YARG.Core.NewParsing.Midi
                         byte diffIndex = sysex[SYSEX_DIFF_INDEX];
                         switch (sysex[SYSEX_TYPE_INDEX])
                         {
-                            case SYSEX_TAP_TYPE:
+                            case SYSEX_OPEN_TYPE:
                                 //                                                                      1 - Green; 0 - Open
                                 laneIndices[MidiLoader_Constants.NOTES_PER_DIFFICULTY * diffIndex + 1] = !enable ? 1 : 0;
                                 break;
-                            case SYSEX_OPEN_TYPE:
+                            case SYSEX_TAP_TYPE:
                                 {
                                     diffModifiers[diffIndex].SliderNotes = enable;
                                     // If any note exists on the same tick, we must change the state to match
