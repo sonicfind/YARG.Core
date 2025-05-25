@@ -313,23 +313,65 @@ namespace YARG.Core.Containers
             }
         }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            return ((IEnumerable<T>) this).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
+        Enumerator GetEnumerator()
         {
             return new Enumerator(this);
         }
 
-        private struct Enumerator : IEnumerator<T>, IEnumerator
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            return new _Enumerator(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new _Enumerator(this);
+        }
+
+        public ref struct Enumerator
         {
             private readonly YargNativeList<T> _list;
             private readonly int               _version;
             private          int               _index;
 
             internal Enumerator(YargNativeList<T> list)
+            {
+                _list = list;
+                _version = list._version;
+                _index = -1;
+            }
+
+            public bool MoveNext()
+            {
+                if (_version != _list._version)
+                {
+                    throw new InvalidOperationException("Enum failed - Sorted List was updated");
+                }
+
+                ++_index;
+                return _index < _list.Count;
+            }
+
+            public ref readonly T Current
+            {
+                get
+                {
+                    if (_version != _list._version || _index < 0 || _index >= _list._count)
+                    {
+                        throw new InvalidOperationException("Enum Operation not possible");
+                    }
+                    return ref _list[_index];
+                }
+            }
+        }
+
+        private struct _Enumerator : IEnumerator<T>, IEnumerator
+        {
+            private readonly YargNativeList<T> _list;
+            private readonly int               _version;
+            private          int               _index;
+
+            internal _Enumerator(YargNativeList<T> list)
             {
                 _list = list;
                 _version = list._version;
