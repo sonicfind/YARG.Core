@@ -118,6 +118,11 @@ namespace YARG.Core.Containers
         /// <returns>The index of the node with the matching key. If one was not found, it returns the index where it would go, but bit-flipped.</returns>
         public int Find(in TKey key, int lo = 0, int hi = int.MaxValue)
         {
+            if (lo < 0)
+            {
+                lo = 0;
+            }
+
             if (hi > _count)
             {
                 hi = _count;
@@ -126,7 +131,7 @@ namespace YARG.Core.Containers
 
             while (lo <= hi)
             {
-                int curr = lo + (hi - lo >> 1);
+                int curr = (hi + lo) >> 1;
                 int order = _buffer[curr].Key.CompareTo(key);
                 if (order == 0)
                 {
@@ -215,7 +220,7 @@ namespace YARG.Core.Containers
         /// This function linearly searches from the end of the list backwards.
         /// Therefore, it should only be used when that behavior results in better performance over a binary search.<br></br>
         /// For OUR case, this is mainly restricted to midi files.<br></br><br></br>
-        /// Note: this should only be used used if the key exists, but it will stop for anything equal to OR less than the key.
+        /// Note: this should only be used if the key exists, but it will stop for anything equal to OR less than the key.
         /// </remarks>
         /// <param name="key">The key to linearly search for</param>
         /// <returns>The reference to the node with the matching key</returns>
