@@ -26,22 +26,6 @@ namespace YARG.Core.NewParsing
             return Ticks > 0;
         }
 
-        /// <summary>
-        /// Attempts to normalize the instance to 1 tick if the current tick value lies beneath the threshold
-        /// </summary>
-        /// <param name="time">Time instance to compare against</param>
-        /// <param name="threshold">The tick value required to dodge truncation</param>
-        /// <returns>A possibly truncated time structure</returns>
-        public static DualTime Truncate(DualTime time, long threshold)
-        {
-            if (time.Ticks < threshold)
-            {
-                time.Seconds /= time.Ticks;
-                time.Ticks = 1;
-            }
-            return time;
-        }
-
         public readonly int CompareTo(DualTime other)
         {
             return Ticks.CompareTo(other.Ticks);
