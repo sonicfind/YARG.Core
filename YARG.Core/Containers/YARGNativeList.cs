@@ -246,6 +246,30 @@ namespace YARG.Core.Containers
             ++_version;
         }
 
+        public void Resize(int newCount, in T value)
+        {
+            Debug.Assert(newCount >= 0);
+            if (newCount > _count)
+            {
+                CheckAndGrow(newCount - _count);
+                while (_count < newCount)
+                {
+                    _buffer[_count++] = value;
+                }
+            }
+            _count = newCount;
+        }
+
+        public void Resize_NoInitialization(int newCount)
+        {
+            Debug.Assert(newCount >= 0);
+            if (newCount > _count)
+            {
+                CheckAndGrow(newCount - _count);
+            }
+            _count = newCount;
+        }
+
         /// <summary>
         /// Returns a reference to the value at the provided index
         /// </summary>
