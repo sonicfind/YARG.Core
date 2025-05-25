@@ -7,6 +7,8 @@ namespace YARG.Core.NewParsing
     public class DifficultyTrack2<TNote> : ITrack
         where TNote : unmanaged, IInstrumentNote
     {
+        private HashWrapper? _hash = null;
+
         public YargNativeSortedList<DualTime, TNote> Notes { get; }
         public YargNativeSortedList<DualTime, DualTime> Overdrives { get; }
         public YargNativeSortedList<DualTime, DualTime> Solos { get; }
@@ -124,33 +126,36 @@ namespace YARG.Core.NewParsing
 
         public HashWrapper ComputeHash()
         {
-            var hash = HashWrapper.Hash(Notes.SpanAsBytes);
-            using var buffer = new YargNativeList<byte>();
-            UpdateHash(Overdrives, 1);
-            UpdateHash(Solos, 2);
-            UpdateHash(Trills, 3);
-            UpdateHash(Tremolos, 4);
-            UpdateHash(BREs, 5);
-            UpdateHash(FaceOffPlayer1, 6);
-            UpdateHash(FaceOffPlayer2, 7);
-            return hash;
-
-            void UpdateHash(YargNativeList<(DualTime, DualTime)> list, int indexTag)
+            if (_hash == null)
             {
-                buffer.Clear();
-                long byteCount = list.CountInBytes;
-                if (buffer.Capacity < byteCount + 1)
-                {
-                    buffer.Capacity = byteCount + 1;
-                }
+                _hash = HashWrapper.Hash(Notes.SpanAsBytes);
+                using var buffer = new YargNativeList<byte>();
+                UpdateHash(Overdrives, 1);
+                UpdateHash(Solos, 2);
+                UpdateHash(Trills, 3);
+                UpdateHash(Tremolos, 4);
+                UpdateHash(BREs, 5);
+                UpdateHash(FaceOffPlayer1, 6);
+                UpdateHash(FaceOffPlayer2, 7);
 
-                buffer.Add((byte)indexTag);
-                unsafe
+                void UpdateHash(YargNativeList<(DualTime, DualTime)> list, int indexTag)
                 {
-                    buffer.AddRange((byte*)list.Data, byteCount);
+                    buffer.Clear();
+                    int byteCount = list.CountInBytes;
+                    if (buffer.Capacity < byteCount + 1)
+                    {
+                        buffer.Capacity = byteCount + 1;
+                    }
+
+                    buffer.Add((byte)indexTag);
+                    unsafe
+                    {
+                        buffer.AddRange((byte*)list.Data, byteCount);
+                    }
+                    _hash ^= HashWrapper.Hash(buffer.Span);
                 }
-                hash ^= HashWrapper.Hash(buffer.Span);
             }
+            return _hash.Value;
         }
 
         public void Dispose()
@@ -164,6 +169,11 @@ namespace YARG.Core.NewParsing
             FaceOffPlayer1.Dispose();
             FaceOffPlayer2.Dispose();
             Events.Dispose();
+        }
+
+        public override int GetHashCode()
+        {
+            return ComputeHash().GetHashCode();
         }
     }
 }
