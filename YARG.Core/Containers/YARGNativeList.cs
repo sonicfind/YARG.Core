@@ -97,9 +97,13 @@ namespace YARG.Core.Containers
         public void CopyFrom(YargNativeList<T> source)
         {
             long byteCount = source._count * sizeof(T);
-            if (source._count > _capacity)
+            if (_buffer == null || source._count > _capacity)
             {
-                _buffer = (T*) Marshal.ReAllocHGlobal((IntPtr) _buffer, (IntPtr) byteCount);
+                if (_buffer != null)
+                {
+                    Marshal.FreeHGlobal((IntPtr)_buffer);
+                }
+                _buffer = (T*)Marshal.AllocHGlobal((IntPtr)byteCount);
                 _capacity = source._count;
             }
             Buffer.MemoryCopy(source._buffer, _buffer, _capacity * sizeof(T), byteCount);
