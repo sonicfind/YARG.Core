@@ -10,7 +10,7 @@ namespace YARG.Core.NewParsing
     {
         private readonly long                               _resolution;
         private readonly YargNativeSortedList<long, Tempo2> _tempoMarkers;
-        private          long                               _index;
+        private          int                                _index;
 
         public readonly long Resolution => _resolution;
 
