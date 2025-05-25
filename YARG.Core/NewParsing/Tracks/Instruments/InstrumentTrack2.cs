@@ -41,18 +41,18 @@ namespace YARG.Core.NewParsing
         {
             for (int i = 0; i < _difficulties.Length; i++)
             {
-                _difficulties[i] = new();
+                _difficulties[i] = new DifficultyTrack2<TNote>();
             }
-            Events = new();
+            Events = new YargManagedSortedList<DualTime, HashSet<string>>();
         }
 
         public InstrumentTrack2(InstrumentTrack2<TNote> source)
         {
             for (int i = 0; i < _difficulties.Length; i++)
             {
-                _difficulties[i] = new(source[i]);
+                _difficulties[i] = new DifficultyTrack2<TNote>(source[i]);
             }
-            Events = new(source.Events);
+            Events = new YargManagedSortedList<DualTime, HashSet<string>>(source.Events);
         }
 
         public void CopyFrom(InstrumentTrack2<TNote> source)
