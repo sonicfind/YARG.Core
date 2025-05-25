@@ -147,8 +147,13 @@ namespace YARG.Core.Containers
         /// <param name="lo">The lowest point in the list to search from</param>
         /// <param name="hi">The exclusively highest point in the list to search from</param>
         /// <returns>The index of the node with the matching key. If one was not found, the index where it would go is returned, but bit-flipped.</returns>
-        public long Find(in TKey key, long lo = 0, long hi = long.MaxValue)
+        public int Find(in TKey key, int lo = 0, int hi = int.MaxValue)
         {
+            if (lo < 0)
+            {
+                lo = 0;
+            }
+
             if (hi > _count)
             {
                 hi = _count;
@@ -157,7 +162,7 @@ namespace YARG.Core.Containers
 
             while (lo <= hi)
             {
-                long curr = lo + (hi - lo >> 1);
+                int curr = (hi + lo) >> 1;
                 int order;
                 unsafe
                 {
@@ -188,9 +193,9 @@ namespace YARG.Core.Containers
         /// <remarks>Undefined behavior will occur if the key and index are out of sync</remarks>
         /// <param name="key">The key to query for and possibly emplace in the list</param>
         /// <returns>The index of the node with the matching key</returns>
-        public long FindOrEmplaceIndex(in TKey key)
+        public int FindOrEmplaceIndex(in TKey key)
         {
-            long index = Find(in key);
+            int index = Find(in key);
             if (index < 0)
             {
                 index = ~index;
@@ -218,7 +223,7 @@ namespace YARG.Core.Containers
         /// <returns>Whether a node was found and removed</returns>
         public bool Remove(in TKey key)
         {
-            long index = Find(key);
+            int index = Find(key);
             if (index < 0)
             {
                 return false;
@@ -236,7 +241,7 @@ namespace YARG.Core.Containers
         /// <exception cref="KeyNotFoundException">A node with the provided key does not exist</exception>
         public unsafe TValue* GetValue(in TKey key)
         {
-            long index = Find(key);
+            int index = Find(key);
             if (index < 0)
             {
                 throw new KeyNotFoundException();
@@ -257,7 +262,7 @@ namespace YARG.Core.Containers
         /// <returns>The reference to the node with the matching key</returns>
         public unsafe TValue* TraverseBackwardsUntil(in TKey key)
         {
-            long index = _count - 1;
+            int index = _count - 1;
             while (index > 0 && key.CompareTo(_buffer[index].Key) < 0)
             {
                 --index;

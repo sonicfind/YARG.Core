@@ -10,20 +10,22 @@ namespace YARG.Core.Containers
     public unsafe class YargNativeList<T> : IEnumerable<T>, IDisposable
         where T : unmanaged
     {
-        private   long _capacity;
-        private   long _version;
-        protected T*   _buffer;
-        protected long _count;
+        protected static readonly int MAX_CAPACITY = int.MaxValue / sizeof(T);
+
+        private   int _capacity;
+        private   int _version;
+        protected T*  _buffer;
+        protected int _count;
 
         /// <summary>
         /// The number of elements within the list
         /// </summary>
-        public long Count => _count;
+        public int Count => _count;
 
         /// <summary>
         /// The capacity of the list where elements will reside
         /// </summary>
-        public long Capacity
+        public int Capacity
         {
             get => _capacity;
             set
@@ -31,6 +33,11 @@ namespace YARG.Core.Containers
                 if (_count > value || value == _capacity)
                 {
                     return;
+                }
+
+                if (value > MAX_CAPACITY)
+                {
+                    throw new OverflowException($"Can not surpass max capacity of {MAX_CAPACITY}");
                 }
 
                 if (value > 0)
@@ -62,14 +69,14 @@ namespace YARG.Core.Containers
         /// <summary>
         /// The span view of the data up to <see cref="Count"/>
         /// </summary>
-        public Span<T> Span => new(_buffer, (int)_count);
+        public Span<T> Span => new(_buffer, _count);
 
-        public long CountInBytes => _count * sizeof(T);
+        public int CountInBytes => _count * sizeof(T);
 
         /// <summary>
         /// The span view of all elements as bytes
         /// </summary>
-        public Span<byte> SpanAsBytes => new(_buffer, (int)CountInBytes);
+        public Span<byte> SpanAsBytes => new(_buffer, CountInBytes);
 
         /// <summary>
         /// The direct pointer for the underlying data. Use carefully.
@@ -175,9 +182,9 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <param name="values">The buffer containing the data to copy</param>
         /// <param name="count">The number of elements to copy from the buffer</param>
-        public void AddRange(T* values, long count)
+        public void AddRange(T* values, int count)
         {
-            if (count < 0 || long.MaxValue - count < _count)
+            if (count < 0 || MAX_CAPACITY - count < _count)
             {
                 throw new ArgumentOutOfRangeException(nameof(count));
             }
@@ -192,7 +199,7 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <param name="index">The position to place the value</param>
         /// <param name="value">The value to insert</param>
-        public void Insert(long index, in T value)
+        public void Insert(int index, in T value)
         {
             CheckAndGrow();
             var position = _buffer + index;
@@ -225,7 +232,7 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <param name="index">The offset into the inner array buffer</param>
         /// <returns>Whether the index was valid</returns>
-        public void RemoveAt(long index)
+        public void RemoveAt(int index)
         {
             if (index < 0 || _count <= index)
             {
@@ -244,7 +251,7 @@ namespace YARG.Core.Containers
         /// </summary>
         /// <param name="index">Array index in the list</param>
         /// <returns>The value by reference</returns>
-        public ref T this[long index] => ref _buffer[index];
+        public ref T this[int index] => ref _buffer[index];
 
         /// <summary>
         /// Returns a reference to the value at the provided index
@@ -252,7 +259,7 @@ namespace YARG.Core.Containers
         /// <param name="index">Array index in the list</param>
         /// <returns>The value by reference</returns>
         /// <exception cref="ArgumentOutOfRangeException">Index was below 0 or >= count</exception>
-        public ref T At(long index)
+        public ref T At(int index)
         {
             if (index < 0 || _count <= index)
             {
@@ -261,25 +268,25 @@ namespace YARG.Core.Containers
             return ref _buffer[index];
         }
 
-        private const long DEFAULT_CAPACITY = 16;
-        protected void CheckAndGrow(long offset = 1)
+        private const int DEFAULT_CAPACITY = 16;
+        protected void CheckAndGrow(int offset = 1)
         {
-            if (_count >= long.MaxValue)
+            if (_count >= MAX_CAPACITY)
             {
                 throw new OverflowException("Element limit reached");
             }
 
             if (_count > _capacity - offset)
             {
-                long newCapacity = _capacity == 0 ? DEFAULT_CAPACITY : 2 * _capacity;
+                int newCapacity = _capacity == 0 ? DEFAULT_CAPACITY : 2 * _capacity;
                 while (0 < newCapacity && newCapacity - offset < _count)
                 {
                     newCapacity *= 2;
                 }
 
-                if ((ulong) newCapacity > long.MaxValue)
+                if ((uint) newCapacity > MAX_CAPACITY)
                 {
-                    newCapacity = long.MaxValue;
+                    newCapacity = MAX_CAPACITY;
                 }
                 Capacity = newCapacity;
             }
@@ -319,8 +326,8 @@ namespace YARG.Core.Containers
         private struct Enumerator : IEnumerator<T>, IEnumerator
         {
             private readonly YargNativeList<T> _list;
-            private readonly long _version;
-            private long _index;
+            private readonly int               _version;
+            private          int               _index;
 
             internal Enumerator(YargNativeList<T> list)
             {
@@ -352,7 +359,7 @@ namespace YARG.Core.Containers
                     {
                         throw new InvalidOperationException("Enum Operation not possible");
                     }
-                    return _list._buffer[_index];
+                    return _list[_index];
                 }
             }
 

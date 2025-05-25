@@ -46,7 +46,7 @@ namespace YARG.Core.NewParsing
         private static void Convert(this DifficultyTrack2<UnknownLaneDrums> source, DifficultyTrack2<FourLaneDrums> destination)
         {
             destination.Notes.Capacity = source.Notes.Count;
-            for (long i = 0; i < source.Notes.Count; ++i)
+            for (int i = 0; i < source.Notes.Count; ++i)
             {
                 ref readonly var curr = ref source.Notes[i];
                 destination.Notes.Add(in curr.Key, in curr.Value.FourLane);

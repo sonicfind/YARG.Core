@@ -20,7 +20,7 @@ namespace YARG.Core.NewParsing
         private static unsafe void FinalizeSyncTrack(SyncTrack2 sync, double resolution)
         {
             // We can skip the first Anchor, even if not explicitly set (as it'd still be 0)
-            for (long index = 1; index < sync.TempoMarkers.Count; ++index)
+            for (int index = 1; index < sync.TempoMarkers.Count; ++index)
             {
                 ref var currMarker = ref sync.TempoMarkers[index];
                 ref var prevMarker = ref sync.TempoMarkers[index - 1];
@@ -98,7 +98,7 @@ namespace YARG.Core.NewParsing
             var tempoTracker = new TempoTracker(chart.Sync, chart.Resolution);
 
             var buffer = DualTime.Zero;
-            for (long index = 0; index < chart.Sync.TimeSigs.Count; ++index)
+            for (int index = 0; index < chart.Sync.TimeSigs.Count; ++index)
             {
                 ref readonly var timeSig = ref chart.Sync.TimeSigs[index];
                 long ticksPerMarker = multipliedTickrate >> timeSig.Value.Denominator;
@@ -164,7 +164,7 @@ namespace YARG.Core.NewParsing
             var tempoTracker = new TempoTracker(chart.Sync, chart.Resolution);
 
             var buffer = DualTime.Zero;
-            for (long index = 0; index < chart.Sync.TimeSigs.Count; ++index)
+            for (int index = 0; index < chart.Sync.TimeSigs.Count; ++index)
             {
                 ref readonly var timeSig = ref chart.Sync.TimeSigs[index];
                 int numerator = timeSig.Value.Numerator;
