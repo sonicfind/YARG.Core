@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace YARG.Core.NewParsing
 {
-    public struct DualTime : IEquatable<DualTime>, IComparable<DualTime>
+    public struct DualTime : IEquatable<DualTime>, IComparable<DualTime>,
+                             IEquatable<long>, IComparable<long>,
+                             IEquatable<double>, IComparable<double>
     {
         public static readonly DualTime Inactive = new()
         {
@@ -34,6 +35,26 @@ namespace YARG.Core.NewParsing
         public readonly bool Equals(DualTime other)
         {
             return Ticks.Equals(other.Ticks);
+        }
+
+        public readonly int CompareTo(long ticks)
+        {
+            return Ticks.CompareTo(ticks);
+        }
+
+        public readonly bool Equals(long ticks)
+        {
+            return Ticks.Equals(ticks);
+        }
+
+        public readonly int CompareTo(double seconds)
+        {
+            return Seconds.CompareTo(seconds);
+        }
+
+        public readonly bool Equals(double seconds)
+        {
+            return Seconds.Equals(seconds);
         }
 
         public readonly override bool Equals(object obj)
