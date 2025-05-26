@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace YARG.Core.Containers
 {
     [DebuggerDisplay("Count: {_count}")]
-    public class YargManagedList<T> : IEnumerable<T>, IDisposable
+    public class YargManagedList<T> : IDisposable
         where T : new()
     {
         private   int _version;
@@ -274,16 +274,6 @@ namespace YARG.Core.Containers
             return new Enumerator(this);
         }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            return new _Enumerator(this);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return new _Enumerator(this);
-        }
-
         public ref struct Enumerator
         {
             private readonly YargManagedList<T> _map;
@@ -318,59 +308,6 @@ namespace YARG.Core.Containers
                     }
                     return ref _map._buffer[_index];
                 }
-            }
-        }
-
-        private struct _Enumerator : IEnumerator<T>, IEnumerator
-        {
-            private readonly YargManagedList<T> _map;
-            private int _index;
-            private readonly int _version;
-
-            internal _Enumerator(YargManagedList<T> map)
-            {
-                _map = map;
-                _index = -1;
-                _version = map._version;
-            }
-
-            public readonly void Dispose()
-            {
-            }
-
-            public bool MoveNext()
-            {
-                if (_version != _map._version)
-                {
-                    throw new InvalidOperationException("Enum failed - Sorted List was updated");
-                }
-
-                ++_index;
-                return _index < _map._count;
-            }
-
-            public readonly T Current
-            {
-                get
-                {
-                    if (_version != _map._version || _index < 0 || _index >= _map._count)
-                    {
-                        throw new InvalidOperationException("Enum Operation not possible");
-                    }
-                    return _map._buffer[_index];
-                }
-            }
-
-            readonly object IEnumerator.Current => Current!;
-
-            void IEnumerator.Reset()
-            {
-                if (_version != _map._version)
-                {
-                    throw new InvalidOperationException("Enum failed - Sorted List was updated");
-                }
-
-                _index = -1;
             }
         }
     }
