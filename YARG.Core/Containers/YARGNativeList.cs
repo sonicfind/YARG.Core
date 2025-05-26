@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 namespace YARG.Core.Containers
 {
     [DebuggerDisplay("Count: {_count}")]
-    public unsafe class YargNativeList<T> : IEnumerable<T>, IDisposable
+    public unsafe class YargNativeList<T> : IDisposable
         where T : unmanaged
     {
         protected static readonly int MAX_CAPACITY = int.MaxValue / sizeof(T);
@@ -342,16 +342,6 @@ namespace YARG.Core.Containers
             return new Enumerator(this);
         }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            return new _Enumerator(this);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return new _Enumerator(this);
-        }
-
         public ref struct Enumerator
         {
             private readonly YargNativeList<T> _list;
@@ -386,58 +376,6 @@ namespace YARG.Core.Containers
                     }
                     return ref _list[_index];
                 }
-            }
-        }
-
-        private struct _Enumerator : IEnumerator<T>, IEnumerator
-        {
-            private readonly YargNativeList<T> _list;
-            private readonly int               _version;
-            private          int               _index;
-
-            internal _Enumerator(YargNativeList<T> list)
-            {
-                _list = list;
-                _version = list._version;
-                _index = -1;
-            }
-
-            public readonly void Dispose()
-            {
-            }
-
-            public bool MoveNext()
-            {
-                if (_version != _list._version)
-                {
-                    throw new InvalidOperationException("Enum failed - Sorted List was updated");
-                }
-
-                ++_index;
-                return _index < _list.Count;
-            }
-
-            public readonly T Current
-            {
-                get
-                {
-                    if (_version != _list._version || _index < 0 || _index >= _list._count)
-                    {
-                        throw new InvalidOperationException("Enum Operation not possible");
-                    }
-                    return _list[_index];
-                }
-            }
-
-            readonly object IEnumerator.Current => Current;
-
-            void IEnumerator.Reset()
-            {
-                if (_version != _list._version)
-                {
-                    throw new InvalidOperationException("Enum failed - Sorted List was updated");
-                }
-                _index = -1;
             }
         }
     }
