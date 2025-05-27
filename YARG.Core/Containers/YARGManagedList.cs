@@ -269,7 +269,7 @@ namespace YARG.Core.Containers
             _count = 0;
         }
 
-        Enumerator GetEnumerator()
+        public Enumerator GetEnumerator()
         {
             return new Enumerator(this);
         }
