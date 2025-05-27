@@ -186,12 +186,10 @@ namespace YARG.Core.Engine
 
         private double Dark_Yarg_Impl(double averageTimeDistance)
         {
-            averageTimeDistance *= 1000;
-
-            double realSize = Curve(averageTimeDistance);
-
-            realSize /= 1000;
-
+            double maxMultiScale = MaxWindow * DynamicWindowScale;
+            double minMultiSlope = MinWindow * DynamicWindowSlope;
+            double gammaPow = Math.Pow(averageTimeDistance / maxMultiScale, DynamicWindowGamma);
+            double realSize = gammaPow * (MaxWindow - minMultiSlope) + minMultiSlope;
             return Math.Clamp(realSize, MinWindow, MaxWindow);
 
             double Curve(double x)
