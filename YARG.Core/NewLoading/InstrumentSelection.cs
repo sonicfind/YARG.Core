@@ -16,9 +16,7 @@ namespace YARG.Core.NewLoading
 
         public readonly bool Equals(InstrumentSelection other)
         {
-            return Instrument == other.Instrument &&
-                Difficulty == other.Difficulty &&
-                Modifiers  == other.Modifiers;
+            return Instrument == other.Instrument && Difficulty == other.Difficulty && Modifiers == other.Modifiers;
         }
     }
 }

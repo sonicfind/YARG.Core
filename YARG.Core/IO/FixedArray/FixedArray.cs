@@ -260,6 +260,56 @@ namespace YARG.Core.IO
             );
         }
 
+        public FixedArray<T> Clone()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(FixedArray<T>));
+            }
+
+            if (_vectorized)
+            {
+                // Reasoning: if the array is used for simd operations, that entails that
+                // the data is either a file read buffer OR the whole file itself.
+                // Cloning would therefore be illogical.
+                throw new InvalidOperationException("Do not clone a vectorized array");
+            }
+
+            var clone = Alloc(Length);
+
+            long byteCount = Length * sizeof(T);
+            Buffer.MemoryCopy(Ptr, clone.Ptr, byteCount, byteCount);
+            return clone;
+        }
+
+        public void CloneTo(FixedArray<T> destination)
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(FixedArray<T>));
+            }
+
+            if (_vectorized || destination._vectorized)
+            {
+                // Reasoning: if the array is used for simd operations, that entails that
+                // the data is either a file read buffer OR the whole file itself.
+                // Cloning would therefore be illogical.
+                throw new InvalidOperationException("Do not clone a vectorized array");
+            }
+
+            if (destination._handle != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(destination._handle);
+            }
+
+            int byteCount = Length * sizeof(T);
+            destination._handle = Marshal.AllocHGlobal((IntPtr) byteCount);
+            destination.Ptr = (T*)destination._handle;
+            destination.Length = Length;
+
+            Buffer.MemoryCopy(Ptr, destination.Ptr, byteCount, byteCount);
+        }
+
         /// <summary>
         /// Indexer into the fixed block of memory
         /// </summary>

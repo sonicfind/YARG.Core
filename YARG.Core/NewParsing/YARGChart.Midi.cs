@@ -67,6 +67,7 @@ namespace YARG.Core.NewParsing
             }
 
             using var data = FixedArray.LoadFile(filename);
+
             var chart = LoadMidi_Single(data, in metadata, in settings, modifiers, drumsType, activeInstruments);
             if (!modifiers.Extract("hopo_frequency", out chart.Settings.HopoThreshold) || chart.Settings.HopoThreshold <= 0)
             {
