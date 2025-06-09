@@ -12,43 +12,82 @@ namespace YARG.Core.NewLoading.Guitar
         public FixedArray<GuitarNoteGroup>      DoubledNotes    { get; }
         public FixedArray<GuitarSustain>        DoubledSustains { get; }
 
-        private GuitarBattleDifficultyUpBuffer(TimedCollection<GuitarNoteGroup> notes, TimedCollection<GuitarSustain> sustains, int numLanes)
+        public static GuitarBattleDifficultyUpBuffer Create(GuitarTrack diffUpTrack)
+        {
+            var doubleNotes = diffUpTrack.Notes.Elements.Clone();
+            var doubleSustains = diffUpTrack.Sustains.Elements.Clone();
+
+            GuitarTrack.ApplyDoubleNotes(
+                diffUpTrack.Notes.Ticks,
+                doubleNotes,
+                diffUpTrack.Sustains.Ticks,
+                doubleSustains,
+                diffUpTrack.NumLanes
+            );
+
+            return new GuitarBattleDifficultyUpBuffer(
+                diffUpTrack.Notes,
+                diffUpTrack.Sustains,
+                doubleNotes,
+                doubleSustains
+            );
+        }
+
+        private GuitarBattleDifficultyUpBuffer(
+            TimedCollection<GuitarNoteGroup> notes,
+            TimedCollection<GuitarSustain> sustains,
+            FixedArray<GuitarNoteGroup> doubledNotes,
+            FixedArray<GuitarSustain>  doubledSustains
+        )
         {
             Notes = notes;
             Sustains = sustains;
-
-            DoubledNotes = notes.Elements.Clone();
-            DoubledSustains = sustains.Elements.Clone();
-
-            GuitarTrack.ApplyDoubleNotes(
-                notes.Ticks,
-                DoubledNotes,
-                sustains.Ticks,
-                DoubledSustains,
-                numLanes
-            );
+            DoubledNotes = doubledNotes;
+            DoubledSustains = doubledSustains;
         }
     }
 
-    public class GuitarBattleEngine : GuitarEngine
+    public class GuitarBattleEngine
     {
+        private enum StrumState
+        {
+            Inactive,
+            Waiting,
+            Taken,
+            Overstrum,
+        }
+
         /// <summary>
         /// The length of time (in seconds) for any activated battle mode event
         /// </summary>
         public const double LENGTH_OF_EVENT = 10;
+
+        /// <summary>
+        /// The length of time (in seconds) to use when applying transformation on a track
+        /// </summary>
+        public const double TRANSFORMATION_SPACING = 1.5;
 
         private readonly GuitarBattleDifficultyUpBuffer?   _difficultyUpBuffer;
         private          FixedArray<GuitarNoteGroup>       _doubledNotes;
         private          FixedArray<GuitarSustain>         _doubledSustains;
         private          double                            _endOfDoubleNotes;
 
+        private GuitarButtonMask _buttonMask = GuitarButtonMask.None;
+        private StrumState       _strumState = StrumState.Inactive;
+        private double           _strumWindow;
+
+        public GuitarTrack                 Track          { get; private set; }
+        public int                         NoteIndex      { get; private set; }
+        public long                        Health         { get; private set; } = (long) int.MaxValue + 1;
+        public double                      CurrentTime    { get; private set; } = 0;
+        public YargNativeList<int>         ActiveSustains { get; }              = new();
+        public YargNativeList<DeadSustain> DeadSustains   { get; }              = new();
+
         public GuitarBattleEngine(
             GuitarTrack track,
             in NewHitWindow hitWindow,
-            double strumWindow,
-            BeatTracker beatTracker,
-            OverdriveStyle style
-        ) : base(track, hitWindow, strumWindow, beatTracker, style)
+            double strumWindow
+        )
         {
             _doubledNotes = track.Notes.Elements.Clone();
             _doubledSustains = track.Sustains.Elements.Clone();
@@ -60,6 +99,144 @@ namespace YARG.Core.NewLoading.Guitar
                 _doubledSustains,
                 track.NumLanes
             );
+        }
+
+        public void UpdateInput(double updateTime, GuitarButtonMask buttonMask)
+        {
+            UpdateTime(updateTime);
+
+            bool newStrum = IsNewStrum(buttonMask, _buttonMask);
+            bool newFretting = (buttonMask & GuitarButtonMask.FretMask) != (_buttonMask & GuitarButtonMask.FretMask);
+            _buttonMask = buttonMask;
+
+            if (newStrum || newFretting)
+            {
+                // Gets the set of valid inputs currently used for holding active sustains
+                var sustainInputMask = ValidateSustainInputs(updateTime, buttonMask);
+
+                int noteIndex = NoteIndex;
+                while (noteIndex < Track.Notes.Length)
+                {
+                    double notePosition = Track.Notes.Seconds[noteIndex];
+                    double noteDistance = double.MaxValue;
+                    if (noteIndex > 0)
+                    {
+                        noteDistance = notePosition - Track.Notes.Seconds[noteIndex - 1];
+                    }
+
+                    double frontEnd = HitWindow.CalculateFrontEnd(noteDistance);
+                    // No reason to process notes that still haven't entered the window
+                    if (updateTime < notePosition - frontEnd)
+                    {
+                        break;
+                    }
+
+                    ref var note = ref Track.Notes[noteIndex];
+                    // Checks if the set of inputs counts towards hitting the current note
+                    if (TestInputsAgainstNote(updateTime, in note, newStrum, (int) buttonMask, (int) sustainInputMask))
+                    {
+                        AddHit(updateTime, notePosition, ref note, scaledMultiplier);
+
+                        // We declare any notes skipped as missed and therefore need to invalidate any
+                        // attached overdrive phrases and declare all attached sustains as dead
+                        while (NoteIndex < noteIndex)
+                        {
+                            ref readonly var skippedNote = ref Track.Notes[NoteIndex];
+                            if (skippedNote.OverdriveIndex != -1)
+                            {
+                                Track.Overdrives[skippedNote.OverdriveIndex].Disable();
+                            }
+
+                            double skippedPosition = Track.Notes.Seconds[NoteIndex];
+
+                            for (int sustainOffset = 0; sustainOffset < skippedNote.SustainCount; sustainOffset++)
+                            {
+                                int sustainIndex = skippedNote.SustainIndex + sustainOffset;
+                                DeadSustains.Add(
+                                    new DeadSustain
+                                    (
+                                        skippedPosition,
+                                        Track.Sustains.Seconds[sustainIndex],
+                                        Track.Sustains[sustainIndex].LaneMask
+                                    )
+                                );
+                            }
+                        }
+                        NoteIndex++;
+
+                        // Don't want to activate the below conditions
+                        newStrum = false;
+                    }
+
+                    // Our focus is only on the current note
+                    if (Combo > 0)
+                    {
+                        break;
+                    }
+
+                    noteIndex++;
+                }
+
+                // Processing explicit over-strums
+                bool withinRange = IsWithinInputRange(updateTime);
+                if (!withinRange || (newStrum && _strumState == StrumState.Overstrum))
+                {
+                    // However, only while inputs fall within the range of a note or sustain should
+                    // we account for the over-strum
+                    if (withinRange)
+                    {
+                        ApplyOverStrum(updateTime, scaledMultiplier);
+                    }
+
+                    _strumState = StrumState.Inactive;
+                    _strumWindow = updateTime;
+                }
+                else if (newStrum)
+                {
+                    _strumState = StrumState.Overstrum;
+                    _strumWindow = updateTime + _strumLeniency;
+                }
+            }
+
+            if (buttonMask.Has(GuitarButtonMask.Whammy))
+            {
+                StartWhammy(updateTime);
+            }
+            else if (updateTime < _whammyEnd)
+            {
+                UpdateWhammy(updateTime);
+            }
+        }
+
+        public void UpdateTime(double time)
+        {
+            bool hadOverStrum = ProcessNoteDrops(time);
+
+            // We don't need to check whether the inputs match the sustains, as at this stage, it is
+            // given that sustains reside either in  the "held" state (match the current set of inputs) or the
+            // "drop leniency" state
+            for (int activeIndex = 0; activeIndex < ActiveSustains.Count;)
+            {
+                ref var activeTracker = ref ActiveSustains[activeIndex];
+
+                var sustainEndTime = Track.Sustains.Seconds[activeTracker];
+
+                if (hadOverStrum && _strumWindow < sustainEndTime)
+                {
+                    DeadSustains.Add(new DeadSustain(_strumWindow, sustainEndTime, Track.Sustains[activeTracker].LaneMask));
+                    ActiveSustains.RemoveAt(activeIndex);
+                }
+                else if (time >= sustainEndTime)
+                {
+                    ActiveSustains.RemoveAt(activeIndex);
+                }
+                else
+                {
+                    activeIndex++;
+                }
+            }
+
+            CurrentTime = time;
         }
 
         public void ApplyDoubleNotes(double timeOfActivation)
@@ -190,13 +367,12 @@ namespace YARG.Core.NewLoading.Guitar
             long   firstNoteTicks   = Track.Notes.Ticks[destinationGroupIndex];
             double firstNoteSeconds = Track.Notes.Seconds[destinationGroupIndex];
 
-            for (int activeIndex = 0; activeIndex < ActiveSustains.Count; ++activeIndex)
+            foreach (var sustain in ActiveSustains)
             {
-                int sustainIndex = ActiveSustains[activeIndex].SustainIndex;
-                if (Track.Sustains.Ticks[sustainIndex] > firstNoteTicks)
+                if (Track.Sustains.Ticks[sustain] > firstNoteTicks)
                 {
-                    Track.Sustains.Ticks[sustainIndex] = firstNoteTicks;
-                    Track.Sustains.Seconds[sustainIndex] = firstNoteSeconds;
+                    Track.Sustains.Ticks[sustain] = firstNoteTicks;
+                    Track.Sustains.Seconds[sustain] = firstNoteSeconds;
                 }
             }
 
@@ -284,6 +460,81 @@ namespace YARG.Core.NewLoading.Guitar
                     Track.Sustains.Seconds[sustainIndex] = outsideNoteSeconds;
                 }
             }
+        }
+
+        private bool ProcessNoteDrops(double updateTime)
+        {
+            bool hasOverStrum = false;
+            if (_strumWindow <= updateTime)
+            {
+                hasOverStrum = _strumState == StrumState.Overstrum;
+                _strumState = StrumState.Inactive;
+            }
+
+            while (NoteIndex < Track.Notes.Length)
+            {
+                double position = Track.Notes.Seconds[NoteIndex];
+
+                double noteDistance = double.MaxValue;
+                if (NoteIndex + 1 < Track.Notes.Length)
+                {
+                    noteDistance = Track.Notes.Seconds[NoteIndex + 1] - position;
+                }
+
+                double backEnd = HitWindow.CalculateBackEnd(noteDistance);
+                double backTime = position + backEnd;
+
+                if ((hasOverStrum || backTime <= updateTime) && Combo > 0)
+                {
+                    Combo = 0;
+                }
+
+
+                // An over-strum will only affect an overdrive phrase if it happens in between two notes
+                // that share the same phrase.
+                //
+                // Or, internally, for over-strums on note offsets [1, n-1] of a phrase
+                int overdriveIndex = Track.Notes[NoteIndex].OverdriveIndex;
+                if (overdriveIndex >= 0)
+                {
+                    ref var overdrive = ref Track.Overdrives[overdriveIndex];
+                    if (backTime <= updateTime || (hasOverStrum && overdrive.HitCount > 0))
+                    {
+                        overdrive.Disable();
+                    }
+                }
+
+                if (updateTime < backTime)
+                {
+                    break;
+                }
+
+                NoteIndex++;
+            }
+
+            return hasOverStrum;
+        }
+
+        private void ApplyOverStrum(double updateTime, long multiplier)
+        {
+            foreach (var tracker in ActiveSustains)
+            {
+                DeadSustains.Add(
+                    new DeadSustain
+                    (
+                        updateTime,
+                        Track.Sustains.Seconds[tracker],
+                        Track.Sustains[tracker].LaneMask
+                    )
+                );
+            }
+            for (int i = 0; i < ActiveSustains.Count; ++i)
+            {
+                ref var tracker = ref ActiveSustains[i];
+
+            }
+            ActiveSustains.Clear();
+            Combo = 0;
         }
     }
 }

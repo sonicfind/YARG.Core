@@ -191,6 +191,7 @@ namespace YARG.Core.NewLoading.Guitar
                         sustain.LaneMask |= laneMapping[lane];
                         sustain.LaneCount++;
                     }
+
                     group.LaneMask |= laneMapping[lane];
                     group.LaneCount++;
                 }
@@ -364,9 +365,7 @@ namespace YARG.Core.NewLoading.Guitar
 
         /// <remarks>
         /// Double Notes can be applied in the middle of gameplay. For simplicity, callers will pass the number of lanes
-        /// as a parameter instead of the generic... for now at least. We'll see if that changes later.
-        /// <br></br>
-        /// Also, all the parameters will stay separated
+        /// as a parameter instead of the generic.
         /// </remarks>
         public static unsafe void ApplyDoubleNotes(
             FixedArray<long> noteTickPositions,

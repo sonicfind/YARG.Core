@@ -1,10 +1,9 @@
 ﻿using System;
 using YARG.Core.Containers;
-using YARG.Core.NewParsing;
 
 namespace YARG.Core.NewLoading.Guitar
 {
-    public class GuitarEngine : BaseEngine
+    public class GuitarBaseEngine : BaseEngine
     {
         private enum StrumState
         {
@@ -38,7 +37,6 @@ namespace YARG.Core.NewLoading.Guitar
         private const double STRUM_LENIENCY_FOR_TESTING       = .060;
         private const double STRUM_SMALL_LENIENCY_FOR_TESTING = .030;
         private const long   POINTS_PER_FRET                  = 50;
-        private const double WHAMMY_TIME                      = .5;
 
         private readonly double _strumLeniency      = STRUM_LENIENCY_FOR_TESTING;
         private readonly double _strumSmallLeniency = STRUM_SMALL_LENIENCY_FOR_TESTING;
@@ -46,29 +44,25 @@ namespace YARG.Core.NewLoading.Guitar
         private GuitarButtonMask _buttonMask = GuitarButtonMask.None;
         private StrumState       _strumState = StrumState.Inactive;
         private double           _strumWindow;
-        private double           _whammyEnd;
 
         public GuitarTrack                   Track            { get; }
         public int                           NoteIndex        { get; private set; }
         public NewHitWindow                  HitWindow        { get; }
         public BeatTracker                   BeatTracker      { get; }
-        public OverdriveTracker              OverdriveTracker { get; }
         public YargNativeList<ActiveSustain> ActiveSustains   { get; } = new();
         public YargNativeList<DeadSustain>   DeadSustains     { get; } = new();
 
-        public GuitarEngine(
+        public GuitarBaseEngine(
             GuitarTrack track,
             NewHitWindow hitWindow,
             double strumWindow,
             BeatTracker beatTracker,
-            OverdriveStyle style
         )
         {
             Track = track;
             HitWindow = hitWindow;
             _strumWindow = strumWindow;
             BeatTracker = beatTracker;
-            OverdriveTracker = new OverdriveTracker(style);
         }
 
         public void UpdateInput(double updateTime, GuitarButtonMask buttonMask)
@@ -114,7 +108,7 @@ namespace YARG.Core.NewLoading.Guitar
                         AddHit(updateTime, notePosition, ref note, scaledMultiplier);
 
                         // We declare any notes skipped as missed and therefore need to invalidate any
-                        // attached overdrive phrases
+                        // attached overdrive phrases and declare all attached sustains as dead
                         while (NoteIndex < noteIndex)
                         {
                             ref readonly var skippedNote = ref Track.Notes[NoteIndex];
